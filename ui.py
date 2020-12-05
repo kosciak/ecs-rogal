@@ -1,8 +1,17 @@
+
+"""Basic UI elements / building blocks, working as abstraction layer for tcod.Console.
+
+This should make working on UI much easier, and maybe use other cli/graphical engines.
+
+"""
+
+
 class AbstractDrawable:
 
-    """Representation of rectangle area of tcod.Console.
-
+    """Representation of rectangular drawing area.
+    
     Allows manipulation of data using local coordinates (relative to self).
+    Using print/draw methods from tcod.Console.
 
     """
 
@@ -16,13 +25,14 @@ class AbstractDrawable:
         self.height = height or parent.height
 
     def _translate_parent(self, x, y):
-        """Translate coordinates relative to self, to coordinates relative to parent."""
+        """Translate local coordinates (relative to self) to coordinates relative to parent."""
         parent_x = self.x + x
         parent_y = self.y + y
         #print('_translate_parent:',x,y,'->',parent_x,parent_y, '?', self)
         return parent_x, parent_y
 
     def _translate_root(self, x, y):
+        """Translate local coordinates (relative to self) to coordinates relative to root panel."""
         return self.parent._translate_root(self.x+x, self.y+y)
 
     # NOTE: Direct access to console.tiles, console.tiles_rgb fragments
@@ -44,10 +54,13 @@ class AbstractDrawable:
     def tiles_rgb(self, tiles_rgb):
         self.parent.tiles_rgb[self.x:self.x+self.width, self.y:self.y+self.height] = tiles_rgb
 
+    # NOTE: you can acces bg, fg, chr as tiles_rgb['bg'], tiles_rgb['fg'], tiles['ch']
+
     def __repr__(self):
         return f'<{self.__class__.__name__} x={self.x}, y={self.y}, width={self.width}, height={self.height}>'
 
     # NOTE: tcod.Console print/draw related methods:
+    # NOTE: Only x,y coordinates are translated, it is NOT checked if prints are outside of Panel!
 
     def put_char(self, x, y, *args, **kwargs):
         parent_x, parent_y = self._translate_parent(x, y)
@@ -61,6 +74,10 @@ class AbstractDrawable:
         parent_x, parent_y = self._translate_parent(x, y)
         return self.parent.print_box(parent_x, parent_y, *args, **kwargs)
 
+    def get_height_rect(self, x, y, *args, **kwargs):
+        parent_x, parent_y = self._translate_parent(x, y)
+        return self.parent.get_height_rect(parent_x, parent_y, *args, **kwargs)
+
     def draw_rect(self, x, y, *args, **kwargs):
         parent_x, parent_y = self._translate_parent(x, y)
         return self.parent.draw_rect(parent_x, parent_y, *args, **kwargs)
@@ -68,6 +85,24 @@ class AbstractDrawable:
     def draw_frame(self, x, y, *args, **kwargs):
         parent_x, parent_y = self._translate_parent(x, y)
         return self.parent.draw_frame(parent_x, parent_y, *args, **kwargs)
+
+    def draw_semigraphics(self, pixels, x, y, *args, **kwargs):
+        parent_x, parent_y = self._translate_parent(x, y)
+        return self.parent.get_height_rect(pixels, parent_x, parent_y, *args, **kwargs)
+
+    def blit_from(self, x, y, src, *args, **kwargs):
+        # RULE: Use keyword arguments for dest_x, dest_y, width height
+        # NOTE: src MUST be tcod.Console!
+        parent_x, parent_y = self._translate_parent(x, y)
+        return self.parent.blit_from(parent_x, parent_y, src, *args, **kwargs)
+
+    def blit_to(self, x, y, dest, *args, **kwargs):
+        # RULE: Use keyword arguments for dest_x, dest_y, width height
+        # NOTE: dest MUST be tcod.Console!
+        parent_x, parent_y = self._translate_parent(x, y)
+        return self.parent.blit_to(parent_x, parent_y, dest, *args, **kwargs)
+    
+    # Other methods
     
     # Other methods
 
@@ -167,6 +202,7 @@ class Panel(AbstractDrawable):
 
 
 class Frame(AbstractDrawable):
+    # TODO: Custom window decorations?
     # TODO: Setting title, adding buttons(?) on top/bottom border, scrollbars?
     #       For example setting things like: 
     #       .- Title ------[X]-.
@@ -181,23 +217,8 @@ class Window:
 
     def __init__(self, parent, x, y, width, height):
         self.frame = Frame(parent, x, y, width, height)
-        self.frame.frame()
+        self.frame.frame() # -> draw_decorations()
         self.panel = Panel(self.frame, 1, 1, width-2, height-2)
-
-    def print(self, x, y, *args, **kwargs):
-        return self.panel.print(x, y, *args, **kwargs)
-
-    def print_box(self, x, y, *args, **kwargs):
-        return self.panel.print_box(x, y, *args, **kwargs)
-
-    def draw_rect(self, x, y, *args, **kwargs):
-        return self.panel.draw_rect(x, y, *args, **kwargs)
-
-    def draw_frame(self, x, y, *args, **kwargs):
-        return self.panel.draw_frame(x, y, *args, **kwargs)
-
-    def fill(self, char, *args, **kwargs):
-        return self.panel.fill(char)
 
 
 class RootPanel(Panel):
@@ -205,8 +226,21 @@ class RootPanel(Panel):
     def __init__(self, console):
         super().__init__(console, 0, 0)
 
+    def __str__(self):
+        return str(self.parent)
+
     def _translate_root(self, x, y):
         return x, y
+    
+    def blit_from(self, x, y, src, *args, **kwargs):
+        # RULE: Use keyword arguments for dest_x, dest_y, width height
+        # NOTE: src MUST be tcod.Console!
+        src.blit(dest=self.parent, dest_x=x, dest_y=y, *args, **kwargs)
+
+    def blit_to(self, x, y, dest, *args, **kwargs):
+        # RULE: Use keyword arguments for dest_x, dest_y, width height
+        # NOTE: dest MUST be tcod.Console!
+        self.parent.blit(dest=dest, src_x=x, src_y=y, *args, **kwargs)
 
     def create_window(x, y, width, height):
         return Window(self, x, y, width, height)
@@ -216,6 +250,7 @@ class RootPanel(Panel):
 
 
 # TODO: frame() should produce FramedPanel with Frame and Panel inside
+# TODO: frames overlapping, and fixing overlapped/overdrawn characters to merge borders/decorations
 # TODO: Scrollable Panels?
 # TODO: Window/Dialog?
 # TODO: event handlers?
