@@ -1,5 +1,7 @@
 import collections
 
+from geometry import Position, Size, Rectangle
+
 
 """Basic UI elements / building blocks, working as abstraction layer for tcod.Console.
 
@@ -8,7 +10,7 @@ This should make working on UI much easier, and maybe use other cli/graphical en
 """
 
 
-class AbstractDrawable:
+class AbstractDrawable(Rectangle):
 
     """Representation of rectangular drawing area.
     
@@ -17,19 +19,12 @@ class AbstractDrawable:
 
     """
 
-    def __init__(self, parent, x, y, width=None, height=None):
+    def __init__(self, parent, position, size):
+        # NOTE: position is relative to parent
+        super().__init__(position, size)
         self.parent = parent
-        # Coordinates relative to parent
-        self.x = x
-        self.y = y
-        # Dimensions
-        self.width = width or parent.width
-        self.height = height or parent.height
 
-    @property
-    def center(self):
-        return int(self.width/2), int(self.height/2)
-
+    # TODO: Rename to: _parent_offset(self, x, y)
     def _translate_parent(self, x, y):
         """Translate local coordinates (relative to self) to coordinates relative to parent."""
         parent_x = self.x + x
@@ -37,6 +32,7 @@ class AbstractDrawable:
         #print('_translate_parent:',x,y,'->',parent_x,parent_y, '?', self)
         return parent_x, parent_y
 
+    # TODO: Rename to: _root_offset(self, x, y)
     def _translate_root(self, x, y):
         """Translate local coordinates (relative to self) to coordinates relative to root panel."""
         return self.parent._translate_root(self.x+x, self.y+y)
@@ -46,19 +42,19 @@ class AbstractDrawable:
     @property
     def tiles(self):
         """Translate coordinates relative to self, to coordinates relative to root."""
-        return self.parent.tiles[self.x:self.x+self.width, self.y:self.y+self.height]
+        return self.parent.tiles[self.x:self.x2, self.y:self.y2]
 
     @tiles.setter
     def tiles(self, tiles):
-        self.parent.tiles[self.x:self.x+self.width, self.y:self.y+self.height] = tiles
+        self.parent.tiles[self.x:self.x2, self.y:self.y2] = tiles
 
     @property
     def tiles_rgb(self):
-        return self.parent.tiles[self.x:self.x+self.width, self.y:self.y+self.height]
+        return self.parent.tiles[self.x2, self.y:self.y2]
 
     @tiles_rgb.setter
     def tiles_rgb(self, tiles_rgb):
-        self.parent.tiles_rgb[self.x:self.x+self.width, self.y:self.y+self.height] = tiles_rgb
+        self.parent.tiles_rgb[self.x:self.x2, self.y:self.y2] = tiles_rgb
 
     # NOTE: you can acces bg, fg, chr as tiles_rgb['bg'], tiles_rgb['fg'], tiles['ch']
 
@@ -115,95 +111,107 @@ class AbstractDrawable:
 
 
 class Container(AbstractDrawable):
-    pass
+
+    def __init__(self, parent, position, size):
+        super().__init__(parent, position, size)
+        self.panels = []
+
 
 class HorizontalContainer(Container):
 
-    def split(self, height, top=None, bottom=None):
+    def split(self, top=None, bottom=None):
+        height = top or bottom
+        if height and height < 1:
+            height = int(self.height * height)
         if top:
             top = Panel(
                 self, 
-                0, 0, 
-                self.width, self.height-height,
+                Position(0, 0), 
+                Size(self.width, self.height-height),
             )
             bottom = Panel(
                 self, 
-                0, self.height-height, 
-                self.width, height,
+                Position(0, self.height-height), 
+                Size(self.width, height),
             )
+            self.panels = [top, bottom]
             return top, bottom
         elif bottom:
             top = Panel(
                 self, 
-                0, 0,
-                self.width, height,
+                Position(0, 0),
+                Size(self.width, height),
             )
             bottom = Panel(
                 self, 
-                0, height,
-                self.width, self.height-height,
+                Position(0, height),
+                Size(self.width, self.height-height),
             )
+            self.panels = [top, bottom]
             return top, bottom
 
 
 class VerticalContainer(Container):
 
-    def split(self, width, left=None, right=None):
+    def split(self, left=None, right=None):
+        width = left or right
+        if width and width < 1:
+            width = int(self.width * width)
         if left:
             left = Panel(
                 self, 
-                0, 0,
-                self.width-width, self.height,
+                Position(0, 0),
+                Size(self.width-width, self.height),
             )
             right = Panel(
                 self, 
-                self.width-width, 0, 
-                width, self.height,
+                Position(self.width-width, 0), 
+                Size(width, self.height),
             )
+            self.panels = [left, right]
             return left, right
         elif right:
             left = Panel(
                 self, 
-                0, 0, 
-                width, self.height,
+                Position(0, 0), 
+                Size(width, self.height),
             )
             right = Panel(
                 self, 
-                width, 0, 
-                self.width-width, self.height,
+                Position(width, 0), 
+                Size(self.width-width, self.height),
             )
+            self.panels = [left, right]
             return left, right
 
 
 class Panel(AbstractDrawable):
 
-    def _create_split_container(self, width, height):
-        if width:
-            container_cls = VerticalContainer
-        elif height:
-            container_cls = HorizontalContainer
-        container = container_cls(
-            isinstance(self, RootPanel) and self or self.parent, 
-            self.x, self.y,
-            width=isinstance(self.parent, (Container, Frame)) and self.width or self.parent.width,
-            height=isinstance(self.parent, (Container, Frame)) and self.height or self.parent.height,
+    def split_vertical(self, left=None, right=None):
+        width = left or right
+        container = VerticalContainer(
+            isinstance(self, RootPanel) and self or self.parent,
+            self.position,
+            self.size,
         )
-        return container
+        return container.split(left=right and width, right=left and width)
+
+    def split_horizontal(self, top=None, bottom=None):
+        height = top or bottom
+        container = HorizontalContainer(
+            isinstance(self, RootPanel) and self or self.parent,
+            self.position,
+            self.size,
+        )
+        return container.split(top=bottom and height, bottom=top and height)
 
     def split(self, left=None, right=None, top=None, bottom=None):
         """Split Panel vertically or horizontally by providing width of new Panel
            placed to the right / left / top / bottom."""
-        width = left or right
-        if width and width < 1:
-            width = int(self.width * width)
-        height = top or bottom
-        if height and height < 1:
-            height = int(self.height * height)
-        container = self._create_split_container(width, height)
-        if width:
-            return container.split(width, left=right and self, right=left and self)
-        if height:
-            return container.split(height, top=bottom and self, bottom=top and self)
+        if left or right:
+            return self.split_vertical(left=left, right=right)
+        if top or bottom:
+            return self.split_horizontal(top=top, bottom=bottom)
 
 
 FrameDecorations = collections.namedtuple(
@@ -214,10 +222,10 @@ FrameDecorations = collections.namedtuple(
     ])
 
 
-DECORATIONS_ASCII = ui.FrameDecorations(*"=-|..''")
+DECORATIONS_ASCII = FrameDecorations(*"=-|..''")
 
 
-class Frame(AbstractDrawable):
+class Frame(Container):
     # TODO: Custom window decorations?
     # TODO: Setting title, adding buttons(?) on top/bottom border, scrollbars?
     #       For example setting things like: 
@@ -244,26 +252,22 @@ class Window:
     # NOTE: splitting window.panel leaves original panel reference!
 
     def __init__(self, parent, x, y, width, height, decorations):
-        self.frame = Frame(parent, x, y, width, height)
+        self.frame = Frame(parent, Position(x, y), Size(width, height))
         self.frame.draw_decorations(decorations)
-        self.panel = Panel(self.frame, 1, 1, width-2, height-2)
+        self.panel = Panel(self.frame, Position(1, 1), Size(width-2, height-2))
+        self.frame.panels.append(self.panel)
 
 
 class RootPanel(Panel):
 
     def __init__(self, console):
-        super().__init__(console, 0, 0)
+        super().__init__(console, Position(0, 0), Size(console.width, console.height))
 
     def __str__(self):
         return str(self.parent)
 
     def _translate_root(self, x, y):
         return x, y
-    
-    def blit_from(self, x, y, src, *args, **kwargs):
-        # RULE: Use keyword arguments for dest_x, dest_y, width height
-        # NOTE: src MUST be tcod.Console!
-        src.blit(dest=self.parent, dest_x=x, dest_y=y, *args, **kwargs)
 
     def blit_to(self, x, y, dest, *args, **kwargs):
         # RULE: Use keyword arguments for dest_x, dest_y, width height
@@ -277,9 +281,15 @@ class RootPanel(Panel):
         return self.parent.clear(*args, **kwargs)
 
 
-# TODO: Instead of x,y, width,height use: Geometry, Position, Size - see pywo.core.basic
+# TODO: Instead of x,y, width,height use geometry.Position, Size, Geometry(?) in print/draw methods???
+
+# TODO: Rework Window class - now it's a mess
+
 # TODO: frame() should produce FramedPanel with Frame and Panel inside
 # TODO: frames overlapping, and fixing overlapped/overdrawn characters to merge borders/decorations
+
+# TODO: Keep track of Z-order of Windows?
+
 # TODO: Scrollable Panels?
 # TODO: Window/Dialog?
 # TODO: event handlers?
