@@ -1,3 +1,5 @@
+import collections
+
 
 """Basic UI elements / building blocks, working as abstraction layer for tcod.Console.
 
@@ -23,6 +25,10 @@ class AbstractDrawable:
         # Dimensions
         self.width = width or parent.width
         self.height = height or parent.height
+
+    @property
+    def center(self):
+        return int(self.width/2), int(self.height/2)
 
     def _translate_parent(self, x, y):
         """Translate local coordinates (relative to self) to coordinates relative to parent."""
@@ -101,13 +107,8 @@ class AbstractDrawable:
         # NOTE: dest MUST be tcod.Console!
         parent_x, parent_y = self._translate_parent(x, y)
         return self.parent.blit_to(parent_x, parent_y, dest, *args, **kwargs)
-    
-    # Other methods
-    
-    # Other methods
 
-    def frame(self, *args, **kwargs):
-        return self.draw_frame(0, 0, width=self.width, height=self.height, *args, **kwargs)
+    # Other methods
 
     def fill(self, char, *args, **kwargs):
         return self.draw_rect(0, 0, ch=ord(char), width=self.width, height=self.height, *args, **kwargs)
@@ -193,12 +194,27 @@ class Panel(AbstractDrawable):
         """Split Panel vertically or horizontally by providing width of new Panel
            placed to the right / left / top / bottom."""
         width = left or right
+        if width and width < 1:
+            width = int(self.width * width)
         height = top or bottom
+        if height and height < 1:
+            height = int(self.height * height)
         container = self._create_split_container(width, height)
         if width:
             return container.split(width, left=right and self, right=left and self)
         if height:
             return container.split(height, top=bottom and self, bottom=top and self)
+
+
+FrameDecorations = collections.namedtuple(
+    'FrameDecorations', [
+        'top', 'bottom', 'side',
+        'top_left', 'top_right',
+        'bottom_left', 'bottom_right',
+    ])
+
+
+DECORATIONS_ASCII = ui.FrameDecorations(*"=-|..''")
 
 
 class Frame(AbstractDrawable):
@@ -208,16 +224,28 @@ class Frame(AbstractDrawable):
     #       .- Title ------[X]-.
     #       |                  |
     #       '-----------(more)-'
-    pass
+
+    def draw_decorations(self, decorations=None, *args, **kwargs):
+        if not decorations:
+            self.draw_frame(0, 0, width=self.width, height=self.height, *args, **kwargs)
+        else:
+            self.draw_rect(1, 0, width=self.width-2, height=1, ch=ord(decorations.top))
+            self.draw_rect(1, self.height-1, width=self.width-2, height=1, ch=ord(decorations.bottom))
+            self.draw_rect(0, 1, width=1, height=self.height-2, ch=ord(decorations.side))
+            self.draw_rect(self.width-1, 1, width=1, height=self.height-2, ch=ord(decorations.side))
+            self.put_char(0, 0, ord(decorations.top_left))
+            self.put_char(self.width-1, 0, ord(decorations.top_right))
+            self.put_char(0, self.height-1, ord(decorations.bottom_left))
+            self.put_char(self.width-1, self.height-1, ord(decorations.bottom_right))
 
 
 class Window:
     # TODO: For now it's just proof of concept
     # NOTE: splitting window.panel leaves original panel reference!
 
-    def __init__(self, parent, x, y, width, height):
+    def __init__(self, parent, x, y, width, height, decorations):
         self.frame = Frame(parent, x, y, width, height)
-        self.frame.frame() # -> draw_decorations()
+        self.frame.draw_decorations(decorations)
         self.panel = Panel(self.frame, 1, 1, width-2, height-2)
 
 
@@ -242,13 +270,14 @@ class RootPanel(Panel):
         # NOTE: dest MUST be tcod.Console!
         self.parent.blit(dest=dest, src_x=x, src_y=y, *args, **kwargs)
 
-    def create_window(x, y, width, height):
-        return Window(self, x, y, width, height)
+    def create_window(self, x, y, width, height, decorations=None):
+        return Window(self, x, y, width, height, decorations)
 
     def clear(self, *args, **kwargs):
         return self.parent.clear(*args, **kwargs)
 
 
+# TODO: Instead of x,y, width,height use: Geometry, Position, Size - see pywo.core.basic
 # TODO: frame() should produce FramedPanel with Frame and Panel inside
 # TODO: frames overlapping, and fixing overlapped/overdrawn characters to merge borders/decorations
 # TODO: Scrollable Panels?
