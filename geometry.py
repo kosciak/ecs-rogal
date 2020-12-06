@@ -51,13 +51,25 @@ class Position(collections.namedtuple(
         return f'<Position x={self.x}, y={self.y}>'
 
 
-class Geometry:
+class Rectangle:
 
     __slots__ = ('position', 'size')
 
     def __init__(self, position, size):
         self.position = position
         self.size = size
+
+    @property
+    def width(self):
+        return self.size.width
+
+    @property
+    def height(self):
+        return self.size.height
+
+    @property
+    def area(self):
+        return self.size.area
 
     @property
     def x(self):
@@ -70,46 +82,54 @@ class Geometry:
     @property
     def x2(self):
         """X coordinate of bottom right corner."""
-        return self.position.x + self.size.width
+        return self.x + self.width
 
     @property
     def y2(self):
         """Y coordinate of bottom right corner."""
-        return self.position.y + self.size.height
+        return self.y + self.height
 
     @property
     def center(self):
         """Return center Position."""
-        return Position(int(self.size.width/2), int(self.size.height/2))
+        return Position(int(self.width/2), int(self.height/2))
+
+    def __iter__(self):
+        """Iterate Positions inside this Rectangle."""
+        for y in range(self.y, self.y2+1):
+            for x in range(self.x, self.x2+1):
+                yield Position(x, y)
 
     @property
-    def area(self):
-        return self.size.area
+    def positions(self):
+        """Return set of Positions inside this Rectangle."""
+        return set(iter(r))
 
     def is_inside(self, position):
-        """Return True if given Coord is inside extent."""
+        """Return True if given Position is inside this Rectangle."""
         if not position:
             return False
-        return (self.position.x <= position.x <= self.x2 and
-                self.position.y <= position.y <= self.y2)
+        return (self.x <= x <= self.x2 and
+                self.y <= y <= self.y2)
 
-    def __contains__(self, coord):
-        return self.is_inside(coord)
+    def __contains__(self, position):
+        return self.is_inside(position)
 
     def intersection(self, other):
-        """Return the intersection with another ``Geometry``.
+        """Return the intersection with another ``Rectangle``.
 
         Returns ``None`` if the geometries don't intersect. 
 
         """
+        # TODO: Test it!
         if not other:
             return None
-        x = max(self.position.x, other.position.x)
-        y = max(self.position.y, other.position.y)
+        x = max(self.x, other.x)
+        y = max(self.y, other.y)
         width = min(self.x2, other.x2) - x
         height = min(self.y2, other.y2) - y
         if width > 0 and height > 0:
-            return Geometry(Position(x, y), Size(width, height))
+            return Rectangle(Position(x, y), Size(width, height))
         else:
             return None
 
@@ -120,8 +140,6 @@ class Geometry:
         return self.position == other.position and self.size == other.size
 
     def __repr__(self):
-        return '<Geometry x=%s, y=%s, width=%s, height=%s, x2=%s, y2=%s>' % \
-               (self.position.x, self.position.y, 
-                self.size.width, self.size.height, 
-                self.x2, self.y2)
+        return '<Rectangle x=%s, y=%s, width=%s, height=%s, x2=%s, y2=%s>' % \
+               (self.x, self.y, self.width, self.height, self.x2, self.y2)
 
