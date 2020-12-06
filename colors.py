@@ -7,7 +7,11 @@ import math
 """Colors, color manipulation and conversions, color maps calculations."""
 
 
-class Color(collections.namedtuple('Color', ['values', 'alpha'])):
+class Color(collections.namedtuple(
+    'Color', [
+        'values', 
+        'alpha',
+    ])):
 
     """Base class for Color implementations in different color models."""
 
@@ -234,9 +238,11 @@ class ColorPalleteIndex(enum.IntEnum):
 
 class ColorPalette:
 
-    def __init__(self, foreground, background, colors):
-        self.foreground = foreground
-        self.background = background
+    def __init__(self, fg, bg, colors):
+        self.fg = fg
+        self.bg = bg
+        #self.cursor_fg = None
+        #self.cursor_bg = None
         self.colors = colors
 
     def __len__(self):
@@ -248,9 +254,54 @@ class ColorPalette:
     def __getattr__(self, name):
         name = name.upper()
         if name in {'FG', 'FOREGROUND'}:
-            return self.foreground
+            return self.fg
         if name in {'BG', 'BACKGROUND'}:
-            return self.background
+            return self.bg
         index = getattr(ColorPalleteIndexes, name)
         return self.colors[index]
 
+
+TANGO_DARK = ColorPalette(
+  fg=HEX("#babdb6"),
+  bg=HEX("#000000"),
+  colors=[
+    HEX("#2e3436"),
+    HEX("#cc0000"),
+    HEX("#4e9a06"),
+    HEX("#c4a000"),
+    HEX("#3465a4"),
+    HEX("#75507b"),
+    HEX("#06989a"),
+    HEX("#d3d7cf"),
+    HEX("#555753"),
+    HEX("#ef2929"),
+    HEX("#8ae234"),
+    HEX("#fce94f"),
+    HEX("#729fcf"),
+    HEX("#ad7fa8"),
+    HEX("#34e2e2"),
+    HEX("#eeeeec"),
+  ])
+
+
+TANGO_LIGHT = ColorPalette(
+  fg=HEX("#000000"),
+  bg=HEX("#babdb6"),
+  colors=[
+    HEX("#2e3436"),
+    HEX("#cc0000"),
+    HEX("#4e9a06"),
+    HEX("#c4a000"),
+    HEX("#3465a4"),
+    HEX("#75507b"),
+    HEX("#06989a"),
+    HEX("#d3d7cf"),
+    HEX("#555753"),
+    HEX("#ef2929"),
+    HEX("#8ae234"),
+    HEX("#fce94f"),
+    HEX("#729fcf"),
+    HEX("#ad7fa8"),
+    HEX("#34e2e2"),
+    HEX("#eeeeec"),
+  ])
