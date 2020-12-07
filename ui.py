@@ -10,7 +10,7 @@ This should make working on UI much easier, and maybe use other cli/graphical en
 """
 
 
-class AbstractDrawable(Rectangle):
+class TilesGrid(Rectangle):
 
     """Representation of rectangular drawing area.
     
@@ -50,7 +50,7 @@ class AbstractDrawable(Rectangle):
 
     @property
     def tiles_rgb(self):
-        return self.parent.tiles[self.x2, self.y:self.y2]
+        return self.parent.tiles_rgb[self.x:self.x2, self.y:self.y2]
 
     @tiles_rgb.setter
     def tiles_rgb(self, tiles_rgb):
@@ -64,34 +64,86 @@ class AbstractDrawable(Rectangle):
     # NOTE: tcod.Console print/draw related methods:
     # NOTE: Only x,y coordinates are translated, it is NOT checked if prints are outside of Panel!
 
+    # put_char(
+    #   x: int, y: int, 
+    #   ch: int, 
+    #   bg_blend: int = 13)
     def put_char(self, x, y, *args, **kwargs):
         parent_x, parent_y = self._translate_parent(x, y)
         return self.parent.put_char(parent_x, parent_y, *args, **kwargs)
 
+    # print(
+    #   x: int, y: int, 
+    #   string: str, 
+    #   fg: Optional[Tuple[int, int, int]] = None, 
+    #   bg: Optional[Tuple[int, int, int]] = None, 
+    #   bg_blend: int = 1, 
+    #   alignment: int = 0)
     def print(self, x, y, *args, **kwargs):
         parent_x, parent_y = self._translate_parent(x, y)
         return self.parent.print(parent_x, parent_y, *args, **kwargs)
 
+    # print_box(
+    #   x: int, y: int, 
+    #   width: int, height: int, 
+    #   string: str, 
+    #   fg: Optional[Tuple[int, int, int]] = None, 
+    #   bg: Optional[Tuple[int, int, int]] = None, 
+    #   bg_blend: int = 1, 
+    #   alignment: int = 0) 
+    #   -> int
     def print_box(self, x, y, *args, **kwargs):
         parent_x, parent_y = self._translate_parent(x, y)
         return self.parent.print_box(parent_x, parent_y, *args, **kwargs)
 
+    # get_height_rect(
+    #   x: int, y: int, 
+    #   width: int, height: int, 
+    #   string: str) 
+    #   -> int
     def get_height_rect(self, x, y, *args, **kwargs):
         parent_x, parent_y = self._translate_parent(x, y)
         return self.parent.get_height_rect(parent_x, parent_y, *args, **kwargs)
 
+    # draw_rect(
+    #   x: int, y: int, 
+    #   width: int, height: int, 
+    #   ch: int, 
+    #   fg: Optional[Tuple[int, int, int]] = None, 
+    #   bg: Optional[Tuple[int, int, int]] = None, 
+    #   bg_blend: int = 1)
     def draw_rect(self, x, y, *args, **kwargs):
         parent_x, parent_y = self._translate_parent(x, y)
         return self.parent.draw_rect(parent_x, parent_y, *args, **kwargs)
 
+    # draw_frame(
+    #   x: int, y: int, 
+    #   width: int, height: int, 
+    #   title: str = '', 
+    #   clear: bool = True, 
+    #   fg: Optional[Tuple[int, int, int]] = None, 
+    #   bg: Optional[Tuple[int, int, int]] = None, 
+    #   bg_blend: int = 1)
     def draw_frame(self, x, y, *args, **kwargs):
         parent_x, parent_y = self._translate_parent(x, y)
         return self.parent.draw_frame(parent_x, parent_y, *args, **kwargs)
 
+    # draw_semigraphics(
+    #   pixels: Any, 
+    #   x: int = 0, 
+    #   y: int = 0)
     def draw_semigraphics(self, pixels, x, y, *args, **kwargs):
         parent_x, parent_y = self._translate_parent(x, y)
         return self.parent.get_height_rect(pixels, parent_x, parent_y, *args, **kwargs)
 
+    # blit(
+    #   dest: tcod.console.Console, 
+    #   dest_x: int = 0, dest_y: int = 0, 
+    #   src_x: int = 0, src_y: int = 0, 
+    #   width: int = 0, height: int = 0, 
+    #   fg_alpha: float = 1.0, 
+    #   bg_alpha: float = 1.0, 
+    #   key_color: Optional[Tuple[int, int, int]] = None)
     def blit_from(self, x, y, src, *args, **kwargs):
         # RULE: Use keyword arguments for dest_x, dest_y, width height
         # NOTE: src MUST be tcod.Console!
@@ -110,7 +162,7 @@ class AbstractDrawable(Rectangle):
         return self.draw_rect(0, 0, ch=ord(char), width=self.width, height=self.height, *args, **kwargs)
 
 
-class Container(AbstractDrawable):
+class Container(TilesGrid):
 
     def __init__(self, parent, position, size):
         super().__init__(parent, position, size)
@@ -185,7 +237,7 @@ class VerticalContainer(Container):
             return left, right
 
 
-class Panel(AbstractDrawable):
+class Panel(TilesGrid):
 
     def split_vertical(self, left=None, right=None):
         width = left or right
@@ -269,6 +321,11 @@ class RootPanel(Panel):
     def _translate_root(self, x, y):
         return x, y
 
+    def blit_from(self, x, y, src, *args, **kwargs):
+        # RULE: Use keyword arguments for dest_x, dest_y, width height
+        # NOTE: src MUST be tcod.Console!
+        src.blit(dest=self.parent, dest_x=x, dest_y=y, *args, **kwargs)
+
     def blit_to(self, x, y, dest, *args, **kwargs):
         # RULE: Use keyword arguments for dest_x, dest_y, width height
         # NOTE: dest MUST be tcod.Console!
@@ -277,6 +334,10 @@ class RootPanel(Panel):
     def create_window(self, x, y, width, height, decorations=None):
         return Window(self, x, y, width, height, decorations)
 
+    # clear(
+    #   ch: int = 32, 
+    #   fg: Tuple[int, int, int] = Ellipsis, 
+    #   bg: Tuple[int, int, int] = Ellipsis)
     def clear(self, *args, **kwargs):
         return self.parent.clear(*args, **kwargs)
 
