@@ -129,10 +129,27 @@ def color_rgb(fg, bg):
     return ''.join(sequences)
 
 
-def show_colors(fn, colors_num, columns=8):
+def show_colors(fn, colors_num=256):
     elements = []
+    print('SYSTEM COLORS:')
+    columns = 8
     for color in range(colors_num):
         element = '%s %03d %s' % (fn(color), color, reset())
+        elements.append(element)
+        if len(elements) == columns:
+            print(''.join(elements))
+            elements = []
+        if color == 15:
+            print('216 COLORS:')
+            columns = 6
+        if color == 231:
+            print('GRAYSCALE COLORS:')
+            columns = 10
+
+def show_colors_rgb(colors, columns=8):
+    elements = []
+    for idx, color in enumerate(colors):
+        element = '%s %03d %s' % (bg_rgb(*color.rgb), idx, reset())
         elements.append(element)
         if len(elements) == columns:
             print(''.join(elements))
