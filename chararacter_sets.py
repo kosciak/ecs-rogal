@@ -100,3 +100,108 @@ class CP437_CharacterSet(enum.IntEnum):
 
 Character = CP437_CharacterSet
 
+
+class Symbol(enum.IntEnum):
+    # Single line walls:
+    HLINE=196 #  (HorzLine)
+    VLINE=179 #  (VertLine)
+    NE=191 #  (NE)
+    NW=218 #  (NW)
+    SE=217 #  (SE)
+    SW=192 #  (SW)
+
+    # Double lines walls:
+    DHLINE=205 #  (DoubleHorzLine)
+    DVLINE=186 #  (DoubleVertLine)
+    DNE=187 #  (DoubleNE)
+    DNW=201 #  (DoubleNW)
+    DSE=188 #  (DoubleSE)
+    DSW=200 #  (DoubleSW)
+
+    # Single line vertical/horizontal junctions (T junctions):
+    TEEW=180 #  (TeeWest)
+    TEEE=195 #  (TeeEast)
+    TEEN=193 #  (TeeNorth)
+    TEES=194 #  (TeeSouth)
+
+    # Double line vertical/horizontal junctions (T junctions):
+    DTEEW=185 #  (DoubleTeeWest)
+    DTEEE=204 #  (DoubleTeeEast)
+    DTEEN=202 #  (DoubleTeeNorth)
+    DTEES=203 #  (DoubleTeeSouth)
+
+    # Block characters:
+    BLOCK1=176 #  (Block1)
+    BLOCK2=177 #  (Block2)
+    BLOCK3=178 #  (Block3)
+
+    # Cross-junction between two single line walls:
+    CROSS=197 #  (Cross)
+
+    # Arrows:
+    ARROW_N=24 #  (ArrowNorth)
+    ARROW_S=25 #  (ArrowSouth)
+    ARROW_E=26 #  (ArrowEast)
+    ARROW_W=27 #  (ArrowWest)
+
+    # Arrows without tail:
+    ARROW2_N=30 #  (ArrowNorthNoTail)
+    ARROW2_S=31 #  (ArrowSouthNoTail)
+    ARROW2_E=16 #  (ArrowEastNoTail)
+    ARROW2_W=17 #  (ArrowWestNoTail)
+
+    # Double arrows:
+    DARROW_H=29 #  (DoubleArrowHorz)
+    ARROW_V=18 #  (DoubleArrowVert)
+
+    # GUI stuff:
+    CHECKBOX_UNSET=224
+    CHECKBOX_SET=225
+    RADIO_UNSET=9
+    RADIO_SET=10
+
+    # Sub-pixel resolution kit:
+    SUBP_NW=226 #  (SubpixelNorthWest)
+    SUBP_NE=227 #  (SubpixelNorthEast)
+    SUBP_N=228 #  (SubpixelNorth)
+    SUBP_SE=229 #  (SubpixelSouthEast)
+    SUBP_DIAG=230 #  (SubpixelDiagonal)
+    SUBP_E=231 #  (SubpixelEast)
+    SUBP_SW=232 #  (SubpixelSouthWest)
+
+    # Miscellaneous characters:
+    SMILY = 1 #  (Smilie)
+    SMILY_INV = 2 #  (SmilieInv)
+    HEART = 3 #  (Heart)
+    DIAMOND = 4 #  (Diamond)
+    CLUB = 5 #  (Club)
+    SPADE = 6 #  (Spade)
+    BULLET = 7 #  (Bullet)
+    BULLET_INV = 8 #  (BulletInv)
+    MALE = 11 #  (Male)
+    FEMALE = 12 #  (Female)
+    NOTE = 13 #  (Note)
+    NOTE_DOUBLE = 14 #  (NoteDouble)
+    LIGHT = 15 #  (Light)
+    EXCLAM_DOUBLE = 19 #  (ExclamationDouble)
+    PILCROW = 20 #  (Pilcrow)
+    SECTION = 21 #  (Section)
+    POUND = 156 #  (Pound)
+    MULTIPLICATION = 158 #  (Multiplication)
+    FUNCTION = 159 #  (Function)
+    RESERVED = 169 #  (Reserved)
+    HALF = 171 #  (Half)
+    ONE_QUARTER = 172 #  (OneQuarter)
+    COPYRIGHT = 184 #  (Copyright)
+    CENT = 189 #  (Cent)
+    YEN = 190 #  (Yen)
+    CURRENCY = 207 #  (Currency)
+    THREE_QUARTERS = 243 #  (ThreeQuarters)
+    DIVISION = 246 #  (Division)
+    GRADE = 248 #  (Grade)
+    UMLAUT = 249 #  (Umlaut)
+    POW1 = 251 #  (Pow1)
+    POW3 = 252 #  (Pow2)
+    POW2 = 253 #  (Pow3)
+    BULLET_SQUARE = 254 #  (BulletSquare)
+
