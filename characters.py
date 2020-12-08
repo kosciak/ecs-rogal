@@ -40,6 +40,8 @@ class Char(enum.IntEnum):
     BLOCK1 = 9617           # ░
     BLOCK2 = 9618           # ▒
     BLOCK3 = 9619           # ▓
+    BLOCK4 = 9608           # █
+    FULL_BLOCK = 9608       # █
 
     # Arrows:
     ARROW_N = 8593          # ↑
@@ -60,21 +62,37 @@ class Char(enum.IntEnum):
     DARROW_V = 8597         # ↕
 
     # GUI stuff:
-    # TODO: Character mismatch!
+    # TODO: Some tilesets might have different glyphs, not matchin original CP437 charset
     CHECKBOX_UNSET = 945    # α
     CHECKBOX_SET = 223      # ß
     RADIO_UNSET = 9675      # ○
     RADIO_SET = 9689        # ◙
 
     # Sub-pixel resolution kit:
-    # TODO: Character mismatch!
-    SUBP_NW = 915           # Γ
-    SUBP_NE = 960           # π
-    SUBP_N = 931            # Σ
-    SUBP_SE = 963           # σ
-    SUBP_DIAG = 181         # µ
-    SUBP_E = 964            # τ
-    SUBP_SW = 934           # Φ
+    # NOTE: original CP437 characters / replaced by SUBP_* in some tilesets
+    SUBP_NW = 915           # Γ / ▘
+    SUBP_NE = 960           # π / ▝
+    SUBP_N = 931            # Σ / ▀
+    SUBP_SE = 963           # σ / ▗
+    SUBP_DIAG = 181         # µ / ▚
+    SUBP_E = 964            # τ / ▐
+    SUBP_SW = 934           # Φ / ▖
+
+    # NOTE: Present in original CP437 character set
+    HALFBLOCK_S = 9604      # ▄
+    HALFBLOCK_W = 9612      # ▌
+    HALFBLOCK_E = 9616      # ▐
+    HALFBLOCK_N = 9600      # ▀
+
+    # NOTE: Used by console.draw_semigraphics() method even though not all present in CP437 tileset!
+    # NOTE: All present in TCOD characterset
+    SEMIGRAPH_NW = 9624     # ▘
+    SEMIGRAPH_NE = 9629     # ▝
+    SEMIGRAPH_N = 9600      # ▀
+    SEMIGRAPH_SE = 9623     # ▗
+    SEMIGRAPH_DIAG = 9626   # ▚
+    SEMIGRAPH_E = 9616      # ▐
+    SEMIGRAPH_SW = 9622     # ▖
 
     # Miscellaneous characters:
     SMILY = 9786            # ☺
@@ -124,7 +142,7 @@ class Char(enum.IntEnum):
 
     BULLET_SQUARE = 9632    # ■
     
-    # TODO: Character mismatch!
+    # NOTE: These might not be consistent among all tilesets!
     RESERVED = 8976         # ⌐
     COPYRIGHT = 9557        # ╕
     CENT = 9564             # ╜
@@ -134,6 +152,18 @@ class Char(enum.IntEnum):
     UMLAUT = 8729           # ∙
     POW1 = 8730             # √
     POW3 = 8319             # ⁿ
+
+
+def show_charmap(charmap, columns=16):
+    elements = []
+    for ch in charmap:
+        element = chr(ch)
+        elements.append(element)
+        if len(elements) == columns:
+            print(' '.join(elements))
+            elements = []
+    if elements:
+        print(' '.join(elements))
 
 
 """
