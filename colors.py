@@ -17,6 +17,10 @@ class Color(collections.namedtuple(
 
     __slots__ = ()
 
+    @property
+    def a(self):
+        return self.alpha
+
     def to_rgb(self):
         raise NotImplementedError()
 
@@ -33,22 +37,39 @@ class Color(collections.namedtuple(
         return self.__class__(self.values, alpha)
 
     @property
-    def rgba(self):
-        rgb = self.to_rgb()
-        return int(rgb.red*255), int(rgb.green*255), int(rgb.blue*255), int(self.alpha*255)
-
-    @property
     def rgb(self):
-        return self.rgba[:3]
+        rgb = self.to_rgb()
+        return int(rgb.red*255), int(rgb.green*255), int(rgb.blue*255)
 
     @property
-    def hsva(self):
-        hsv = self.to_hsv()
-        return int(hsv.hue*360), int(hsv.saturaion*100), int(hsv.value*100), int(hsv.alpha*255)
+    def rgba(self):
+        return (*self.rgb, int(self.alpha*255))
 
     @property
     def hsv(self):
-        return self.hsva[:3]
+        hsv = self.to_hsv()
+        return int(hsv.hue*360), int(hsv.saturation*100), int(hsv.value*100)
+
+    @property
+    def hsva(self):
+        return (*self.hsv, int(self.alpha*255))
+
+    def interpolate(self, other, level=0.5):
+        # Linear color interpolation
+        values = [(other.values[i]-self.values[i])*level + self.values[i] 
+                  for i in range(len(self.values))]
+        alpha = (other.alpha-self.alpha)*level + self.alpha
+        return self.__class__(values, alpha)
+    
+    def gradient(self, other, steps):
+        values_diff = [other.values[i] - self.values[i] for i in range(len(self.values))]
+        alpha_diff = other.alpha - self.alpha
+        for step in range(steps):
+            level = step / (steps - 1)
+            values = [values_diff[i]*level + self.values[i] 
+                      for i in range(len(self.values))]
+            alpha = (other.alpha-self.alpha)*level + self.alpha
+            yield self.__class__(values, alpha)
 
 
 class RGBColor(Color):
@@ -60,14 +81,17 @@ class RGBColor(Color):
     @property
     def red(self):
         return self.values[0]
+    r = red
 
     @property
     def green(self):
         return self.values[1]
+    g = green
 
     @property
     def blue(self):
         return self.values[2]
+    b = blue
 
     def to_rgb(self):
         return self
@@ -75,6 +99,26 @@ class RGBColor(Color):
     def to_hsv(self):
         values = colorsys.rgb_to_hsv(*self.values)
         return HSVColor(values, self.alpha)
+
+    def interpolate(self, other, level=0.5):
+        other = other.to_rgb()
+        return super().interpolate(other, level)
+
+    def gradient(self, other, steps):
+        other = other.to_rgb()
+        return super().gradient(other, steps)
+
+    def greyscale(self):
+        # Convert to greyscale using linear luminosity method
+        # See: https://en.wikipedia.org/wiki/Grayscale#Converting_color_to_grayscale
+        linear = self.red*0.2126 + self.green*0.7152 + self.blue*0.0722
+        return RGBColor((linear, linear, linear), self.alpha)
+
+    def saturate(self, level=3.0):
+        return self.to_hsv().saturate(level).to_rgb()
+
+    def desaturate(self, level=1.0):
+        return self.to_hsv().desaturate(level).to_rgb()
 
     @property
     def hex(self):
@@ -98,14 +142,17 @@ class HSVColor(Color):
     @property
     def hue(self):
         return self.values[0]
+    h = hue
 
     @property
-    def saturaion(self):
+    def saturation(self):
         return self.values[1]
+    s = saturation
 
     @property
     def value(self):
         return self.values[2]
+    v = value
 
     def to_hsv(self):
         return self
@@ -113,6 +160,27 @@ class HSVColor(Color):
     def to_rgb(self):
         values = colorsys.hsv_to_rgb(*self.values)
         return RGBColor(values, self.alpha)
+
+    def interpolate(self, other, level=0.5):
+        other = other.to_hsv()
+        return super().interpolate(other, level)
+
+    def gradient(self, other, steps):
+        other = other.to_hsv()
+        return super().gradient(other, steps)
+
+    def greyscale(self):
+        return self.to_rgb().greyscale().to_hsv()
+
+    def saturate(self, level=1.0):
+        level += 1.0
+        saturation = min([1.0, self.saturation * level])
+        return HSVColor((self.hue, saturation, self.value), self.alpha)
+
+    def desaturate(self, level=1.0):
+        level = abs(level - 1.0)
+        saturation = max([0.0, self.saturation * level])
+        return HSVColor((self.hue, saturation, self.value), self.alpha)
 
     @property
     def hex(self):
@@ -132,18 +200,20 @@ def RGB(red, green, blue, alpha=255):
     """Return RGB color. 
 
     Values of Red, Green, Blue are in range of 0-255.
+    Value of Alpha is in range of 0-255.
     
     """
     return RGBColor((red/255., green/255., blue/255.), alpha/255.)
 
 
-def HSV(hue, saturaion, value, alpha=255):
+def HSV(hue, saturation, value, alpha=255):
     """Return HSV color.
 
     Saturation is in range of 0-360 degrees, Hue, and value in range of 0-100%.
+    Value of Alpha is in range of 0-255.
     
     """
-    return HSVColor((hue/360.%1., saturaion/100., value/100.), alpha/255.)
+    return HSVColor((hue/360.%1., saturation/100., value/100.), alpha/255.)
 
 
 def HEX(color):
@@ -163,18 +233,6 @@ def HEX(color):
         saturation = int(color[3:5], 16)
         value = int(color[5:7], 16)
         return HSV(hue, saturation, value, alpha)
-
-
-# Some predefined colors:
-RED = HSV(0, 100, 100)
-YELLOW = HSV(60, 100, 100)
-GREEN = HSV(120, 100, 100)
-CYAN = HSV(180, 100, 100)
-BLUE = HSV(240, 100, 100)
-MAGENTA = HSV(300, 100, 100)
-
-BLACK = HSV(0, 0, 0)
-WHITE = HSV(0, 0, 100)
 
 
 class ColorMap:
@@ -200,19 +258,19 @@ class ColorMap:
         return self.colors[int(n)]
 
     @staticmethod
-    def from_gradient(color_min, color_max, steps=256):
+    def from_hsv_gradient(color_min, color_max, steps=256):
         """Return ColorMap as gradient between two colors, with given number of steps."""
         colors = []
-        hsva_min = color_min.to_hsv()
-        hsva_max = color_max.to_hsv()
-        values_range = [hsva_max.values[i] - hsva_min.values[i] for i in range(3)]
-        alpha_range = hsva_max.alpha - hsva_min.alpha
-        for value in range(0, steps):
-            values = [value/float(steps-1)*values_range[i]+hsva_min.values[i] for i in range(3)]
-            alpha = value/float(steps-1)*alpha_range+ hsva_min.alpha
-            values[0] %= 1.
-            rgba = HSVColor(values, alpha).to_rgb()
-            colors.append(rgba)
+        for color in color_min.to_hsv().gradient(color_max, steps=steps):
+            colors.append(color.to_rgb())
+        return ColorMap(colors)
+
+    @staticmethod
+    def from_rgb_gradient(color_min, color_max, steps=256):
+        """Return ColorMap as gradient between two colors, with given number of steps."""
+        colors = []
+        for color in color_min.to_rgb().gradient(color_max, steps=steps):
+            colors.append(color.to_rgb())
         return ColorMap(colors)
 
 
