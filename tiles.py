@@ -7,7 +7,12 @@ class Colors(collections.namedtuple(
         'bg',
     ])):
 
-    def reverse(self):
+    def __new__(cls, fg=None, bg=None):
+        if not (fg or bg):
+            return None
+        return super().__new__(cls, fg, bg)
+
+    def invert(self):
         return Colors(self.bg, self.fg)
 
 
@@ -63,6 +68,6 @@ class Tile(collections.namedtuple(
         return self.colors.bg
 
     @staticmethod
-    def create(char, fg=None, bg=None):
+    def create(char, fg, bg=None):
         return Tile(Character(char), Colors(fg, bg))
 
