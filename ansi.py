@@ -146,6 +146,7 @@ def show_colors(fn, colors_num=256):
             print('GRAYSCALE COLORS:')
             columns = 10
 
+
 def show_colors_rgb(colors, columns=8):
     elements = []
     for idx, color in enumerate(colors):
@@ -154,4 +155,10 @@ def show_colors_rgb(colors, columns=8):
         if len(elements) == columns:
             print(''.join(elements))
             elements = []
+    if elements:
+        print(''.join(elements))
+
+
+def show_color(color):
+    print(f'{bg_rgb(*color.rgb)} {color.rgb} {reset()}')
 

@@ -103,7 +103,7 @@ class Rectangle:
     @property
     def positions(self):
         """Return set of Positions inside this Rectangle."""
-        return set(iter(r))
+        return set(iter(self))
 
     def is_inside(self, position):
         """Return True if given Position is inside this Rectangle."""

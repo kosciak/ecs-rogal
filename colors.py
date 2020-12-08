@@ -60,7 +60,7 @@ class Color(collections.namedtuple(
                   for i in range(len(self.values))]
         alpha = (other.alpha-self.alpha)*level + self.alpha
         return self.__class__(values, alpha)
-    
+
     def gradient(self, other, steps):
         values_diff = [other.values[i] - self.values[i] for i in range(len(self.values))]
         alpha_diff = other.alpha - self.alpha
