@@ -1,6 +1,7 @@
 import collections
 
 from geometry import Position, Size, Rectangle
+from tiles import Tile, Colors
 
 
 """Basic UI elements / building blocks, working as abstraction layer for tcod.Console.
@@ -24,18 +25,14 @@ class TilesGrid(Rectangle):
         super().__init__(position, size)
         self.parent = parent
 
-    # TODO: Rename to: _parent_offset(self, x, y)
-    def _translate_parent(self, x, y):
+    def _parent_offset(self, position):
         """Translate local coordinates (relative to self) to coordinates relative to parent."""
-        parent_x = self.x + x
-        parent_y = self.y + y
-        #print('_translate_parent:',x,y,'->',parent_x,parent_y, '?', self)
-        return parent_x, parent_y
+        return Position(self.x+position.x, self.y+position.y)
 
-    # TODO: Rename to: _root_offset(self, x, y)
-    def _translate_root(self, x, y):
+    def _root_offset(self, position):
         """Translate local coordinates (relative to self) to coordinates relative to root panel."""
-        return self.parent._translate_root(self.x+x, self.y+y)
+        offset = self._parent_offset(position)
+        return self.parent._root_offset(offset)
 
     # NOTE: Direct access to console.tiles, console.tiles_rgb fragments
 
@@ -58,92 +55,43 @@ class TilesGrid(Rectangle):
 
     # NOTE: you can acces bg, fg, chr as tiles_rgb['bg'], tiles_rgb['fg'], tiles['ch']
 
-    def __repr__(self):
-        return f'<{self.__class__.__name__} x={self.x}, y={self.y}, width={self.width}, height={self.height}>'
+    # NOTE: Only position is translated, it is NOT checked if prints are outside of Panel!
 
-    # NOTE: tcod.Console print/draw related methods:
-    # NOTE: Only x,y coordinates are translated, it is NOT checked if prints are outside of Panel!
+    def print(self, text, position, colors=None, *args, **kwargs):
+        """Print text on given position using colors."""
+        # TODO: Store offset to root, and call self.root.* instead of self.parent.*
+        offset = self._parent_offset(position)
+        return self.parent.print(text, offset, colors=colors, *args, **kwargs)
 
-    # put_char(
-    #   x: int, y: int, 
-    #   ch: int, 
-    #   bg_blend: int = 13)
-    def put_char(self, x, y, *args, **kwargs):
-        parent_x, parent_y = self._translate_parent(x, y)
-        return self.parent.put_char(parent_x, parent_y, *args, **kwargs)
+    def draw(self, tile, position, size=None, *args, **kwargs):
+        """Draw Tile on given position.
 
-    # print(
-    #   x: int, y: int, 
-    #   string: str, 
-    #   fg: Optional[Tuple[int, int, int]] = None, 
-    #   bg: Optional[Tuple[int, int, int]] = None, 
-    #   bg_blend: int = 1, 
-    #   alignment: int = 0)
-    def print(self, x, y, *args, **kwargs):
-        parent_x, parent_y = self._translate_parent(x, y)
-        return self.parent.print(parent_x, parent_y, *args, **kwargs)
+        If size provided draw rectangle filled with this Tile.
 
-    # print_box(
-    #   x: int, y: int, 
-    #   width: int, height: int, 
-    #   string: str, 
-    #   fg: Optional[Tuple[int, int, int]] = None, 
-    #   bg: Optional[Tuple[int, int, int]] = None, 
-    #   bg_blend: int = 1, 
-    #   alignment: int = 0) 
-    #   -> int
-    def print_box(self, x, y, *args, **kwargs):
-        parent_x, parent_y = self._translate_parent(x, y)
-        return self.parent.print_box(parent_x, parent_y, *args, **kwargs)
+        """
+        offset = self._parent_offset(position)
+        return self.parent.draw(tile, offset, size=size, *args, **kwargs)
 
-    # get_height_rect(
-    #   x: int, y: int, 
-    #   width: int, height: int, 
-    #   string: str) 
-    #   -> int
-    def get_height_rect(self, x, y, *args, **kwargs):
-        parent_x, parent_y = self._translate_parent(x, y)
-        return self.parent.get_height_rect(parent_x, parent_y, *args, **kwargs)
+    def fill(self, tile, *args, **kwargs):
+        """Fill whole Rectangle with given Tile."""
+        return self.draw(tile, Position(0, 0), self.size, *args, **kwargs)
 
-    # draw_rect(
-    #   x: int, y: int, 
-    #   width: int, height: int, 
-    #   ch: int, 
-    #   fg: Optional[Tuple[int, int, int]] = None, 
-    #   bg: Optional[Tuple[int, int, int]] = None, 
-    #   bg_blend: int = 1)
-    def draw_rect(self, x, y, *args, **kwargs):
-        parent_x, parent_y = self._translate_parent(x, y)
-        return self.parent.draw_rect(parent_x, parent_y, *args, **kwargs)
+    def paint(self, colors, position, size=None, *args, **kwargs):
+        """Paint Colors on given position.
 
-    # draw_frame(
-    #   x: int, y: int, 
-    #   width: int, height: int, 
-    #   title: str = '', 
-    #   clear: bool = True, 
-    #   fg: Optional[Tuple[int, int, int]] = None, 
-    #   bg: Optional[Tuple[int, int, int]] = None, 
-    #   bg_blend: int = 1)
-    def draw_frame(self, x, y, *args, **kwargs):
-        parent_x, parent_y = self._translate_parent(x, y)
-        return self.parent.draw_frame(parent_x, parent_y, *args, **kwargs)
+        If size provided paint rectangle using these Colors.
 
-    # draw_semigraphics(
-    #   pixels: Any, 
-    #   x: int = 0, 
-    #   y: int = 0)
-    def draw_semigraphics(self, pixels, x, y, *args, **kwargs):
-        parent_x, parent_y = self._translate_parent(x, y)
-        return self.parent.get_height_rect(pixels, parent_x, parent_y, *args, **kwargs)
+        """
+        offset = self._parent_offset(position)
+        return # TODO: Update ONLY fg and bg
 
-    # blit(
-    #   dest: tcod.console.Console, 
-    #   dest_x: int = 0, dest_y: int = 0, 
-    #   src_x: int = 0, src_y: int = 0, 
-    #   width: int = 0, height: int = 0, 
-    #   fg_alpha: float = 1.0, 
-    #   bg_alpha: float = 1.0, 
-    #   key_color: Optional[Tuple[int, int, int]] = None)
+    def draw_image(self, image, position=None, *args, **kwargs):
+        """Draw image on given position."""
+        position = position or Position(0, 0)
+        offset = self._parent_offset(position)
+        return self.parent.draw_semigraphics(image, offset, *args, **kwargs)
+
+    # TODO: Needs rework!
     def blit_from(self, x, y, src, *args, **kwargs):
         # RULE: Use keyword arguments for dest_x, dest_y, width height
         # NOTE: src MUST be tcod.Console!
@@ -158,8 +106,11 @@ class TilesGrid(Rectangle):
 
     # Other methods
 
-    def fill(self, char, *args, **kwargs):
-        return self.draw_rect(0, 0, ch=ord(char), width=self.width, height=self.height, *args, **kwargs)
+    # TODO: get_tile(self, position)
+    # TODO: get_colors(self, position)
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__} x={self.x}, y={self.y}, width={self.width}, height={self.height}>'
 
 
 class Container(TilesGrid):
@@ -321,6 +272,126 @@ class RootPanel(Panel):
     def _translate_root(self, x, y):
         return x, y
 
+    # NOTE: tcod.Console print/draw related methods:
+
+    def _put_char(self, x, y, ch, *args, **kwargs):
+        """tcod.Console.put_char(
+            x: int, y: int, 
+            ch: int, 
+            bg_blend: int = 13)
+        """
+        return self.parent.put_char(x, y, ch, *args, **kwargs)
+
+    def _print(self, x, y, text, fg=None, bg=None, *args, **kwargs):
+        """tcod.Cosole.print(
+            x: int, y: int, 
+            string: str, 
+            fg: Optional[Tuple[int, int, int]] = None, 
+            bg: Optional[Tuple[int, int, int]] = None, 
+            bg_blend: int = 1, 
+            alignment: int = 0)
+        """
+        return self.parent.print(
+            x, y, text, fg=fg, bg=bg, *args, **kwargs)
+
+    def _print_box(self, x, y, width, height, text, fg=None, bg=None, *args, **kwargs):
+        """tcod.Console.print_box(
+            x: int, y: int, 
+            width: int, height: int, 
+            string: str, 
+            fg: Optional[Tuple[int, int, int]] = None, 
+            bg: Optional[Tuple[int, int, int]] = None, 
+            bg_blend: int = 1, 
+            alignment: int = 0)-> int
+        """
+        return self.parent.print_box(
+            x, y, width, height, text, fg=fg, bg=bg, *args, **kwargs)
+
+    def _get_height_rect(self, x, y, width, height, text, *args, **kwargs):
+        """tcod.Console.get_height_rect(
+            x: int, y: int, 
+            width: int, height: int, 
+            string: str)-> int
+        """
+        return self.parent.get_height_rect(
+            x, y, width, height, text, *args, **kwargs)
+
+    def _draw_rect(self, x, y, width, height, ch, fg=None, bg=None, *args, **kwargs):
+        """tcod.Console.draw_rect(
+            x: int, y: int, 
+            width: int, height: int, 
+            ch: int, 
+            fg: Optional[Tuple[int, int, int]] = None, 
+            bg: Optional[Tuple[int, int, int]] = None, 
+            bg_blend: int = 1)
+        """
+        return self.parent.draw_rect(
+            x, y, width, height, ch, fg=fg, bg=bg, *args, **kwargs)
+
+    def _draw_frame(self, x, y, width, height, title=None, clear=True, fg=None, bg=None, *args, **kwargs):
+        """tcod.Console.draw_frame(
+            x: int, y: int, 
+            width: int, height: int, 
+            title: str = '', 
+            clear: bool = True, 
+            fg: Optional[Tuple[int, int, int]] = None, 
+            bg: Optional[Tuple[int, int, int]] = None, 
+            bg_blend: int = 1)
+        """
+        return self.parent.draw_frame(
+            x, y, width, height, title=title, clear=clear, fg=fg, bg=bg, *args, **kwargs)
+
+    def _draw_semigraphics(self, pixels, x, y, *args, **kwargs):
+        """tcod.Console.draw_semigraphics(
+            pixels: Any, 
+            x: int = 0, 
+            y: int = 0)
+        """
+        return self.parent.get_height_rect(pixels, x, y, *args, **kwargs)
+
+    def _clear(self, ch=None, fg=None, bg=None, *args, **kwargs):
+        """tcod.Console.clear(
+            ch: int = 32, 
+            fg: Tuple[int, int, int] = Ellipsis, 
+            bg: Tuple[int, int, int] = Ellipsis)
+        """
+        return self.parent.clear(ch, fg=fg, bg=bg, *args, **kwargs)
+
+    # blit(
+    #   dest: tcod.console.Console, 
+    #   dest_x: int = 0, dest_y: int = 0, 
+    #   src_x: int = 0, src_y: int = 0, 
+    #   width: int = 0, height: int = 0, 
+    #   fg_alpha: float = 1.0, 
+    #   bg_alpha: float = 1.0, 
+    #   key_color: Optional[Tuple[int, int, int]] = None)
+
+    # ------------------------------------------------- #
+
+    def clear(self, colors=None, *args, **kwargs):
+        fg = colors and colors.fg
+        bg = colors and colors.bg
+        return self._clear(fg=fg, bg=bg*args, **kwargs)
+
+    def print(self, text, position, colors=None, *args, **kwargs):
+        fg = colors and colors.fg
+        bg = colors and colors.bg
+        return self._print(
+            position.x, position.y, text, fg=fg, bg=bg, *args, **kwargs)
+
+    def draw(self, tile, position, size=None, *args, **kwargs):
+        if size:
+            return self._draw_rect(
+                position.x, position.y, size.width, size.height, tile.code_point, 
+                fg=tile.fg, bg=tile.bg, *args, **kwargs)
+        else:
+            return self._print(
+                position.x, position.y, tile.char, fg=tile.fg, bg=tile.bg, *args, **kwargs)
+
+    def draw_image(self, image, position, *args, **kwargs):
+        return self._draw_semigraphics(
+            image, position.x, position.y, *args, **kwargs)
+
     def blit_from(self, x, y, src, *args, **kwargs):
         # RULE: Use keyword arguments for dest_x, dest_y, width height
         # NOTE: src MUST be tcod.Console!
@@ -334,12 +405,13 @@ class RootPanel(Panel):
     def create_window(self, x, y, width, height, decorations=None):
         return Window(self, x, y, width, height, decorations)
 
-    # clear(
-    #   ch: int = 32, 
-    #   fg: Tuple[int, int, int] = Ellipsis, 
-    #   bg: Tuple[int, int, int] = Ellipsis)
-    def clear(self, *args, **kwargs):
-        return self.parent.clear(*args, **kwargs)
+    def show(self):
+        import ansi
+        for row in self.parent.tiles_rgb.transpose():
+            row_txt = []
+            for ch, fg, bg in row:
+                row_txt.append(ansi.fg_rgb(*fg)+ansi.bg_rgb(*bg)+chr(ch)+ansi.reset())
+            print(''.join(row_txt))
 
 
 # TODO: Instead of x,y, width,height use geometry.Position, Size, Geometry(?) in print/draw methods???
