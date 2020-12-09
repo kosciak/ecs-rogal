@@ -1,6 +1,6 @@
 import enum
 
-from colors import HEX
+from colors import HEX, ColorPalette
 
 
 # Web colors
@@ -314,4 +314,11 @@ class WebColor(enum.IntEnum):
 
 COLORS = WEB_COLORS
 Color = WebColor
+
+
+WEB = ColorPalette(
+    fg=WEB_COLORS[Color.WHITE],
+    bg=WEB_COLORS[Color.BLACK],
+    colors=WEB_COLORS,
+)
 

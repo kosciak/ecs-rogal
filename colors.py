@@ -259,7 +259,7 @@ class ColorMap:
 
     @staticmethod
     def from_hsv_gradient(color_min, color_max, steps=256):
-        """Return ColorMap as gradient between two colors, with given number of steps."""
+        """Return ColorMap as gradient between two HSV colors, with given number of steps."""
         colors = []
         for color in color_min.to_hsv().gradient(color_max, steps=steps):
             colors.append(color.to_rgb())
@@ -267,7 +267,7 @@ class ColorMap:
 
     @staticmethod
     def from_rgb_gradient(color_min, color_max, steps=256):
-        """Return ColorMap as gradient between two colors, with given number of steps."""
+        """Return ColorMap as gradient between two RGB colors, with given number of steps."""
         colors = []
         for color in color_min.to_rgb().gradient(color_max, steps=steps):
             colors.append(color.to_rgb())
@@ -281,9 +281,6 @@ class ColorPalette:
         self.bg = bg
         #self.cursor_fg = None
         #self.cursor_bg = None
-        # TODO: add default_colors list?
-        #self.colors = DEFAULT_X11_COLORS[:]
-        #self.colors[0:len(colors)] = colors
         self.colors = colors
 
     def __len__(self):
@@ -295,48 +292,6 @@ class ColorPalette:
     def __getitem__(self, key):
         return self.colors[key]
 
+    def invert(self):
+        return ColorPalette(self.bg, self.fg, self.colors)
 
-TANGO_DARK = ColorPalette(
-    fg=HEX("#babdb6"),
-    bg=HEX("#000000"),
-    colors=[
-        HEX("#2e3436"),
-        HEX("#cc0000"),
-        HEX("#4e9a06"),
-        HEX("#c4a000"),
-        HEX("#3465a4"),
-        HEX("#75507b"),
-        HEX("#06989a"),
-        HEX("#d3d7cf"),
-        HEX("#555753"),
-        HEX("#ef2929"),
-        HEX("#8ae234"),
-        HEX("#fce94f"),
-        HEX("#729fcf"),
-        HEX("#ad7fa8"),
-        HEX("#34e2e2"),
-        HEX("#eeeeec"),
-    ])
-
-
-TANGO_LIGHT = ColorPalette(
-    fg=HEX("#000000"),
-    bg=HEX("#babdb6"),
-    colors=[
-        HEX("#2e3436"),
-        HEX("#cc0000"),
-        HEX("#4e9a06"),
-        HEX("#c4a000"),
-        HEX("#3465a4"),
-        HEX("#75507b"),
-        HEX("#06989a"),
-        HEX("#d3d7cf"),
-        HEX("#555753"),
-        HEX("#ef2929"),
-        HEX("#8ae234"),
-        HEX("#fce94f"),
-        HEX("#729fcf"),
-        HEX("#ad7fa8"),
-        HEX("#34e2e2"),
-        HEX("#eeeeec"),
-    ])

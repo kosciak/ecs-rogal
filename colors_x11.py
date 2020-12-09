@@ -1,6 +1,6 @@
 import enum
 
-from colors import HEX
+from colors import HEX, ColorMap, ColorPalette
 
 
 # X11 default colors
@@ -273,24 +273,60 @@ X11_COLORS = [
 
 class X11Color(enum.IntEnum):
     # Base system colors
-    TERM_BLACK=0,
-    TERM_RED=1,
-    TERM_GREEN=2,
-    TERM_YELLOW=3,
-    TERM_BLUE=4,
-    TERM_MAGENTA=5, 
-    TERM_CYAN=6,
-    TERM_WHITE=7,
+    TERM_BLACK = 0,
+    TERM_RED = 1,
+    TERM_GREEN = 2,
+    TERM_YELLOW = 3,
+    TERM_BLUE = 4,
+    TERM_MAGENTA = 5, 
+    TERM_CYAN = 6,
+    TERM_WHITE = 7,
+
+    BASE_BLACK = 0,
+    BASE_RED = 1,
+    BASE_GREEN = 2,
+    BASE_YELLOW = 3,
+    BASE_BLUE = 4,
+    BASE_MAGENTA = 5, 
+    BASE_CYAN = 6,
+    BASE_WHITE = 7,
+
+    TERM_0 = 0
+    TERM_1 = 1
+    TERM_2 = 2
+    TERM_3 = 3
+    TERM_4 = 4
+    TERM_5 = 5
+    TERM_6 = 6
+    TERM_7 = 7
 
     # Bright version of base system colors
-    BRIGHT_BLACK=8,
-    BRIGHT_RED=9,
-    BRIGHT_GREEN=10,
-    BRIGHT_YELLOW=11,
-    BRIGHT_BLUE=12,
-    BRIGHT_MAGENTA=13, 
-    BRIGHT_CYAN=14,
-    BRIGHT_WHITE=15,
+    BRIGHT_BLACK = 8,
+    BRIGHT_RED = 9,
+    BRIGHT_GREEN = 10,
+    BRIGHT_YELLOW = 11,
+    BRIGHT_BLUE = 12,
+    BRIGHT_MAGENTA = 13, 
+    BRIGHT_CYAN = 14,
+    BRIGHT_WHITE = 15,
+
+    BRIGHT_0 = 8
+    BRIGHT_1 = 9
+    BRIGHT_2 = 10
+    BRIGHT_3 = 11
+    BRIGHT_4 = 12
+    BRIGHT_5 = 13
+    BRIGHT_6 = 14
+    BRIGHT_7 = 15
+
+    TERM_8 = 8
+    TERM_9 = 9
+    TERM_10 = 10
+    TERM_11 = 11
+    TERM_12 = 12
+    TERM_13 = 13
+    TERM_14 = 14
+    TERM_15 = 15
 
     # System colors
     BLACK = 0
@@ -301,7 +337,7 @@ class X11Color(enum.IntEnum):
     PURPLE = 5
     TEAL = 6
     SILVER = 7
-    GRAY = 8
+    GREY = 8
     RED = 9
     LIME = 10
     YELLOW = 11
@@ -559,4 +595,43 @@ class X11Color(enum.IntEnum):
 
 COLORS = X11_COLORS
 Color = X11Color
+
+
+GREYSCALE_COLORS = (16, *range(232,256), 231)
+GREYSCALE_MAP = ColorMap(GREYSCALE_COLORS)
+
+
+X11_DARK = ColorPalette(
+    fg=X11_COLORS[Color.WHITE],
+    bg=X11_COLORS[Color.BLACK],
+    colors=X11_COLORS,
+)
+
+X11_LIGHT = X11_DARK.invert()
+
+
+TANGO_DARK = ColorPalette(
+    fg=HEX("#babdb6"),
+    bg=HEX("#000000"),
+    colors=[
+        HEX("#2e3436"),
+        HEX("#cc0000"),
+        HEX("#4e9a06"),
+        HEX("#c4a000"),
+        HEX("#3465a4"),
+        HEX("#75507b"),
+        HEX("#06989a"),
+        HEX("#d3d7cf"),
+        HEX("#555753"),
+        HEX("#ef2929"),
+        HEX("#8ae234"),
+        HEX("#fce94f"),
+        HEX("#729fcf"),
+        HEX("#ad7fa8"),
+        HEX("#34e2e2"),
+        HEX("#eeeeec"),
+        *X11_COLORS[16:],
+    ])
+
+TANGO_LIGHT = TANGO_DARK.invert()
 
