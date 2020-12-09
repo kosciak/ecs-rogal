@@ -144,7 +144,9 @@ def show_colors(fn, colors_num=256):
             columns = 6
         if color == 231:
             print('GRAYSCALE COLORS:')
-            columns = 10
+            columns = 12
+    if elements:
+        print(''.join(elements))
 
 
 def show_colors_rgb(colors, columns=8):
