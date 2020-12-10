@@ -1,15 +1,15 @@
-import enum
+from enum import Enum
 
 
 """Rudimentary ANSI support."""
 
 
-class EscapeSequence(enum.Enum):
+class EscapeSequence(Enum):
     # CSI = '\x1b[' # Control Sequence Introducer
     CSI = '\033['   # Control Sequence Introducer
 
 
-class CSI_Code(enum.Enum):
+class CSI_Code(Enum):
     CUU = 'A'   # Cursor Up
     CUD = 'B'   # Cursor Down
     CUF = 'C'   # Cursor Forward
@@ -24,7 +24,7 @@ class CSI_Code(enum.Enum):
     SGR = 'm'   # Select Graphic Rendition / Set Graphic Rendition
 
 
-class SGR_Attribute(enum.IntEnum):
+class SGR_Attribute(Enum):
     RESET = 0
     BOLD = 1
     DIM = 2
@@ -40,12 +40,12 @@ class SGR_Attribute(enum.IntEnum):
     BG_BRIGHT_BASE = 100
 
 
-class ColorsMode(enum.IntEnum):
+class ColorsMode(Enum):
     COLORS_256 = 5
     COLORS_RGB = 2
 
 
-class Color(enum.IntEnum):
+class Color(Enum):
     BLACK=0,
     RED=1,
     GREEN=2,
@@ -65,51 +65,51 @@ def sgr(*parameters):
 
 
 def reset():
-    return sgr(SGR_Attribute.RESET)
+    return sgr(SGR_Attribute.RESET.value)
 
 
 def bold():
-    return sgr(SGR_Attribute.BOLD)
+    return sgr(SGR_Attribute.BOLD.value)
 
 def dim():
-    return sgr(SGR_Attribute.DIM)
+    return sgr(SGR_Attribute.DIM.value)
 
 def underlined():
-    return sgr(SGR_Attribute.UNDERLINED)
+    return sgr(SGR_Attribute.UNDERLINED.value)
 
 def inverted():
-    return sgr(SGR_Attribute.INVERT)
+    return sgr(SGR_Attribute.INVERT.value)
 
 
 def fg(color):
-    return sgr(SGR_Attribute.FG_BASE+color%8)
+    return sgr(SGR_Attribute.FG_BASE.value+color%8)
 
 def bg(color):
-    return sgr(SGR_Attribute.BG_BASE+color%8)
+    return sgr(SGR_Attribute.BG_BASE.value+color%8)
 
 def fg_bright(color):
-    return sgr(SGR_Attribute.FG_BRIGHT_BASE+color%8)
+    return sgr(SGR_Attribute.FG_BRIGHT_BASE.value+color%8)
 
 def bg_bright(color):
-    return sgr(SGR_Attribute.BG_BRIGHT_BASE+color%8)
+    return sgr(SGR_Attribute.BG_BRIGHT_BASE.value+color%8)
 
 def fg_bold(color):
-    return sgr(SGR_Attribute.FG_BASE+color%8, SGR_Attribute.BOLD)
+    return sgr(SGR_Attribute.FG_BASE.value+color%8, SGR_Attribute.BOLD.value)
 
 def bg_bold(color):
-    return sgr(SGR_Attribute.FG_BASE+color%8, SGR_Attribute.BOLD)
+    return sgr(SGR_Attribute.FG_BASE.value+color%8, SGR_Attribute.BOLD.value)
 
 def fg_256(color):
-    return sgr(SGR_Attribute.SET_FG, ColorsMode.COLORS_256, color)
+    return sgr(SGR_Attribute.SET_FG.value, ColorsMode.COLORS_256.value, color)
  
 def bg_256(color):
-    return sgr(SGR_Attribute.SET_BG, ColorsMode.COLORS_256, color)
+    return sgr(SGR_Attribute.SET_BG.value, ColorsMode.COLORS_256.value, color)
 
 def fg_rgb(r,g,b):
-    return sgr(SGR_Attribute.SET_FG, ColorsMode.COLORS_RGB, r, g, b)
+    return sgr(SGR_Attribute.SET_FG.value, ColorsMode.COLORS_RGB.value, r, g, b)
  
 def bg_rgb(r,g,b):
-    return sgr(SGR_Attribute.SET_BG, ColorsMode.COLORS_RGB, r, g, b)
+    return sgr(SGR_Attribute.SET_BG.value, ColorsMode.COLORS_RGB.value, r, g, b)
 
 
 def color_256(fg, bg):

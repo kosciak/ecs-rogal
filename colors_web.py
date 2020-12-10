@@ -1,4 +1,4 @@
-import enum
+from enum import Enum
 
 from colors import HEX, ColorPalette
 
@@ -159,7 +159,7 @@ WEB_COLORS = [
 ]
 
 
-class WebColor(enum.IntEnum):
+class WebColor(Enum):
     # Base web colors
     BLACK = 0
     MAROON = 1

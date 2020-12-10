@@ -1,4 +1,4 @@
-import enum
+from enum import Enum
 
 from colors import HEX, ColorMap, ColorPalette
 
@@ -271,7 +271,7 @@ X11_COLORS = [
 ]
 
 
-class X11Color(enum.IntEnum):
+class X11Color(Enum):
     # Base system colors
     TERM_BLACK = 0,
     TERM_RED = 1,
@@ -595,7 +595,6 @@ class X11Color(enum.IntEnum):
 
 COLORS = X11_COLORS
 Color = X11Color
-
 
 GREYSCALE_COLORS = (16, *range(232,256), 231)
 GREYSCALE_MAP = ColorMap(GREYSCALE_COLORS)

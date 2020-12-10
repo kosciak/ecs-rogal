@@ -56,6 +56,7 @@ class Color(collections.namedtuple(
 
     def interpolate(self, other, level=0.5):
         # Linear color interpolation
+        # TODO: For HSV see: https://www.alanzucconi.com/2016/01/06/colour-interpolation/2/
         values = [(other.values[i]-self.values[i])*level + self.values[i] 
                   for i in range(len(self.values))]
         alpha = (other.alpha-self.alpha)*level + self.alpha
