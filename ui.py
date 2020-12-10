@@ -61,7 +61,7 @@ class TilesGrid(Rectangle):
 
     def fill(self, tile, *args, **kwargs):
         """Fill whole Rectangle with given Tile."""
-        return self.draw(tile, Position.ZERO, self.size, *args, **kwargs)
+        return self.draw(tile, Position.ZERO, size=self.size, *args, **kwargs)
 
     def paint(self, colors, position, size=None, *args, **kwargs):
         """Paint Colors on given position.
@@ -285,7 +285,16 @@ class RootPanel(Panel):
                 position.x, position.y, tile.char, fg=tile.fg, bg=tile.bg, *args, **kwargs)
 
     def paint(self, colors, position, size=None, *args, **kwargs):
-        return # TODO: !!!
+        if size:
+            if colors.fg:
+                self.console.fg[position.x:position.x+size.width, position.y:position.y+size.height] = colors.fg
+            if colors.bg:
+                self.console.bg[position.x:position.x+size.width, position.y:position.y+size.height] = colors.bg
+        else:
+            if colors.fg:
+                self.console.fg[position] = colors.fg
+            if colors.bg:
+                self.console.bg[position] = colors.bg
 
     def image(self, image, position, *args, **kwargs):
         return self._draw_semigraphics(
