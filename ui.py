@@ -1,4 +1,5 @@
 import collections
+from enum import Enum
 
 from geometry import Position, Size, Rectangle
 from tiles import Tile, Colors
@@ -6,24 +7,32 @@ from tiles import Tile, Colors
 
 """Basic UI elements / building blocks, working as abstraction layer for tcod.Console.
 
-This should make working on UI much easier, and maybe use other cli/graphical engines.
+This should make working on UI much easier, and maybe allow to use other cli/graphical engines.
 
 """
 
 
+class Alignment(Enum):
+    LEFT = 0    # tcod.LEFT
+    RIGHT = 1   # tcod.RIGHT
+    CENTER = 2  # tcod.CENTER
+
+
 class TilesGrid(Rectangle):
 
-    """Representation of rectangular drawing area.
+    """Representation of rectangular tiles based drawing area.
     
     Allows manipulation of data using local coordinates (relative to self).
-    Using print/draw methods from tcod.Console.
 
     """
 
     def __init__(self, parent, position, size):
         # NOTE: position is relative to parent
+        #       offset is relative to root
         super().__init__(position, size)
         self.parent = parent
+        self.root = self.parent.root
+        self.offset = Position(self.parent.offset.x+self.x, self.parent.offset.y+self.y)
 
     def _parent_offset(self, position):
         """Translate local coordinates (relative to self) to coordinates relative to parent."""
@@ -31,37 +40,15 @@ class TilesGrid(Rectangle):
 
     def _root_offset(self, position):
         """Translate local coordinates (relative to self) to coordinates relative to root panel."""
-        offset = self._parent_offset(position)
-        return self.parent._root_offset(offset)
-
-    # NOTE: Direct access to console.tiles, console.tiles_rgb fragments
-
-    @property
-    def tiles(self):
-        """Translate coordinates relative to self, to coordinates relative to root."""
-        return self.parent.tiles[self.x:self.x2, self.y:self.y2]
-
-    @tiles.setter
-    def tiles(self, tiles):
-        self.parent.tiles[self.x:self.x2, self.y:self.y2] = tiles
-
-    @property
-    def tiles_rgb(self):
-        return self.parent.tiles_rgb[self.x:self.x2, self.y:self.y2]
-
-    @tiles_rgb.setter
-    def tiles_rgb(self, tiles_rgb):
-        self.parent.tiles_rgb[self.x:self.x2, self.y:self.y2] = tiles_rgb
-
-    # NOTE: you can acces bg, fg, chr as tiles_rgb['bg'], tiles_rgb['fg'], tiles['ch']
+        return Position(self.offset.x+position.x, self.offset.y+position.y)
 
     # NOTE: Only position is translated, it is NOT checked if prints are outside of Panel!
 
-    def print(self, text, position, colors=None, *args, **kwargs):
+    def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
         """Print text on given position using colors."""
         # TODO: Store offset to root, and call self.root.* instead of self.parent.*
-        offset = self._parent_offset(position)
-        return self.parent.print(text, offset, colors=colors, *args, **kwargs)
+        offset = self._root_offset(position)
+        return self.root.print(text, offset, colors=colors, alignment=alignment, *args, **kwargs)
 
     def draw(self, tile, position, size=None, *args, **kwargs):
         """Draw Tile on given position.
@@ -69,12 +56,12 @@ class TilesGrid(Rectangle):
         If size provided draw rectangle filled with this Tile.
 
         """
-        offset = self._parent_offset(position)
-        return self.parent.draw(tile, offset, size=size, *args, **kwargs)
+        offset = self._root_offset(position)
+        return self.root.draw(tile, offset, size=size, *args, **kwargs)
 
     def fill(self, tile, *args, **kwargs):
         """Fill whole Rectangle with given Tile."""
-        return self.draw(tile, Position(0, 0), self.size, *args, **kwargs)
+        return self.draw(tile, Position.ZERO, self.size, *args, **kwargs)
 
     def paint(self, colors, position, size=None, *args, **kwargs):
         """Paint Colors on given position.
@@ -82,27 +69,27 @@ class TilesGrid(Rectangle):
         If size provided paint rectangle using these Colors.
 
         """
-        offset = self._parent_offset(position)
-        return # TODO: Update ONLY fg and bg
+        offset = self._root_offset(position)
+        return self.root.paint(colors, position, size=size, *args, **kwargs)
 
-    def draw_image(self, image, position=None, *args, **kwargs):
+    def image(self, image, position=None, *args, **kwargs):
         """Draw image on given position."""
-        position = position or Position(0, 0)
-        offset = self._parent_offset(position)
-        return self.parent.draw_semigraphics(image, offset, *args, **kwargs)
+        position = position or Position.ZERO
+        offset = self._root_offset(position)
+        return self.root.draw_semigraphics(image, offset, *args, **kwargs)
 
     # TODO: Needs rework!
     def blit_from(self, x, y, src, *args, **kwargs):
         # RULE: Use keyword arguments for dest_x, dest_y, width height
         # NOTE: src MUST be tcod.Console!
         parent_x, parent_y = self._translate_parent(x, y)
-        return self.parent.blit_from(parent_x, parent_y, src, *args, **kwargs)
+        return self.root.blit_from(parent_x, parent_y, src, *args, **kwargs)
 
     def blit_to(self, x, y, dest, *args, **kwargs):
         # RULE: Use keyword arguments for dest_x, dest_y, width height
         # NOTE: dest MUST be tcod.Console!
         parent_x, parent_y = self._translate_parent(x, y)
-        return self.parent.blit_to(parent_x, parent_y, dest, *args, **kwargs)
+        return self.root.blit_to(parent_x, parent_y, dest, *args, **kwargs)
 
     # Other methods
 
@@ -129,7 +116,7 @@ class HorizontalContainer(Container):
         if top:
             top = Panel(
                 self, 
-                Position(0, 0), 
+                Position.ZERO, 
                 Size(self.width, self.height-height),
             )
             bottom = Panel(
@@ -142,7 +129,7 @@ class HorizontalContainer(Container):
         elif bottom:
             top = Panel(
                 self, 
-                Position(0, 0),
+                Position.ZERO,
                 Size(self.width, height),
             )
             bottom = Panel(
@@ -163,7 +150,7 @@ class VerticalContainer(Container):
         if left:
             left = Panel(
                 self, 
-                Position(0, 0),
+                Position.ZERO,
                 Size(self.width-width, self.height),
             )
             right = Panel(
@@ -176,7 +163,7 @@ class VerticalContainer(Container):
         elif right:
             left = Panel(
                 self, 
-                Position(0, 0), 
+                Position.ZERO, 
                 Size(width, self.height),
             )
             right = Panel(
@@ -193,7 +180,7 @@ class Panel(TilesGrid):
     def split_vertical(self, left=None, right=None):
         width = left or right
         container = VerticalContainer(
-            isinstance(self, RootPanel) and self or self.parent,
+            self.parent,
             self.position,
             self.size,
         )
@@ -202,7 +189,7 @@ class Panel(TilesGrid):
     def split_horizontal(self, top=None, bottom=None):
         height = top or bottom
         container = HorizontalContainer(
-            isinstance(self, RootPanel) and self or self.parent,
+            self.parent,
             self.position,
             self.size,
         )
@@ -261,16 +248,61 @@ class Window:
         self.frame.panels.append(self.panel)
 
 
+# TODO: Move to ui.tcod_wrapper ?
 class RootPanel(Panel):
 
     def __init__(self, console):
-        super().__init__(console, Position(0, 0), Size(console.width, console.height))
+        self.root = self
+        self.parent = self
+        self.offset = Position.ZERO
+        super().__init__(self, Position.ZERO, Size(console.width, console.height))
+        self.console = console
 
     def __str__(self):
-        return str(self.parent)
+        return str(self.console)
 
     def _translate_root(self, x, y):
         return x, y
+
+    def clear(self, colors=None, *args, **kwargs):
+        fg = colors and colors.fg
+        bg = colors and colors.bg
+        return self._clear(fg=fg, bg=bg*args, **kwargs)
+
+    def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
+        fg = colors and colors.fg
+        bg = colors and colors.bg
+        return self._print(
+            position.x, position.y, text, fg=fg, bg=bg, alignment=alignment, *args, **kwargs)
+
+    def draw(self, tile, position, size=None, *args, **kwargs):
+        if size:
+            return self._draw_rect(
+                position.x, position.y, size.width, size.height, tile.code_point, 
+                fg=tile.fg, bg=tile.bg, *args, **kwargs)
+        else:
+            return self._print(
+                position.x, position.y, tile.char, fg=tile.fg, bg=tile.bg, *args, **kwargs)
+
+    def paint(self, colors, position, size=None, *args, **kwargs):
+        return # TODO: !!!
+
+    def image(self, image, position, *args, **kwargs):
+        return self._draw_semigraphics(
+            image, position.x, position.y, *args, **kwargs)
+
+    def blit_from(self, x, y, src, *args, **kwargs):
+        # RULE: Use keyword arguments for dest_x, dest_y, width height
+        # NOTE: src MUST be tcod.Console!
+        src.blit(dest=self.console, dest_x=x, dest_y=y, *args, **kwargs)
+
+    def blit_to(self, x, y, dest, *args, **kwargs):
+        # RULE: Use keyword arguments for dest_x, dest_y, width height
+        # NOTE: dest MUST be tcod.Console!
+        self.console.blit(dest=dest, src_x=x, src_y=y, *args, **kwargs)
+
+    def create_window(self, x, y, width, height, decorations=None):
+        return Window(self, x, y, width, height, decorations)
 
     # NOTE: tcod.Console print/draw related methods:
 
@@ -280,7 +312,7 @@ class RootPanel(Panel):
             ch: int, 
             bg_blend: int = 13)
         """
-        return self.parent.put_char(x, y, ch, *args, **kwargs)
+        return self.console.put_char(x, y, ch, *args, **kwargs)
 
     def _print(self, x, y, text, fg=None, bg=None, *args, **kwargs):
         """tcod.Cosole.print(
@@ -291,7 +323,7 @@ class RootPanel(Panel):
             bg_blend: int = 1, 
             alignment: int = 0)
         """
-        return self.parent.print(
+        return self.console.print(
             x, y, text, fg=fg, bg=bg, *args, **kwargs)
 
     def _print_box(self, x, y, width, height, text, fg=None, bg=None, *args, **kwargs):
@@ -304,7 +336,7 @@ class RootPanel(Panel):
             bg_blend: int = 1, 
             alignment: int = 0)-> int
         """
-        return self.parent.print_box(
+        return self.console.print_box(
             x, y, width, height, text, fg=fg, bg=bg, *args, **kwargs)
 
     def _get_height_rect(self, x, y, width, height, text, *args, **kwargs):
@@ -313,7 +345,7 @@ class RootPanel(Panel):
             width: int, height: int, 
             string: str)-> int
         """
-        return self.parent.get_height_rect(
+        return self.console.get_height_rect(
             x, y, width, height, text, *args, **kwargs)
 
     def _draw_rect(self, x, y, width, height, ch, fg=None, bg=None, *args, **kwargs):
@@ -325,7 +357,7 @@ class RootPanel(Panel):
             bg: Optional[Tuple[int, int, int]] = None, 
             bg_blend: int = 1)
         """
-        return self.parent.draw_rect(
+        return self.console.draw_rect(
             x, y, width, height, ch, fg=fg, bg=bg, *args, **kwargs)
 
     def _draw_frame(self, x, y, width, height, title=None, clear=True, fg=None, bg=None, *args, **kwargs):
@@ -338,7 +370,7 @@ class RootPanel(Panel):
             bg: Optional[Tuple[int, int, int]] = None, 
             bg_blend: int = 1)
         """
-        return self.parent.draw_frame(
+        return self.console.draw_frame(
             x, y, width, height, title=title, clear=clear, fg=fg, bg=bg, *args, **kwargs)
 
     def _draw_semigraphics(self, pixels, x, y, *args, **kwargs):
@@ -347,7 +379,7 @@ class RootPanel(Panel):
             x: int = 0, 
             y: int = 0)
         """
-        return self.parent.get_height_rect(pixels, x, y, *args, **kwargs)
+        return self.console.get_height_rect(pixels, x, y, *args, **kwargs)
 
     def _clear(self, ch=None, fg=None, bg=None, *args, **kwargs):
         """tcod.Console.clear(
@@ -355,7 +387,7 @@ class RootPanel(Panel):
             fg: Tuple[int, int, int] = Ellipsis, 
             bg: Tuple[int, int, int] = Ellipsis)
         """
-        return self.parent.clear(ch, fg=fg, bg=bg, *args, **kwargs)
+        return self.console.clear(ch, fg=fg, bg=bg, *args, **kwargs)
 
     # blit(
     #   dest: tcod.console.Console, 
@@ -366,55 +398,38 @@ class RootPanel(Panel):
     #   bg_alpha: float = 1.0, 
     #   key_color: Optional[Tuple[int, int, int]] = None)
 
-    # ------------------------------------------------- #
+    # NOTE: Direct access to console.tiles, console.tiles_rgb fragments
+    # NOTE: you can acces bg, fg, chr as tiles_rgb['bg'], tiles_rgb['fg'], tiles['ch']
 
-    def clear(self, colors=None, *args, **kwargs):
-        fg = colors and colors.fg
-        bg = colors and colors.bg
-        return self._clear(fg=fg, bg=bg*args, **kwargs)
+    @property
+    def tiles(self):
+        """Translate coordinates relative to self, to coordinates relative to root."""
+        return self.parent.tiles[self.x:self.x2, self.y:self.y2]
 
-    def print(self, text, position, colors=None, *args, **kwargs):
-        fg = colors and colors.fg
-        bg = colors and colors.bg
-        return self._print(
-            position.x, position.y, text, fg=fg, bg=bg, *args, **kwargs)
+    @tiles.setter
+    def tiles(self, tiles):
+        self.parent.tiles[self.x:self.x2, self.y:self.y2] = tiles
 
-    def draw(self, tile, position, size=None, *args, **kwargs):
-        if size:
-            return self._draw_rect(
-                position.x, position.y, size.width, size.height, tile.code_point, 
-                fg=tile.fg, bg=tile.bg, *args, **kwargs)
-        else:
-            return self._print(
-                position.x, position.y, tile.char, fg=tile.fg, bg=tile.bg, *args, **kwargs)
+    @property
+    def tiles_rgb(self):
+        return self.parent.tiles_rgb[self.x:self.x2, self.y:self.y2]
 
-    def draw_image(self, image, position, *args, **kwargs):
-        return self._draw_semigraphics(
-            image, position.x, position.y, *args, **kwargs)
-
-    def blit_from(self, x, y, src, *args, **kwargs):
-        # RULE: Use keyword arguments for dest_x, dest_y, width height
-        # NOTE: src MUST be tcod.Console!
-        src.blit(dest=self.parent, dest_x=x, dest_y=y, *args, **kwargs)
-
-    def blit_to(self, x, y, dest, *args, **kwargs):
-        # RULE: Use keyword arguments for dest_x, dest_y, width height
-        # NOTE: dest MUST be tcod.Console!
-        self.parent.blit(dest=dest, src_x=x, src_y=y, *args, **kwargs)
-
-    def create_window(self, x, y, width, height, decorations=None):
-        return Window(self, x, y, width, height, decorations)
+    @tiles_rgb.setter
+    def tiles_rgb(self, tiles_rgb):
+        self.parent.tiles_rgb[self.x:self.x2, self.y:self.y2] = tiles_rgb
 
     def show(self):
         import ansi
-        for row in self.parent.tiles_rgb.transpose():
+        for row in self.console.tiles_rgb.transpose():
             row_txt = []
             for ch, fg, bg in row:
                 row_txt.append(ansi.fg_rgb(*fg)+ansi.bg_rgb(*bg)+chr(ch)+ansi.reset())
             print(''.join(row_txt))
 
 
-# TODO: Instead of x,y, width,height use geometry.Position, Size, Geometry(?) in print/draw methods???
+# TODO: alignment, bg_blend
+
+# TODO: ansi-like color control codes - "%c%c%c%cFoo%c" % (tcod.COLCTRL_FORE_RGB, *tcod.white, tcod.COLCTRL_STOP)
 
 # TODO: Rework Window class - now it's a mess
 
