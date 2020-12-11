@@ -317,8 +317,8 @@ Color = WebColor
 
 
 WEB = ColorPalette(
-    fg=WEB_COLORS[Color.WHITE],
-    bg=WEB_COLORS[Color.BLACK],
+    fg=WEB_COLORS[Color.WHITE.value],
+    bg=WEB_COLORS[Color.BLACK.value],
     colors=WEB_COLORS,
 )
 

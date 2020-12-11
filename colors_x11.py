@@ -601,8 +601,8 @@ GREYSCALE_MAP = ColorMap(GREYSCALE_COLORS)
 
 
 X11_DARK = ColorPalette(
-    fg=X11_COLORS[Color.WHITE],
-    bg=X11_COLORS[Color.BLACK],
+    fg=X11_COLORS[Color.WHITE.value],
+    bg=X11_COLORS[Color.BLACK.value],
     colors=X11_COLORS,
 )
 
@@ -633,4 +633,27 @@ TANGO_DARK = ColorPalette(
     ])
 
 TANGO_LIGHT = TANGO_DARK.invert()
+
+
+CGA = ColorPalette(
+    fg=HEX('#FFFFFF'),
+    bg=HEX('#000000'),
+    colors=[
+        HEX('#000000'),
+        HEX('#AA0000'),
+        HEX('#00AA00'),
+        HEX('#AA5500'),
+        HEX('#0000AA'),
+        HEX('#AA00AA'),
+        HEX('#00AAAA'),
+        HEX('#AAAAAA'),
+        HEX('#555555'),
+        HEX('#FF5555'),
+        HEX('#55FF55'),
+        HEX('#FFFF55'),
+        HEX('#5555FF'),
+        HEX('#FF55FF'),
+        HEX('#55FFFF'),
+        HEX('#FFFFFF'),
+    ])
 

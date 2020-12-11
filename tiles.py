@@ -37,6 +37,10 @@ class Character:
     @property
     def char(self):
         return chr(self.code_point)
+    ch = char
+
+    def __eq__(self, other):
+        return self.code_point == other.code_point
 
     def __str__(self):
         return self.char
