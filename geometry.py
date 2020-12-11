@@ -35,6 +35,8 @@ class Position(collections.namedtuple(
         'y',
     ])):
 
+    __slots__ = ()
+
     def distance(self, other):
         if not other:
             return None
@@ -50,14 +52,12 @@ class Position(collections.namedtuple(
     def __repr__(self):
         return f'<Position x={self.x}, y={self.y}>'
 
+Position.ZERO = Position(0, 0)
 
-class Rectangle:
 
-    __slots__ = ('position', 'size')
+class WithSizeMixin:
 
-    def __init__(self, position, size):
-        self.position = position
-        self.size = size
+    __slots__ = ()
 
     @property
     def width(self):
@@ -71,6 +71,11 @@ class Rectangle:
     def area(self):
         return self.size.area
 
+
+class WithPositionMixin:
+
+    __slots__ = ()
+
     @property
     def x(self):
         return self.position.x
@@ -78,6 +83,15 @@ class Rectangle:
     @property
     def y(self):
         return self.position.y
+
+
+class Rectangle(WithPositionMixin, WithSizeMixin):
+
+    __slots__ = ('position', 'size', )
+
+    def __init__(self, position, size):
+        self.position = position
+        self.size = size
 
     @property
     def x2(self):
@@ -92,7 +106,7 @@ class Rectangle:
     @property
     def center(self):
         """Return center Position."""
-        return Position(int(self.width/2), int(self.height/2))
+        return Position(int(self.x+self.width/2), int(self.y+self.height/2))
 
     def __iter__(self):
         """Iterate Positions inside this Rectangle."""
@@ -109,8 +123,8 @@ class Rectangle:
         """Return True if given Position is inside this Rectangle."""
         if not position:
             return False
-        return (self.x <= x <= self.x2 and
-                self.y <= y <= self.y2)
+        return (self.x <= position.x <= self.x2 and
+                self.y <= position.y <= self.y2)
 
     def __contains__(self, position):
         return self.is_inside(position)
