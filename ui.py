@@ -1,7 +1,8 @@
 import collections
 from enum import Enum
 
-from geometry import Position, Size, Rectangle
+from geometry import Position, Size, WithSizeMixin, Rectangle
+from colors import RGB
 from tiles import Tile, Colors
 
 
@@ -11,6 +12,12 @@ This should make working on UI much easier, and maybe allow to use other cli/gra
 
 """
 
+DEFAULT_CH = ' '
+DEFAULT_FG = RGB(255, 255, 255).rgb
+DEFAULT_BG = RGB(0, 0, 0).rgb
+
+EMPTY_TILE = Tile.create(DEFAULT_CH, fg=DEFAULT_FG, bg=DEFAULT_BG)
+
 
 class Alignment(Enum):
     LEFT = 0    # tcod.LEFT
@@ -18,35 +25,72 @@ class Alignment(Enum):
     CENTER = 2  # tcod.CENTER
 
 
-class TilesGrid(Rectangle):
+class AbstractTilesGrid(WithSizeMixin):
 
-    """Representation of rectangular tiles based drawing area.
+    """Representation of rectangular Tiles based drawing area."""
+
+    __slots__ = ()
+
+    def clear(self, colors=None, *args, **kwargs):
+        """Clear whole Rectangle wigh default values."""
+        if colors:
+            tile = Tile.create(DEFAULT_CH, fg=colors.fg, bg=colors.bg)
+        else:
+            tile = EMPTY_TILE
+        return self.fill(tile)
+
+    def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
+        """Print text on given position using colors."""
+        raise NotImplementedError()
+
+    def draw(self, tile, position, size=None, *args, **kwargs):
+        """Draw Tile on given position.
+
+        If size provided draw rectangle filled with this Tile.
+
+        """
+        raise NotImplementedError()
+
+    def fill(self, tile, *args, **kwargs):
+        """Fill whole area with given Tile."""
+        return self.draw(tile, Position.ZERO, size=self.size, *args, **kwargs)
+
+    def paint(self, colors, position, size=None, *args, **kwargs):
+        """Paint Colors on given position.
+
+        If size provided paint rectangle using these Colors.
+
+        """
+        raise NotImplementedError()
+
+    def image(self, image, position=None, *args, **kwargs):
+        """Draw image on given position."""
+        raise NotImplementedError()
+
+
+class Panel(AbstractTilesGrid, Rectangle):
+
+    """Representation of rectangular Tiles based drawing area.
     
     Allows manipulation of data using local coordinates (relative to self).
 
     """
 
-    def __init__(self, parent, position, size):
+    def __init__(self, root, offset, size):
         # NOTE: position is relative to parent
         #       offset is relative to root
-        super().__init__(position, size)
-        self.parent = parent
-        self.root = self.parent.root
-        self.offset = Position(self.parent.offset.x+self.x, self.parent.offset.y+self.y)
-
-    def _parent_offset(self, position):
-        """Translate local coordinates (relative to self) to coordinates relative to parent."""
-        return Position(self.x+position.x, self.y+position.y)
+        super().__init__(offset, size)
+        self.root = root
 
     def _root_offset(self, position):
         """Translate local coordinates (relative to self) to coordinates relative to root panel."""
-        return Position(self.offset.x+position.x, self.offset.y+position.y)
+        #return Position(self.offset.x+position.x, self.offset.y+position.y)
+        return Position(self.x+position.x, self.y+position.y)
 
     # NOTE: Only position is translated, it is NOT checked if prints are outside of Panel!
 
     def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
         """Print text on given position using colors."""
-        # TODO: Store offset to root, and call self.root.* instead of self.parent.*
         offset = self._root_offset(position)
         return self.root.print(text, offset, colors=colors, alignment=alignment, *args, **kwargs)
 
@@ -58,10 +102,6 @@ class TilesGrid(Rectangle):
         """
         offset = self._root_offset(position)
         return self.root.draw(tile, offset, size=size, *args, **kwargs)
-
-    def fill(self, tile, *args, **kwargs):
-        """Fill whole Rectangle with given Tile."""
-        return self.draw(tile, Position.ZERO, size=self.size, *args, **kwargs)
 
     def paint(self, colors, position, size=None, *args, **kwargs):
         """Paint Colors on given position.
@@ -76,7 +116,7 @@ class TilesGrid(Rectangle):
         """Draw image on given position."""
         position = position or Position.ZERO
         offset = self._root_offset(position)
-        return self.root.draw_semigraphics(image, offset, *args, **kwargs)
+        return self.root.image(image, offset, *args, **kwargs)
 
     # TODO: Needs rework!
     def blit_from(self, x, y, src, *args, **kwargs):
@@ -100,10 +140,10 @@ class TilesGrid(Rectangle):
         return f'<{self.__class__.__name__} x={self.x}, y={self.y}, width={self.width}, height={self.height}>'
 
 
-class Container(TilesGrid):
+class Container(Panel):
 
-    def __init__(self, parent, position, size):
-        super().__init__(parent, position, size)
+    def __init__(self, root, offset, size):
+        super().__init__(root, offset, size)
         self.panels = []
 
 
@@ -114,27 +154,27 @@ class HorizontalContainer(Container):
         if height and height < 1:
             height = int(self.height * height)
         if top:
-            top = Panel(
-                self, 
-                Position.ZERO, 
+            top = SplittablePanel(
+                self.root, 
+                self._root_offset(Position.ZERO), 
                 Size(self.width, self.height-height),
             )
-            bottom = Panel(
-                self, 
-                Position(0, self.height-height), 
+            bottom = SplittablePanel(
+                self.root, 
+                self._root_offset(Position(0, self.height-height)), 
                 Size(self.width, height),
             )
             self.panels = [top, bottom]
             return top, bottom
         elif bottom:
-            top = Panel(
-                self, 
-                Position.ZERO,
+            top = SplittablePanel(
+                self.root, 
+                self._root_offset(Position.ZERO),
                 Size(self.width, height),
             )
-            bottom = Panel(
-                self, 
-                Position(0, height),
+            bottom = SplittablePanel(
+                self.root, 
+                self._root_offset(Position(0, height)),
                 Size(self.width, self.height-height),
             )
             self.panels = [top, bottom]
@@ -148,39 +188,39 @@ class VerticalContainer(Container):
         if width and width < 1:
             width = int(self.width * width)
         if left:
-            left = Panel(
-                self, 
-                Position.ZERO,
+            left = SplittablePanel(
+                self.root, 
+                self._root_offset(Position.ZERO),
                 Size(self.width-width, self.height),
             )
-            right = Panel(
-                self, 
-                Position(self.width-width, 0), 
+            right = SplittablePanel(
+                self.root, 
+                self._root_offset(Position(self.width-width, 0)), 
                 Size(width, self.height),
             )
             self.panels = [left, right]
             return left, right
         elif right:
-            left = Panel(
-                self, 
-                Position.ZERO, 
+            left = SplittablePanel(
+                self.root, 
+                self._root_offset(Position.ZERO), 
                 Size(width, self.height),
             )
-            right = Panel(
-                self, 
-                Position(width, 0), 
+            right = SplittablePanel(
+                self.root, 
+                self._root_offset(Position(width, 0)), 
                 Size(self.width-width, self.height),
             )
             self.panels = [left, right]
             return left, right
 
 
-class Panel(TilesGrid):
+class SplittablePanel(Panel):
 
     def split_vertical(self, left=None, right=None):
         width = left or right
         container = VerticalContainer(
-            self.parent,
+            self.root,
             self.position,
             self.size,
         )
@@ -189,7 +229,7 @@ class Panel(TilesGrid):
     def split_horizontal(self, top=None, bottom=None):
         height = top or bottom
         container = HorizontalContainer(
-            self.parent,
+            self.root,
             self.position,
             self.size,
         )
@@ -244,17 +284,14 @@ class Window:
     def __init__(self, parent, x, y, width, height, decorations):
         self.frame = Frame(parent, Position(x, y), Size(width, height))
         self.frame.draw_decorations(decorations)
-        self.panel = Panel(self.frame, Position(1, 1), Size(width-2, height-2))
+        self.panel = SplittablePanel(self.frame, Position(1, 1), Size(width-2, height-2))
         self.frame.panels.append(self.panel)
 
 
 # TODO: Move to ui.tcod_wrapper ?
-class RootPanel(Panel):
+class RootPanel(SplittablePanel):
 
     def __init__(self, console):
-        self.root = self
-        self.parent = self
-        self.offset = Position.ZERO
         super().__init__(self, Position.ZERO, Size(console.width, console.height))
         self.console = console
 
@@ -265,13 +302,14 @@ class RootPanel(Panel):
         return x, y
 
     def clear(self, colors=None, *args, **kwargs):
-        fg = colors and colors.fg
-        bg = colors and colors.bg
-        return self._clear(fg=fg, bg=bg*args, **kwargs)
+        fg = colors and colors.fg or DEFAULT_FG
+        bg = colors and colors.bg or DEFAULT_BG
+        return self._clear(fg=fg, bg=bg, *args, **kwargs)
 
     def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
-        fg = colors and colors.fg
+        fg = colors and colors.fg or DEFAULT_FG
         bg = colors and colors.bg
+        alignment = alignment or Alignment.LEFT.value
         return self._print(
             position.x, position.y, text, fg=fg, bg=bg, alignment=alignment, *args, **kwargs)
 
@@ -310,8 +348,8 @@ class RootPanel(Panel):
         # NOTE: dest MUST be tcod.Console!
         self.console.blit(dest=dest, src_x=x, src_y=y, *args, **kwargs)
 
-    def create_window(self, x, y, width, height, decorations=None):
-        return Window(self, x, y, width, height, decorations)
+    def create_window(self, x, y, width, height): #, decorations=None):
+        return SplittablePanel(self, x, y, width, height) #, decorations)
 
     # NOTE: tcod.Console print/draw related methods:
 
@@ -396,6 +434,7 @@ class RootPanel(Panel):
             fg: Tuple[int, int, int] = Ellipsis, 
             bg: Tuple[int, int, int] = Ellipsis)
         """
+        ch = ord(ch or DEFAULT_CH)
         return self.console.clear(ch, fg=fg, bg=bg, *args, **kwargs)
 
     # blit(
