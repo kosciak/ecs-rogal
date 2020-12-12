@@ -1,4 +1,5 @@
 import collections
+from enum import Enum
 
 
 class Colors(collections.namedtuple(
@@ -35,18 +36,17 @@ class Character:
         return instance
 
     @property
-    def char(self):
+    def ch(self):
         return chr(self.code_point)
-    ch = char
 
     def __eq__(self, other):
         return self.code_point == other.code_point
 
     def __str__(self):
-        return self.char
+        return self.ch
 
     def __repr__(self):
-        return f'<Character {self.code_point} = "{self.char}">'
+        return f'<Character {self.code_point} = "{self.ch}">'
 
 
 class Tile(collections.namedtuple(
@@ -56,8 +56,8 @@ class Tile(collections.namedtuple(
     ])):
 
     @property
-    def char(self):
-        return self.character.char
+    def ch(self):
+        return self.character.ch
 
     @property
     def code_point(self):
@@ -72,6 +72,6 @@ class Tile(collections.namedtuple(
         return self.colors.bg
 
     @staticmethod
-    def create(char, fg, bg=None):
-        return Tile(Character(char), Colors(fg, bg))
+    def create(ch, fg, bg=None):
+        return Tile(Character(ch), Colors(fg, bg))
 
