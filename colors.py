@@ -1,6 +1,5 @@
 import collections
 import colorsys
-import enum
 import math
 
 

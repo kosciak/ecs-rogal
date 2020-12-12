@@ -1,5 +1,3 @@
-from enum import Enum
-
 from colors import HEX, ColorPalette
 
 
@@ -159,7 +157,7 @@ WEB_COLORS = [
 ]
 
 
-class WebColor(Enum):
+class WebColor:
     # Base web colors
     BLACK = 0
     MAROON = 1
@@ -317,8 +315,8 @@ Color = WebColor
 
 
 WEB = ColorPalette(
-    fg=WEB_COLORS[Color.WHITE.value],
-    bg=WEB_COLORS[Color.BLACK.value],
+    fg=WEB_COLORS[Color.WHITE],
+    bg=WEB_COLORS[Color.BLACK],
     colors=WEB_COLORS,
 )
 

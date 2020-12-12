@@ -1,7 +1,5 @@
-from enum import Enum
 
-
-class Char(Enum):
+class Char:
     # Single line walls:
     HLINE = 9472            # ─
     VLINE = 9474            # │

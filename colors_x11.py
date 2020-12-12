@@ -1,5 +1,3 @@
-from enum import Enum
-
 from colors import HEX, ColorMap, ColorPalette
 
 
@@ -271,25 +269,25 @@ X11_COLORS = [
 ]
 
 
-class X11Color(Enum):
+class X11Color:
     # Base system colors
-    TERM_BLACK = 0,
-    TERM_RED = 1,
-    TERM_GREEN = 2,
-    TERM_YELLOW = 3,
-    TERM_BLUE = 4,
-    TERM_MAGENTA = 5, 
-    TERM_CYAN = 6,
-    TERM_WHITE = 7,
+    TERM_BLACK = 0
+    TERM_RED = 1
+    TERM_GREEN = 2
+    TERM_YELLOW = 3
+    TERM_BLUE = 4
+    TERM_MAGENTA = 5 
+    TERM_CYAN = 6
+    TERM_WHITE = 7
 
-    BASE_BLACK = 0,
-    BASE_RED = 1,
-    BASE_GREEN = 2,
-    BASE_YELLOW = 3,
-    BASE_BLUE = 4,
-    BASE_MAGENTA = 5, 
-    BASE_CYAN = 6,
-    BASE_WHITE = 7,
+    BASE_BLACK = 0
+    BASE_RED = 1
+    BASE_GREEN = 2
+    BASE_YELLOW = 3
+    BASE_BLUE = 4
+    BASE_MAGENTA = 5 
+    BASE_CYAN = 6
+    BASE_WHITE = 7
 
     TERM_0 = 0
     TERM_1 = 1
@@ -301,14 +299,14 @@ class X11Color(Enum):
     TERM_7 = 7
 
     # Bright version of base system colors
-    BRIGHT_BLACK = 8,
-    BRIGHT_RED = 9,
-    BRIGHT_GREEN = 10,
-    BRIGHT_YELLOW = 11,
-    BRIGHT_BLUE = 12,
-    BRIGHT_MAGENTA = 13, 
-    BRIGHT_CYAN = 14,
-    BRIGHT_WHITE = 15,
+    BRIGHT_BLACK = 8
+    BRIGHT_RED = 9
+    BRIGHT_GREEN = 10
+    BRIGHT_YELLOW = 11
+    BRIGHT_BLUE = 12
+    BRIGHT_MAGENTA = 13 
+    BRIGHT_CYAN = 14
+    BRIGHT_WHITE = 15
 
     BRIGHT_0 = 8
     BRIGHT_1 = 9
@@ -601,44 +599,55 @@ GREYSCALE_MAP = ColorMap(GREYSCALE_COLORS)
 
 
 X11_DARK = ColorPalette(
-    fg=X11_COLORS[Color.WHITE.value],
-    bg=X11_COLORS[Color.BLACK.value],
+    fg=X11_COLORS[Color.WHITE],
+    bg=X11_COLORS[Color.BLACK],
     colors=X11_COLORS,
 )
 
 X11_LIGHT = X11_DARK.invert()
 
 
+TANGO_COLORS = [
+    HEX("#2e3436"),
+    HEX("#cc0000"),
+    HEX("#4e9a06"),
+    HEX("#c4a000"),
+    HEX("#3465a4"),
+    HEX("#75507b"),
+    HEX("#06989a"),
+    HEX("#d3d7cf"),
+    HEX("#555753"),
+    HEX("#ef2929"),
+    HEX("#8ae234"),
+    HEX("#fce94f"),
+    HEX("#729fcf"),
+    HEX("#ad7fa8"),
+    HEX("#34e2e2"),
+    HEX("#eeeeec"),
+]
+
 TANGO_DARK = ColorPalette(
-    fg=HEX("#babdb6"),
-    bg=HEX("#000000"),
+    fg=HEX("#D3D7CF"),
+    bg=HEX("#2E3436"),
     colors=[
-        HEX("#2e3436"),
-        HEX("#cc0000"),
-        HEX("#4e9a06"),
-        HEX("#c4a000"),
-        HEX("#3465a4"),
-        HEX("#75507b"),
-        HEX("#06989a"),
-        HEX("#d3d7cf"),
-        HEX("#555753"),
-        HEX("#ef2929"),
-        HEX("#8ae234"),
-        HEX("#fce94f"),
-        HEX("#729fcf"),
-        HEX("#ad7fa8"),
-        HEX("#34e2e2"),
-        HEX("#eeeeec"),
+        *TANGO_COLORS,
         *X11_COLORS[16:],
     ])
 
-TANGO_LIGHT = TANGO_DARK.invert()
+TANGO_LIGHT = ColorPalette(
+    fg=HEX("#2E3436"),
+    bg=HEX("#EEEEEC"),
+    colors=[
+        *TANGO_COLORS,
+        *X11_COLORS[16:],
+    ])
 
 
-CGA = ColorPalette(
+CGA_TERM = ColorPalette(
     fg=HEX('#FFFFFF'),
     bg=HEX('#000000'),
     colors=[
+        # Order rearanged to match term colors
         HEX('#000000'),
         HEX('#AA0000'),
         HEX('#00AA00'),
