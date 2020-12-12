@@ -1,4 +1,5 @@
 import collections
+from enum import Enum
 import math
 
 
@@ -19,11 +20,19 @@ class Size(collections.namedtuple(
         return f'<Size width={self.width}, height={self.height}>'
 
 
-class Direction(collections.namedtuple(
-    'Position', [
-        'dx', 
-        'dy',
-    ])):
+class Direction(Enum):
+    N = (0, 1)
+    NE = (1, 1)
+    E = (1, 0)
+    SE = (1, -1)
+    S = (0, -1)
+    SW = (-1, -1)
+    W = (-1, 0)
+    NW = (-1, 1)
+
+    def __init__(self, dx, dy):
+        self.dx = dx
+        self.dy = dy
 
     def __repr__(self):
         return f'<Direction dx={self.dx}, dy={self.dy}>'
