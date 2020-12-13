@@ -1,43 +1,44 @@
+from geometry import Direction
+
 import tcod.event
 
 
 # *_MOVE_KEYS = {key_symbol: (dx, dy), }
 ARROW_MOVE_KEYS = {
-    tcod.event.K_LEFT: (-1, 0),
-    tcod.event.K_RIGHT: (1, 0),
-    tcod.event.K_UP: (0, -1),
-    tcod.event.K_DOWN: (0, 1),
-    tcod.event.K_HOME: (-1, -1),
-    tcod.event.K_END: (-1, 1),
-    tcod.event.K_PAGEUP: (1, -1),
-    tcod.event.K_PAGEDOWN: (1, 1),
+    tcod.event.K_LEFT: Direction.W,
+    tcod.event.K_RIGHT: Direction.E,
+    tcod.event.K_UP: Direction.S,
+    tcod.event.K_DOWN: Direction.N,
+    tcod.event.K_HOME: Direction.SW,
+    tcod.event.K_END: Direction.NW,
+    tcod.event.K_PAGEUP: Direction.SE,
+    tcod.event.K_PAGEDOWN: Direction.NE,
 }
 NUMPAD_MOVE_KEYS = {
-    tcod.event.K_KP_1: (-1, 1),
-    tcod.event.K_KP_2: (0, 1),
-    tcod.event.K_KP_3: (1, 1),
-    tcod.event.K_KP_4: (-1, 0),
-    tcod.event.K_KP_6: (1, 0),
-    tcod.event.K_KP_7: (-1, -1),
-    tcod.event.K_KP_8: (0, -1),
-    tcod.event.K_KP_9: (1, -1),
+    tcod.event.K_KP_1: Direction.NW,
+    tcod.event.K_KP_2: Direction.N,
+    tcod.event.K_KP_3: Direction.NE,
+    tcod.event.K_KP_4: Direction.W,
+    tcod.event.K_KP_6: Direction.E,
+    tcod.event.K_KP_7: Direction.SW,
+    tcod.event.K_KP_8: Direction.S,
+    tcod.event.K_KP_9: Direction.SE,
 }
 VI_MOVE_KEYS = {
-    tcod.event.K_h: (-1, 0),
-    tcod.event.K_j: (0, 1),
-    tcod.event.K_k: (0, -1),
-    tcod.event.K_l: (1, 0),
-    tcod.event.K_y: (-1, -1),
-    tcod.event.K_u: (1, -1),
-    tcod.event.K_b: (-1, 1),
-    tcod.event.K_n: (1, 1),
+    tcod.event.K_h: Direction.W,
+    tcod.event.K_j: Direction.N,
+    tcod.event.K_k: Direction.S,
+    tcod.event.K_l: Direction.E,
+    tcod.event.K_y: Direction.SW,
+    tcod.event.K_u: Direction.SE,
+    tcod.event.K_b: Direction.NW,
+    tcod.event.K_n: Direction.NE,
 }
 
-MOVE_KEYS = {
-    **ARROW_MOVE_KEYS, 
-    **NUMPAD_MOVE_KEYS, 
-    **VI_MOVE_KEYS,
-}
+MOVE_KEYS = {}
+MOVE_KEYS.update(ARROW_MOVE_KEYS)
+MOVE_KEYS.update(NUMPAD_MOVE_KEYS)
+MOVE_KEYS.update(VI_MOVE_KEYS)
 
 
 WAIT_KEYS = {
@@ -65,5 +66,6 @@ MODIFIER_ALT_KEYS = {
     tcod.event.K_LALT,
     tcod.event.K_RALT,
 }
+
 MODIFIER_KEYS = MODIFIER_SHIFT_KEYS | MODIFIER_CTRL_KEYS | MODIFIER_ALT_KEYS
 
