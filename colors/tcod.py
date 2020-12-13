@@ -31,7 +31,7 @@ def init_colors():
             else:
                 color_name = base_name
             TCOD_COLORS.append(color)
-            print(color_name, color)
+            #print(color_name, color)
             setattr(TCODColor, color_name.upper(), idx)
             idx += 1
 

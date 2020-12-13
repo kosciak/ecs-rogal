@@ -64,6 +64,7 @@ class Color(collections.namedtuple(
     def gradient(self, other, steps):
         values_diff = [other.values[i] - self.values[i] for i in range(len(self.values))]
         alpha_diff = other.alpha - self.alpha
+        # TODO: Consider: for value in np.linspace(0, 1, steps)
         for step in range(steps):
             level = step / (steps - 1)
             values = [values_diff[i]*level + self.values[i] 
@@ -276,7 +277,8 @@ class ColorMap:
 
 class ColorPalette:
 
-    def __init__(self, fg, bg, colors):
+    def __init__(self, name, fg, bg, colors):
+        self.name = name
         self.fg = fg
         self.bg = bg
         #self.cursor_fg = None
@@ -292,6 +294,9 @@ class ColorPalette:
     def __getitem__(self, key):
         return self.colors[key]
 
-    def invert(self):
-        return ColorPalette(self.bg, self.fg, self.colors)
+    def invert(self, name=None):
+        return ColorPalette(name or self.name, self.bg, self.fg, self.colors)
+
+    def __repr__(self):
+        return f'<ColorPalette name="{self.name}">'
 
