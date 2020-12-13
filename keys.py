@@ -54,6 +54,9 @@ CONFIRM_KEYS = {
 }
 
 
+ESCAPE_KEY = tcod.event.K_ESCAPE
+
+
 MODIFIER_SHIFT_KEYS = {
     tcod.event.K_LSHIFT,
     tcod.event.K_RSHIFT,

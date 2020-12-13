@@ -4,6 +4,7 @@ from geometry import Size
 from colors.x11 import TANGO_DARK, Color
 from tilesets import TERMINAL_12x12_CP
 from wrappers import TcodWrapper
+import keys
 
 import tcod
 
@@ -22,13 +23,23 @@ def main():
 
     with wrapper as wrapper:
         root_panel = wrapper.create_root_panel()
-        root_panel.clear()
-        root_panel.print('@', root_panel.center)
-        wrapper.flush(root_panel.console)
+        position = root_panel.center
         while True:
+            root_panel.clear()
+            root_panel.print('@', position)
+            wrapper.flush(root_panel.console)
             for event in wrapper.events():
                 # Just print all events, and gracefully quit on closing window
                 print(event)
+                if event.type == 'KEYDOWN':
+                    key = event.sym
+                    if key == keys.ESCAPE_KEY:
+                        raise SystemExit()
+
+                    direction = keys.MOVE_KEYS.get(key)
+                    if direction:
+                        position = position.move(direction)
+
                 if event.type == 'QUIT':
                     raise SystemExit()
 
