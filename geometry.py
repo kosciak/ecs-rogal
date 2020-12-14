@@ -34,6 +34,10 @@ class Direction(Enum):
         self.dx = dx
         self.dy = dy
 
+    @property
+    def is_diagonal(self):
+        return all([self.dx, self.dy])
+
     def __repr__(self):
         return f'<Direction dx={self.dx}, dy={self.dy}>'
 
