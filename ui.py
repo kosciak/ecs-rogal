@@ -2,7 +2,7 @@ import collections
 
 from geometry import Position, Size, WithSizeMixin, Rectangle
 from colors import RGB
-from tiles import Tile, Colors
+from renderable import Tile, Colors
 
 
 """Basic UI elements / building blocks, working as abstraction layer for tcod.Console.

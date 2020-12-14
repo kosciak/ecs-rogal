@@ -1,6 +1,8 @@
 import collections
-from enum import Enum
+from enum import IntEnum, auto
 
+
+# TODO: Rename module to renderables.py ?
 
 class Colors(collections.namedtuple(
     'Colors', [
@@ -74,4 +76,19 @@ class Tile(collections.namedtuple(
     @staticmethod
     def create(ch, fg, bg=None):
         return Tile(Character(ch), Colors(fg, bg))
+
+
+class RenderOrder(IntEnum):
+    # Terrain tiles
+    TERRAIN = auto()
+    # Terrian foliage (grass, bushes, flowers, etc)
+    FOLIAGE = auto()
+    # Props - furniture, statues, doors, stairs, etc
+    PROPS = auto()
+    # Items on floor
+    ITEMS = auto()
+    # Player, monsters, NPCs
+    ACTORS = auto()
+    # Particle effects
+    PARTICLES = auto()
 
