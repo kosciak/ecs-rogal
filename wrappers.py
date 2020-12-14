@@ -1,15 +1,14 @@
 import tcod
 
-
 from ui import TcodRootPanel
 
 
 class IOWrapper:
 
-    def create_console(self):
+    def create_console(self, size=None):
         return None
 
-    def create_root_panel(self):
+    def create_panel(self, size=None):
         return None
 
     def flush(self, console):
@@ -85,15 +84,18 @@ class TcodWrapper(IOWrapper):
             tileset = self.load_tileset(self._tileset)
             self.context.change_tileset(tileset)
 
-    def create_console(self):
+    def create_console(self, size=None):
         # TODO: Check options and resizing behaviour
-        return self.context.new_console()
+        size = size or self.size
+        return self.context.new_console(*size)
 
-    def create_root_panel(self):
-        console = self.create_console()
+    def create_panel(self, size=None):
+        console = self.create_console(size)
         return TcodRootPanel(console, self.palette)
 
     def flush(self, console):
+        if not isinstance(console, tcod.console.Console):
+            console = console.console
         if self.initialized:
             # TODO: Check options and resizing behaviour
             self.context.present(console)
@@ -135,14 +137,17 @@ class MockWrapper(IOWrapper):
         # TODO: Some event on palette change forcing everything to redraw?
         self._palette = palette  
 
-    def create_console(self):
-        return tcod.console.Console(*self.size, order="F")
+    def create_console(self, size=None):
+        size = size or self.size
+        return tcod.console.Console(*size, order="F")
 
-    def create_root_panel(self):
-        console = self.create_console()
+    def create_panel(self, size=None):
+        console = self.create_console(size)
         return TcodRootPanel(console, self.palette)
 
     def flush(self, console):
+        if not isinstance(console, tcod.console.Console):
+            console = console.console
         import ansi
         lines = []
         for row in console.tiles_rgb.transpose():

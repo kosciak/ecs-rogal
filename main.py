@@ -28,12 +28,12 @@ def main():
     )
 
     with wrapper as wrapper:
-        root_panel = wrapper.create_root_panel()
+        root_panel = wrapper.create_panel()
         position = root_panel.center
         while True:
             root_panel.clear()
             root_panel.print('@', position)
-            wrapper.flush(root_panel.console)
+            wrapper.flush(root_panel)
             for event in wrapper.events():
                 # Just print all events, and gracefully quit on closing window
                 log.debug('Event: %s', event)
