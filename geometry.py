@@ -11,6 +11,9 @@ class Size(collections.namedtuple(
 
     __slots__ = ()
 
+    def __new__(cls, width, height):
+        return super().__new__(cls, int(width), int(height))
+
     @property
     def area(self):
         """Calculate the area of a rectangle of this size."""
@@ -66,6 +69,9 @@ class Position(collections.namedtuple(
     ])):
 
     __slots__ = ()
+
+    def __new__(cls, x, y):
+        return super().__new__(cls, int(x), int(y))
 
     def distance(self, other):
         if not other:
