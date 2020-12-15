@@ -20,6 +20,23 @@ class Size(collections.namedtuple(
         return f'<Size width={self.width}, height={self.height}>'
 
 
+class WithSizeMixin:
+
+    __slots__ = ()
+
+    @property
+    def width(self):
+        return self.size.width
+
+    @property
+    def height(self):
+        return self.size.height
+
+    @property
+    def area(self):
+        return self.size.area
+
+
 class Direction(Enum):
     N = (0, 1)
     NE = (1, 1)
@@ -62,27 +79,20 @@ class Position(collections.namedtuple(
             return self
         return Position(self.x+direction.dx, self.y+direction.dy)
 
+    def __add__(self, other):
+        if not other:
+            return None
+        return Position(self.x+other.x, self.y+other.y)
+
+    def __sub__(self, other):
+        if not other:
+            return None
+        return Position(self.x-other.x, self.y-other.y)
+
     def __repr__(self):
         return f'<Position x={self.x}, y={self.y}>'
 
 Position.ZERO = Position(0, 0)
-
-
-class WithSizeMixin:
-
-    __slots__ = ()
-
-    @property
-    def width(self):
-        return self.size.width
-
-    @property
-    def height(self):
-        return self.size.height
-
-    @property
-    def area(self):
-        return self.size.area
 
 
 class WithPositionMixin:
@@ -99,6 +109,8 @@ class WithPositionMixin:
 
 
 class Rectangle(WithPositionMixin, WithSizeMixin):
+
+    """Rectangle in 2D space."""
 
     __slots__ = ('position', 'size', )
 

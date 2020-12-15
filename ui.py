@@ -28,6 +28,11 @@ class AbstractTilesGrid(WithSizeMixin):
 
     __slots__ = ()
 
+    @property
+    def center(self):
+        """Return center Position relative to self!"""
+        return Position(int(self.width/2), int(self.height/2))
+
     def empty_tile(self, colors):
         fg = (colors and colors.fg) or DEFAULT_FG
         bg = (colors and colors.bg) or DEFAULT_bG
@@ -75,9 +80,10 @@ class AbstractTilesGrid(WithSizeMixin):
 
 class Panel(AbstractTilesGrid, Rectangle):
 
-    """Representation of rectangular Tiles based drawing area.
+    """Representation of rectangular part of Tiles based drawing area.
     
     Allows manipulation of data using local coordinates (relative to self).
+    NOTE: center() returns Position relative to self so it can be used in draw/paint methods.
 
     """
 
@@ -87,21 +93,27 @@ class Panel(AbstractTilesGrid, Rectangle):
         super().__init__(offset, size)
         self.root = root
 
-    def _root_offset(self, position):
-        """Translate local coordinates (relative to self) to coordinates relative to root panel."""
-        #return Position(self.offset.x+position.x, self.offset.y+position.y)
-        return Position(self.x+position.x, self.y+position.y)
+    def offset(self, position, root=None):
+        """Return Position relative to root.
+        
+        self.offset(local_pos) -> pos relative to root
+        root.offset(pos, panel) -> local_pos relative to panel
+        self.offset(local_pos, other) -> pos relative to other
+
+        """
+        offset = self.position + position
+        if root and not root == self.root:
+            offset -= root
+        return offset
 
     # NOTE: Only position is translated, it is NOT checked if prints are outside of Panel!
 
     def create_panel(self, position, size):
-        offset = self._root_offset(position)
-        return self.root.create_panel(offset, size)
+        return self.root.create_panel(self.offset(position), size)
 
     def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
         """Print text on given position using colors."""
-        offset = self._root_offset(position)
-        return self.root.print(text, offset, colors=colors, alignment=alignment, *args, **kwargs)
+        return self.root.print(text, self.offset(position), colors=colors, alignment=alignment, *args, **kwargs)
 
     def draw(self, tile, position, size=None, *args, **kwargs):
         """Draw Tile on given position.
@@ -109,8 +121,7 @@ class Panel(AbstractTilesGrid, Rectangle):
         If size provided draw rectangle filled with this Tile.
 
         """
-        offset = self._root_offset(position)
-        return self.root.draw(tile, offset, size=size, *args, **kwargs)
+        return self.root.draw(tile, self.offset(position), size=size, *args, **kwargs)
 
     def paint(self, colors, position, size=None, *args, **kwargs):
         """Paint Colors on given position.
@@ -118,14 +129,12 @@ class Panel(AbstractTilesGrid, Rectangle):
         If size provided paint rectangle using these Colors.
 
         """
-        offset = self._root_offset(position)
-        return self.root.paint(colors, position, size=size, *args, **kwargs)
+        return self.root.paint(colors, self.offset(position), size=size, *args, **kwargs)
 
     def image(self, image, position=None, *args, **kwargs):
         """Draw image on given position."""
         position = position or Position.ZERO
-        offset = self._root_offset(position)
-        return self.root.image(image, offset, *args, **kwargs)
+        return self.root.image(image, self.offset(position), *args, **kwargs)
 
     # Other methods
 
