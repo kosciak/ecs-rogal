@@ -19,6 +19,10 @@ class Size(collections.namedtuple(
         """Calculate the area of a rectangle of this size."""
         return self.width * self.height
 
+    def __mul__(self, factor):
+        """Resize by factor value."""
+        return Size(self.width*factor, self.height*factor)
+
     def __repr__(self):
         return f'<Size width={self.width}, height={self.height}>'
 
