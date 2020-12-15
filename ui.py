@@ -71,6 +71,10 @@ class AbstractTilesGrid(WithSizeMixin):
         """
         raise NotImplementedError()
 
+    def mask(self, tile, mask, position=None):
+        """Draw Tile on positions where mask is True, startig on position."""
+        raise NotImplementedError()
+
     def image(self, image, position=None, *args, **kwargs):
         """Draw image on given position."""
         raise NotImplementedError()
@@ -130,6 +134,11 @@ class Panel(AbstractTilesGrid, Rectangle):
 
         """
         return self.root.paint(colors, self.offset(position), size=size, *args, **kwargs)
+
+    def mask(self, tile, mask, position=None):
+        """Draw Tile on positions where mask is True, startig on position."""
+        position = position or Position.ZERO
+        return self.root.mask(colors, self.offset(position), size=size, *args, **kwargs)
 
     def image(self, image, position=None, *args, **kwargs):
         """Draw image on given position."""
@@ -313,6 +322,17 @@ class TcodRootPanel(RootPanel):
             if bg:
                 self.console.bg[position] = bg
 
+    def mask(self, tile, mask, position=None):
+        position = position or Position.ZERO
+        width, height = mask.shape
+        fg = self.rgb(tile.fg)
+        bg = self.rgb(tile.bg)
+        self.console.ch[position.x:position.x+width, position.y:position.y+height][mask] = tile.code_point
+        if fg:
+            self.console.fg[position.x:position.x+width, position.y:position.y+height][mask] = fg
+        if bg:
+            self.console.bg[position.x:position.x+width, position.y:position.y+height][mask] = bg
+
     def image(self, image, position, *args, **kwargs):
         return self._draw_semigraphics(
             image, position.x, position.y, *args, **kwargs)
@@ -423,7 +443,7 @@ class TcodRootPanel(RootPanel):
     #   bg_alpha: float = 1.0, 
     #   key_color: Optional[Tuple[int, int, int]] = None)
 
-    # NOTE: Direct access to console.tiles, console.tiles_rgb fragments
+    # TODO: Direct access to console.tiles, console.tiles_rgb fragments
     # NOTE: you can acces bg, fg, chr as tiles_rgb['bg'], tiles_rgb['fg'], tiles['ch']
 
     @property
@@ -445,11 +465,7 @@ class TcodRootPanel(RootPanel):
 
     def show(self):
         import ansi
-        for row in self.console.tiles_rgb.transpose():
-            row_txt = []
-            for ch, fg, bg in row:
-                row_txt.append(ansi.fg_rgb(*fg)+ansi.bg_rgb(*bg)+chr(ch)+ansi.reset())
-            print(''.join(row_txt))
+        ansi.show_tcod_console(self.console)
 
 
 # TODO: Support for bg_blend, learn how it works in tcod
