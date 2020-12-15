@@ -167,7 +167,7 @@ def show_color(color):
 
 def show_tcod_console(console):
     lines = []
-    for row in console.tiles_rgb.transpose():
+    for row in console.tiles_rgb:
         row_txt = []
         for ch, fg, bg in row:
             row_txt.append(fg_rgb(*fg)+bg_rgb(*bg)+chr(ch)+reset())

@@ -87,6 +87,7 @@ class TcodWrapper(IOWrapper):
     def create_console(self, size=None):
         # TODO: Check options and resizing behaviour
         size = size or self.console_size
+        # NOTE: new_console returns console with order=="C"
         return self.context.new_console(*size)
 
     def create_panel(self, size=None):
@@ -139,7 +140,8 @@ class MockWrapper(IOWrapper):
 
     def create_console(self, size=None):
         size = size or self.console_size
-        return tcod.console.Console(*size, order="F")
+        # NOTE: Use order="C" to match context.new_console behaviour
+        return tcod.console.Console(*size, order="C")
 
     def create_panel(self, size=None):
         console = self.create_console(size)

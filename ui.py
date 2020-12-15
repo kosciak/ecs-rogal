@@ -311,27 +311,33 @@ class TcodRootPanel(RootPanel):
     def paint(self, colors, position, size=None, *args, **kwargs):
         fg = self.rgb(colors.fg)
         bg = self.rgb(colors.bg)
+        # NOTE: console is in order="C", so we need to do some transpositions
+        j, i = position
+        height, width = size
         if size:
             if fg:
-                self.console.fg[position.x:position.x+size.width, position.y:position.y+size.height] = fg
+                self.console.fg[i:i+width, j:j+height] = fg
             if bg:
-                self.console.bg[position.x:position.x+size.width, position.y:position.y+size.height] = bg
+                self.console.bg[i:i+width, j:j+height] = bg
         else:
             if fg:
-                self.console.fg[position] = fg
+                self.console.fg[i,j] = fg
             if bg:
-                self.console.bg[position] = bg
+                self.console.bg[i,j] = bg
 
     def mask(self, tile, mask, position=None):
         position = position or Position.ZERO
-        width, height = mask.shape
         fg = self.rgb(tile.fg)
         bg = self.rgb(tile.bg)
-        self.console.ch[position.x:position.x+width, position.y:position.y+height][mask] = tile.code_point
+        # NOTE: console is in order="C", so we need to do some transpositions
+        j, i = position
+        mask = mask.transpose()
+        width, height = mask.shape
+        self.console.ch[i:i+width, j:j+height][mask] = tile.code_point
         if fg:
-            self.console.fg[position.x:position.x+width, position.y:position.y+height][mask] = fg
+            self.console.fg[i:i+width, j:j+height][mask] = fg
         if bg:
-            self.console.bg[position.x:position.x+width, position.y:position.y+height][mask] = bg
+            self.console.bg[i:i+width, j:j+height][mask] = bg
 
     def image(self, image, position, *args, **kwargs):
         return self._draw_semigraphics(
