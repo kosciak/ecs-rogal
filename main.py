@@ -8,6 +8,8 @@ from colors.x11 import TANGO_DARK, Color
 from tilesets import TERMINAL_12x12_CP
 from wrappers import TcodWrapper
 import keys
+import game_map
+from renderable import Tile
 
 import tcod
 
@@ -29,10 +31,13 @@ def main():
 
     with wrapper as wrapper:
         root_panel = wrapper.create_panel()
+        level = game_map.generate(root_panel.size*0.75)
+        player = Tile.create('@', fg=15)
         position = root_panel.center
         while True:
             root_panel.clear()
-            root_panel.print('@', position)
+            game_map.render(level, root_panel)
+            root_panel.draw(player, position)
             wrapper.flush(root_panel)
             for event in wrapper.events():
                 # Just print all events, and gracefully quit on closing window
