@@ -36,7 +36,7 @@ class TcodWrapper(IOWrapper):
         resizable=False,
         title=None,
     ):
-        self.size = console_size
+        self.console_size = console_size
         self._palette = palette
         self._tileset = tileset
         self.resizable = resizable
@@ -51,8 +51,8 @@ class TcodWrapper(IOWrapper):
     def context(self):
         if not self.initialized:
             context = tcod.context.new(
-                columns=self.size.width,
-                rows=self.size.height,
+                columns=self.console_size.width,
+                rows=self.console_size.height,
                 title=self.title,
                 tileset=self.tileset,
                 sdl_window_flags=self.resizable and tcod.context.SDL_WINDOW_RESIZABLE
@@ -86,7 +86,7 @@ class TcodWrapper(IOWrapper):
 
     def create_console(self, size=None):
         # TODO: Check options and resizing behaviour
-        size = size or self.size
+        size = size or self.console_size
         return self.context.new_console(*size)
 
     def create_panel(self, size=None):
@@ -109,7 +109,7 @@ class TcodWrapper(IOWrapper):
                 wait = None
             event_gen = tcod.event.wait(wait)
         for event in event_gen:
-            # Intercept WINDOW RESIZE and update self.size?
+            # Intercept WINDOW RESIZE and update self.console_size?
             self.context.convert_event(event)
             yield event
 
@@ -125,7 +125,7 @@ class MockWrapper(IOWrapper):
         console_size,
         palette,
     ):
-        self.size = console_size
+        self.console_size = console_size
         self._palette = palette
 
     @property
@@ -138,7 +138,7 @@ class MockWrapper(IOWrapper):
         self._palette = palette  
 
     def create_console(self, size=None):
-        size = size or self.size
+        size = size or self.console_size
         return tcod.console.Console(*size, order="F")
 
     def create_panel(self, size=None):
@@ -149,11 +149,5 @@ class MockWrapper(IOWrapper):
         if not isinstance(console, tcod.console.Console):
             console = console.console
         import ansi
-        lines = []
-        for row in console.tiles_rgb.transpose():
-            row_txt = []
-            for ch, fg, bg in row:
-                row_txt.append(ansi.fg_rgb(*fg)+ansi.bg_rgb(*bg)+chr(ch)+ansi.reset())
-            lines.append(''.join(row_txt))
-        print('\n'.join(lines))
+        ansi.show_tcod_console(console)
 

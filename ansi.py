@@ -164,3 +164,13 @@ def show_colors_rgb(colors, columns=8):
 def show_color(color):
     print(f'{bg_rgb(*color.rgb)} {color.rgb} {reset()}')
 
+
+def show_tcod_console(console):
+    lines = []
+    for row in console.tiles_rgb.transpose():
+        row_txt = []
+        for ch, fg, bg in row:
+            row_txt.append(fg_rgb(*fg)+bg_rgb(*bg)+chr(ch)+reset())
+        lines.append(''.join(row_txt))
+    print('\n'.join(lines))
+
