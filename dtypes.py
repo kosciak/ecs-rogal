@@ -12,7 +12,7 @@ tile_rgb_dt = np.dtype([
 ])
 
 
-terrain_tile_dt = np.dtype([
+terrain_split_dt = np.dtype([
     ('type',        'B'),
     ('material',    'B'),
 ])

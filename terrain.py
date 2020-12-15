@@ -2,41 +2,15 @@ import collections
 from enum import Enum, IntEnum, IntFlag, auto
 
 
-class TerrainTile(Enum):
-    VOID = (Type.VOID, Material.NONE)
-    CHASM = (Type.CHASM, Material.NONE)
-
-    STONE_FLOOR = (Type.FLOOR, Material.STONE)
-    STONE_WALL = (Type.WALL, Material.STONE)
-
-    ROCK_FLOOR = (Type.FLOOR, Material.ROCK)
-    ROCK_WALL = (Type.WALL, Material.ROCK)
-
-    GROUND_FLOOR = (Type.FLOOR, Material.GROUND) 
-
-    MUD_FLOOR = (Type.FLOOR, Material.MUD)
-
-    DEEP_WATER = (Type.LIQUID, Material.WATER)
-    SHALLOW_WATER = (Type.SHALLOW_LIQUID, Material.WATER)
-
-    LAVA = (Type.LIQUID, Material.LAVA)
-    ACID = (Type.LIQUID, Material.ACID)
-
-    def __init__(self, type, material):
-        self.type = type
-        self.material = material
-
-    @property
-    def id(self):
-        return self.type + (self.material<<8)
-
-
 class Type(IntEnum):
     """General Terrain tile type."""
     VOID = 0
     CHASM = auto()
 
     FLOOR = auto()
+    PATH = auto()
+    ROAD = auto()
+
     WALL = auto()
 
     LIQUID = auto()
@@ -63,18 +37,49 @@ class Material(IntEnum):
     LAVA = auto()
 
 
+class Terrain(Enum):
+    VOID = (Type.VOID, Material.NONE)
+    CHASM = (Type.CHASM, Material.NONE)
+
+    STONE_FLOOR = (Type.FLOOR, Material.STONE)
+    STONE_WALL = (Type.WALL, Material.STONE)
+
+    ROCK_FLOOR = (Type.FLOOR, Material.ROCK)
+    ROCK_WALL = (Type.WALL, Material.ROCK)
+
+    GROUND_FLOOR = (Type.FLOOR, Material.GROUND)
+
+    MUD_FLOOR = (Type.FLOOR, Material.MUD)
+
+    DEEP_WATER = (Type.LIQUID, Material.WATER)
+    SHALLOW_WATER = (Type.SHALLOW_LIQUID, Material.WATER)
+
+    LAVA = (Type.LIQUID, Material.LAVA)
+    ACID = (Type.LIQUID, Material.ACID)
+
+    def __init__(self, type, material):
+        self.type = type
+        self.material = material
+
+    @property
+    def id(self):
+        return self.type + (self.material<<8)
+
+
 class TerrainFlag(IntFlag):
     NONE = 0
 
-    OPAQUE = auto()
+    BLOCK_VISION = auto()
 
     BLOCK_WALKING = auto()
     BLOCK_FLYING = auto()
     BLOCK_SWIMMING = auto()
     BLOCK_ALL_MOVEMENT = BLOCK_WALKING | BLOCK_FLYING | BLOCK_SWIMMING
 
+    #BLOCK_ITEMS = auto() # Blocks item placement?
 
-OPAQUE = {
+
+BLOCK_VISION = {
     Type.WALL,
 }
 
@@ -102,9 +107,9 @@ BLOCK_ALL_MOVEMENT = {
 def get_flags(type, material, variant=None):
     flags = TerrainFlag.NONE
 
-    if type in OPAQUE and \
+    if type in BLOCK_VISION and \
        not material in TRANSPARENT:
-        flags |= TerrainFlag.OPAQUE
+        flags |= TerrainFlag.BLOCK_VISION
 
     if type in BLOCK_ALL_MOVEMENT:
         flags |= TerrainFlag.BLOCK_ALL_MOVEMENT
