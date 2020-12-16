@@ -1,73 +1,50 @@
 import numpy as np
 
-from ecs import Component
+from ecs import Component, Flag, SingleValue
 
 
-class BlocksMovement(Component):
-    __slots__ = ()
+BlocksMovement = Flag('BlocksMovement')
 
-class BlockVisibility(Component):
-    __slots__ = ()
+BlockVisibility = Flag('BlockVisibility')
 
-class Hidden(Component):
-    __slots__ = ()
+Hidden = Flag('Hidden')
 
-class Player(Component):
-    __slots__ = ()
+Player = Flag('Player')
 
+Monster = Flag('Monster')
 
-class Monster(Component):
-    __slots__ = ()
+Item = Flag('Item')
 
+CursedItem = Flag('CursedItem')
 
-class Item(Component):
-    __slots__ = ()
-
-class CursedItem(Component):
-    __slots__ = ()
-
-class UnidentifiedItem(Component):
-    __slots__ = ()
+UnidentifiedItem = Flag('UnidentifiedItem')
 
 
-class Name(Component):
-    __slots__ = ('name', )
-
-    def __init__(self, name):
-        self.name = name
+Name = SingleValue('Name')
 
 
-class Position(Component):
-    __slots__ = ('position', )
-    _attrs_ = ('x', 'y', )
+# TODO: Use both Position and Location (for entities not on current map/level)?
+Position = SingleValue('Position')
 
-    def __init__(self, position):
+class Location(Component):
+    __slots__ = ('map_id', 'position', )
+
+    def __init__(self, map_id, position):
+        self.map_id = map_id
         self.position = position
-
-    @property
-    def x(self):
-        return self.position[0]
-
-    @property
-    def y(self):
-        return self.position[1]
-
-# TODO: Position on different level/depth/map, not currentl one
 
 
 class Renderable(Component):
-    __slots__ = ('character', 'fg_color', 'bg_color', 'render_order', )
+    __slots__ = ('tile', 'render_order', )
 
-    def __init__(self, character, fg_color, *, bg_color=None, render_order):
-        self.character = character
-        self.fg_color = fg_color
-        self.bg_color = bg_color
+    def __init__(self, tile, render_order):
+        self.tile = tile
         self.render_order = render_order
 
 
 class Viewshed(Component):
     __slots__ = ('view_range', 'visible_tiles', 'needs_update', )
-    _attrs_ = ('view_range', )
+    params = ('view_range', )
 
     def __init__(self, view_range):
         self.view_range = view_range
@@ -96,6 +73,7 @@ class Pool:
 
 
 # Action intentions
+# TODO: Rework as SingleValue?
 
 class WantsToMove(Component):
     __slots__ = ()
