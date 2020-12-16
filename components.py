@@ -75,8 +75,7 @@ class Pool:
 # Action intentions
 # TODO: Rework as SingleValue?
 
-class WantsToMove(Component):
-    __slots__ = ()
+WantsToMove = SingleValue('WantsToMove')
 
 class WantsToMelee(Component):
     __slots__ = ()
