@@ -44,12 +44,12 @@ def generate(size):
 
 def render(level, panel):
     from terrain import Terrain
-    from renderable import Tile
     from geometry import Position
+    import tiles
 
     tiles = {
-        Terrain.STONE_WALL.id:     Tile.create('#', fg=3),
-        Terrain.STONE_FLOOR.id:    Tile.create('.', fg=7),
+        Terrain.STONE_WALL.id:     tiles.STONE_WALL,
+        Terrain.STONE_FLOOR.id:    tiles.STONE_FLOOR,
     }
 
     for tile_id in np.unique(level.terrain):

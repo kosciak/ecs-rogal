@@ -3,15 +3,20 @@
 import logging
 
 import logs
+
 from geometry import Size
 from colors.x11 import Color, TANGO_DARK
 from tilesets import TERMINAL_12x12_CP
+
 from wrappers import TcodWrapper
 import keys
+
 import game_map
-from renderable import Tile, RenderOrder
+
 from ecs import ECS
 import components
+import entities
+import systems
 
 import tcod
 
@@ -21,32 +26,6 @@ log = logging.getLogger('rogal.main')
 
 CONSOLE_SIZE = Size(80, 50)
 
-
-# TODO: Move to systems module
-def movement_system_run(ecs, level):
-    # Movement system
-    locations = ecs.manage(components.Location)
-    movements = ecs.manage(components.WantsToMove)
-    for location, direction in ecs.join(locations, movements):
-        location.position = location.position.move(direction)
-        # TODO: Add some HasMoved to flag to entity?
-    movements.clear()
-
-
-# TODO: Move to entities module
-def create_player(ecs):
-    return ecs.create(
-        components.Player(),
-        components.Renderable(Tile.create('@', fg=15), RenderOrder.ACTORS),
-        components.Viewshed(view_range=8),
-    )
-
-
-# TODO: Move to entities module
-def spawn_entity(ecs, entity, level, position):
-    locations = ecs.manage(components.Location)
-    location = components.Location(level.id, position)
-    locations.insert(entity, location)
 
 
 def render(wrapper, root_panel, ecs, level):
@@ -92,10 +71,13 @@ def loop(wrapper, root_panel, ecs, level, player):
     while True:
         # Render
         render(wrapper, root_panel, ecs, level)
+
         # Handle user input
         handle_events(wrapper, ecs, level, player)
+
+        # Run systems
         # Apply movements
-        movement_system_run(ecs, level)
+        systems.movement_system_run(ecs, level)
 
 
 def main():
@@ -113,8 +95,8 @@ def main():
         root_panel = wrapper.create_panel()
 
         level = game_map.generate(root_panel.size*0.75)
-        player = create_player(ecs)
-        spawn_entity(ecs, player, level, root_panel.center)
+        player = entities.create_player(ecs)
+        entities.spawn(ecs, player, level, root_panel.center)
 
         loop(wrapper, root_panel, ecs, level, player)
 
