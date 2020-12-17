@@ -57,13 +57,10 @@ class Terrain(Enum):
     LAVA = (Type.LIQUID, Material.LAVA)
     ACID = (Type.LIQUID, Material.ACID)
 
-    def __init__(self, type, material):
-        self.type = type
+    def __init__(self, terrain_type, material):
+        self.type = terrain_type
         self.material = material
-
-    @property
-    def id(self):
-        return self.type + (self.material<<8)
+        self.id = self.type + (self.material<<8)
 
 
 class TerrainFlag(IntFlag):
