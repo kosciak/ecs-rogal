@@ -28,11 +28,6 @@ class AbstractTilesGrid(WithSizeMixin):
 
     __slots__ = ()
 
-    @property
-    def center(self):
-        """Return center Position relative to self!"""
-        return Position(int(self.width/2), int(self.height/2))
-
     def empty_tile(self, colors):
         fg = (colors and colors.fg) or DEFAULT_FG
         bg = (colors and colors.bg) or DEFAULT_bG
@@ -71,7 +66,7 @@ class AbstractTilesGrid(WithSizeMixin):
         """
         raise NotImplementedError()
 
-    def mask(self, tile, mask, position=None):
+    def mask(self, tile, mask, position=None, *args, **kwargs):
         """Draw Tile on positions where mask is True, startig on position."""
         raise NotImplementedError()
 
@@ -96,6 +91,11 @@ class Panel(AbstractTilesGrid, Rectangle):
         #       offset is relative to root
         super().__init__(offset, size)
         self.root = root
+
+    @property
+    def center(self):
+        """Return center Position relative to self!"""
+        return Position(int(self.width/2), int(self.height/2))
 
     def offset(self, position, root=None):
         """Return Position relative to root.
@@ -135,10 +135,10 @@ class Panel(AbstractTilesGrid, Rectangle):
         """
         return self.root.paint(colors, self.offset(position), size=size, *args, **kwargs)
 
-    def mask(self, tile, mask, position=None):
+    def mask(self, tile, mask, position=None, *args, **kwargs):
         """Draw Tile on positions where mask is True, startig on position."""
         position = position or Position.ZERO
-        return self.root.mask(colors, self.offset(position), size=size, *args, **kwargs)
+        return self.root.mask(tile, mask, self.offset(position), *args, **kwargs)
 
     def image(self, image, position=None, *args, **kwargs):
         """Draw image on given position."""

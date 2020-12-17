@@ -40,6 +40,11 @@ class WithSizeMixin:
         return self.size.height
 
     @property
+    def center(self):
+        """Return center Position."""
+        return Position(int(self.width/2), int(self.height/2))
+
+    @property
     def area(self):
         return self.size.area
 
