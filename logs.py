@@ -22,9 +22,8 @@ class ColorLogger(logging.Logger):
         # NOTE: color value might be 0, so use None for checking if set or not
         if color is None:
             color = DEFAULT_LEVEL_COLORS.get(level)
-        if color is not None:
-            extra = extra or {}
-            extra['fg'] = color
+        extra = extra or {}
+        extra['fg'] = color
         super()._log(level, msg, args, exc_info=exc_info, extra=extra, stack_info=stack_info)
 
 
