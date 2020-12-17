@@ -41,6 +41,9 @@ class Renderable(Component):
         self.tile = tile
         self.render_order = render_order
 
+    def __lt__(self, other):
+        return self.render_order < other.render_order
+
 
 class Viewshed(Component):
     __slots__ = ('view_range', 'visible_tiles', 'needs_update', )
