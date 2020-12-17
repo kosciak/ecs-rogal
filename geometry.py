@@ -45,14 +45,14 @@ class WithSizeMixin:
 
 
 class Direction(Enum):
-    N = (0, 1)
-    NE = (1, 1)
+    N = (0, -1)
+    NE = (1, -1)
     E = (1, 0)
-    SE = (1, -1)
-    S = (0, -1)
-    SW = (-1, -1)
+    SE = (1, 1)
+    S = (0, 1)
+    SW = (-1, 1)
     W = (-1, 0)
-    NW = (-1, 1)
+    NW = (-1, -1)
 
     def __init__(self, dx, dy):
         self.dx = dx
@@ -60,7 +60,11 @@ class Direction(Enum):
 
     @property
     def is_diagonal(self):
-        return all([self.dx, self.dy])
+        return all(self.value)
+
+    @property
+    def is_cardinal(self):
+        return not self.is_diagonal
 
     def __repr__(self):
         return f'<Direction dx={self.dx}, dy={self.dy}>'
