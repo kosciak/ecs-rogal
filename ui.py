@@ -302,11 +302,11 @@ class TcodRootPanel(RootPanel):
         bg = self.rgb(tile.bg)
         if size:
             return self._draw_rect(
-                position.x, position.y, size.width, size.height, tile.code_point, 
+                position.x, position.y, size.width, size.height, tile.ch, 
                 fg=fg, bg=bg, *args, **kwargs)
         else:
             return self._print(
-                position.x, position.y, tile.ch, fg=fg, bg=bg, *args, **kwargs)
+                position.x, position.y, tile.char, fg=fg, bg=bg, *args, **kwargs)
 
     def paint(self, colors, position, size=None, *args, **kwargs):
         fg = self.rgb(colors.fg)
@@ -333,7 +333,7 @@ class TcodRootPanel(RootPanel):
         j, i = position
         mask = mask.transpose()
         width, height = mask.shape
-        self.console.ch[i:i+width, j:j+height][mask] = tile.code_point
+        self.console.ch[i:i+width, j:j+height][mask] = tile.ch
         if fg:
             self.console.fg[i:i+width, j:j+height][mask] = fg
         if bg:

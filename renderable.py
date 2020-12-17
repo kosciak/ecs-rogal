@@ -19,14 +19,14 @@ class Colors(collections.namedtuple(
         return Colors(self.bg, self.fg)
 
 
-class Character:
+class Glyph:
 
     __slots__ = ('code_point', )
 
     __INSTANCES = {}
 
     def __new__(cls, code_point):
-        if isinstance(code_point, Character):
+        if isinstance(code_point, Glyph):
             return code_point
         if isinstance(code_point, str):
             code_point = ord(code_point)
@@ -38,7 +38,7 @@ class Character:
         return instance
 
     @property
-    def ch(self):
+    def char(self):
         return chr(self.code_point)
 
     def __eq__(self, other):
@@ -48,22 +48,22 @@ class Character:
         return self.ch
 
     def __repr__(self):
-        return f'<Character {self.code_point} = "{self.ch}">'
+        return f'<Glyph {self.code_point} = "{self.char}">'
 
 
 class Tile(collections.namedtuple(
     'Tile', [
-        'character',
+        'glyph',
         'colors',
     ])):
 
     @property
-    def ch(self):
-        return self.character.ch
+    def char(self):
+        return self.glyph.char
 
     @property
-    def code_point(self):
-        return self.character.code_point
+    def ch(self):
+        return self.glyph.code_point
 
     @property
     def fg(self):
@@ -75,7 +75,7 @@ class Tile(collections.namedtuple(
 
     @staticmethod
     def create(ch, fg, bg=None):
-        return Tile(Character(ch), Colors(fg, bg))
+        return Tile(Glyph(ch), Colors(fg, bg))
 
 
 class RenderOrder(IntEnum):
@@ -83,7 +83,7 @@ class RenderOrder(IntEnum):
     TERRAIN = auto()
     # Terrian foliage (grass, bushes, flowers, etc)
     FOLIAGE = auto()
-    # Props - furniture, statues, doors, stairs, etc
+    # Props - furniture, statues, altars, doors, stairs, etc
     PROPS = auto()
     # Items on floor
     ITEMS = auto()
