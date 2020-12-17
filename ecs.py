@@ -118,7 +118,29 @@ class Entity:
         return self._components.values()
 
 
-class SingleComponentIterator:
+class EntitiesIterator:
+
+    __slots__ = ('managers', )
+
+    def __init__(self, *managers):
+        self.managers = managers
+
+    def __iter__(self):
+        if len(self.managers) == 1 and \
+           isinstance(self.managers[0], EntitiesManager):
+            # NOTE: Iterate through all entities, it's the only one manager
+            entities = self.managers[0].entities
+        else:
+            entities = set.intersection(*(
+                manager.entities
+                for manager in self.managers
+                # NOTE: No need to intersect with ALL entitites
+                if not isinstance(manager, EntitiesManager)
+            ))
+        yield from entities
+
+
+class ComponentIterator:
 
     __slots__ = ('component_manager', )
 
@@ -128,36 +150,42 @@ class SingleComponentIterator:
     def __iter__(self):
         # TODO: Check if removing entity while iterating won't break things!
         for entity in self.component_manager.entities:
-            yield entity, entity.get(self.component_manager.component_type)
+            yield component_manager.get(entity)
 
 
-class MultiComponentsIterator:
+class JoinIterator:
 
-    __slots__ = ('component_managers', )
+    __slots__ = ('managers', )
 
-    def __init__(self, *component_managers):
-        self.component_managers = component_managers
+    def __init__(self, *managers):
+        self.managers = managers
 
     def __iter__(self):
-        entities = set.intersection(*[
-            component_manager.entities
-            for component_manager in self.component_managers
-        ])
+        entities = EntitiesIterator(*self.managers)
         # TODO: Consider filtering out FlagComponent no need to have element that is always True
-        component_managers = self.component_managers
-        #component_managers = (
-        #    component_manager for component_manager in self.component_managers
-        #    if not issubclass(component_manager.component_type, FlagComponent)
-        #)
         for entity in entities:
-            components = [
-                entity.get(component_manager.component_type)
-                for component_manager in component_managers
+            values = [
+                manager.get(entity)
+                for manager in self.managers
             ]
-            yield (entity, *components)
+            yield values
 
 
-class ComponentManager:
+class JoinableManager:
+
+    @property
+    def entities(self):
+        return {}
+
+    def get(self, entity):
+        raise NotImplementedError()
+
+    # TODO: Do I really need it at Manager level? Maybe ecs.join(*managers) should be enough?
+    def join(self, *managers):
+        yield from JoinIterator(self, *managers)
+
+
+class ComponentManager(JoinableManager):
 
     __slots__ = ('_entities', 'component_type', )
 
@@ -195,26 +223,29 @@ class ComponentManager:
         return self._entities
 
     def iter(self):
-        yield from SingleComponentIterator(self)
+        yield from ComponentIterator(self)
 
     def __iter__(self):
         yield from self.iter()
-
-    def join(self, *component_managers):
-        component_managers = [self, *component_managers]
-        yield from MultiComponentsIterator(*component_managers)
-
-    # TODO: filter(self, *component_managers) BUT not returning self.component_type
 
     def __repr__(self):
         return f'<{self.__class__.__name__}({self.component_type.__name__})>'
 
 
-class EntitiesManager:
+class EntitiesManager(JoinableManager):
 
     def __init__(self):
         self._entities = {} # {entity.id: entity, }
         self._component_managers = {} # {component_type: ComponentManager(component_type), }
+
+    def manage(self, component_type):
+        if isinstance(component_type, Component):
+            component_type = type(component_type)
+        component_manager = self._component_managers.get(component_type)
+        if not component_manager:
+            component_manager = ComponentManager(component_type)
+            self._component_managers[component_type] = component_manager
+        return self._component_managers[component_type]
 
     def create(self, *components, entity_id=None):
         entity_id = entity_id or uuid.uuid4()
@@ -226,6 +257,8 @@ class EntitiesManager:
         return entity
 
     def get(self, entity_id):
+        if isinstance(entity_id, Entity):
+            entity_id = entity_id.id
         return self._entities.get(entity_id)
 
     def remove(self, *entities):
@@ -235,26 +268,36 @@ class EntitiesManager:
                 component_manager.remove(entity, component_type)
             self._entities.pop(entity.id, None)
 
-    def manage(self, component_type):
-        if isinstance(component_type, Component):
-            component_type = type(component_type)
-        component_manager = self._component_managers.get(component_type)
-        if not component_manager:
-            component_manager = ComponentManager(component_type)
-            self._component_managers[component_type] = component_manager
-        return self._component_managers[component_type]
+    @property
+    def entities(self):
+        return self._entities.values()
+
+    def __iter__(self):
+        yield from self._entities.values()
 
     def filter(self, *component_types):
-        component_types = (
-            isinstance(component_type, Component) and type(component_type) or component_type
-            for component_type in component_types
-        )
         component_managers = [
-            self._component_managers[component_type] 
+            self.manage(component_type)
             for component_type in component_types
         ]
-        if len(component_managers) == 1:
-            yield from SingleComponentIterator(component_managers[0])
-        else:
-            yield from MultiComponentsIterator(*component_managers)
+        yield from EntitiesIterator(*component_managers)
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__}>'
+
+
+class ECS:
+
+    def __init__(self):
+        self.entities = EntitiesManager()
+        # TODO: self.systems = SystemsManager()
+
+    def create(self, *components, entity_id=None):
+        return self.entities.create(*components, entity_id=entity_id)
+
+    def manage(self, component_type):
+        return self.entities.manage(component_type)
+
+    def join(self, *managers):
+        yield from JoinIterator(*managers)
 
