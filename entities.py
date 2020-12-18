@@ -9,7 +9,16 @@ import tiles
 def create_player(ecs):
     return ecs.create(
         components.Player(),
+        components.Name('Player'),
         components.Renderable(tiles.PLAYER, RenderOrder.ACTORS),
+        components.Viewshed(view_range=8),
+    )
+
+def create_monster(ecs):
+    return ecs.create(
+        components.Monster(),
+        components.Name('Generic monster'),
+        components.Renderable(tiles.MONSTER, RenderOrder.ACTORS),
         components.Viewshed(view_range=8),
     )
 
