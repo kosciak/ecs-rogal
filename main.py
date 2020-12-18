@@ -27,6 +27,9 @@ log = logging.getLogger('rogal.main')
 
 CONSOLE_SIZE = Size(80, 50)
 
+CAMERA_SIZE = Size(10, 10)
+LEVEL_SIZE = Size(12,8)
+
 
 def render_message_log(panel):
     from renderable import Colors
@@ -36,21 +39,67 @@ def render_message_log(panel):
         panel.print(msg.message, Position(1, panel.height-offset), colors=Colors(fg=msg.fg))
 
 
-def render(wrapper, root_panel, ecs, level):
-    root_panel.clear()
-    camera, message_log = root_panel.split(bottom=5)
+def render_camera(panel, ecs, level, player):
+    import numpy as np
+    from terrain import Terrain
+    from geometry import Position, Rectangle
+    import tiles
 
-    render_message_log(message_log)
+    player_position = ecs.manage(components.Location).get(player).position
 
-    #### Camera
-    # Rendering terrain
-    game_map.render(level, camera)
+    tiles = {
+        Terrain.STONE_WALL.id:     tiles.STONE_WALL,
+        Terrain.STONE_FLOOR.id:    tiles.STONE_FLOOR,
+    }
+
+    log.debug('--- Rendering level ---')
+    log.debug(f'Panel           : {panel}')
+    log.debug(f'Level           : {level.size}')
+    centers_offset = panel.center - level.center
+    render_offset = Position(
+        min((panel.width-level.width)/2, centers_offset.x),
+        min((panel.height-level.height)/2, centers_offset.y),
+    )
+    log.debug(f'Render offset   : {render_offset}')
+
+    level_rectangle = Rectangle(panel.position+render_offset, level.size)
+    log.debug(f'Level rect      : {level_rectangle}')
+    #intersection = panel & level_rectangle
+    intersection = level_rectangle & panel
+    log.debug(f'Intersection    : {intersection}')
+
+    # Render terrain
+    slice_x = slice(abs(min(0, render_offset.x)), min(level.width, level.width+render_offset.x))
+    slice_y = slice(abs(min(0, render_offset.y)), min(level.height, level.height+render_offset.y))
+    print('???', slice_x, slice_y)
+    terrain = level.terrain[slice_x, slice_y]
+    print('???', terrain.shape)
+    mask_offset = Position(max(0, render_offset.x), max(0, render_offset.y))
+    for tile_id in np.unique(terrain):
+        mask = terrain == tile_id
+        tile = tiles.get(tile_id)
+        panel.mask(tile, mask, mask_offset)
 
     # Render all renderable entities
     locations = ecs.manage(components.Location)
     renderables = ecs.manage(components.Renderable)
     for renderable, location in sorted(ecs.join(renderables, locations)):
-        camera.draw(renderable.tile, location.position)
+        render_position = render_offset + location.position
+        if not panel.position+render_position in panel:
+            continue
+        panel.draw(renderable.tile, render_position)
+
+
+def render(wrapper, root_panel, ecs, level, player):
+    root_panel.clear()
+    camera, message_log = root_panel.split(bottom=5)
+    camera_position = Position(camera.center.x-CAMERA_SIZE.width/2, camera.center.y-CAMERA_SIZE.height/2)
+    camera = root_panel.create_panel(camera_position, CAMERA_SIZE)
+
+    render_message_log(message_log)
+
+    render_camera(camera, ecs, level, player)
+    root_panel._draw_frame(camera.x-1, camera.y-1, camera.width+2, camera.height+2, 'mapcam', clear=False)
 
     # Show rendered panel
     wrapper.flush(root_panel)
@@ -82,7 +131,7 @@ def handle_events(wrapper, ecs, level, player):
 def loop(wrapper, root_panel, ecs, level, player):
     while True:
         # Render
-        render(wrapper, root_panel, ecs, level)
+        render(wrapper, root_panel, ecs, level, player)
 
         # Handle user input
         handle_events(wrapper, ecs, level, player)
@@ -106,7 +155,9 @@ def main():
     with wrapper as wrapper:
         root_panel = wrapper.create_panel()
 
-        level = game_map.generate(root_panel.size*0.75)
+        #level = game_map.generate(root_panel.size*0.75)
+        #level = game_map.generate(root_panel.size*1.025)
+        level = game_map.generate(LEVEL_SIZE)
         player = entities.create_player(ecs)
         entities.spawn(ecs, player, level, level.center)
 

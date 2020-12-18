@@ -41,21 +41,3 @@ def generate(size):
 
     return level
 
-
-def render(level, panel):
-    from terrain import Terrain
-    from geometry import Position
-    import tiles
-
-    tiles = {
-        Terrain.STONE_WALL.id:     tiles.STONE_WALL,
-        Terrain.STONE_FLOOR.id:    tiles.STONE_FLOOR,
-    }
-
-    for tile_id in np.unique(level.terrain):
-        mask = level.terrain == tile_id
-        tile = tiles.get(tile_id)
-        center = panel.center
-        position = Position(center.x-level.width/2, center.y-level.height/2)
-        panel.mask(tile, mask, position)
-

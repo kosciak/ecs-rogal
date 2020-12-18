@@ -420,6 +420,7 @@ class TcodRootPanel(RootPanel):
             bg: Optional[Tuple[int, int, int]] = None, 
             bg_blend: int = 1)
         """
+        title = title or ''
         return self.console.draw_frame(
             x, y, width, height, title=title, clear=clear, fg=fg, bg=bg, *args, **kwargs)
 
