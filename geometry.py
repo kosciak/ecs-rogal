@@ -42,7 +42,7 @@ class WithSizeMixin:
     @property
     def center(self):
         """Return center Position."""
-        return Position(int(self.width/2), int(self.height/2))
+        return Position(self.width/2, self.height/2)
 
     @property
     def area(self):
@@ -86,7 +86,12 @@ class Position(collections.namedtuple(
     def __new__(cls, x, y):
         return super().__new__(cls, int(x), int(y))
 
+    def offset(self, other):
+        """Return position of self in relation to other."""
+        return self - other
+
     def distance(self, other):
+        """Return Euclidean distance between two Positions."""
         if not other:
             return None
         x = self.x - other.x
@@ -150,7 +155,7 @@ class Rectangle(WithPositionMixin, WithSizeMixin):
     @property
     def center(self):
         """Return center Position."""
-        return Position(int(self.x+self.width/2), int(self.y+self.height/2))
+        return Position(self.x+self.width//2, self.y+self.height//2)
 
     def __iter__(self):
         """Iterate Positions inside this Rectangle."""

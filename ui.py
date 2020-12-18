@@ -95,7 +95,7 @@ class Panel(AbstractTilesGrid, Rectangle):
     @property
     def center(self):
         """Return center Position relative to self!"""
-        return Position(int(self.width/2), int(self.height/2))
+        return Position(self.width/2, self.height/2)
 
     def offset(self, position, root=None):
         """Return Position relative to root.
@@ -114,6 +114,12 @@ class Panel(AbstractTilesGrid, Rectangle):
 
     def create_panel(self, position, size):
         return self.root.create_panel(self.offset(position), size)
+
+    def framed(self, title=None):
+        """Draw generic frame (with optional title) and return panel inside the frame."""
+        self.root._draw_frame(self.position.x, self.position.y, self.width, self.height,
+                              title=title, clear=False)
+        return self.create_panel(Position(1,1), Size(self.width-2, self.height-2))
 
     def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
         """Print text on given position using colors."""
@@ -313,8 +319,8 @@ class TcodRootPanel(RootPanel):
         bg = self.rgb(colors.bg)
         # NOTE: console is in order="C", so we need to do some transpositions
         j, i = position
-        height, width = size
         if size:
+            height, width = size
             if fg:
                 self.console.fg[i:i+width, j:j+height] = fg
             if bg:
