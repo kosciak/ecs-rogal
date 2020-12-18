@@ -1,5 +1,6 @@
 from renderable import Tile
 from colors.x11 import Color
+from characters import Glyph
 
 from terrain import Terrain
 
@@ -8,6 +9,8 @@ from terrain import Terrain
 
 
 # Terrain
+
+BOUNDARY =      Tile.create(Glyph.BLOCK1, fg=Color.BASE_RED)
 
 STONE_WALL =    Tile.create('#', fg=Color.BASE_YELLOW)
 STONE_FLOOR =   Tile.create('.', fg=Color.BASE_WHITE)

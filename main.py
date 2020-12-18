@@ -29,6 +29,8 @@ CONSOLE_SIZE = Size(80, 50)
 
 SCROLLABLE_CAMERA = True
 
+SHOW_BOUNDARIES = True
+
 CAMERA_SIZE = Size(12, 12)
 LEVEL_SIZE = Size(14,9)
 
@@ -41,7 +43,9 @@ def render_message_log(panel):
         panel.print(msg.message, Position(0, panel.height-offset), colors=Colors(fg=msg.fg))
 
 
-def render_camera(panel, ecs, level, player, scrollable=SCROLLABLE_CAMERA):
+def render_camera(panel, ecs, level, player, 
+        scrollable=SCROLLABLE_CAMERA, 
+        show_boundaries=SHOW_BOUNDARIES):
     """Render level contets viewed through (scrollable) camera."""
     import numpy as np
     from geometry import Position, Rectangle
@@ -60,6 +64,21 @@ def render_camera(panel, ecs, level, player, scrollable=SCROLLABLE_CAMERA):
         Position(cam_center.x-panel.width//2, cam_center.y-panel.height//2),
         panel.size
     )
+
+    # Draw BOUNDARIES of the map/level
+    if show_boundaries:
+        boundaries = set()
+        for boundary in [
+            Rectangle(Position(-1,-1), Size(level.width+2, 1)),
+            Rectangle(Position(-1,level.height), Size(level.width+2, 1)),
+            Rectangle(Position(-1, 0), Size(1, level.height)),
+            Rectangle(Position(level.width, 0), Size(1, level.height)),
+        ]:
+            intersection = boundary & camera
+            if intersection:
+                boundaries.update(intersection.positions)
+        for position in boundaries:
+            panel.draw(tiles.BOUNDARY, position.offset(camera.position))
 
     # Part of level that is covered by camera
     cam_coverage = camera & Rectangle(Position.ZERO, level.size)

@@ -1,5 +1,5 @@
 
-class Char:
+class Glyph:
     # Single line walls:
     HLINE = 9472            # ─
     VLINE = 9474            # │
