@@ -159,8 +159,8 @@ class Rectangle(WithPositionMixin, WithSizeMixin):
 
     def __iter__(self):
         """Iterate Positions inside this Rectangle."""
-        for y in range(self.y, self.y2+1):
-            for x in range(self.x, self.x2+1):
+        for y in range(self.y, self.y2):
+            for x in range(self.x, self.x2):
                 yield Position(x, y)
 
     @property
@@ -172,8 +172,8 @@ class Rectangle(WithPositionMixin, WithSizeMixin):
         """Return True if given Position is inside this Rectangle."""
         if not position:
             return False
-        return (self.x <= position.x <= self.x2 and
-                self.y <= position.y <= self.y2)
+        return (self.x <= position.x < self.x2 and
+                self.y <= position.y < self.y2)
 
     def __contains__(self, position):
         return self.is_inside(position)
