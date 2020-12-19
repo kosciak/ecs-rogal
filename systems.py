@@ -1,4 +1,5 @@
 import components
+from terrain import TerrainFlag
 
 import numpy as np
 
@@ -38,10 +39,17 @@ def visibility_system_run(ecs, level):
             # No need to recalculate
             continue
 
-        transparency = level.terrain > 0 # TODO: Use level.flags
+        transparency = level.flags & TerrainFlag.BLOCK_VISION == 0
         pov = location.position
         fov = tcod.map.compute_fov(
-            transparency, pov=pov, radius=viewshed.view_range, light_walls=True
+            transparency, pov=pov, 
+            radius=viewshed.view_range, 
+            light_walls=True,
+            #algorithm=tcod.FOV_SHADOW,
+            #algorithm=tcod.FOV_DIAMOND,
+            #algorithm=tcod.FOV_RESTRICTIVE,
+            #algorithm=tcod.FOV_PERMISSIVE(1),
+            algorithm=tcod.FOV_SYMMETRIC_SHADOWCAST,
         )
 
         viewshed.update(fov)

@@ -11,7 +11,7 @@ def create_player(ecs):
         components.Player(),
         components.Name('Player'),
         components.Renderable(tiles.PLAYER, RenderOrder.ACTORS),
-        components.Viewshed(view_range=8),
+        components.Viewshed(view_range=12),
     )
 
 def create_monster(ecs):
@@ -19,7 +19,7 @@ def create_monster(ecs):
         components.Monster(),
         components.Name('Generic monster'),
         components.Renderable(tiles.MONSTER, RenderOrder.ACTORS),
-        components.Viewshed(view_range=8),
+        components.Viewshed(view_range=12),
     )
 
 

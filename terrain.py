@@ -63,6 +63,12 @@ class Terrain(Enum):
         self.id = self.type + (self.material<<8)
 
 
+TERRAIN_BY_ID = {
+    terrain.id: terrain
+    for terrain in Terrain
+}
+
+
 class TerrainFlag(IntFlag):
     NONE = 0
 
@@ -101,18 +107,21 @@ BLOCK_ALL_MOVEMENT = {
 
 
 
-def get_flags(type, material, variant=None):
+def get_flags(terrain):
+    if not terrain in Terrain:
+        terrain = TERRAIN_BY_ID.get(terrain)
+
     flags = TerrainFlag.NONE
 
-    if type in BLOCK_VISION and \
-       not material in TRANSPARENT:
+    if terrain.type in BLOCK_VISION and \
+       not terrain.material in TRANSPARENT:
         flags |= TerrainFlag.BLOCK_VISION
 
-    if type in BLOCK_ALL_MOVEMENT:
+    if terrain.type in BLOCK_ALL_MOVEMENT:
         flags |= TerrainFlag.BLOCK_ALL_MOVEMENT
-    if not type in ALLOW_SWIMMING:
+    if not terrain.type in ALLOW_SWIMMING:
         flags |= TerrainFlag.BLOCK_SWIMMING
-    if type in BLOCK_WALKING:
+    if terrain.type in BLOCK_WALKING:
         flags |= TerrainFlag.BLOCK_WALKING
 
     return flags

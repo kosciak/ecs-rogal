@@ -219,6 +219,5 @@ class Rectangle(WithPositionMixin, WithSizeMixin):
         return self.position == other.position and self.size == other.size
 
     def __repr__(self):
-        return '<Rectangle x=%s, y=%s, width=%s, height=%s, x2=%s, y2=%s>' % \
-               (self.x, self.y, self.width, self.height, self.x2, self.y2)
+        return f'<{self.__class__.__name__} x={self.x}, y={self.y}, width={self.width}, height={self.height}, x2={self.x2}, y2={self.y2}>'
 

@@ -31,7 +31,7 @@ PALETTE = TANGO_DARK
 CONSOLE_SIZE = Size(80, 50)
 
 CAMERA_SIZE = Size(12, 12)
-LEVEL_SIZE = Size(16,16)
+LEVEL_SIZE = Size(20,20)
 
 
 def render(wrapper, root_panel, ecs, level, player):
