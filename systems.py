@@ -1,5 +1,5 @@
 import components
-from terrain import TerrainFlag
+from flags import Flag
 
 import numpy as np
 
@@ -39,7 +39,7 @@ def visibility_system_run(ecs, level):
             # No need to recalculate
             continue
 
-        transparency = level.flags & TerrainFlag.BLOCK_VISION == 0
+        transparency = level.flags & Flag.BLOCK_VISION == 0
         pov = location.position
         fov = tcod.map.compute_fov(
             transparency, pov=pov, 

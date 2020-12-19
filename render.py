@@ -104,7 +104,7 @@ def render_camera(panel, ecs, level, player,
     # Draw all renderable ENTITIES, in order described by Renderable.render_order
     locations = ecs.manage(components.Location)
     renderables = ecs.manage(components.Renderable)
-    for renderable, location in sorted(ecs.join(renderables, locations)):
+    for location, renderable in sorted(ecs.join(locations, renderables)):
         if not location.map_id == level.id:
             # Not on the map/level we are rendering, skip!
             continue

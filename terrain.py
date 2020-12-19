@@ -1,5 +1,6 @@
 import collections
 from enum import Enum, IntEnum, IntFlag, auto
+from flags import Flag
 
 
 class Type(IntEnum):
@@ -69,19 +70,6 @@ TERRAIN_BY_ID = {
 }
 
 
-class TerrainFlag(IntFlag):
-    NONE = 0
-
-    BLOCK_VISION = auto()
-
-    BLOCK_WALKING = auto()
-    BLOCK_FLYING = auto()
-    BLOCK_SWIMMING = auto()
-    BLOCK_ALL_MOVEMENT = BLOCK_WALKING | BLOCK_FLYING | BLOCK_SWIMMING
-
-    #BLOCK_ITEMS = auto() # Blocks item placement?
-
-
 BLOCK_VISION = {
     Type.WALL,
 }
@@ -111,18 +99,18 @@ def get_flags(terrain):
     if not terrain in Terrain:
         terrain = TERRAIN_BY_ID.get(terrain)
 
-    flags = TerrainFlag.NONE
+    flags = Flag.NONE
 
     if terrain.type in BLOCK_VISION and \
        not terrain.material in TRANSPARENT:
-        flags |= TerrainFlag.BLOCK_VISION
+        flags |= Flag.BLOCK_VISION
 
     if terrain.type in BLOCK_ALL_MOVEMENT:
-        flags |= TerrainFlag.BLOCK_ALL_MOVEMENT
+        flags |= Flag.BLOCK_ALL_MOVEMENT
     if not terrain.type in ALLOW_SWIMMING:
-        flags |= TerrainFlag.BLOCK_SWIMMING
+        flags |= Flag.BLOCK_SWIMMING
     if terrain.type in BLOCK_WALKING:
-        flags |= TerrainFlag.BLOCK_WALKING
+        flags |= Flag.BLOCK_WALKING
 
     return flags
 
