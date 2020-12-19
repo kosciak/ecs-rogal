@@ -3,53 +3,10 @@ from enum import Enum
 import math
 
 
-class Size(collections.namedtuple(
-    'Size', [
-        'width', 
-        'height',
-    ])):
-
-    __slots__ = ()
-
-    def __new__(cls, width, height):
-        return super().__new__(cls, int(width), int(height))
-
-    @property
-    def area(self):
-        """Calculate the area of a rectangle of this size."""
-        return self.width * self.height
-
-    def __mul__(self, factor):
-        """Resize by factor value."""
-        return Size(self.width*factor, self.height*factor)
-
-    def __repr__(self):
-        return f'<Size width={self.width}, height={self.height}>'
-
-
-class WithSizeMixin:
-
-    __slots__ = ()
-
-    @property
-    def width(self):
-        return self.size.width
-
-    @property
-    def height(self):
-        return self.size.height
-
-    @property
-    def center(self):
-        """Return center Position."""
-        return Position(self.width/2, self.height/2)
-
-    @property
-    def area(self):
-        return self.size.area
-
-
 class Direction(Enum):
+
+    """Direction on 2D plane."""
+
     N = (0, -1)
     NE = (1, -1)
     E = (1, 0)
@@ -81,6 +38,8 @@ class Position(collections.namedtuple(
         'y',
     ])):
 
+    """Position on 2D plane."""
+
     __slots__ = ()
 
     def __new__(cls, x, y):
@@ -90,15 +49,14 @@ class Position(collections.namedtuple(
         """Return position of self in relation to other."""
         return self - other
 
-    def distance(self, other):
-        """Return Euclidean distance between two Positions."""
+    def distance(self, other, distance_fn=euclidean_distance):
+        """Return distance between two Positions."""
         if not other:
             return None
-        x = self.x - other.x
-        y = self.x - other.y
-        return math.hypot(x, y)
+        return distance_fn(self, other)
 
     def move(self, direction):
+        """Return Position after moving in given Direction."""
         if not direction:
             return self
         return Position(self.x+direction.dx, self.y+direction.dy)
@@ -121,6 +79,8 @@ Position.ZERO = Position(0, 0)
 
 class WithPositionMixin:
 
+    """Mixin for easy acces to Position related methods and properties."""
+
     __slots__ = ()
 
     @property
@@ -132,9 +92,59 @@ class WithPositionMixin:
         return self.position.y
 
 
+class Size(collections.namedtuple(
+    'Size', [
+        'width', 
+        'height',
+    ])):
+
+    """Size on 2D plane."""
+
+    __slots__ = ()
+
+    def __new__(cls, width, height):
+        return super().__new__(cls, int(width), int(height))
+
+    @property
+    def area(self):
+        """Calculate the area of a rectangle of this size."""
+        return self.width * self.height
+
+    def __mul__(self, factor):
+        """Resize by factor value."""
+        return Size(self.width*factor, self.height*factor)
+
+    def __repr__(self):
+        return f'<Size width={self.width}, height={self.height}>'
+
+
+class WithSizeMixin:
+
+    """Mixin for easy acces to Size related methods and properties."""
+
+    __slots__ = ()
+
+    @property
+    def width(self):
+        return self.size.width
+
+    @property
+    def height(self):
+        return self.size.height
+
+    @property
+    def area(self):
+        return self.size.area
+
+    @property
+    def center(self):
+        """Return center Position relative to self."""
+        return Position(self.width/2, self.height/2)
+
+
 class Rectangle(WithPositionMixin, WithSizeMixin):
 
-    """Rectangle in 2D space."""
+    """Rectangle on 2D plane with Position on top-left corner."""
 
     __slots__ = ('position', 'size', )
 
@@ -179,12 +189,11 @@ class Rectangle(WithPositionMixin, WithSizeMixin):
         return self.is_inside(position)
 
     def intersection(self, other):
-        """Return the intersection with another ``Rectangle``.
+        """Return Rectangle that is an intersection with other Rectangle.
 
-        Returns ``None`` if the geometries don't intersect. 
+        Returns None if the geometries don't intersect. 
 
         """
-        # TODO: Test it!
         if not other:
             return None
         x = max(self.x, other.x)
@@ -205,4 +214,11 @@ class Rectangle(WithPositionMixin, WithSizeMixin):
     def __repr__(self):
         return '<Rectangle x=%s, y=%s, width=%s, height=%s, x2=%s, y2=%s>' % \
                (self.x, self.y, self.width, self.height, self.x2, self.y2)
+
+
+def euclidean_distance(position, other):
+    """Return Euclidean distance between points."""
+    delta_x = position.x - other.x
+    delta_y = position.x - other.y
+    return math.hypot(delta_x, delta_y)
 
