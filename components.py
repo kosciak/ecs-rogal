@@ -1,4 +1,5 @@
 import numpy as np
+from geometry import Position, WithPositionMixin
 
 from ecs import Component, Flag, SingleValue
 
@@ -24,9 +25,9 @@ Name = SingleValue('Name')
 
 
 # TODO: Use both Position and Location (for entities not on current map/level)?
-Position = SingleValue('Position')
+#Position = SingleValue('Position')
 
-class Location(Component):
+class Location(WithPositionMixin, Component):
     __slots__ = ('map_id', 'position', )
 
     def __init__(self, map_id, position):
@@ -54,9 +55,15 @@ class Viewshed(Component):
         self.visible_tiles = set()
         self.needs_update = True
 
-    def update(self, fov):
+    def invalidate(self):
+        self.visible_tiles = set()
         self.needs_update = True
-        self.visible_tiles = np.transpose(fov.nonzero())
+
+    def update(self, fov):
+        self.needs_update = False
+        self.visible_tiles = {
+            Position(x, y) for x, y in np.transpose(fov.nonzero())
+        }
 
 
 class Pool:

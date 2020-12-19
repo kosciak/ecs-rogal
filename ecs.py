@@ -275,6 +275,7 @@ class EntitiesManager(JoinableManager):
     def __iter__(self):
         yield from self._entities.values()
 
+    # TODO: Not sure if filter() is necessary, join() should be enough
     def filter(self, *component_types):
         component_managers = [
             self.manage(component_type)
