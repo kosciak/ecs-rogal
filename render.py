@@ -2,7 +2,7 @@ import logs
 
 import components
 from geometry import Position, Size, Rectangle
-from renderable import Colors
+from renderable import Colors, Tile
 import tiles
 
 import numpy as np
@@ -59,15 +59,27 @@ def render_camera(panel, ecs, level, player,
             panel.draw(tiles.BOUNDARY, position.offset(camera.position))
 
     # Part of level that is covered by camera
-    cam_coverage = camera & Rectangle(Position.ZERO, level.size)
+    cam_coverage = camera & level
     if not cam_coverage:
         # Nothing to display, nothing to do here...
         return
 
-    # TODO: Handle level.visible, level.revealed flags
-
     # Slice level.terrain to get part that is covered by camera
-    terrain = level.terrain[cam_coverage.x:cam_coverage.x2, cam_coverage.y:cam_coverage.y2]
+    terrain = level.terrain[
+        cam_coverage.x : cam_coverage.x2,
+        cam_coverage.y : cam_coverage.y2
+    ]
+
+    # Visibility info
+    revealed = level.revealed[
+        cam_coverage.x : cam_coverage.x2,
+        cam_coverage.y : cam_coverage.y2
+    ]
+    visible = level.visible[
+        cam_coverage.x : cam_coverage.x2,
+        cam_coverage.y : cam_coverage.y2
+    ]
+    revealed_not_visible = revealed ^ visible
 
     # Offset for drawing a terrain tile with a mask
     # It's mirrored camera.position but only with x,y values > 0
@@ -75,9 +87,19 @@ def render_camera(panel, ecs, level, player,
 
     # Draw TERRAIN tiles
     for terrain_id in np.unique(terrain):
-        mask = terrain == terrain_id
-        tile = tiles.TERRAIN.get(terrain_id)
-        panel.mask(tile, mask, mask_offset)
+        if not terrain_id:
+            continue
+        terrain_mask = terrain == terrain_id
+        # Visible
+        mask = terrain_mask & visible
+        if np.any(mask):
+            tile = tiles.VISIBLE_TERRAIN.get(terrain_id)
+            panel.mask(tile, mask, mask_offset)
+        # Revealed but not visible
+        mask = terrain_mask & revealed_not_visible
+        if np.any(mask):
+            tile = tiles.REVEALED_TERRAIN.get(terrain_id)
+            panel.mask(tile, mask, mask_offset)
 
     # Draw all renderable ENTITIES, in order described by Renderable.render_order
     locations = ecs.manage(components.Location)
@@ -89,7 +111,14 @@ def render_camera(panel, ecs, level, player,
         if not location.position in cam_coverage:
             # Not inside area covered by camera, skip!
             continue
+        if not level.revealed[location.position]:
+            # Not yet revealed, skip!
+            continue
+        if not level.visible[location.position]:
+            # Not visible, skip!
+            # TODO: What about doors, staircases ang others which placement should be remembered?
+            continue
+        # TODO: Some components checks like entity.has(components.Hidden)
         render_position = location.position.offset(camera.position)
         panel.draw(renderable.tile, render_position)
-
 

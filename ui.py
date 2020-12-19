@@ -95,7 +95,7 @@ class Panel(AbstractTilesGrid, Rectangle):
     @property
     def center(self):
         """Return center Position relative to self!"""
-        return Position(self.width/2, self.height/2)
+        return super(Rectangle, self).center
 
     def offset(self, position, root=None):
         """Return Position relative to root.

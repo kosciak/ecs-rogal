@@ -5,7 +5,7 @@ import logging
 import logs
 
 from geometry import Position, Size
-from colors.x11 import Color, TANGO_DARK
+from colors.x11 import Color, TANGO_DARK, TANGO_LIGHT
 from tilesets import TERMINAL_12x12_CP
 
 from wrappers import TcodWrapper
@@ -26,11 +26,12 @@ import tcod
 logs.setup()
 log = logging.getLogger('rogal.main')
 
+PALETTE = TANGO_DARK
 
 CONSOLE_SIZE = Size(80, 50)
 
 CAMERA_SIZE = Size(12, 12)
-LEVEL_SIZE = Size(14,9)
+LEVEL_SIZE = Size(16,16)
 
 
 def render(wrapper, root_panel, ecs, level, player):
@@ -81,6 +82,8 @@ def loop(wrapper, root_panel, ecs, level, player):
         # Run systems
         # Apply movements
         systems.movement_system_run(ecs, level)
+        # Recalculate FOV
+        systems.visibility_system_run(ecs, level)
 
 
 def main():
@@ -88,7 +91,7 @@ def main():
 
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
-        palette=TANGO_DARK,
+        palette=PALETTE,
         tileset=TERMINAL_12x12_CP,
         resizable=False,
         title='Rogal test'
@@ -101,7 +104,8 @@ def main():
         #level = game_map.generate(root_panel.size*1.025)
         level = game_map.generate(LEVEL_SIZE)
         player = entities.create_player(ecs)
-        entities.spawn(ecs, player, level, level.center)
+        #entities.spawn(ecs, player, level, level.center)
+        entities.spawn(ecs, player, level, Position(3,3))
         for offset in [(-2,-2), (2,2), (-3,3), (3,-3)]:
             monster = entities.create_monster(ecs)
             position = level.center + Position(*offset)

@@ -16,9 +16,14 @@ STONE_WALL =    Tile.create('#', fg=Color.BASE_YELLOW)
 STONE_FLOOR =   Tile.create('.', fg=Color.BASE_WHITE)
 
 
-TERRAIN = {
+VISIBLE_TERRAIN = {
     Terrain.STONE_WALL.id:     STONE_WALL,
     Terrain.STONE_FLOOR.id:    STONE_FLOOR,
+}
+
+REVEALED_TERRAIN = {
+    terrain_id: Tile.create(tile.glyph, fg=Color.BRIGHT_BLACK)
+    for terrain_id, tile in VISIBLE_TERRAIN.items()
 }
 
 

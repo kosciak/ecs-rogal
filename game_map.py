@@ -2,17 +2,18 @@ import uuid
 
 import numpy as np
 
-from geometry import WithSizeMixin
+from geometry import Position, Rectangle
 
 import dtypes
 
     
-class GameMap(WithSizeMixin):
+class GameMap(Rectangle):
 
     def __init__(self, map_id, size, depth):
+        super().__init__(Position.ZERO, size)
+
         self.id = map_id
 
-        self.size = size
         self.depth = depth
 
         self.terrain = np.zeros(self.size, dtype=dtypes.terrain_id_dt)
