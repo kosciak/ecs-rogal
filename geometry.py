@@ -3,6 +3,13 @@ from enum import Enum
 import math
 
 
+def euclidean_distance(position, other):
+    """Return Euclidean distance between points."""
+    delta_x = position.x - other.x
+    delta_y = position.x - other.y
+    return math.hypot(delta_x, delta_y)
+
+
 class Direction(Enum):
 
     """Direction on 2D plane."""
@@ -214,11 +221,4 @@ class Rectangle(WithPositionMixin, WithSizeMixin):
     def __repr__(self):
         return '<Rectangle x=%s, y=%s, width=%s, height=%s, x2=%s, y2=%s>' % \
                (self.x, self.y, self.width, self.height, self.x2, self.y2)
-
-
-def euclidean_distance(position, other):
-    """Return Euclidean distance between points."""
-    delta_x = position.x - other.x
-    delta_y = position.x - other.y
-    return math.hypot(delta_x, delta_y)
 
