@@ -1,9 +1,9 @@
-import components
-from flags import Flag
-
 import numpy as np
 
 import tcod
+
+import components
+from flags import Flag
 
 
 """Systems running ecs."""
@@ -39,7 +39,7 @@ def visibility_system_run(ecs, level):
             # No need to recalculate
             continue
 
-        transparency = level.flags & Flag.BLOCK_VISION == 0
+        transparency = level.flags & Flag.BLOCKS_VISION == 0
         pov = location.position
         fov = tcod.map.compute_fov(
             transparency, pov=pov, 
@@ -57,4 +57,22 @@ def visibility_system_run(ecs, level):
             # If player, update visible and revealed flags
             level.visible[:] = fov
             level.revealed |= fov
+
+
+def map_indexing_system_run(ecs, level):
+    # Clear previous data
+    level.entities.clear()
+    level.flags[:] = level.base_flags
+
+    locations = ecs.manage(components.Location)
+    movement_blockers = ecs.manage(components.BlocksMovement)
+    for entity, location in ecs.join(ecs.entities, locations):
+        if not location.map_id == level.id:
+            # Not on current map/level
+            continue
+
+        # Update entities on location, and flags
+        level.entities[location.position].add(entity)
+        if entity in movement_blockers:
+            level.flags[location.position] |= Flag.BLOCKS_MOVEMENT
 

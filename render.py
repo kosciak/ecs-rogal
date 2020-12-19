@@ -1,11 +1,11 @@
 import logs
 
+import numpy as np
+
 import components
 from geometry import Position, Size, Rectangle
 from renderable import Colors, Tile
 import tiles
-
-import numpy as np
 
 
 """Rendering components."""
@@ -104,7 +104,7 @@ def render_camera(panel, ecs, level, player,
     # Draw all renderable ENTITIES, in order described by Renderable.render_order
     locations = ecs.manage(components.Location)
     renderables = ecs.manage(components.Renderable)
-    for location, renderable in sorted(ecs.join(locations, renderables)):
+    for renderable, location in sorted(ecs.join(renderables, locations)):
         if not location.map_id == level.id:
             # Not on the map/level we are rendering, skip!
             continue

@@ -70,7 +70,7 @@ TERRAIN_BY_ID = {
 }
 
 
-BLOCK_VISION = {
+BLOCKS_VISION = {
     Type.WALL,
 }
 
@@ -83,12 +83,12 @@ ALLOW_SWIMMING = {
     Type.SHALLOW_LIQUID,
 }
 
-BLOCK_WALKING = {
+BLOCKS_WALKING = {
     Type.LIQUID,
     Type.CHASM,
 }
 
-BLOCK_ALL_MOVEMENT = {
+BLOCKS_MOVEMENT = {
     Type.VOID,
     Type.WALL,
 }
@@ -101,16 +101,16 @@ def get_flags(terrain):
 
     flags = Flag.NONE
 
-    if terrain.type in BLOCK_VISION and \
+    if terrain.type in BLOCKS_VISION and \
        not terrain.material in TRANSPARENT:
-        flags |= Flag.BLOCK_VISION
+        flags |= Flag.BLOCKS_VISION
 
-    if terrain.type in BLOCK_ALL_MOVEMENT:
-        flags |= Flag.BLOCK_ALL_MOVEMENT
+    if terrain.type in BLOCKS_MOVEMENT:
+        flags |= Flag.BLOCKS_MOVEMENT
     if not terrain.type in ALLOW_SWIMMING:
-        flags |= Flag.BLOCK_SWIMMING
-    if terrain.type in BLOCK_WALKING:
-        flags |= Flag.BLOCK_WALKING
+        flags |= Flag.BLOCKS_SWIMMING
+    if terrain.type in BLOCKS_WALKING:
+        flags |= Flag.BLOCKS_WALKING
 
     return flags
 

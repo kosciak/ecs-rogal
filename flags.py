@@ -4,13 +4,14 @@ from enum import IntFlag, auto
 class Flag(IntFlag):
     NONE = 0
 
-    BLOCK_VISION = auto()
+    BLOCKS_VISION = auto()
 
-    BLOCK_WALKING = auto()
-    BLOCK_FLYING = auto()
-    BLOCK_SWIMMING = auto()
-    BLOCK_ALL_MOVEMENT = BLOCK_WALKING | BLOCK_FLYING | BLOCK_SWIMMING
+    BLOCKS_WALKING = auto()
+    # TODO: Reenable after adding some kind on MovementType support
+    BLOCKS_FLYING = 0 #auto()
+    BLOCKS_SWIMMING = 0 #auto()
+    BLOCKS_MOVEMENT = BLOCKS_WALKING | BLOCKS_FLYING | BLOCKS_SWIMMING
 
-    #BLOCK_ITEMS = auto() # Blocks item placement?
+    #BLOCKS_ITEMS = auto() # Blocks item placement?
 
 

@@ -1,10 +1,11 @@
+import collections
 import uuid
 
 import numpy as np
 
-from geometry import Position, Rectangle
-
+from geometry import Direction, Position, Rectangle
 import dtypes
+from flags import Flag
 
     
 class GameMap(Rectangle):
@@ -27,10 +28,21 @@ class GameMap(Rectangle):
         self.visible = np.zeros(self.size, dtype=np.bool)
         self.revealed = np.zeros(self.size, dtype=np.bool)
 
+        self.entities = collections.defaultdict(set)
+
     @staticmethod
     def create(size, depth):
         map_id = uuid.uuid4()
         return GameMap(map_id, size, depth)
+
+    def get_exits(self, position):
+        # TODO: add movement_type argument and check only appopriate movement type related flag
+        exits = set()
+        for direction in Direction:
+            move_position = position.move(direction)
+            if not self.flags[move_position] & Flag.BLOCKS_MOVEMENT:
+                exits.add(direction)
+        return exits
 
 
 def generate(size):

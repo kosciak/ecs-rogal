@@ -47,6 +47,17 @@ def render(wrapper, root_panel, ecs, level, player):
     wrapper.flush(root_panel)
 
 
+def try_move(ecs, level, player, direction):
+    location = player.get(components.Location)
+    exits = level.get_exits(location.position)
+    if direction in exits:
+        log.info(f'Move: {direction}')
+        movements = ecs.manage(components.WantsToMove)
+        movements.insert(player, components.WantsToMove(direction))
+    else:
+        log.warning(f'{direction} blocked!')
+
+
 def handle_events(wrapper, ecs, level, player):
     for event in wrapper.events():
         # Just print all events, and gracefully quit on closing window
@@ -61,9 +72,7 @@ def handle_events(wrapper, ecs, level, player):
 
             direction = keys.MOVE_KEYS.get(key)
             if direction:
-                log.info('Move: %s', direction)
-                movements = ecs.manage(components.WantsToMove)
-                movements.insert(player, components.WantsToMove(direction))
+                try_move(ecs, level, player, direction)
 
         if event.type == 'QUIT':
             log.warning('Quitting...')
@@ -80,14 +89,16 @@ def loop(wrapper, root_panel, ecs, level, player):
         handle_events(wrapper, ecs, level, player)
 
         # Run systems
-        # Apply movements
-        systems.movement_system_run(ecs, level)
-        # Recalculate FOV
-        systems.visibility_system_run(ecs, level)
+        ecs.systems_run(level)
 
 
 def main():
     ecs = ECS()
+
+    # Register systems
+    ecs.register(systems.movement_system_run)
+    ecs.register(systems.map_indexing_system_run)
+    ecs.register(systems.visibility_system_run)
 
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,

@@ -17,6 +17,7 @@ def create_player(ecs):
 def create_monster(ecs):
     return ecs.create(
         components.Monster(),
+        components.BlocksMovement(),
         components.Name('Generic monster'),
         components.Renderable(tiles.MONSTER, RenderOrder.ACTORS),
         components.Viewshed(view_range=12),

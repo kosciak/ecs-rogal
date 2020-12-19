@@ -292,6 +292,7 @@ class ECS:
     def __init__(self):
         self.entities = EntitiesManager()
         # TODO: self.systems = SystemsManager()
+        self.systems = []
 
     def create(self, *components, entity_id=None):
         return self.entities.create(*components, entity_id=entity_id)
@@ -301,4 +302,11 @@ class ECS:
 
     def join(self, *managers):
         yield from JoinIterator(*managers)
+
+    def register(self, system):
+        self.systems.append(system)
+
+    def systems_run(self, *args, **kwargs):
+        for system_run in self.systems:
+            system_run(self, *args, **kwargs)
 
