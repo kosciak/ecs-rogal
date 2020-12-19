@@ -1,6 +1,6 @@
 from renderable import Tile
 from colors.x11 import Color
-from characters import Glyph
+from glyphs import Glyph
 
 from terrain import Terrain
 
