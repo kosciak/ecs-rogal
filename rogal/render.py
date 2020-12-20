@@ -1,11 +1,11 @@
-import logs
-
 import numpy as np
 
-import components
-from geometry import Position, Size, Rectangle
-from renderable import Colors, Tile
-import tiles
+from . import logs
+
+from . import components
+from .geometry import Position, Size, Rectangle
+from .renderable import Colors, Tile
+from . import tiles
 
 
 """Rendering components."""

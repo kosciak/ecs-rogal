@@ -1,30 +1,26 @@
-#!/usr/bin/env python3
-
 import logging
 
-import logs
+from .geometry import Position, Size
+from .colors.x11 import Color, TANGO_DARK, TANGO_LIGHT
+from .tilesets import TERMINAL_12x12_CP
 
-from geometry import Position, Size
-from colors.x11 import Color, TANGO_DARK, TANGO_LIGHT
-from tilesets import TERMINAL_12x12_CP
+from .wrappers import TcodWrapper
+from . import keys
 
-from wrappers import TcodWrapper
-import keys
+from . import game_map
 
-import game_map
+from .ecs import ECS
+from . import components
+from . import entities
+from . import systems
 
-from ecs import ECS
-import components
-import entities
-import systems
-
-from render import render_message_log, render_camera
+from .render import render_message_log, render_camera
 
 import tcod
 
 
-logs.setup()
 log = logging.getLogger('rogal.main')
+
 
 PALETTE = TANGO_DARK
 
@@ -92,7 +88,7 @@ def loop(wrapper, root_panel, ecs, level, player):
         handle_events(wrapper, ecs, level, player)
 
 
-def main():
+def run():
     ecs = ECS()
 
     # Register systems
@@ -125,8 +121,4 @@ def main():
             entities.spawn(ecs, monster, level, position)
 
         loop(wrapper, root_panel, ecs, level, player)
-
-
-if __name__ == "__main__":
-    main()
 

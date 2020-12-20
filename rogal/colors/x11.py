@@ -1,4 +1,4 @@
-from colors import HEX, ColorMap, ColorPalette
+from .core import HEX, ColorMap, ColorPalette
 
 
 # X11 default colors

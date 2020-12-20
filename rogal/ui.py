@@ -1,8 +1,8 @@
 import collections
 
-from geometry import Position, Size, WithSizeMixin, Rectangle
-from colors import RGB
-from renderable import Tile, Colors
+from .geometry import Position, Size, WithSizeMixin, Rectangle
+from .colors import RGB
+from .renderable import Tile, Colors
 
 
 """Basic UI elements / building blocks, working as abstraction layer for tcod.Console.
@@ -477,7 +477,7 @@ class TcodRootPanel(RootPanel):
         self.parent.tiles_rgb[self.x:self.x2, self.y:self.y2] = tiles_rgb
 
     def show(self):
-        import ansi
+        from . import ansi
         ansi.show_tcod_console(self.console)
 
 

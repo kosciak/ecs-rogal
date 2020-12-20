@@ -1,6 +1,6 @@
-from geometry import Direction
-
 import tcod.event
+
+from .geometry import Direction
 
 
 # *_MOVE_KEYS = {key_symbol: (dx, dy), }

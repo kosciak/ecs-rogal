@@ -1,7 +1,7 @@
-import components
-from renderable import RenderOrder
-from terrain import Terrain
-import tiles
+from . import components
+from .renderable import RenderOrder
+from .terrain import Terrain
+from . import tiles
 
 
 """Entities definition and creation."""

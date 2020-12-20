@@ -1,6 +1,6 @@
 import tcod
 
-from ui import TcodRootPanel
+from .ui import TcodRootPanel
 
 
 class IOWrapper:
@@ -150,6 +150,6 @@ class MockWrapper(IOWrapper):
     def flush(self, console):
         if not isinstance(console, tcod.console.Console):
             console = console.console
-        import ansi
+        from . import ansi
         ansi.show_tcod_console(console)
 

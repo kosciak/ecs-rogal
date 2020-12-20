@@ -2,8 +2,8 @@ import numpy as np
 
 import tcod
 
-import components
-from flags import Flag, get_flags
+from . import components
+from .flags import Flag, get_flags
 
 
 """Systems running ecs."""

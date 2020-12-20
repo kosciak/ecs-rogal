@@ -1,4 +1,4 @@
-from colors import HEX, ColorPalette
+from .core import HEX, ColorPalette
 
 
 # Web colors

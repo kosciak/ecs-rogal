@@ -1,8 +1,7 @@
-from renderable import Tile
-from colors.x11 import Color
-from glyphs import Glyph
-
-from terrain import Terrain
+from .colors.x11 import Color
+from .glyphs import Glyph
+from .renderable import Tile
+from .terrain import Terrain
 
 
 """All Tile definitions."""

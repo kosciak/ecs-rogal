@@ -3,7 +3,7 @@ from enum import Enum
 
 import tcod
 
-from colors import RGB
+from .core import RGB
 
 
 TCOD_COLORS = []

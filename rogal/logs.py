@@ -114,7 +114,7 @@ CONFIG = dict(
         },
         'history': {
             'level': logging.INFO,
-            'class': 'logs.GlobalHistoryHandler',
+            'class': 'rogal.logs.GlobalHistoryHandler',
             'filters': ['allow_info_warning'],
         }
     },

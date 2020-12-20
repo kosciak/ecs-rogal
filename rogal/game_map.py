@@ -3,9 +3,9 @@ import uuid
 
 import numpy as np
 
-from geometry import Direction, Position, Rectangle
-import dtypes
-from flags import Flag
+from . import dtypes
+from .flags import Flag
+from .geometry import Direction, Position, Rectangle
 
     
 class GameMap(Rectangle):
@@ -58,7 +58,7 @@ class GameMap(Rectangle):
 
 
 def generate(size):
-    from terrain import Terrain
+    from .terrain import Terrain
 
     level = GameMap.create(size, 0)
     level.terrain[:] = Terrain.STONE_WALL.id

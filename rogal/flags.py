@@ -1,5 +1,6 @@
 from enum import IntFlag, auto
-import components
+
+from . import components
 
 
 class Flag(IntFlag):

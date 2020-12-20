@@ -1,7 +1,7 @@
 import numpy as np
-from geometry import Position, WithPositionMixin
 
-from ecs import Component, SingleValueComponent, Flag, SingleValue
+from .ecs import Component, SingleValueComponent, Flag, SingleValue
+from .geometry import Position, WithPositionMixin
 
 
 # Flags

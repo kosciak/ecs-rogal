@@ -1,6 +1,7 @@
 import collections
 from enum import Enum, IntEnum, IntFlag, auto
-from flags import Flag
+
+from .flags import Flag
 
 
 class Type(IntEnum):
