@@ -44,6 +44,18 @@ class GameMap(Rectangle):
                 exits.add(direction)
         return exits
 
+    def serialize(self):
+        terrain = []
+        for row in self.terrain.T:
+            terrain.append(','.join([f'{terrain_id:02x}' for terrain_id in row]))
+        data = {
+            str(self.id): dict(
+                depth=self.depth,
+                #name=self.name,
+                terrain=terrain,
+            )}
+        return data
+
 
 def generate(size):
     from terrain import Terrain

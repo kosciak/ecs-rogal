@@ -1,7 +1,7 @@
 import numpy as np
 from geometry import Position, WithPositionMixin
 
-from ecs import Component, Flag, SingleValue
+from ecs import Component, SingleValueComponent, Flag, SingleValue
 
 
 # Flags
@@ -37,6 +37,14 @@ class Location(WithPositionMixin, Component):
         self.map_id = map_id
         self.position = position
 
+    def serialize(self):
+        data = dict(
+            map_id=str(self.map_id),
+            x=self.x, 
+            y=self.y,
+        )
+        return data
+
 
 class Renderable(Component):
     __slots__ = ('tile', 'render_order', )
@@ -47,6 +55,15 @@ class Renderable(Component):
 
     def __lt__(self, other):
         return self.render_order < other.render_order
+
+    def serialize(self):
+        data = dict(
+            ch=self.tile.ch,
+            fg=self.tile.fg,
+            bg=self.tile.bg,
+            render_order=int(self.render_order),
+        )
+        return data
 
 
 class Viewshed(Component):
@@ -95,7 +112,11 @@ class Pool:
 # Action intentions
 # TODO: Rework as SingleValue?
 
-WantsToMove = SingleValue('WantsToMove')
+class WantsToMove(SingleValueComponent):
+
+    def serialize(self):
+        return self.value.name
+
 
 class WantsToMelee(Component):
     __slots__ = ()

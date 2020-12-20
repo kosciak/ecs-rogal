@@ -9,6 +9,17 @@ class Component:
     __slots__ = ()
     params = ()
 
+    @property
+    def name(self):
+        return f'{self.__class__.__name__}'
+
+    def serialize(self):
+        data = {}
+        params = self.params or self.__slots__
+        for param in params:
+            data[param] = getattr(self, param)
+        return data
+
     def __repr__(self):
         param_values = []
         if self.params:
@@ -16,10 +27,10 @@ class Component:
         elif self.__slots__:
             param_values = [(param, getattr(self, param)) for param in self.__slots__]
         if not param_values:
-            return f'<{self.__class__.__name__}>'
+            return f'<{self.name}>'
         else:
             param_values_txt = ', '.join([f'{param}={value!r}' for param, value in param_values])
-            return f'<{self.__class__.__name__} {param_values_txt}>'
+            return f'<{self.name} {param_values_txt}>'
 
 
 class SingleValueComponent(Component):
@@ -28,6 +39,9 @@ class SingleValueComponent(Component):
 
     def __init__(self, value):
         self.value = value
+
+    def serialize(self):
+        return self.value
 
     def __repr__(self):
         return f'<{self.__class__.__name__}={self.value!r}>'
@@ -43,6 +57,9 @@ class FlagComponent(Component):
     @property
     def value(self):
         return self._value
+
+    def serialize(self):
+        return self.value
 
     def __repr__(self):
         return f'<{self.__class__.__name__}>'
@@ -63,7 +80,7 @@ def Flag(name):
     bases = (FlagComponent, )
     attrs = dict(
         __slots__=(),
-        __call__=lambda self: self,
+        __call__=lambda self, *args, **kwargs: self,
     )
     return type(name, bases, attrs)(value=True)
 
@@ -116,6 +133,12 @@ class Entity:
     @property
     def components(self):
         return self._components.values()
+
+    def serialize(self):
+        data = {}
+        for component in self.components:
+            data[component.name] = component.serialize()
+        return data
 
 
 class EntitiesIterator:
@@ -247,8 +270,17 @@ class EntitiesManager(JoinableManager):
             self._component_managers[component_type] = component_manager
         return self._component_managers[component_type]
 
+    def get_id(self, entity_id):
+        if isinstance(entity_id, Entity):
+            return entity_id.id
+        if isinstance(entity_id, uuid.UUID):
+            return entity_id
+        if entity_id is not None:
+            return uuid.UUID(int=entity_id)
+        return uuid.uuid4()
+
     def create(self, *components, entity_id=None):
-        entity_id = entity_id or uuid.uuid4()
+        entity_id = self.get_id(entity_id)
         entity = Entity(entity_id)
         self._entities[entity.id] = entity
         for component in components:
@@ -257,8 +289,7 @@ class EntitiesManager(JoinableManager):
         return entity
 
     def get(self, entity_id):
-        if isinstance(entity_id, Entity):
-            entity_id = entity_id.id
+        entity_id = self.get_id(entity_id)
         return self._entities.get(entity_id)
 
     def remove(self, *entities):
@@ -275,13 +306,11 @@ class EntitiesManager(JoinableManager):
     def __iter__(self):
         yield from self._entities.values()
 
-    # TODO: Not sure if filter() is necessary, join() should be enough
-    def filter(self, *component_types):
-        component_managers = [
-            self.manage(component_type)
-            for component_type in component_types
-        ]
-        yield from EntitiesIterator(*component_managers)
+    def serialize(self):
+        data = {}
+        for entity in self:
+            data[str(entity.id)] = entity.serialize()
+        return data
 
     def __repr__(self):
         return f'<{self.__class__.__name__}>'
