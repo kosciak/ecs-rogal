@@ -8,23 +8,23 @@ from terrain import Terrain
 """All Tile definitions."""
 
 
+def visible(tile):
+    """Return visible tile."""
+    return tile
+
+def revealed(tile):
+    """Return revealed but not visible tile."""
+    return Tile.create(tile.glyph, fg=Color.BRIGHT_BLACK)
+
+
 # Terrain
 
 BOUNDARY =      Tile.create(Glyph.BLOCK1, fg=Color.BASE_RED)
 
+VOID =          Tile.create(Glyph.FULL_BLOCK, fg=Color.BASE_BLACK)
 STONE_WALL =    Tile.create('#', fg=Color.BASE_YELLOW)
 STONE_FLOOR =   Tile.create('.', fg=Color.BASE_WHITE)
-
-
-VISIBLE_TERRAIN = {
-    Terrain.STONE_WALL.id:     STONE_WALL,
-    Terrain.STONE_FLOOR.id:    STONE_FLOOR,
-}
-
-REVEALED_TERRAIN = {
-    terrain_id: Tile.create(tile.glyph, fg=Color.BRIGHT_BLACK)
-    for terrain_id, tile in VISIBLE_TERRAIN.items()
-}
+SHALLOW_WATER = Tile.create('~', fg=Color.BRIGHT_BLUE)
 
 
 # Entities

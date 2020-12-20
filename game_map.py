@@ -46,20 +46,16 @@ class GameMap(Rectangle):
 
 
 def generate(size):
-    from terrain import Terrain, get_flags
+    from terrain import Terrain
 
     level = GameMap.create(size, 0)
     level.terrain[:] = Terrain.STONE_WALL.id
     level.terrain[1:-1, 1:-1] = Terrain.STONE_FLOOR.id
+    level.terrain[-3:-1, 1:-1] = Terrain.SHALLOW_WATER.id
     level.terrain[1: -1, level.height//2] = Terrain.STONE_WALL.id
     level.terrain[level.center] = Terrain.STONE_FLOOR.id
     level.terrain[level.width//4, level.height//2] = Terrain.STONE_FLOOR.id
     level.terrain[level.width//4*3, level.height//2] = Terrain.STONE_FLOOR.id
-
-    for terrain_id in np.unique(level.terrain):
-        terrain_mask = level.terrain == terrain_id
-        level.base_flags[terrain_mask] = get_flags(terrain_id)
-        level.flags[terrain_mask] = get_flags(terrain_id)
 
     return level
 

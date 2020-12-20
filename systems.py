@@ -3,7 +3,7 @@ import numpy as np
 import tcod
 
 import components
-from flags import Flag
+from flags import Flag, get_flags
 
 
 """Systems running ecs."""
@@ -60,19 +60,27 @@ def visibility_system_run(ecs, level):
 
 
 def map_indexing_system_run(ecs, level):
+    # Calculate base_flags if needed
+    if not np.any(level.base_flags):
+        for terrain_id in np.unique(level.terrain):
+            terrain_mask = level.terrain == terrain_id
+            terrain_flags = get_flags(ecs.entities.get(terrain_id))
+            level.base_flags[terrain_mask] = terrain_flags
+
     # Clear previous data
     level.entities.clear()
     level.flags[:] = level.base_flags
 
     locations = ecs.manage(components.Location)
-    movement_blockers = ecs.manage(components.BlocksMovement)
     for entity, location in ecs.join(ecs.entities, locations):
         if not location.map_id == level.id:
             # Not on current map/level
             continue
 
-        # Update entities on location, and flags
+        # Update entities on location
         level.entities[location.position].add(entity)
-        if entity in movement_blockers:
-            level.flags[location.position] |= Flag.BLOCKS_MOVEMENT
+
+        # Update flags
+        entity_flags = get_flags(entity)
+        level.flags[location.position] |= entity_flags
 

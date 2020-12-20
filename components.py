@@ -4,28 +4,31 @@ from geometry import Position, WithPositionMixin
 from ecs import Component, Flag, SingleValue
 
 
+# Flags
+
 BlocksMovement = Flag('BlocksMovement')
 
-BlockVisibility = Flag('BlockVisibility')
+BlocksVision = Flag('BlocksVision')
 
-Hidden = Flag('Hidden')
+
+# Entity type
+
+Terrain = Flag('Terrain')
+
+Foliage = Flag('Foliage')
+
+Prop = Flag('Prop')
+
+Item = Flag('Item')
 
 Player = Flag('Player')
 
 Monster = Flag('Monster')
 
-Item = Flag('Item')
 
-CursedItem = Flag('CursedItem')
-
-UnidentifiedItem = Flag('UnidentifiedItem')
-
+# Common components
 
 Name = SingleValue('Name')
-
-
-# TODO: Use both Position and Location (for entities not on current map/level)?
-#Position = SingleValue('Position')
 
 class Location(WithPositionMixin, Component):
     __slots__ = ('map_id', 'position', )
@@ -64,6 +67,13 @@ class Viewshed(Component):
         self.visible_tiles = {
             Position(x, y) for x, y in np.transpose(fov.nonzero())
         }
+
+
+Hidden = Flag('Hidden')
+
+CursedItem = Flag('CursedItem')
+
+UnidentifiedItem = Flag('UnidentifiedItem')
 
 
 class Pool:

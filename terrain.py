@@ -64,13 +64,9 @@ class Terrain(Enum):
         self.id = self.type + (self.material<<8)
 
 
-TERRAIN_BY_ID = {
-    terrain.id: terrain
-    for terrain in Terrain
-}
-
-
+# TODO: Remove after migrating to entities
 BLOCKS_VISION = {
+    Type.VOID,
     Type.WALL,
 }
 
@@ -92,25 +88,4 @@ BLOCKS_MOVEMENT = {
     Type.VOID,
     Type.WALL,
 }
-
-
-
-def get_flags(terrain):
-    if not terrain in Terrain:
-        terrain = TERRAIN_BY_ID.get(terrain)
-
-    flags = Flag.NONE
-
-    if terrain.type in BLOCKS_VISION and \
-       not terrain.material in TRANSPARENT:
-        flags |= Flag.BLOCKS_VISION
-
-    if terrain.type in BLOCKS_MOVEMENT:
-        flags |= Flag.BLOCKS_MOVEMENT
-    if not terrain.type in ALLOW_SWIMMING:
-        flags |= Flag.BLOCKS_SWIMMING
-    if terrain.type in BLOCKS_WALKING:
-        flags |= Flag.BLOCKS_WALKING
-
-    return flags
 

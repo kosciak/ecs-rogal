@@ -86,24 +86,25 @@ def render_camera(panel, ecs, level, player,
     mask_offset = Position(max(0, camera.x*-1), max(0, camera.y*-1))
 
     # Draw TERRAIN tiles
+    renderables = ecs.manage(components.Renderable)
     for terrain_id in np.unique(terrain):
         if not terrain_id:
             continue
         terrain_mask = terrain == terrain_id
+        renderable = renderables.get(ecs.entities.get(terrain_id))
         # Visible
         mask = terrain_mask & visible
         if np.any(mask):
-            tile = tiles.VISIBLE_TERRAIN.get(terrain_id)
+            tile = tiles.visible(renderable.tile)
             panel.mask(tile, mask, mask_offset)
         # Revealed but not visible
         mask = terrain_mask & revealed_not_visible
         if np.any(mask):
-            tile = tiles.REVEALED_TERRAIN.get(terrain_id)
+            tile = tiles.revealed(renderable.tile)
             panel.mask(tile, mask, mask_offset)
 
     # Draw all renderable ENTITIES, in order described by Renderable.render_order
     locations = ecs.manage(components.Location)
-    renderables = ecs.manage(components.Renderable)
     for renderable, location in sorted(ecs.join(renderables, locations)):
         if not location.map_id == level.id:
             # Not on the map/level we are rendering, skip!
@@ -120,5 +121,6 @@ def render_camera(panel, ecs, level, player,
             continue
         # TODO: Some components checks like entity.has(components.Hidden)
         render_position = location.position.offset(camera.position)
-        panel.draw(renderable.tile, render_position)
+        tile = tiles.visible(renderable.tile)
+        panel.draw(tile, render_position)
 

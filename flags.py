@@ -1,4 +1,5 @@
 from enum import IntFlag, auto
+import components
 
 
 class Flag(IntFlag):
@@ -14,4 +15,17 @@ class Flag(IntFlag):
 
     #BLOCKS_ITEMS = auto() # Blocks item placement?
 
+
+def get_flags(entity):
+    flags = Flag.NONE
+
+    if not entity:
+        return flags
+
+    if entity.has(components.BlocksMovement):
+        flags |= Flag.BLOCKS_MOVEMENT
+    if entity.has(components.BlocksVision):
+        flags |= Flag.BLOCKS_VISION
+
+    return flags
 

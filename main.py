@@ -81,15 +81,15 @@ def handle_events(wrapper, ecs, level, player):
 
 def loop(wrapper, root_panel, ecs, level, player):
     while True:
+        # Run systems
+        ecs.systems_run(level)
+
         # Render
         # TODO: No need to render after EVERY single event!
         render(wrapper, root_panel, ecs, level, player)
 
         # Handle user input
         handle_events(wrapper, ecs, level, player)
-
-        # Run systems
-        ecs.systems_run(level)
 
 
 def main():
@@ -99,6 +99,8 @@ def main():
     ecs.register(systems.movement_system_run)
     ecs.register(systems.map_indexing_system_run)
     ecs.register(systems.visibility_system_run)
+
+    entities.create_terrain(ecs)
 
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
