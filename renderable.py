@@ -11,7 +11,7 @@ class Colors(collections.namedtuple(
     ])):
 
     def __new__(cls, fg=None, bg=None):
-        if not (fg or bg):
+        if fg is None and bg is None:
             return None
         return super().__new__(cls, fg, bg)
 

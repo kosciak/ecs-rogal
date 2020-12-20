@@ -24,7 +24,7 @@ BOUNDARY =      Tile.create(Glyph.BLOCK1, fg=Color.BASE_RED)
 VOID =          Tile.create(Glyph.FULL_BLOCK, fg=Color.BASE_BLACK)
 STONE_WALL =    Tile.create('#', fg=Color.BASE_YELLOW)
 STONE_FLOOR =   Tile.create('.', fg=Color.BASE_WHITE)
-SHALLOW_WATER = Tile.create('~', fg=Color.BRIGHT_BLUE)
+SHALLOW_WATER = Tile.create('~', fg=Color.BASE_BLUE)
 
 
 # Entities

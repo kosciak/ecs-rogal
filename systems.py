@@ -11,7 +11,7 @@ from flags import Flag, get_flags
 # NOTE: For now just use <type>_system_run(ecs, level), make some classes later
 
 
-def movement_system_run(ecs, level):
+def movement_system_run(ecs, level, *args, **kwargs):
     locations = ecs.manage(components.Location)
     movement_intents = ecs.manage(components.WantsToMove)
     for entity, location, direction in ecs.join(ecs.entities, locations, movement_intents):
@@ -25,7 +25,7 @@ def movement_system_run(ecs, level):
     movement_intents.clear()
 
 
-def visibility_system_run(ecs, level):
+def visibility_system_run(ecs, level, *args, **kwargs):
     viewsheds = ecs.manage(components.Viewshed)
     locations = ecs.manage(components.Location)
     for entity, location, viewshed in ecs.join(ecs.entities, locations, viewsheds):
@@ -59,7 +59,7 @@ def visibility_system_run(ecs, level):
             level.revealed |= fov
 
 
-def map_indexing_system_run(ecs, level):
+def map_indexing_system_run(ecs, level, *args, **kwargs):
     # Calculate base_flags if needed
     if not np.any(level.base_flags):
         for terrain_id in np.unique(level.terrain):
