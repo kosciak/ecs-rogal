@@ -26,14 +26,9 @@ class Material(IntEnum):
     STONE = auto()
     ROCK = auto()
 
-    SNOW = auto()
-    ICE = auto()
+    MUD = 8
 
-    GLASS = auto()
-
-    MUD = auto()
-
-    WATER = auto()
+    WATER = 10
     ACID = auto()
     LAVA = auto()
 
@@ -61,17 +56,18 @@ class Terrain(Enum):
     def __init__(self, terrain_type, material):
         self.type = terrain_type
         self.material = material
-        self.id = self.type + (self.material<<8)
+        self.id = self.material + (self.type<<4)
+
+    @property
+    def hex(self):
+        return f'{self.id:02x}'
+
 
 
 # TODO: Remove after migrating to entities
 BLOCKS_VISION = {
     Type.VOID,
     Type.WALL,
-}
-
-TRANSPARENT = {
-    Material.GLASS,
 }
 
 ALLOW_SWIMMING = {

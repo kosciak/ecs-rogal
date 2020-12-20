@@ -12,12 +12,7 @@ tile_rgb_dt = np.dtype([
 ])
 
 
-terrain_split_dt = np.dtype([
-    ('type',        'B'),
-    ('material',    'B'),
-])
-
-terrain_id_dt = np.dtype(('u2', {'type': ('u1', 0), 'material': ('u1', 1)}))
+terrain_id_dt = np.dtype('u1')
 
 
 flags_dt = np.dtype('u4')
