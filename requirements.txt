@@ -1,2 +1,3 @@
-tcod==11.18
-numpy>=1.18
+tcod==11.18.2
+numpy==1.19.4
+PyYAML==5.3.1
