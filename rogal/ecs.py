@@ -49,14 +49,19 @@ class SingleValueComponent(Component):
 
 class FlagComponent(Component):
 
-    __slots__ = ('_value', )
+    _INSTANCE = None
 
-    def __init__(self, value):
-        self._value = value
+    params = ('value', )
+
+    def __new__(cls):
+        if not cls._INSTANCE:
+            # NOTE: Singleton
+            cls._INSTANCE = super().__new__(cls)
+        return cls._INSTANCE
 
     @property
     def value(self):
-        return self._value
+        return True
 
     def serialize(self):
         return self.value
@@ -82,7 +87,7 @@ def Flag(name):
         __slots__=(),
         __call__=lambda self, *args, **kwargs: self,
     )
-    return type(name, bases, attrs)(value=True)
+    return type(name, bases, attrs)()
 
 
 class Entity:
