@@ -208,6 +208,17 @@ class JoinableManager:
         yield from JoinIterator(self, *managers)
 
 
+class EntitiesSet(set, JoinableManager):
+
+    @property
+    def entities(self):
+        return self
+
+    def get(self, entity):
+        if entity in self:
+            return entity
+
+
 class ComponentManager(JoinableManager):
 
     __slots__ = ('_entities', 'component_type', )
@@ -337,6 +348,7 @@ class ECS:
         self.systems.append(system)
 
     def systems_run(self, *args, **kwargs):
+        print('Running systems...')
         for system_run in self.systems:
             system_run(self, *args, **kwargs)
 

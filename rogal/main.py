@@ -1,4 +1,5 @@
 import logging
+import time
 
 from .geometry import Position, Size
 from .colors.x11 import Color, TANGO_DARK, TANGO_LIGHT
@@ -33,6 +34,7 @@ LEVEL_SIZE = Size(20,20)
 
 
 def render(wrapper, root_panel, ecs, level, player):
+    print(f'Render @ {time.time()}')
     root_panel.clear()
     camera, message_log = root_panel.split(bottom=7)
     #camera = root_panel.create_panel(Position(10,10), CAMERA_SIZE)
@@ -58,9 +60,10 @@ def try_move(ecs, level, player, direction):
 
 
 def handle_events(wrapper, ecs, level, player):
+    #for event in wrapper.events(wait=1/30):
     for event in wrapper.events():
         # Just print all events, and gracefully quit on closing window
-        #log.debug('Event: %s', event)
+        log.debug('Event: %s', event)
 
         # TODO: implement tcod.EventDispatch
         if event.type == 'KEYDOWN':

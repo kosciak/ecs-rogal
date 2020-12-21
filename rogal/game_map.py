@@ -4,6 +4,7 @@ import uuid
 import numpy as np
 
 from . import dtypes
+from .ecs import EntitiesSet
 from .flags import Flag
 from .geometry import Direction, Position, Rectangle
 
@@ -28,7 +29,7 @@ class GameMap(Rectangle):
         self.visible = np.zeros(self.size, dtype=np.bool)
         self.revealed = np.zeros(self.size, dtype=np.bool)
 
-        self.entities = collections.defaultdict(set)
+        self.entities = collections.defaultdict(EntitiesSet)
 
     @staticmethod
     def create(size, depth):
