@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 
 from .ecs import Component, SingleValueComponent, Flag, SingleValue
@@ -26,6 +28,11 @@ Player = Flag('Player')
 Monster = Flag('Monster')
 
 Actor = Flag('Actor')
+
+class Particle(SingleValueComponent):
+
+    def __init__(self, value):
+        super().__init__(time.time()+value)
 
 
 # Common components

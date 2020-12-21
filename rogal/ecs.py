@@ -250,7 +250,7 @@ class ComponentManager(JoinableManager):
     def remove(self, *entities):
         for entity in entities:
             entity.remove(self.component_type)
-        self.entities -= set(entities)
+        self._entities -= set(entities)
 
     def clear(self):
         for entity in self.entities:
@@ -310,9 +310,9 @@ class EntitiesManager(JoinableManager):
 
     def remove(self, *entities):
         for entity in entities:
-            for component_type in entity.components.keys():
+            for component_type in list(entity._components.keys()):
                 component_manager = self.manage(component_type)
-                component_manager.remove(entity, component_type)
+                component_manager.remove(entity)
             self._entities.pop(entity.id, None)
 
     @property

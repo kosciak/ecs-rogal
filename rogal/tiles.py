@@ -56,6 +56,9 @@ class TermTiles(Tilesset):
     PLAYER =        ('@', Color.BRIGHT_WHITE)
     MONSTER =       ('M', Color.LIME)
 
+    # Particles
+    MEELE_HIT =     (0, None, Color.BRIGHT_RED)
+
     @property
     def revealed(self):
         """Return revealed but not visible tile."""

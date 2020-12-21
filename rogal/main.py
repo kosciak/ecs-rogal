@@ -100,6 +100,7 @@ def run():
     ecs = ECS()
 
     # Register systems
+    ecs.register(systems.particle_system_run)
     ecs.register(systems.melee_system_run)
     ecs.register(systems.movement_system_run)
     ecs.register(systems.map_indexing_system_run)
@@ -127,11 +128,11 @@ def run():
 
         player = entities.create_player(ecs)
         #entities.spawn(ecs, player, level, level.center)
-        entities.spawn(ecs, player, level, Position(3,3))
+        entities.spawn(ecs, player, level.id, Position(3,3))
         for offset in [(-2,-2), (2,2), (-3,3), (3,-3)]:
             monster = entities.create_monster(ecs)
             position = level.center + Position(*offset)
-            entities.spawn(ecs, monster, level, position)
+            entities.spawn(ecs, monster, level.id, position)
 
         loop(wrapper, root_panel, ecs, world, level, player)
 

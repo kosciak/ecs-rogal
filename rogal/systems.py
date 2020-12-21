@@ -1,10 +1,12 @@
 import logging
+import time
 
 import numpy as np
 
 import tcod
 
 from . import components
+from .entities import create_meele_hit_particle, spawn
 from .flags import Flag, get_flags
 
 
@@ -14,6 +16,16 @@ log = logging.getLogger('rogal.systems')
 """Systems running ecs."""
 
 # NOTE: For now just use <type>_system_run(ecs, world), make some classes later
+
+
+def particle_system_run(ecs, world, *args, **kwargs):
+    particles = ecs.manage(components.Particle)
+    outdated = set()
+    now = time.time()
+    for entity, ttl in ecs.join(ecs.entities, particles):
+        if ttl < now:
+            outdated.add(entity)
+    ecs.entities.remove(*outdated)
 
 
 def movement_system_run(ecs, world, *args, **kwargs):
@@ -44,6 +56,9 @@ def melee_system_run(ecs, world, *args, **kwargs):
         target = ecs.entities.get(target_id)
         log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
         # TODO: Do some damage!
+        #particle = create_meele_hit_particle(ecs)
+        #location = target.get(components.Location)
+        #spawn(ecs, particle, location.map_id, location.position)
 
     # Clear processed melee
     melee.clear()

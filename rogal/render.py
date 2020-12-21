@@ -122,5 +122,8 @@ def render_camera(panel, ecs, level, player,
         # TODO: Some components checks like entity.has(components.Hidden)
         render_position = location.position.offset(camera.position)
         tile = renderable.tile_visible
-        panel.draw(tile, render_position)
+        if not tile.ch:
+            panel.paint(tile.colors, render_position)
+        else:
+            panel.draw(tile, render_position)
 

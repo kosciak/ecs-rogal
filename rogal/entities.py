@@ -71,9 +71,21 @@ def create_monster(ecs):
     )
 
 
+# Particles
+
+def create_particle(ecs, tile, ttl):
+    return ecs.create(
+        components.Particle(ttl),
+        components.Renderable(tile, RenderOrder.PARTICLES),
+    )
+
+def create_meele_hit_particle(ecs):
+    return create_particle(ecs, tiles.MEELE_HIT, .05)
+
+
 # functions
 
-def spawn(ecs, entity, level, position):
+def spawn(ecs, entity, level_id, position):
     locations = ecs.manage(components.Location)
-    locations.insert(entity, level.id, position)
+    locations.insert(entity, level_id, position)
 
