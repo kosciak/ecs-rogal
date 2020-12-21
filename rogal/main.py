@@ -2,7 +2,7 @@ import logging
 
 from .geometry import Position, Size
 from .colors.x11 import Color, TANGO_DARK, TANGO_LIGHT
-from .tilesets import TERMINAL_12x12_CP
+from .tilesheets import TERMINAL_12x12_CP
 
 from .wrappers import TcodWrapper
 from . import keys
@@ -101,7 +101,7 @@ def run():
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
         palette=PALETTE,
-        tileset=TERMINAL_12x12_CP,
+        tilesheet=TERMINAL_12x12_CP,
         resizable=False,
         title='Rogal test'
     )

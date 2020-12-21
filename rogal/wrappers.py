@@ -32,13 +32,13 @@ class TcodWrapper(IOWrapper):
     def __init__(self, 
         console_size,
         palette,
-        tileset,
+        tilesheet,
         resizable=False,
         title=None,
     ):
         self.console_size = console_size
         self._palette = palette
-        self._tileset = tileset
+        self._tilesheet = tilesheet
         self.resizable = resizable
         self.title=title
         self._context = None
@@ -54,7 +54,7 @@ class TcodWrapper(IOWrapper):
                 columns=self.console_size.width,
                 rows=self.console_size.height,
                 title=self.title,
-                tileset=self.tileset,
+                tileset=self.tilesheet,
                 sdl_window_flags=self.resizable and tcod.context.SDL_WINDOW_RESIZABLE
             )
             self._context = context
@@ -69,20 +69,20 @@ class TcodWrapper(IOWrapper):
         # TODO: Some event on palette change forcing everything to redraw?
         self._palette = palette  
 
-    def load_tileset(self, tileset):
+    def load_tilesheet(self, tilesheet):
         return tcod.tileset.load_tilesheet(
-            tileset.path, tileset.columns, tileset.rows, tileset.charmap)
+            tilesheet.path, tilesheet.columns, tilesheet.rows, tilesheet.charmap)
 
     @property
-    def tileset(self):
-        return self.load_tileset(self._tileset)
+    def tilesheet(self):
+        return self.load_tilesheet(self._tilesheet)
 
-    @tileset.setter
-    def tileset(self, tileset):
-        self._tileset = tileset
+    @tilesheet.setter
+    def tilesheet(self, tilesheet):
+        self._tilesheet = tilesheet
         if self.initialized:
-            tileset = self.load_tileset(self._tileset)
-            self.context.change_tileset(tileset)
+            tilesheet = self.load_tilesheet(self._tilesheet)
+            self.context.change_tilesheet(tilesheet)
 
     def create_console(self, size=None):
         # TODO: Check options and resizing behaviour

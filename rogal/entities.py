@@ -1,7 +1,7 @@
 from . import components
 from .renderable import RenderOrder
 from .terrain import Terrain
-from . import tiles
+from .tiles import TermTiles as tiles
 
 
 """Entities definition and creation."""

@@ -4,8 +4,8 @@ from . import logs
 
 from . import components
 from .geometry import Position, Size, Rectangle
-from .renderable import Colors, Tile
-from . import tiles
+from .renderable import Colors
+from .tiles import TermTiles as tiles
 
 
 """Rendering components."""
@@ -56,7 +56,7 @@ def render_camera(panel, ecs, level, player,
             if intersection:
                 boundaries.update(intersection.positions)
         for position in boundaries:
-            panel.draw(tiles.BOUNDARY, position.offset(camera.position))
+            panel.draw(tiles.BOUNDARY.tile, position.offset(camera.position))
 
     # Part of level that is covered by camera
     cam_coverage = camera & level
@@ -95,12 +95,12 @@ def render_camera(panel, ecs, level, player,
         # Visible
         mask = terrain_mask & visible
         if np.any(mask):
-            tile = tiles.visible(renderable.tile)
+            tile = renderable.tile_visible
             panel.mask(tile, mask, mask_offset)
         # Revealed but not visible
         mask = terrain_mask & revealed_not_visible
         if np.any(mask):
-            tile = tiles.revealed(renderable.tile)
+            tile = renderable.tile_revealed
             panel.mask(tile, mask, mask_offset)
 
     # Draw all renderable ENTITIES, in order described by Renderable.render_order
@@ -121,6 +121,6 @@ def render_camera(panel, ecs, level, player,
             continue
         # TODO: Some components checks like entity.has(components.Hidden)
         render_position = location.position.offset(camera.position)
-        tile = tiles.visible(renderable.tile)
+        tile = renderable.tile_visible
         panel.draw(tile, render_position)
 

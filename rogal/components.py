@@ -47,20 +47,31 @@ class Location(WithPositionMixin, Component):
 
 
 class Renderable(Component):
-    __slots__ = ('tile', 'render_order', )
+    __slots__ = ('_tile', 'render_order', )
+    params = ('tile', 'render_order', )
 
     def __init__(self, tile, render_order):
-        self.tile = tile
+        self._tile = tile
         self.render_order = render_order
+
+    @property
+    def tile(self):
+        return self._tile.tile
+
+    @property
+    def tile_visible(self):
+        return self._tile.visible
+
+    @property
+    def tile_revealed(self):
+        return self._tile.revealed
 
     def __lt__(self, other):
         return self.render_order < other.render_order
 
     def serialize(self):
         data = dict(
-            ch=self.tile.ch,
-            fg=self.tile.fg,
-            bg=self.tile.bg,
+            tile=self._tile.name,
             render_order=int(self.render_order),
         )
         return data
@@ -113,6 +124,8 @@ class Pool:
 # TODO: Rework as SingleValue?
 
 class WantsToMove(SingleValueComponent):
+
+    """Move one step in given Direction."""
 
     def serialize(self):
         return self.value.name

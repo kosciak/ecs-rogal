@@ -26,6 +26,7 @@ def movement_system_run(ecs, level, *args, **kwargs):
 
 
 def visibility_system_run(ecs, level, *args, **kwargs):
+    players = ecs.manage(components.Player)
     viewsheds = ecs.manage(components.Viewshed)
     locations = ecs.manage(components.Location)
     for entity, location, viewshed in ecs.join(ecs.entities, locations, viewsheds):
@@ -53,7 +54,7 @@ def visibility_system_run(ecs, level, *args, **kwargs):
         )
 
         viewshed.update(fov)
-        if entity.has(components.Player):
+        if entity in players:
             # If player, update visible and revealed flags
             level.visible[:] = fov
             level.revealed |= fov
