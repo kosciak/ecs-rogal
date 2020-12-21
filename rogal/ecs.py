@@ -149,6 +149,8 @@ class EntitiesIterator:
         self.managers = managers
 
     def __iter__(self):
+        if not all(self.managers):
+            return
         if len(self.managers) == 1 and \
            isinstance(self.managers[0], EntitiesManager):
             # NOTE: Iterate through all entities, it's the only one manager
@@ -184,6 +186,8 @@ class JoinIterator:
         self.managers = managers
 
     def __iter__(self):
+        if not all(self.managers):
+            return
         entities = EntitiesIterator(*self.managers)
         # TODO: Consider filtering out FlagComponent no need to have element that is always True
         for entity in entities:

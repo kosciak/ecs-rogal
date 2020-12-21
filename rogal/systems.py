@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 
 import tcod
@@ -6,16 +8,22 @@ from . import components
 from .flags import Flag, get_flags
 
 
+log = logging.getLogger('rogal.systems')
+
+
 """Systems running ecs."""
 
 # NOTE: For now just use <type>_system_run(ecs, world), make some classes later
 
 
 def movement_system_run(ecs, world, *args, **kwargs):
+    names = ecs.manage(components.Name)
     locations = ecs.manage(components.Location)
-    movements = ecs.manage(components.WantsToMove)
+    movement = ecs.manage(components.WantsToMove)
     viewsheds = ecs.manage(components.Viewshed)
-    for entity, location, direction in ecs.join(ecs.entities, locations, movements):
+    for entity, location, direction in ecs.join(ecs.entities, locations, movement):
+        log.info(f'{names.get(entity)} MOVE: {direction}')
+
         # Update position
         location.position = location.position.move(direction)
 
@@ -25,8 +33,21 @@ def movement_system_run(ecs, world, *args, **kwargs):
             vieshed.invalidate()
         # TODO: Add some HasMoved to flag to entity?
 
-    # Clear processed movements
-    movements.clear()
+    # Clear processed movement
+    movement.clear()
+
+
+def melee_system_run(ecs, world, *args, **kwargs):
+    names = ecs.manage(components.Name)
+    melee = ecs.manage(components.WantsToMelee)
+    for entity, target_id in ecs.join(ecs.entities, melee):
+        target = ecs.entities.get(target_id)
+        log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
+        # TODO: Do some damage!
+
+    # Clear processed melee
+    melee.clear()
+
 
 
 def visibility_system_run(ecs, world, *args, **kwargs):

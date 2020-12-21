@@ -18,6 +18,7 @@ from . import systems
 from .render import render_message_log, render_camera
 
 from . import ai
+from .player import try_move
 
 import tcod
 
@@ -36,7 +37,7 @@ LEVEL_SIZE = Size(20,20)
 def render(wrapper, root_panel, ecs, level, player):
     print(f'Render @ {time.time()}')
     root_panel.clear()
-    camera, message_log = root_panel.split(bottom=7)
+    camera, message_log = root_panel.split(bottom=12)
     #camera = root_panel.create_panel(Position(10,10), CAMERA_SIZE)
 
     render_message_log(message_log.framed('logs'))
@@ -47,23 +48,11 @@ def render(wrapper, root_panel, ecs, level, player):
     wrapper.flush(root_panel)
 
 
-def try_move(ecs, level, player, direction):
-    movements = ecs.manage(components.WantsToMove)
-    location = player.get(components.Location)
-    exits = level.get_exits(location.position)
-    if direction in exits:
-        log.info(f'Move: {direction}')
-        movements.insert(player, direction)
-        return True
-    else:
-        log.warning(f'{direction} blocked!')
-
-
 def handle_events(wrapper, ecs, level, player):
     #for event in wrapper.events(wait=1/30):
     for event in wrapper.events():
         # Just print all events, and gracefully quit on closing window
-        log.debug('Event: %s', event)
+        print(f'Event: {event}')
 
         # TODO: implement tcod.EventDispatch
         if event.type == 'KEYDOWN':
@@ -88,7 +77,7 @@ def handle_events(wrapper, ecs, level, player):
 def loop(wrapper, root_panel, ecs, world, level, player):
     actors = ecs.manage(components.Actor)
     locations = ecs.manage(components.Location)
-    movements = ecs.manage(components.WantsToMove)
+    movement = ecs.manage(components.WantsToMove)
 
     while True:
         for entity, actor, location in ecs.join(ecs.entities, actors, locations):
@@ -104,13 +93,14 @@ def loop(wrapper, root_panel, ecs, world, level, player):
             else:
                 # Monster move
                 direction = ai.random_move(level, location.position)
-                movements.insert(entity, direction)
+                movement.insert(entity, direction)
 
 
 def run():
     ecs = ECS()
 
     # Register systems
+    ecs.register(systems.melee_system_run)
     ecs.register(systems.movement_system_run)
     ecs.register(systems.map_indexing_system_run)
     ecs.register(systems.visibility_system_run)

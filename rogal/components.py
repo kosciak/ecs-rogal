@@ -123,7 +123,6 @@ class Pool:
 
 
 # Action intentions
-# TODO: Rework as SingleValue?
 
 class WantsToMove(SingleValueComponent):
 
@@ -133,8 +132,11 @@ class WantsToMove(SingleValueComponent):
         return self.value.name
 
 
-class WantsToMelee(Component):
-    __slots__ = ()
+WantsToMelee = SingleValue('WantsToMelee')
+
+
+# TODO: Rework as SingleValue?
+
 class WantsToShoot(Component):
     __slots__ = ()
 
