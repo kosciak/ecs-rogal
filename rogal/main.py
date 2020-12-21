@@ -75,10 +75,10 @@ def handle_events(wrapper, ecs, level, player):
             raise SystemExit()
 
 
-def loop(wrapper, root_panel, ecs, level, player):
+def loop(wrapper, root_panel, ecs, world, level, player):
     while True:
         # Run systems
-        ecs.systems_run(level)
+        ecs.systems_run(world)
 
         # Render
         # TODO: No need to render after EVERY single event!
@@ -98,6 +98,8 @@ def run():
 
     entities.create_terrain(ecs)
 
+    world = {}
+
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
         palette=PALETTE,
@@ -112,6 +114,8 @@ def run():
         #level = game_map.generate(root_panel.size*0.75)
         #level = game_map.generate(root_panel.size*1.025)
         level = game_map.generate(LEVEL_SIZE)
+        world[level.id] = level
+
         player = entities.create_player(ecs)
         #entities.spawn(ecs, player, level, level.center)
         entities.spawn(ecs, player, level, Position(3,3))
@@ -120,5 +124,5 @@ def run():
             position = level.center + Position(*offset)
             entities.spawn(ecs, monster, level, position)
 
-        loop(wrapper, root_panel, ecs, level, player)
+        loop(wrapper, root_panel, ecs, world, level, player)
 

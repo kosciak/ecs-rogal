@@ -8,10 +8,10 @@ from .flags import Flag, get_flags
 
 """Systems running ecs."""
 
-# NOTE: For now just use <type>_system_run(ecs, level), make some classes later
+# NOTE: For now just use <type>_system_run(ecs, world), make some classes later
 
 
-def movement_system_run(ecs, level, *args, **kwargs):
+def movement_system_run(ecs, world, *args, **kwargs):
     locations = ecs.manage(components.Location)
     movement_intents = ecs.manage(components.WantsToMove)
     for entity, location, direction in ecs.join(ecs.entities, locations, movement_intents):
@@ -25,14 +25,12 @@ def movement_system_run(ecs, level, *args, **kwargs):
     movement_intents.clear()
 
 
-def visibility_system_run(ecs, level, *args, **kwargs):
+def visibility_system_run(ecs, world, *args, **kwargs):
     players = ecs.manage(components.Player)
     viewsheds = ecs.manage(components.Viewshed)
     locations = ecs.manage(components.Location)
     for entity, location, viewshed in ecs.join(ecs.entities, locations, viewsheds):
-        if not location.map_id == level.id:
-            # Not on current map/level
-            continue
+        level = world.get(location.map_id)
         if not location.position in level:
             # Outside map/level boundaries
             continue
@@ -60,23 +58,22 @@ def visibility_system_run(ecs, level, *args, **kwargs):
             level.revealed |= fov
 
 
-def map_indexing_system_run(ecs, level, *args, **kwargs):
-    # Calculate base_flags if needed
-    if not np.any(level.base_flags):
-        for terrain_id in np.unique(level.terrain):
-            terrain_mask = level.terrain == terrain_id
-            terrain_flags = get_flags(ecs.entities.get(terrain_id))
-            level.base_flags[terrain_mask] = terrain_flags
+def map_indexing_system_run(ecs, world, *args, **kwargs):
+    for level in world.values():
+        # Calculate base_flags if needed
+        if not np.any(level.base_flags):
+            for terrain_id in np.unique(level.terrain):
+                terrain_mask = level.terrain == terrain_id
+                terrain_flags = get_flags(ecs.entities.get(terrain_id))
+                level.base_flags[terrain_mask] = terrain_flags
 
-    # Clear previous data
-    level.entities.clear()
-    level.flags[:] = level.base_flags
+        # Clear previous data
+        level.entities.clear()
+        level.flags[:] = level.base_flags
 
     locations = ecs.manage(components.Location)
     for entity, location in ecs.join(ecs.entities, locations):
-        if not location.map_id == level.id:
-            # Not on current map/level
-            continue
+        level = world.get(location.map_id)
 
         # Update entities on location
         level.entities[location.position].add(entity)

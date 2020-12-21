@@ -42,7 +42,7 @@ class Tilesset(Enum):
         return f'<Tile {self.char!r}, fg={self.fg}, bg={self.bg}>'
 
 
-class TermTiles(TilesSet):
+class TermTiles(Tilesset):
 
     BOUNDARY =      (Glyph.BLOCK1, Color.BASE_RED)
 
