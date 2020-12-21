@@ -8,7 +8,7 @@ from .tiles import TermTiles as tiles
 
 # Terrain
 
-def create_terrain(ecs):
+def create_all_terrains(ecs):
     ecs.create(
         components.Terrain(),
         components.Name('Empty void of darkness'),
@@ -53,14 +53,17 @@ def create_terrain(ecs):
 def create_player(ecs):
     return ecs.create(
         components.Player(),
+        components.Actor(),
         components.Name('Player'),
         components.Renderable(tiles.PLAYER, RenderOrder.ACTORS),
+        components.BlocksMovement(),
         components.Viewshed(view_range=12),
     )
 
 def create_monster(ecs):
     return ecs.create(
         components.Monster(),
+        components.Actor(),
         components.Name('Generic monster'),
         components.Renderable(tiles.MONSTER, RenderOrder.ACTORS),
         components.BlocksMovement(),
@@ -72,6 +75,5 @@ def create_monster(ecs):
 
 def spawn(ecs, entity, level, position):
     locations = ecs.manage(components.Location)
-    location = components.Location(level.id, position)
-    locations.insert(entity, location)
+    locations.insert(entity, level.id, position)
 

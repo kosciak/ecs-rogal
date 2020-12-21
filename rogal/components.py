@@ -25,6 +25,8 @@ Player = Flag('Player')
 
 Monster = Flag('Monster')
 
+Actor = Flag('Actor')
+
 
 # Common components
 

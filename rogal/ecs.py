@@ -225,9 +225,10 @@ class ComponentManager(JoinableManager):
     def get(self, entity):
         return entity.get(self.component_type)
 
-    def insert(self, entity, component):
-        if not type(component) == self.component_type:
+    def insert(self, entity, *args, component=None, **kwargs):
+        if component and not type(component) == self.component_type:
             raise ValueError('Invalid component type!')
+        component = component or self.component_type(*args, **kwargs)
         entity.attach(component)
         self.entities.add(entity)
 
@@ -265,7 +266,7 @@ class EntitiesManager(JoinableManager):
         if isinstance(component_type, Component):
             component_type = type(component_type)
         component_manager = self._component_managers.get(component_type)
-        if not component_manager:
+        if component_manager is None:
             component_manager = ComponentManager(component_type)
             self._component_managers[component_type] = component_manager
         return self._component_managers[component_type]
@@ -285,7 +286,7 @@ class EntitiesManager(JoinableManager):
         self._entities[entity.id] = entity
         for component in components:
             component_manager = self.manage(component)
-            component_manager.insert(entity, component)
+            component_manager.insert(entity, component=component)
         return entity
 
     def get(self, entity_id):

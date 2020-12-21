@@ -16,6 +16,8 @@ from . import systems
 
 from .render import render_message_log, render_camera
 
+from . import ai
+
 import tcod
 
 
@@ -44,12 +46,13 @@ def render(wrapper, root_panel, ecs, level, player):
 
 
 def try_move(ecs, level, player, direction):
+    movements = ecs.manage(components.WantsToMove)
     location = player.get(components.Location)
     exits = level.get_exits(location.position)
     if direction in exits:
         log.info(f'Move: {direction}')
-        movements = ecs.manage(components.WantsToMove)
-        movements.insert(player, components.WantsToMove(direction))
+        movements.insert(player, direction)
+        return True
     else:
         log.warning(f'{direction} blocked!')
 
@@ -66,9 +69,13 @@ def handle_events(wrapper, ecs, level, player):
                 log.warning('Quitting...')
                 raise SystemExit()
 
+            if key in keys.WAIT_KEYS:
+                log.info('Waiting...')
+                return True
+
             direction = keys.MOVE_KEYS.get(key)
             if direction:
-                try_move(ecs, level, player, direction)
+                return try_move(ecs, level, player, direction)
 
         if event.type == 'QUIT':
             log.warning('Quitting...')
@@ -76,16 +83,25 @@ def handle_events(wrapper, ecs, level, player):
 
 
 def loop(wrapper, root_panel, ecs, world, level, player):
+    actors = ecs.manage(components.Actor)
+    locations = ecs.manage(components.Location)
+    movements = ecs.manage(components.WantsToMove)
+
     while True:
-        # Run systems
-        ecs.systems_run(world)
+        for entity, actor, location in ecs.join(ecs.entities, actors, locations):
+            # Run systems
+            ecs.systems_run(world)
 
-        # Render
-        # TODO: No need to render after EVERY single event!
-        render(wrapper, root_panel, ecs, level, player)
-
-        # Handle user input
-        handle_events(wrapper, ecs, level, player)
+            if entity == player:
+                # Handle user input until action is performed
+                action_performed = False
+                while not action_performed:
+                    render(wrapper, root_panel, ecs, level, player)
+                    action_performed = handle_events(wrapper, ecs, level, player)
+            else:
+                # Monster move
+                direction = ai.random_move(level, location.position)
+                movements.insert(entity, direction)
 
 
 def run():
@@ -96,7 +112,7 @@ def run():
     ecs.register(systems.map_indexing_system_run)
     ecs.register(systems.visibility_system_run)
 
-    entities.create_terrain(ecs)
+    entities.create_all_terrains(ecs)
 
     world = {}
 

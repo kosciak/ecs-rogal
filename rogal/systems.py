@@ -13,16 +13,20 @@ from .flags import Flag, get_flags
 
 def movement_system_run(ecs, world, *args, **kwargs):
     locations = ecs.manage(components.Location)
-    movement_intents = ecs.manage(components.WantsToMove)
-    for entity, location, direction in ecs.join(ecs.entities, locations, movement_intents):
+    movements = ecs.manage(components.WantsToMove)
+    viewsheds = ecs.manage(components.Viewshed)
+    for entity, location, direction in ecs.join(ecs.entities, locations, movements):
         # Update position
         location.position = location.position.move(direction)
+
         # Invalidate visibility data
-        vieshed = entity.get(components.Viewshed)
+        vieshed = viewsheds.get(entity)
         if vieshed:
             vieshed.invalidate()
         # TODO: Add some HasMoved to flag to entity?
-    movement_intents.clear()
+
+    # Clear processed movements
+    movements.clear()
 
 
 def visibility_system_run(ecs, world, *args, **kwargs):

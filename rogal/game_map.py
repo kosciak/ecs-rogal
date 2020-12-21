@@ -35,12 +35,15 @@ class GameMap(Rectangle):
         map_id = uuid.uuid4()
         return GameMap(map_id, size, depth)
 
+    def is_blocked(self, position):
+        return self.flags[position] & Flag.BLOCKS_MOVEMENT
+
     def get_exits(self, position):
         # TODO: add movement_type argument and check only appopriate movement type related flag
         exits = set()
         for direction in Direction:
             move_position = position.move(direction)
-            if not self.flags[move_position] & Flag.BLOCKS_MOVEMENT:
+            if not self.is_blocked(move_position):
                 exits.add(direction)
         return exits
 
