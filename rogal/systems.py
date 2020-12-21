@@ -15,10 +15,10 @@ log = logging.getLogger('rogal.systems')
 
 """Systems running ecs."""
 
-# NOTE: For now just use <type>_system_run(ecs, world), make some classes later
+# NOTE: For now just use <type>_system_run(ecs), make some classes later
 
 
-def particle_system_run(ecs, world, *args, **kwargs):
+def particle_system_run(ecs, *args, **kwargs):
     particles = ecs.manage(components.Particle)
     outdated = set()
     now = time.time()
@@ -28,7 +28,7 @@ def particle_system_run(ecs, world, *args, **kwargs):
     ecs.entities.remove(*outdated)
 
 
-def movement_system_run(ecs, world, *args, **kwargs):
+def movement_system_run(ecs, *args, **kwargs):
     names = ecs.manage(components.Name)
     locations = ecs.manage(components.Location)
     movement = ecs.manage(components.WantsToMove)
@@ -49,7 +49,7 @@ def movement_system_run(ecs, world, *args, **kwargs):
     movement.clear()
 
 
-def melee_system_run(ecs, world, *args, **kwargs):
+def melee_system_run(ecs, *args, **kwargs):
     names = ecs.manage(components.Name)
     melee = ecs.manage(components.WantsToMelee)
     for entity, target_id in ecs.join(ecs.entities, melee):
@@ -58,19 +58,19 @@ def melee_system_run(ecs, world, *args, **kwargs):
         # TODO: Do some damage!
         #particle = create_meele_hit_particle(ecs)
         #location = target.get(components.Location)
-        #spawn(ecs, particle, location.map_id, location.position)
+        #spawn(ecs, particle, location.level_id, location.position)
 
     # Clear processed melee
     melee.clear()
 
 
 
-def visibility_system_run(ecs, world, *args, **kwargs):
+def visibility_system_run(ecs, *args, **kwargs):
     players = ecs.manage(components.Player)
     viewsheds = ecs.manage(components.Viewshed)
     locations = ecs.manage(components.Location)
     for entity, location, viewshed in ecs.join(ecs.entities, locations, viewsheds):
-        level = world.get(location.map_id)
+        level = ecs.levels.get(location.level_id)
         if not location.position in level:
             # Outside map/level boundaries
             continue
@@ -98,8 +98,8 @@ def visibility_system_run(ecs, world, *args, **kwargs):
             level.revealed |= fov
 
 
-def map_indexing_system_run(ecs, world, *args, **kwargs):
-    for level in world.values():
+def map_indexing_system_run(ecs, *args, **kwargs):
+    for level in ecs.levels:
         # Calculate base_flags if needed
         if not np.any(level.base_flags):
             for terrain_id in np.unique(level.terrain):
@@ -113,7 +113,7 @@ def map_indexing_system_run(ecs, world, *args, **kwargs):
 
     locations = ecs.manage(components.Location)
     for entity, location in ecs.join(ecs.entities, locations):
-        level = world.get(location.map_id)
+        level = ecs.levels.get(location.level_id)
 
         # Update entities on location
         level.entities[location.position].add(entity)

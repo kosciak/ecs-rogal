@@ -40,15 +40,15 @@ class Particle(SingleValueComponent):
 Name = SingleValue('Name')
 
 class Location(WithPositionMixin, Component):
-    __slots__ = ('map_id', 'position', )
+    __slots__ = ('level_id', 'position', )
 
-    def __init__(self, map_id, position):
-        self.map_id = map_id
+    def __init__(self, level_id, position):
+        self.level_id = level_id
         self.position = position
 
     def serialize(self):
         data = dict(
-            map_id=str(self.map_id),
+            level_id=str(self.level_id),
             x=self.x, 
             y=self.y,
         )

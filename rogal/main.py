@@ -74,7 +74,7 @@ def handle_events(wrapper, ecs, level, player):
             raise SystemExit()
 
 
-def loop(wrapper, root_panel, ecs, world, level, player):
+def loop(wrapper, root_panel, ecs, level, player):
     actors = ecs.manage(components.Actor)
     locations = ecs.manage(components.Location)
     movement = ecs.manage(components.WantsToMove)
@@ -82,7 +82,7 @@ def loop(wrapper, root_panel, ecs, world, level, player):
     while True:
         for entity, actor, location in ecs.join(ecs.entities, actors, locations):
             # Run systems
-            ecs.systems_run(world)
+            ecs.systems_run()
 
             if entity == player:
                 # Handle user input until action is performed
@@ -108,8 +108,6 @@ def run():
 
     entities.create_all_terrains(ecs)
 
-    world = {}
-
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
         palette=PALETTE,
@@ -124,7 +122,7 @@ def run():
         #level = game_map.generate(root_panel.size*0.75)
         #level = game_map.generate(root_panel.size*1.025)
         level = game_map.generate(LEVEL_SIZE)
-        world[level.id] = level
+        ecs.add_level(level)
 
         player = entities.create_player(ecs)
         #entities.spawn(ecs, player, level, level.center)
@@ -134,5 +132,5 @@ def run():
             position = level.center + Position(*offset)
             entities.spawn(ecs, monster, level.id, position)
 
-        loop(wrapper, root_panel, ecs, world, level, player)
+        loop(wrapper, root_panel, ecs, level, player)
 
