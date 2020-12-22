@@ -1,6 +1,10 @@
 import collections
 import functools
+import logging
 import uuid
+
+
+log = logging.getLogger(__name__)
 
 
 class Component:
@@ -288,7 +292,7 @@ class ComponentManager(JoinableManager):
     __slots__ = ('_entities', 'component_type', )
 
     def __init__(self, component_type):
-        self._entities = set()
+        self._entities = EntitiesSet()
         self.component_type = component_type
 
     def __len__(self):
@@ -427,10 +431,11 @@ class ECS:
     def register(self, system):
         self.systems.append(system)
 
-    def systems_run(self, *args, **kwargs):
-        print('Running systems...')
-        for system_run in self.systems:
-            system_run(self, *args, **kwargs)
+    def run(self, state, *args, **kwargs):
+        systems = [system for system in self.systems if system.should_run(state)]
+        log.debug(f'systems.run({state.name}): {systems}')
+        for system in systems:
+            system.run(self, *args, **kwargs)
 
     def add_level(self, level):
         self.levels.add(level)

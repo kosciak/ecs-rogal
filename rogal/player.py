@@ -3,7 +3,7 @@ import logging
 from . import components
 
 
-log = logging.getLogger('rogal.player')
+log = logging.getLogger(__name__)
 
 
 def try_move(ecs, level, player, direction):
