@@ -1,8 +1,10 @@
+import functools
 import time
 
 import numpy as np
 
-from .ecs import Component, SingleValueComponent, Flag, SingleValue
+from .ecs import Component, ConstantValueComponent, SingleValueComponent
+from .ecs import Flag, Constant, Counter 
 from .geometry import Position, WithPositionMixin
 
 
@@ -27,9 +29,11 @@ Player = Flag('Player')
 
 Monster = Flag('Monster')
 
+# TODO: Remove Actor flag? Not used after implementing ActsNow, WaitsForAction and actions_queue_system
 Actor = Flag('Actor')
 
 class Particle(SingleValueComponent):
+    __slots__ = ()
 
     def __init__(self, value):
         super().__init__(time.time()+value)
@@ -37,7 +41,7 @@ class Particle(SingleValueComponent):
 
 # Common components
 
-Name = SingleValue('Name')
+Name = Constant('Name')
 
 class Location(WithPositionMixin, Component):
     __slots__ = ('level_id', 'position', )
@@ -129,9 +133,16 @@ class Pool:
         self._value = max(0, min(value, self.max_value))
 
 
+# Actions queue
+
+ActsNow = Flag('ActsNow')
+
+WaitsForAction = Counter('WaitsForAction')
+
+
 # Action intentions
 
-class WantsToMove(SingleValueComponent):
+class WantsToMove(ConstantValueComponent, SingleValueComponent):
 
     """Move one step in given Direction."""
 
@@ -139,10 +150,10 @@ class WantsToMove(SingleValueComponent):
         return self.value.name
 
 
-WantsToMelee = SingleValue('WantsToMelee')
+WantsToMelee = Constant('WantsToMelee')
 
 
-# TODO: Rework as SingleValue?
+# TODO: Rework as Constant?
 
 class WantsToShoot(Component):
     __slots__ = ()

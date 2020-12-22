@@ -1,10 +1,15 @@
 import collections
+import functools
 import uuid
 
 
-# TODO: ComponentMeta extracting lower_case name to be used as entity.name_of_component?
-
 class Component:
+
+    """Component that hold some value(s).
+
+    params - values that are used by constructor and serialization
+
+    """
 
     __slots__ = ()
     params = ()
@@ -33,7 +38,19 @@ class Component:
             return f'<{self.name} {param_values_txt}>'
 
 
+class ConstantValueComponent(Component):
+
+    """Component that holds constant value, when iterating only it's value is returned."""
+
+    __slots__ = ()
+
+    def serialize(self):
+        return self.value
+
+
 class SingleValueComponent(Component):
+
+    """Component that holds single value."""
 
     __slots__ = ('value', )
 
@@ -47,10 +64,36 @@ class SingleValueComponent(Component):
         return f'<{self.__class__.__name__}={self.value!r}>'
 
 
-class FlagComponent(Component):
+@functools.total_ordering
+class CounterComponent(SingleValueComponent):
+
+    """Single value component that can be incremented/decremented, and compared to other values."""
+
+    __slots__ = ()
+    params = ('value', )
+
+    def __add__(self, value):
+        self.value += value
+        return self
+
+    def __sub__(self, value):
+        self.value -= value
+        return self
+
+    def __lt__(self, other):
+        return self.value < other
+
+    def __eq__(self, other):
+        return self.value == other
+
+
+class FlagComponent(ConstantValueComponent):
+
+    """Constant value Component holding True as value."""
 
     _INSTANCE = None
 
+    __slots__ = ()
     params = ('value', )
 
     def __new__(cls):
@@ -63,19 +106,25 @@ class FlagComponent(Component):
     def value(self):
         return True
 
-    def serialize(self):
-        return self.value
-
     def __repr__(self):
         return f'<{self.__class__.__name__}>'
 
 
-def SingleValue(name):
+def Constant(name):
     """Returns SingleValueComponent class with given name."""
-    bases = (SingleValueComponent, )
+    bases = (ConstantValueComponent, SingleValueComponent, )
     attrs = dict(
         __slots__=(),
         params=('value', ),
+    )
+    return type(name, bases, attrs)
+
+
+def Counter(name):
+    """Returns CounterComponent class with given name."""
+    bases = (CounterComponent, )
+    attrs = dict(
+        __slots__=(),
     )
     return type(name, bases, attrs)
 
@@ -91,6 +140,12 @@ def Flag(name):
 
 
 class Entity:
+
+    """Entity with set of Components.
+
+    Entity contains only one Component of given type.
+
+    """
 
     __slots__ = ('id', '_components', )
 
@@ -130,7 +185,7 @@ class Entity:
         if isinstance(component_type, Component):
             component_type = type(component_type)
         component = self._components.get(component_type)
-        if isinstance(component, (SingleValueComponent, FlagComponent)):
+        if isinstance(component, ConstantValueComponent):
             return component.value
         else:
             return component

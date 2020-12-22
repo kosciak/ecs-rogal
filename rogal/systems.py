@@ -18,14 +18,19 @@ log = logging.getLogger('rogal.systems')
 # NOTE: For now just use <type>_system_run(ecs), make some classes later
 
 
-def particle_system_run(ecs, *args, **kwargs):
-    particles = ecs.manage(components.Particle)
-    outdated = set()
-    now = time.time()
-    for entity, ttl in ecs.join(ecs.entities, particles):
-        if ttl < now:
-            outdated.add(entity)
-    ecs.entities.remove(*outdated)
+def actions_queue_system_run(ecs, *args, **kwargs):
+    acts_now = ecs.manage(components.ActsNow)
+    waiting = ecs.manage(components.WaitsForAction)
+
+    # Clear previous ActsNow flags
+    acts_now.clear()
+
+    for entity, waits in ecs.join(ecs.entities, waiting):
+        # Decrease wait time
+        waits -= 1
+        if waits <= 0:
+            # No more waiting, time for some action!
+            acts_now.insert(entity)
 
 
 def movement_system_run(ecs, *args, **kwargs):
@@ -121,4 +126,14 @@ def map_indexing_system_run(ecs, *args, **kwargs):
         # Update flags
         entity_flags = get_flags(entity)
         level.flags[location.position] |= entity_flags
+
+
+def particle_system_run(ecs, *args, **kwargs):
+    particles = ecs.manage(components.Particle)
+    outdated = set()
+    now = time.time()
+    for entity, ttl in ecs.join(ecs.entities, particles):
+        if ttl < now:
+            outdated.add(entity)
+    ecs.entities.remove(*outdated)
 

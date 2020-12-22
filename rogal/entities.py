@@ -1,3 +1,5 @@
+import random
+
 from . import components
 from .renderable import RenderOrder
 from .terrain import Terrain
@@ -58,16 +60,18 @@ def create_player(ecs):
         components.Renderable(tiles.PLAYER, RenderOrder.ACTORS),
         components.BlocksMovement(),
         components.Viewshed(view_range=12),
+        components.WaitsForAction(1),
     )
 
 def create_monster(ecs):
     return ecs.create(
         components.Monster(),
         components.Actor(),
-        components.Name('Generic monster'),
+        components.Name('Monster'),
         components.Renderable(tiles.MONSTER, RenderOrder.ACTORS),
         components.BlocksMovement(),
         components.Viewshed(view_range=12),
+        components.WaitsForAction(random.randint(2,10)),
     )
 
 

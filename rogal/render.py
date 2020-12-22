@@ -29,10 +29,12 @@ def render_camera(panel, ecs, level, player,
         show_boundaries=SHOW_BOUNDARIES):
     """Render level contets viewed through (scrollable) camera."""
 
+    player_position = player.get(components.Location).position
+
     # Select what camera should be centered on
     if scrollable:
         # Player position, relative to level
-        cam_center = player.get(components.Location).position
+        cam_center = player_position
     else:
         # Level center
         cam_center = level.center

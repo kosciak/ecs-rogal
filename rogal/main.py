@@ -63,7 +63,7 @@ def handle_events(wrapper, ecs, level, player):
 
             if key in keys.WAIT_KEYS:
                 log.info('Waiting...')
-                return True
+                return 60
 
             direction = keys.MOVE_KEYS.get(key)
             if direction:
@@ -75,36 +75,42 @@ def handle_events(wrapper, ecs, level, player):
 
 
 def loop(wrapper, root_panel, ecs, level, player):
-    actors = ecs.manage(components.Actor)
+    #actors = ecs.manage(components.Actor)
+    acts_now = ecs.manage(components.ActsNow)
+    waiting = ecs.manage(components.WaitsForAction)
     locations = ecs.manage(components.Location)
     movement = ecs.manage(components.WantsToMove)
 
     while True:
-        for entity, actor, location in ecs.join(ecs.entities, actors, locations):
-            # Run systems
-            ecs.systems_run()
-
+        # Run systems
+        ecs.systems_run()
+        for entity, acting, location in ecs.join(ecs.entities, acts_now, locations):
             if entity == player:
                 # Handle user input until action is performed
-                action_performed = False
-                while not action_performed:
+                action_cost = 0
+                while not action_cost:
                     render(wrapper, root_panel, ecs, level, player)
-                    action_performed = handle_events(wrapper, ecs, level, player)
+                    action_cost = handle_events(wrapper, ecs, level, player)
+                    waiting.insert(entity, action_cost)
             else:
                 # Monster move
                 direction = ai.random_move(level, location.position)
                 movement.insert(entity, direction)
+                action_cost = 60
+                waiting.insert(entity, action_cost)
+            ecs.systems_run()
 
 
 def run():
     ecs = ECS()
 
     # Register systems
-    ecs.register(systems.particle_system_run)
+    #ecs.register(systems.particle_system_run)
     ecs.register(systems.melee_system_run)
     ecs.register(systems.movement_system_run)
     ecs.register(systems.map_indexing_system_run)
     ecs.register(systems.visibility_system_run)
+    ecs.register(systems.actions_queue_system_run)
 
     entities.create_all_terrains(ecs)
 
