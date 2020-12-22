@@ -52,8 +52,17 @@ class TermTiles(Tilesset):
     STONE_FLOOR =   ('.', Color.BASE_WHITE)
     SHALLOW_WATER = ('~', Color.BASE_BLUE)
 
-    # Entities
+    # Foliage
+
+    # Props
+    CLOSED_DOOR =   ('+', Color.BASE_YELLOW)
+    OPEN_DOOR =     ('-', Color.BASE_YELLOW)
+
+    # Items
+
+    # Actors
     PLAYER =        ('@', Color.BRIGHT_WHITE)
+
     MONSTER =       ('M', Color.LIME)
 
     # Particles

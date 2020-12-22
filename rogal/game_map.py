@@ -64,10 +64,13 @@ class GameMap(Rectangle):
         return data
 
 
-def generate(size):
+def generate(ecs, size):
+    from . import entities
     from .terrain import Terrain
 
     level = GameMap.create(size, 0)
+
+    # Terrain layout
     level.terrain[:] = Terrain.STONE_WALL.id
     level.terrain[1:-1, 1:-1] = Terrain.STONE_FLOOR.id
     level.terrain[-3:-1, 1:-1] = Terrain.SHALLOW_WATER.id
@@ -75,6 +78,18 @@ def generate(size):
     level.terrain[level.center] = Terrain.STONE_FLOOR.id
     level.terrain[level.width//4, level.height//2] = Terrain.STONE_FLOOR.id
     level.terrain[level.width//4*3, level.height//2] = Terrain.STONE_FLOOR.id
+
+    # Entities Spawning
+    closed_door = entities.create(ecs, entities.CLOSED_DOOR)
+    entities.spawn(ecs, closed_door, level.id, level.center)
+
+    player = entities.create(ecs, entities.PLAYER)
+    entities.spawn(ecs, player, level.id, Position(3,3))
+
+    for offset in [(-2,-2), (2,2), (-3,3), (3,-3)]:
+        monster = entities.create(ecs, entities.MONSTER)
+        position = level.center + Position(*offset)
+        entities.spawn(ecs, monster, level.id, position)
 
     return level
 

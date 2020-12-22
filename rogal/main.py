@@ -122,12 +122,14 @@ def run():
 
     ecs.register(systems.MeleeCombatSystem())
     ecs.register(systems.MovementSystem())
+    ecs.register(systems.OperateSystem())
 
     ecs.register(systems.MapIndexingSystem())
     ecs.register(systems.VisibilitySystem())
 
     # Entities initialization
-    entities.create_all_terrains(ecs)
+    for entity_id, template in entities.ALL_TERRAIN:
+        entities.create(ecs, template, entity_id=entity_id)
 
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
@@ -143,18 +145,8 @@ def run():
         # Level(s) generation
         #level = game_map.generate(root_panel.size*0.75)
         #level = game_map.generate(root_panel.size*1.025)
-        level = game_map.generate(LEVEL_SIZE)
+        level = game_map.generate(ecs, LEVEL_SIZE)
         ecs.add_level(level)
-
-        # Entities Spawning
-        # TODO: Move to level generation!
-        player = entities.create_player(ecs)
-        #entities.spawn(ecs, player, level, level.center)
-        entities.spawn(ecs, player, level.id, Position(3,3))
-        for offset in [(-2,-2), (2,2), (-3,3), (3,-3)]:
-            monster = entities.create_monster(ecs)
-            position = level.center + Position(*offset)
-            entities.spawn(ecs, monster, level.id, position)
 
         loop(wrapper, root_panel, ecs)
 

@@ -29,8 +29,14 @@ Player = Flag('Player')
 
 Monster = Flag('Monster')
 
-# TODO: Remove Actor flag? Not used after implementing ActsNow, WaitsForAction and actions_queue_system
-Actor = Flag('Actor')
+
+class OnOperate(Component):
+    __slots__ = ('insert', 'remove')
+
+    def __init__(self, insert=None, remove=''):
+        self.insert = insert or []
+        self.remove = remove or []
+
 
 class Particle(SingleValueComponent):
     __slots__ = ()
@@ -151,6 +157,8 @@ class WantsToMove(ConstantValueComponent, SingleValueComponent):
 
 
 WantsToMelee = Constant('WantsToMelee')
+
+WantsToOperate = Constant('WantsToOperate')
 
 
 # TODO: Rework as Constant?

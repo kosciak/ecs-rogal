@@ -10,69 +10,89 @@ from .tiles import TermTiles as tiles
 
 # Terrain
 
-def create_all_terrains(ecs):
-    ecs.create(
-        components.Terrain(),
-        components.Name('Empty void of darkness'),
-        components.Renderable(tiles.VOID, RenderOrder.TERRAIN),
-        components.BlocksVision(),
-        components.BlocksMovement(),
-        entity_id=Terrain.VOID.id
-    )
+VOID = (
+    components.Terrain(),
+    components.Name('Empty void of darkness'),
+    components.Renderable(tiles.VOID, RenderOrder.TERRAIN),
+    components.BlocksVision(),
+    components.BlocksMovement(),
+)
 
-    ecs.create(
-        components.Terrain(),
-        components.Name('Stone wall'),
-        components.Renderable(tiles.STONE_WALL, RenderOrder.TERRAIN),
-        components.BlocksVision(),
-        components.BlocksMovement(),
-        entity_id=Terrain.STONE_WALL.id
-    )
+STONE_WALL = (
+    components.Terrain(),
+    components.Name('Stone wall'),
+    components.Renderable(tiles.STONE_WALL, RenderOrder.TERRAIN),
+    components.BlocksVision(),
+    components.BlocksMovement(),
+)
 
-    ecs.create(
-        components.Terrain(),
-        components.Name('Stone floor'),
-        components.Renderable(tiles.STONE_FLOOR, RenderOrder.TERRAIN),
-        entity_id=Terrain.STONE_FLOOR.id
-    )
+STONE_FLOOR = (
+    components.Terrain(),
+    components.Name('Stone floor'),
+    components.Renderable(tiles.STONE_FLOOR, RenderOrder.TERRAIN),
+)
 
-    ecs.create(
-        components.Terrain(),
-        components.Name('Shallow water'),
-        components.Renderable(tiles.SHALLOW_WATER, RenderOrder.TERRAIN),
-        entity_id=Terrain.SHALLOW_WATER.id
-    )
+SHALLOW_WATER = (
+    components.Terrain(),
+    components.Name('Shallow water'),
+    components.Renderable(tiles.SHALLOW_WATER, RenderOrder.TERRAIN),
+)
+
+ALL_TERRAIN = [
+    (Terrain.VOID.id, VOID), 
+    (Terrain.STONE_WALL.id, STONE_WALL),
+    (Terrain.STONE_FLOOR.id, STONE_FLOOR),
+    (Terrain.SHALLOW_WATER.id, SHALLOW_WATER),
+]
 
 
 # Foliage
 
 # Props
 
+OPEN_DOOR = (
+    components.Prop(),
+    components.Name('Open door'),
+    components.Renderable(tiles.OPEN_DOOR, RenderOrder.PROPS),
+)
+
+CLOSED_DOOR = (
+    components.Prop(),
+    components.Name('Closed door'),
+    components.Renderable(tiles.CLOSED_DOOR, RenderOrder.PROPS),
+    components.BlocksMovement(),
+    components.BlocksVision(),
+    components.OnOperate(
+        insert=OPEN_DOOR,
+        remove=(
+            components.BlocksVision, 
+            components.BlocksMovement, 
+            components.OnOperate,
+        ),
+    ),
+)
+
 # Items
 
 # Actors
 
-def create_player(ecs):
-    return ecs.create(
-        components.Player(),
-        components.Actor(),
-        components.Name('Player'),
-        components.Renderable(tiles.PLAYER, RenderOrder.ACTORS),
-        components.BlocksMovement(),
-        components.Viewshed(view_range=12),
-        components.WaitsForAction(1),
-    )
+PLAYER = (
+    components.Player(),
+    components.Name('Player'),
+    components.Renderable(tiles.PLAYER, RenderOrder.ACTORS),
+    components.BlocksMovement(),
+    components.Viewshed(view_range=12),
+    components.WaitsForAction(1),
+)
 
-def create_monster(ecs):
-    return ecs.create(
-        components.Monster(),
-        components.Actor(),
-        components.Name('Monster'),
-        components.Renderable(tiles.MONSTER, RenderOrder.ACTORS),
-        components.BlocksMovement(),
-        components.Viewshed(view_range=12),
-        components.WaitsForAction(random.randint(2,10)),
-    )
+MONSTER = (
+    components.Monster(),
+    components.Name('Monster'),
+    components.Renderable(tiles.MONSTER, RenderOrder.ACTORS),
+    components.BlocksMovement(),
+    components.Viewshed(view_range=12),
+    components.WaitsForAction(random.randint(2,10)),
+)
 
 
 # Particles
@@ -88,6 +108,10 @@ def create_meele_hit_particle(ecs):
 
 
 # functions
+
+def create(ecs, template, entity_id=None):
+    return ecs.create(*template, entity_id=entity_id)
+
 
 def spawn(ecs, entity, level_id, position):
     locations = ecs.manage(components.Location)

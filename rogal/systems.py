@@ -38,7 +38,7 @@ class System:
 class ActionsQueueSystem(System):
 
     INCLUDE_STATES = {
-        RunState.TICKING, 
+        RunState.TICKING,
     }
 
     def run(self, ecs, *args, **kwargs):
@@ -59,40 +59,40 @@ class ActionsQueueSystem(System):
 class MovementSystem(System):
 
     INCLUDE_STATES = {
-        RunState.ACTION_PERFORMED, 
+        RunState.ACTION_PERFORMED,
     }
 
     def run(self, ecs, *args, **kwargs):
         names = ecs.manage(components.Name)
         locations = ecs.manage(components.Location)
-        movement = ecs.manage(components.WantsToMove)
+        movement_directions = ecs.manage(components.WantsToMove)
         viewsheds = ecs.manage(components.Viewshed)
-        for entity, location, direction in ecs.join(ecs.entities, locations, movement):
+        for entity, location, direction in ecs.join(ecs.entities, locations, movement_directions):
             log.info(f'{names.get(entity)} MOVE: {direction}')
 
             # Update position
             location.position = location.position.move(direction)
 
             # Invalidate visibility data
-            vieshed = viewsheds.get(entity)
-            if vieshed:
-                vieshed.invalidate()
+            viewshed = viewsheds.get(entity)
+            if viewshed:
+                viewshed.invalidate()
             # TODO: Add some HasMoved to flag to entity?
 
-        # Clear processed movement
-        movement.clear()
+        # Clear processed movements
+        movement_directions.clear()
 
 
 class MeleeCombatSystem(System):
 
     INCLUDE_STATES = {
-        RunState.ACTION_PERFORMED, 
+        RunState.ACTION_PERFORMED,
     }
 
     def run(self, ecs, *args, **kwargs):
         names = ecs.manage(components.Name)
-        melee = ecs.manage(components.WantsToMelee)
-        for entity, target_id in ecs.join(ecs.entities, melee):
+        melee_targets = ecs.manage(components.WantsToMelee)
+        for entity, target_id in ecs.join(ecs.entities, melee_targets):
             target = ecs.entities.get(target_id)
             log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
             # TODO: Do some damage!
@@ -100,8 +100,51 @@ class MeleeCombatSystem(System):
             #location = target.get(components.Location)
             #spawn(ecs, particle, location.level_id, location.position)
 
-        # Clear processed melee
-        melee.clear()
+        # Clear processed targets
+        melee_targets.clear()
+
+
+class OperateSystem(System):
+
+    INCLUDE_STATES = {
+        RunState.ACTION_PERFORMED,
+    }
+
+    def run(self, ecs, *args, **kwargs):
+        names = ecs.manage(components.Name)
+        operate_targets = ecs.manage(components.WantsToOperate)
+        operations = ecs.manage(components.OnOperate)
+        changes_visibility = set()
+        for entity, target_id in ecs.join(ecs.entities, operate_targets):
+            target = ecs.entities.get(target_id)
+            log.info(f'{names.get(entity)} OPERATE: {names.get(target)}')
+            operation = operations.get(target)
+            for component in operation.insert:
+                if component == components.BlocksVision:
+                    changes_visibility.add(target)
+                manager = ecs.manage(component)
+                manager.insert(target, component=component)
+            for component in operation.remove:
+                if component == components.BlocksVision:
+                    changes_visibility.add(target)
+                manager = ecs.manage(component)
+                manager.remove(target)
+
+        # Force update of Viewshed of all entities on levels where visibility changed
+        locations = ecs.manage(components.Location)
+        level_ids = set()
+        for entity in changes_visibility:
+            location = locations.get(entity)
+            level_ids.add(location.level_id)
+
+        viewsheds = ecs.manage(components.Viewshed)
+        for viewshed, location in ecs.join(viewsheds, locations):
+            if location.level_id in level_ids:
+                viewshed.needs_update = True
+
+        # Clear processed targets
+        operate_targets.clear()
+
 
 
 
