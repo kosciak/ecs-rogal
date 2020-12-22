@@ -7,6 +7,7 @@ import uuid
 log = logging.getLogger(__name__)
 
 
+@functools.total_ordering
 class Component:
 
     """Component that hold some value(s).
@@ -28,6 +29,13 @@ class Component:
         for param in params:
             data[param] = getattr(self, param)
         return data
+
+    def __lt__(self, other):
+        # Just some arbitrary comparison for total_ordering to work
+        return id(self) < id(other)
+
+    #def __eq__(self, other):
+    #    return id(self) == id(other)
 
     def __repr__(self):
         param_values = []
@@ -64,11 +72,13 @@ class SingleValueComponent(Component):
     def serialize(self):
         return self.value
 
+    def __eq__(self, other):
+        return self.value == other.value
+
     def __repr__(self):
         return f'<{self.__class__.__name__}={self.value!r}>'
 
 
-@functools.total_ordering
 class CounterComponent(SingleValueComponent):
 
     """Single value component that can be incremented/decremented, and compared to other values."""
@@ -84,11 +94,13 @@ class CounterComponent(SingleValueComponent):
         self.value -= value
         return self
 
+    def __eq__(self, other):
+        if hasattr(other, 'value'):
+            other = other.value
+        return self.value == other
+
     def __lt__(self, other):
         return self.value < other
-
-    def __eq__(self, other):
-        return self.value == other
 
 
 class FlagComponent(ConstantValueComponent):
@@ -239,7 +251,7 @@ class ComponentIterator:
     def __iter__(self):
         # TODO: Check if removing entity while iterating won't break things!
         for entity in self.component_manager.entities:
-            yield component_manager.get(entity)
+            yield self.component_manager.get(entity)
 
 
 class JoinIterator:
