@@ -1,6 +1,8 @@
 import logging
 import time
 
+import tcod
+
 from .geometry import Position, Size
 from .colors.x11 import Color, TANGO_DARK, TANGO_LIGHT
 from .tilesheets import TERMINAL_12x12_CP
@@ -22,8 +24,6 @@ from .render import render_message_log, render_camera
 from . import ai
 from .player import try_move
 
-import tcod
-
 
 log = logging.getLogger(__name__)
 
@@ -32,8 +32,8 @@ PALETTE = TANGO_DARK
 
 CONSOLE_SIZE = Size(80, 50)
 
-CAMERA_SIZE = Size(12, 12)
-LEVEL_SIZE = Size(20,20)
+CAMERA_SIZE = Size(15, 15)
+LEVEL_SIZE = Size(21,21)
 
 
 def render(wrapper, root_panel, ecs, level, player):

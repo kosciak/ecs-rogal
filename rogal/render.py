@@ -12,6 +12,7 @@ from .tiles import TermTiles as tiles
 
 
 SCROLLABLE_CAMERA = True
+#SCROLLABLE_CAMERA = False
 
 SHOW_BOUNDARIES = True
 
@@ -44,6 +45,18 @@ def render_camera(panel, ecs, level, player,
         Position(cam_center.x-panel.width//2, cam_center.y-panel.height//2),
         panel.size
     )
+    # For level-centered camera need to move camera if level.size > camera.size and approaching edge
+    # Adjust top-left corner
+    adjusted_position = Position(
+        min(camera.x, player_position.x-1),
+        min(camera.y, player_position.y-1)
+    )
+    # Adjust bottom-right corner
+    adjust_move = Position(
+       max(0, 2+player_position.x-camera.x2),
+       max(0, 2+player_position.y-camera.y2), 
+    )
+    camera.position = adjusted_position+adjust_move
 
     # Draw BOUNDARIES of the map/level
     if show_boundaries:
