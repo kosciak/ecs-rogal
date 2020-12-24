@@ -14,6 +14,8 @@ BlocksMovement = Flag('BlocksMovement')
 
 BlocksVision = Flag('BlocksVision')
 
+BlocksVisionChanged = Flag('BlocksVisionChanged')
+
 
 # Entity type
 
@@ -96,6 +98,7 @@ class Renderable(Component):
         return data
 
 
+
 class Viewshed(Component):
     __slots__ = ('view_range', 'visible_tiles', 'needs_update', )
     params = ('view_range', )
@@ -154,6 +157,8 @@ class WantsToMove(ConstantValueComponent, SingleValueComponent):
 
     def serialize(self):
         return self.value.name
+
+HasMoved = Flag('HasMoved')
 
 
 WantsToMelee = Constant('WantsToMelee')
