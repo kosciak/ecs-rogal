@@ -106,7 +106,7 @@ def render_camera(panel, ecs, level, player,
         if not terrain_id:
             continue
         terrain_mask = terrain == terrain_id
-        renderable = renderables.get(ecs.entities.get(terrain_id))
+        renderable = renderables.get(ecs.get(terrain_id))
         # Visible
         mask = terrain_mask & visible
         if np.any(mask):

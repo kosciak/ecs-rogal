@@ -109,12 +109,12 @@ class MeleeCombatSystem(System):
         melee_targets = ecs.manage(components.WantsToMelee)
 
         for entity, target_id in ecs.join(ecs.entities, melee_targets):
-            target = ecs.entities.get(target_id)
+            target = ecs.get(target_id)
             log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
             # TODO: Do some damage!
-            #particle = create_meele_hit_particle(ecs)
-            #location = target.get(components.Location)
-            #spawn(ecs, particle, location.level_id, location.position)
+            particle = create_meele_hit_particle(ecs)
+            location = target.get(components.Location)
+            spawn(ecs, particle, location.level_id, location.position)
 
         # Clear processed targets
         melee_targets.clear()
@@ -133,7 +133,7 @@ class OperateSystem(System):
         blocks_vision_changes = ecs.manage(components.BlocksVisionChanged)
 
         for entity, target_id in ecs.join(ecs.entities, operate_targets):
-            target = ecs.entities.get(target_id)
+            target = ecs.get(target_id)
             log.info(f'{names.get(entity)} OPERATE: {names.get(target)}')
             operation = operations.get(target)
             for component in operation.insert:
@@ -197,10 +197,12 @@ class VisibilitySystem(System):
                 transparency, pov=pov, 
                 radius=viewshed.view_range, 
                 light_walls=True,
+                #algorithm=tcod.FOV_BASIC,
                 #algorithm=tcod.FOV_SHADOW,
                 #algorithm=tcod.FOV_DIAMOND,
                 #algorithm=tcod.FOV_RESTRICTIVE,
                 #algorithm=tcod.FOV_PERMISSIVE(1),
+                #algorithm=tcod.FOV_PERMISSIVE(8),
                 algorithm=tcod.FOV_SYMMETRIC_SHADOWCAST,
             )
 
@@ -226,7 +228,7 @@ class MapIndexingSystem(System):
         if not np.any(level.base_flags):
             for terrain_id in np.unique(level.terrain):
                 terrain_mask = level.terrain == terrain_id
-                terrain_flags = get_flags(ecs.entities.get(terrain_id))
+                terrain_flags = get_flags(ecs.get(terrain_id))
                 level.base_flags[terrain_mask] = terrain_flags
 
     def clear_flags(self, ecs, *args, **kwargs):
@@ -257,6 +259,12 @@ class MapIndexingSystem(System):
 
 
 class ParticlesSystem(System):
+
+    INCLUDE_STATES = {
+        #RunState.TICKING,
+        RunState.WAITING_FOR_INPUT,
+        RunState.ANIMATIONS,
+    }
 
     def run(self, ecs, *args, **kwargs):
         particles = ecs.manage(components.Particle)

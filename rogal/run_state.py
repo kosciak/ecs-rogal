@@ -6,4 +6,5 @@ class RunState(Enum):
     TICKING = auto()
     WAITING_FOR_INPUT = auto()
     ACTION_PERFORMED = auto()
+    ANIMATIONS = auto()
 

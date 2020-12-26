@@ -37,6 +37,8 @@ LEVEL_SIZE = Size(21,21)
 
 
 def render(wrapper, root_panel, ecs, level, player):
+    if not level or not player:
+        return
     log.debug(f'Render @ {time.time()}')
     root_panel.clear()
     camera, message_log = root_panel.split(bottom=12)
@@ -82,6 +84,11 @@ def loop(wrapper, root_panel, ecs):
     locations = ecs.manage(components.Location)
     waiting = ecs.manage(components.WaitsForAction)
 
+    pending_animations = ecs.manage(components.Animation)
+
+    player = None
+    level = None
+
     # Preparation
     ecs.run(RunState.PRE_RUN)
 
@@ -93,6 +100,7 @@ def loop(wrapper, root_panel, ecs):
             # Each actor performs action
 
             if actor in players:
+                player = actor
                 # Handle user input until action is performed
                 action_cost = 0
                 while not action_cost:
@@ -109,6 +117,12 @@ def loop(wrapper, root_panel, ecs):
             ecs.run(RunState.ACTION_PERFORMED)
             waiting.insert(actor, action_cost)
 
+            # Render real time animated effects
+            while len(pending_animations):
+                ecs.run(RunState.ANIMATIONS)
+                render(wrapper, root_panel, ecs, level, player)
+                time.sleep(1/60)
+
 
 def run():
     # ECS initialization
@@ -116,7 +130,7 @@ def run():
 
     # Register systems
     # NOTE: Systems are run in order they were registered
-    #ecs.register(systems.ParticlesSystem())
+    ecs.register(systems.ParticlesSystem())
 
     ecs.register(systems.ActionsQueueSystem())
 

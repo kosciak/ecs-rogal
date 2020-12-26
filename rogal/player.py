@@ -23,8 +23,8 @@ def try_move(ecs, level, player, direction):
     target_entities = level.get_entities(target_position)
 
     melee_targets = ecs.manage(components.WantsToMelee)
-    monsters = ecs.manage(components.Monster)
-    for target, monster in ecs.join(target_entities, monsters):
+    with_hit_points = ecs.manage(components.HitPoints)
+    for target, hit_points in ecs.join(target_entities, with_hit_points):
         melee_targets.insert(player, target.id)
         return ACTION_COST
 

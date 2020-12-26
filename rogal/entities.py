@@ -83,6 +83,9 @@ PLAYER = (
     components.BlocksMovement(),
     components.Viewshed(view_range=12),
     components.WaitsForAction(1),
+    components.HitPoints(20),
+    components.Attack(10),
+    components.Defence(10),
 )
 
 MONSTER = (
@@ -92,6 +95,9 @@ MONSTER = (
     components.BlocksMovement(),
     components.Viewshed(view_range=12),
     components.WaitsForAction(random.randint(2,10)),
+    components.HitPoints(10),
+    components.Attack(5),
+    components.Defence(5),
 )
 
 
@@ -99,6 +105,7 @@ MONSTER = (
 
 def create_particle(ecs, tile, ttl):
     return ecs.create(
+        components.Animation(),
         components.Particle(ttl),
         components.Renderable(tile, RenderOrder.PARTICLES),
     )

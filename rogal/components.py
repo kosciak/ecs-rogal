@@ -4,7 +4,7 @@ import time
 import numpy as np
 
 from .ecs import Component, ConstantValueComponent, SingleValueComponent
-from .ecs import Flag, Constant, Counter 
+from .ecs import Flag, Constant, Counter, component_type
 from .geometry import Position, WithPositionMixin
 
 
@@ -40,11 +40,15 @@ class OnOperate(Component):
         self.remove = remove or []
 
 
-class Particle(SingleValueComponent):
+Animation = Flag('Animation')
+
+class Particle(ConstantValueComponent, SingleValueComponent):
     __slots__ = ()
 
     def __init__(self, value):
         super().__init__(time.time()+value)
+
+# TODO: RealTimeParticles and TickBasedParticles based on ClockTicks like WaitsForAction
 
 
 # Common components
@@ -119,18 +123,13 @@ class Viewshed(Component):
         }
 
 
-Hidden = Flag('Hidden')
+class PoolComponent(Component):
+    __slots__ = ('_value', 'max_value', )
+    params = ('value', 'max_value', )
 
-CursedItem = Flag('CursedItem')
-
-UnidentifiedItem = Flag('UnidentifiedItem')
-
-
-class Pool:
-
-    def __init__(self, value, max_value):
+    def __init__(self, value, max_value=None):
         self._value = 0
-        self.max_value = max_value
+        self.max_value = max_value or value
         self.value = value
 
     @property
@@ -140,6 +139,28 @@ class Pool:
     @value.setter
     def value(self, value):
         self._value = max(0, min(value, self.max_value))
+
+Pool = component_type(PoolComponent)
+
+HitPoints = Pool('HitPoints')
+
+
+class AttributeComponent(Component):
+    __slots__ = ('base', 'bonus')
+    params = ('base', 'bonus')
+
+    def __init__(self, base, bonus=None):
+        self.base = base
+        self.bonus = bonus or 0
+
+    @property
+    def total(self):
+        return self.base + self.bonus
+
+Attribute = component_type(AttributeComponent)
+
+Attack = Attribute('Attack')
+Defence = Attribute('Defence')
 
 
 # Actions queue
@@ -189,3 +210,10 @@ class WantsToEquipItem(Component):
 class WantsToUnEquipItem(Component):
     __slots__ = ()
 
+
+
+Hidden = Flag('Hidden')
+
+CursedItem = Flag('CursedItem')
+
+UnidentifiedItem = Flag('UnidentifiedItem')
