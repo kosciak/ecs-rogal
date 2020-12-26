@@ -65,6 +65,7 @@ class SingleValueComponent(Component):
     """Component that holds single value."""
 
     __slots__ = ('value', )
+    params = ('value', )
 
     def __init__(self, value):
         self.value = value
@@ -84,7 +85,6 @@ class CounterComponent(SingleValueComponent):
     """Single value component that can be incremented/decremented, and compared to other values."""
 
     __slots__ = ()
-    params = ('value', )
 
     def __add__(self, value):
         self.value += value
@@ -126,25 +126,6 @@ class FlagComponent(ConstantValueComponent):
         return f'<{self.__class__.__name__}>'
 
 
-def Constant(name):
-    """Returns SingleValueComponent class with given name."""
-    bases = (ConstantValueComponent, SingleValueComponent, )
-    attrs = dict(
-        __slots__=(),
-        params=('value', ),
-    )
-    return type(name, bases, attrs)
-
-
-def Counter(name):
-    """Returns CounterComponent class with given name."""
-    bases = (CounterComponent, )
-    attrs = dict(
-        __slots__=(),
-    )
-    return type(name, bases, attrs)
-
-
 def Flag(name):
     """Returns FlagComponent instance of class with given name."""
     bases = (FlagComponent, )
@@ -153,6 +134,20 @@ def Flag(name):
         __call__=lambda self, *args, **kwargs: self,
     )
     return type(name, bases, attrs)()
+
+
+def _type_factory(name, bases):
+    """Returns class with given name, inheriting from bases."""
+    attrs = dict(
+        __slots__=(),
+    )
+    return type(name, bases, attrs)
+
+def component_type(*bases):
+    return functools.partial(_type_factory, bases=bases)
+
+Constant = component_type(ConstantValueComponent, SingleValueComponent, )
+Counter = component_type(CounterComponent)
 
 
 class Entity:
@@ -433,6 +428,9 @@ class ECS:
 
     def create(self, *components, entity_id=None):
         return self.entities.create(*components, entity_id=entity_id)
+
+    def get(self, entity_id):
+        return self.entities.get(entity_id)
 
     def manage(self, component_type):
         return self.entities.manage(component_type)
