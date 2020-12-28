@@ -6,7 +6,7 @@ import math
 def euclidean_distance(position, other):
     """Return Euclidean distance between points."""
     delta_x = position.x - other.x
-    delta_y = position.x - other.y
+    delta_y = position.y - other.y
     return math.hypot(delta_x, delta_y)
 
 
@@ -214,9 +214,6 @@ class Rectangle(WithPositionMixin, WithSizeMixin):
 
     def __and__(self, other):
         return self.intersection(other)
-
-    def __eq__(self, other):
-        return self.position == other.position and self.size == other.size
 
     def __repr__(self):
         return f'<{self.__class__.__name__} x={self.x}, y={self.y}, width={self.width}, height={self.height}, x2={self.x2}, y2={self.y2}>'
