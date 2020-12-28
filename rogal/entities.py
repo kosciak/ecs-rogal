@@ -111,7 +111,7 @@ def create_particle(ecs, tile, ttl):
     )
 
 def create_meele_hit_particle(ecs):
-    return create_particle(ecs, tiles.MEELE_HIT, .05)
+    return create_particle(ecs, tiles.MEELE_HIT, .075)
 
 
 # functions

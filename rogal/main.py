@@ -10,7 +10,7 @@ from .tilesheets import TERMINAL_12x12_CP
 from .wrappers import TcodWrapper
 from . import keys
 
-from . import game_map
+from .procgen import LevelGenerator
 
 from .ecs import ECS
 from . import components
@@ -30,10 +30,11 @@ log = logging.getLogger(__name__)
 
 PALETTE = TANGO_DARK
 
-CONSOLE_SIZE = Size(80, 50)
+CONSOLE_SIZE = Size(80, 48)
 
 CAMERA_SIZE = Size(15, 15)
 LEVEL_SIZE = Size(21,21)
+LEVEL_SIZE = Size(78,34)
 
 
 def render(wrapper, root_panel, ecs, level, player):
@@ -157,9 +158,7 @@ def run():
         root_panel = wrapper.create_panel()
 
         # Level(s) generation
-        #level = game_map.generate(root_panel.size*0.75)
-        #level = game_map.generate(root_panel.size*1.025)
-        level = game_map.generate(ecs, LEVEL_SIZE)
+        level = LevelGenerator(ecs, LEVEL_SIZE).generate()
         ecs.add_level(level)
 
         loop(wrapper, root_panel, ecs)

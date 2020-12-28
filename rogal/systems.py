@@ -197,13 +197,13 @@ class VisibilitySystem(System):
                 transparency, pov=pov, 
                 radius=viewshed.view_range, 
                 light_walls=True,
-                #algorithm=tcod.FOV_BASIC,
+                algorithm=tcod.FOV_BASIC,
                 #algorithm=tcod.FOV_SHADOW,
                 #algorithm=tcod.FOV_DIAMOND,
                 #algorithm=tcod.FOV_RESTRICTIVE,
                 #algorithm=tcod.FOV_PERMISSIVE(1),
                 #algorithm=tcod.FOV_PERMISSIVE(8),
-                algorithm=tcod.FOV_SYMMETRIC_SHADOWCAST,
+                #algorithm=tcod.FOV_SYMMETRIC_SHADOWCAST,
             )
 
             viewshed.update(fov)

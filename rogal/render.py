@@ -12,7 +12,7 @@ from .tiles import TermTiles as tiles
 
 
 SCROLLABLE_CAMERA = True
-#SCROLLABLE_CAMERA = False
+SCROLLABLE_CAMERA = False
 
 SHOW_BOUNDARIES = True
 
