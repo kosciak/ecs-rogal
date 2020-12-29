@@ -21,7 +21,117 @@ SEED = None
 #SEED = uuid.UUID( '137ad920-fd42-470a-a99c-6ed52b7c05b5' )
 
 
-class LevelGenerator:
+class OffsetedRectangle(Rectangle):
+
+    INNER_OFFSET = Position.ZERO
+
+    def __init__(self, position, size):
+        self.inner = Rectangle(position, size)
+        super().__init__(
+            Position(position.x-self.INNER_OFFSET.x, position.y-self.INNER_OFFSET.y),
+            Size(size.width+self.INNER_OFFSET.x, size.height+self.INNER_OFFSET.y)
+        )
+
+    @property
+    def center(self):
+        return self.inner.center
+
+    def dig_floor(self, level, floor):
+        level.terrain[self.inner.x:self.inner.x2, self.inner.y:self.inner.y2] = floor.id
+
+
+class Room(OffsetedRectangle):
+
+    INNER_OFFSET = Position(1, 1)
+
+    """Rectangular room.
+
+    Left and top border are considered walls, so rooms can share walls with each other when adjecent.
+
+    Room with Size(5, 3) has inner floor area of Size(4, 2) with offset (1, 1)
+
+    #####
+    #....
+    #....
+
+    """
+
+    def horizontal_share(self, other):
+        shared_x = (
+            max(self.inner.x, other.inner.x), 
+            min(self.inner.x2, other.x2)
+        )
+        if shared_x[0] > shared_x[1]:
+            return []
+        return list(range(*shared_x))
+
+    def vertical_share(self, other):
+        shared_y = (
+            max(self.inner.y, other.inner.y), 
+            min(self.inner.y2, other.y2)
+        )
+        if shared_y[0] > shared_y[1]:
+            return []
+        return list(range(*shared_y))
+
+    def horizontal_between(self, other):
+        min_x = min(self.x2, other.x2)
+        max_x = max(self.inner.x, other.inner.x)
+        return max_x-min_x
+
+    def vertical_between(self, other):
+        min_y = min(self.y2, other.y2)
+        max_y = max(self.inner.y, other.inner.y)
+        return max_y-min_y
+
+    def set_walls(self, level, wall):
+        level.terrain[self.x:self.x2+1, self.y:self.y2+1] = wall.id
+
+
+class VerticalCorridor(OffsetedRectangle):
+
+    INNER_OFFSET = Position(1, 0)
+
+    """Vertical corridor.
+
+    #.
+    #.
+    #.
+
+    """
+
+    def __init__(self, position, length):
+        self.length = length
+        super().__init__(position, Size(1, self.length))
+
+    def get_position(self, length):
+        if length < 0:
+            length += self.length
+        return Position(self.inner.x, self.y+length)
+
+
+class HorizontalCorridor(OffsetedRectangle):
+
+    INNER_OFFSET = Position(0, 1)
+
+    """Horizontal corridor.
+
+    #####
+    .....
+
+    """
+
+    def __init__(self, position, length):
+        self.length = length
+        super().__init__(position, Size(self.length, 1))
+
+    def get_position(self, length):
+        if length < 0:
+            length += self.length
+        return Position(self.x+length, self.inner.y)
+
+
+class RoomsWithStraightCorridorsLevelGenerator:
 
     MIN_ROOM_SIZE = 5
     MAX_ROOM_SIZE_FACTOR = .45
@@ -43,8 +153,7 @@ class LevelGenerator:
         self.max_rooms_distance = max(self.size) * self.MAX_ROOMS_DISTANCE_FACTOR
 
         self.rooms = []
-        self.horizontal_corridors = []
-        self.vertical_corridors = []
+        self.corridors = []
 
         self.connections = collections.defaultdict(set)
         self.distances = collections.defaultdict(list)
@@ -69,10 +178,10 @@ class LevelGenerator:
             random.randint(self.MIN_ROOM_SIZE, self.max_room_height)
         )
         position = Position(
-            random.randint(0, self.level.width-size.width-1),
-            random.randint(0, self.level.height-size.height-1),
+            random.randint(1, self.level.width-size.width-1),
+            random.randint(1, self.level.height-size.height-1),
         )
-        return Rectangle(position, size)
+        return Room(position, size)
 
     def generate_rooms(self):
         # Generate rooms until 40% of level area is covered
@@ -94,34 +203,20 @@ class LevelGenerator:
 
     def get_vertical_corridors(self, room, other):
         corridors = []
-        shared_x = (max(room.x+1, other.x+1), min(room.x2, other.x2))
-        if shared_x[0] > shared_x[1]:
-            return corridors
-        for x in range(*shared_x):
-            min_y = min(room.y2, other.y2)
-            max_y = max(room.y+1, other.y+1)
-            corridor = Rectangle(
-                Position(x-1, min_y),
-                Size(2, max_y-min_y)
-            )
+        for x in room.horizontal_share(other):
+            y = min(room.y2, other.y2)
+            length = room.vertical_between(other)
+            corridor = VerticalCorridor(Position(x, y), length)
             corridors.append(corridor)
-        #print('V:', len(corridors))
         return corridors
 
     def get_horizontal_corridors(self, room, other):
         corridors = []
-        shared_y = (max(room.y+1, other.y+1), min(room.y2, other.y2))
-        if shared_y[0] > shared_y[1]:
-            return corridors
-        for y in range(*shared_y):
-            min_x = min(room.x2, other.x2)
-            max_x = max(room.x+1, other.x+1)
-            corridor = Rectangle(
-                Position(min_x, y-1),
-                Size(max_x-min_x, 2)
-            )
+        for y in room.vertical_share(other):
+            x = min(room.x2, other.x2)
+            length = room.horizontal_between(other)
+            corridor = HorizontalCorridor(Position(x, y), length)
             corridors.append(corridor)
-        #print('H:', len(corridors))
         return corridors
 
     def connect_vertical(self, room, other):
@@ -130,7 +225,7 @@ class LevelGenerator:
             if any(corridor.intersection(r) for r in self.rooms
                if not (r == room or r == other)):
                 continue
-            self.vertical_corridors.append(corridor)
+            self.corridors.append(corridor)
             return corridor
 
     def connect_horizontal(self, room, other):
@@ -139,7 +234,7 @@ class LevelGenerator:
             if any(corridor.intersection(r) for r in self.rooms
                if not (r == room or r == other)):
                 continue
-            self.horizontal_corridors.append(corridor)
+            self.corridors.append(corridor)
             return corridor
 
     def connect(self, room, other):
@@ -163,7 +258,6 @@ class LevelGenerator:
                 continue
             if self.connect(room, other):
                 connected = True
-                #print('C:', room, other, distance)
                 next_room_chance = 1/(len(self.connections[room])*5)
                 if random.random() > next_room_chance:
                     break
@@ -198,23 +292,66 @@ class LevelGenerator:
         tries += 1
         return self.fix_connections(tries)
 
-    def dig_rooms(self):
+    def fill(self, terrain):
+        self.level.terrain[:] = terrain.id
+
+    def dig_rooms(self, wall, floor):
         # Dig out rooms
         for room in self.rooms:
-            self.level.terrain[room.x:room.x2+1, room.y:room.y2+1] = Terrain.STONE_WALL.id
-            self.level.terrain[room.x+1:room.x2, room.y+1:room.y2] = Terrain.STONE_FLOOR.id
+            room.set_walls(self.level, wall)
+            room.dig_floor(self.level, floor)
 
-    def dig_corridors(self):
-        for corridor in self.vertical_corridors:
-            self.level.terrain[corridor.x+1, corridor.y:corridor.y2] = Terrain.STONE_FLOOR.id
-        for corridor in self.horizontal_corridors:
-            self.level.terrain[corridor.x:corridor.x2, corridor.y+1] = Terrain.STONE_FLOOR.id
+    def dig_corridors(self, floor):
+        for corridor in self.corridors:
+            # NOTE: No set_walls for now since crossing corridors would be blocked!
+            corridor.dig_floor(self.level, floor)
+
+    def spawn_closed_door(self, position):
+        closed_door = entities.create(self.ecs, entities.CLOSED_DOOR)
+        entities.spawn(self.ecs, closed_door, self.level.id, position)
+
+    def spawn_monster(self, position):
+        monster = entities.create(self.ecs, entities.MONSTER)
+        entities.spawn(self.ecs, monster, self.level.id, position)
 
     def spawn_entities(self):
         # Entities Spawning
         # Player in center of first room
         player = entities.create(self.ecs, entities.PLAYER)
         entities.spawn(self.ecs, player, self.level.id, self.rooms[0].center)
+
+        # Doors
+        for corridor in self.corridors:
+            if corridor.length == 1:
+                position = corridor.get_position(0)
+                self.spawn_closed_door(position)
+            elif corridor.length > 2:
+                if random.random() < .25:
+                    position = corridor.get_position(0)
+                    self.spawn_closed_door(position)
+                if random.random() < .25:
+                    position = corridor.get_position(-1)
+                    self.spawn_closed_door(position)
+
+        # Monsters
+        for room in self.rooms:
+            area = room.inner.area
+            min_monster_area = 5**2
+            min_monsters_num = 0
+            max_monsters_num = area//min_monster_area
+            if max_monsters_num > 3:
+                min_monsters_num = 1
+            max_monsters_num = min(3, max_monsters_num)
+            monsters_num = random.randint(min_monsters_num, max_monsters_num)
+            room_positions = list(room.inner.positions)
+            monster_positions = set()
+            for i in range(monsters_num):
+                position = random.choice(room_positions)
+                while position in monster_positions:
+                    position = random.choice(room_positions)
+                monster_positions.add(position)
+                self.spawn_monster(position)
+
 
     def generate(self):
         self.generate_rooms()
@@ -227,14 +364,17 @@ class LevelGenerator:
         if len(disconnected) > 1:
             raise ValueError(disconnected)
 
-        self.level.terrain[:] = Terrain.STONE_WALL.id
-        self.dig_rooms()
-        self.dig_corridors()
+        self.fill(Terrain.STONE_WALL)
+        self.dig_rooms(wall=Terrain.STONE_WALL, floor=Terrain.STONE_FLOOR)
+        self.dig_corridors(floor=Terrain.STONE_FLOOR)
 
         self.spawn_entities()
 
-        #self.level.revealed[:] = 1
+        self.level.revealed[:] = 1
         return self.level
+
+
+LevelGenerator = RoomsWithStraightCorridorsLevelGenerator
 
 
 def generate_static_level(ecs, size):
