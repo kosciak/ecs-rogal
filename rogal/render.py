@@ -4,7 +4,7 @@ from . import logs
 
 from . import components
 from .geometry import Position, Size, Rectangle
-from .renderable import Colors
+from .renderable import RenderOrder, Colors
 from .tiles import TermTiles as tiles
 
 
@@ -127,18 +127,20 @@ def render_camera(panel, ecs, level, player,
         if not location.position in cam_coverage:
             # Not inside area covered by camera, skip!
             continue
-        if not level.revealed[location.position]:
-            # Not yet revealed, skip!
-            continue
-        if not level.visible[location.position]:
-            # Not visible, skip!
-            # TODO: What about doors, staircases ang others which placement should be remembered?
-            continue
+
+        tile = None
+        if level.visible[location.position]:
+            # Visible by player
+            tile = renderable.tile_visible
+        elif level.revealed[location.position]:
+            # Not visible, but revealed
+            if renderable.render_order == RenderOrder.PROPS:
+                tile = renderable.tile_revealed
         # TODO: Some components checks like entity.has(components.Hidden)
-        render_position = location.position.offset(camera.position)
-        tile = renderable.tile_visible
-        if not tile.ch:
-            panel.paint(tile.colors, render_position)
-        else:
-            panel.draw(tile, render_position)
+        if tile is not None:
+            render_position = location.position.offset(camera.position)
+            if not tile.ch:
+                panel.paint(tile.colors, render_position)
+            else:
+                panel.draw(tile, render_position)
 
