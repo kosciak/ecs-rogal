@@ -28,7 +28,7 @@ class OffsetedRectangle(Rectangle):
     def __init__(self, position, size):
         self.inner = Rectangle(position, size)
         super().__init__(
-            Position(position.x-self.INNER_OFFSET.x, position.y-self.INNER_OFFSET.y),
+            position-self.INNER_OFFSET,
             Size(size.width+self.INNER_OFFSET.x, size.height+self.INNER_OFFSET.y)
         )
 
@@ -99,7 +99,6 @@ class VerticalCorridor(OffsetedRectangle):
     #.
 
     """
-
     def __init__(self, position, length):
         self.length = length
         super().__init__(position, Size(1, self.length))
@@ -120,7 +119,6 @@ class HorizontalCorridor(OffsetedRectangle):
     .....
 
     """
-
     def __init__(self, position, length):
         self.length = length
         super().__init__(position, Size(self.length, 1))
@@ -139,6 +137,7 @@ class RoomsWithStraightCorridorsLevelGenerator:
     MIN_ROOMS_AREA_FACTOR = .35
     MAX_ROOMS_DISTANCE_FACTOR = .30
 
+    """LevelGenerator creating random rooms connected with straight corridors."""
     def __init__(self, ecs, size, depth=0, seed=SEED):
         self.ecs = ecs
 
@@ -161,6 +160,7 @@ class RoomsWithStraightCorridorsLevelGenerator:
         self.init_rng(seed)
 
     def init_rng(self, seed):
+        """Init RNG with given seed, or generate new seed for generation."""
         if seed is None:
             seed = uuid.uuid4()
         log.debug(f'LevelGenerator({self.size}) seed= {seed}')
@@ -172,7 +172,18 @@ class RoomsWithStraightCorridorsLevelGenerator:
             self._level = GameMap.create(self.size, self.depth)
         return self._level
 
+    def calc_room_distances(self):
+        """Calculate distances between rooms."""
+        self.distances.clear()
+        for room in self.rooms:
+            for other in self.rooms:
+                if other == room:
+                    continue
+                distance = room.center.distance(other.center)
+                self.distances[room].append([distance, other])
+
     def generate_room(self):
+        """Generate random room."""
         size = Size(
             random.randint(self.MIN_ROOM_SIZE, self.max_room_width),
             random.randint(self.MIN_ROOM_SIZE, self.max_room_height)
@@ -184,7 +195,7 @@ class RoomsWithStraightCorridorsLevelGenerator:
         return Room(position, size)
 
     def generate_rooms(self):
-        # Generate rooms until 40% of level area is covered
+        """Generate rooms covering at least min_rooms_area of the level area."""
         while sum(room.area for room in self.rooms) < self.min_rooms_area:
             room = self.generate_room()
             if room.area > self.max_room_area:
@@ -193,15 +204,10 @@ class RoomsWithStraightCorridorsLevelGenerator:
                 continue
             self.rooms.append(room)
 
-    def calc_room_distances(self):
-        for room in self.rooms:
-            for other in self.rooms:
-                if other == room:
-                    continue
-                distance = room.center.distance(other.center)
-                self.distances[room].append([distance, other])
+        self.calc_room_distances()
 
     def get_vertical_corridors(self, room, other):
+        """Return all possible vertical corridors connecting to other room."""
         corridors = []
         for x in room.horizontal_share(other):
             y = min(room.y2, other.y2)
@@ -211,6 +217,7 @@ class RoomsWithStraightCorridorsLevelGenerator:
         return corridors
 
     def get_horizontal_corridors(self, room, other):
+        """Return all possible horizontal corridors connecting to other room."""
         corridors = []
         for y in room.vertical_share(other):
             x = min(room.x2, other.x2)
@@ -220,8 +227,10 @@ class RoomsWithStraightCorridorsLevelGenerator:
         return corridors
 
     def connect_vertical(self, room, other):
+        """Try creating vertical corridor by randomly checking possible connections."""
         corridors = self.get_vertical_corridors(room, other)
         for corridor in random.sample(corridors, len(corridors)):
+            # Do NOT create corridors intersecting with rooms
             if any(corridor.intersection(r) for r in self.rooms
                if not (r == room or r == other)):
                 continue
@@ -229,8 +238,10 @@ class RoomsWithStraightCorridorsLevelGenerator:
             return corridor
 
     def connect_horizontal(self, room, other):
+        """Try creating horizontal corridor by randomly checking possible connections."""
         corridors = self.get_horizontal_corridors(room, other)
         for corridor in random.sample(corridors, len(corridors)):
+            # Do NOT create corridors intersecting with rooms
             if any(corridor.intersection(r) for r in self.rooms
                if not (r == room or r == other)):
                 continue
@@ -238,6 +249,7 @@ class RoomsWithStraightCorridorsLevelGenerator:
             return corridor
 
     def connect(self, room, other):
+        """Try creating vertical or horizontal corridor to other room."""
         vertical_corridor = self.connect_vertical(room, other)
         horizontal_corridor = self.connect_horizontal(room, other)
         if vertical_corridor or horizontal_corridor:
@@ -246,6 +258,7 @@ class RoomsWithStraightCorridorsLevelGenerator:
             return vertical_corridor or horizontal_corridor
 
     def connect_room(self, room, rooms=None):
+        """Try connecting given room with closest room, not yet connected with it."""
         rooms = rooms or self.rooms
         distances = sorted(self.distances[room], key=lambda e: e[0])
         connected = False
@@ -258,6 +271,7 @@ class RoomsWithStraightCorridorsLevelGenerator:
                 continue
             if self.connect(room, other):
                 connected = True
+                # There's small chance for creating extra connection from this room
                 next_room_chance = 1/(len(self.connections[room])*5)
                 if random.random() > next_room_chance:
                     break
@@ -269,6 +283,7 @@ class RoomsWithStraightCorridorsLevelGenerator:
             self.connect_room(room)
 
     def get_connections(self, room, connections=None):
+        """Return recursively all connected rooms with given room."""
         connections = connections or set()
         connections.add(room)
         for connected in self.connections[room]:
@@ -277,14 +292,20 @@ class RoomsWithStraightCorridorsLevelGenerator:
             connections.update(self.get_connections(connected, connections))
         return connections
 
-    def fix_connections(self, tries=1):
+    def fix_connections(self, tries=1, max_tries=10):
+        """Check for all disconnected rooms, and try to fix them."""
+        # Get all rooms that are accessible from first room
         connected = self.get_connections(self.rooms[0])
+        # Get rooms that are NOT connected and not accessible
         disconnected = [room for room in self.rooms if not room in connected]
         if not disconnected:
+            # Nothing to fix here, all rooms are nicely connected
             return []
-        if tries > 10:
-            return disconnected
+        # On each try increase max_rooms_distance, on last try it will be twice as big
         self.max_rooms_distance *= (1.+.1*tries)
+        if tries > max_tries:
+            return disconnected
+        # Try to connect disconnected rooms with connected ones
         for room in random.sample(disconnected, len(disconnected)):
             log.debug(f'Fixing: {room}')
             if self.connect_room(room, rooms=connected):
@@ -293,17 +314,19 @@ class RoomsWithStraightCorridorsLevelGenerator:
         return self.fix_connections(tries)
 
     def fill(self, terrain):
+        """Fill whole level with given terrain."""
         self.level.terrain[:] = terrain.id
 
     def dig_rooms(self, wall, floor):
-        # Dig out rooms
+        """Dig rooms."""
         for room in self.rooms:
             room.set_walls(self.level, wall)
             room.dig_floor(self.level, floor)
 
     def dig_corridors(self, floor):
+        """Dig corridors."""
         for corridor in self.corridors:
-            # NOTE: No set_walls for now since crossing corridors would be blocked!
+            # NOTE: No set_walls for now since corridors would be blocked by walls when crossing!
             corridor.dig_floor(self.level, floor)
 
     def spawn_closed_door(self, position):
@@ -315,17 +338,20 @@ class RoomsWithStraightCorridorsLevelGenerator:
         entities.spawn(self.ecs, monster, self.level.id, position)
 
     def spawn_entities(self):
-        # Entities Spawning
-        # Player in center of first room
+        """Spawn entities."""
+        # Spawn Player in the center of the first room
         player = entities.create(self.ecs, entities.PLAYER)
         entities.spawn(self.ecs, player, self.level.id, self.rooms[0].center)
 
         # Doors
         for corridor in self.corridors:
             if corridor.length == 1:
+                # Always spawn door in corridors with length == 1
                 position = corridor.get_position(0)
                 self.spawn_closed_door(position)
             elif corridor.length > 2:
+                # Never spawn doors in corridors with length == 2
+                # Otherwise there's 25% chance of door on each end of corridor
                 if random.random() < .25:
                     position = corridor.get_position(0)
                     self.spawn_closed_door(position)
@@ -357,8 +383,6 @@ class RoomsWithStraightCorridorsLevelGenerator:
         self.generate_rooms()
         log.debug(f'Rooms: {len(self.rooms)}')
 
-        self.calc_room_distances()
-
         self.connect_rooms()
         disconnected = self.fix_connections()
         if len(disconnected) > 1:
@@ -370,7 +394,7 @@ class RoomsWithStraightCorridorsLevelGenerator:
 
         self.spawn_entities()
 
-        self.level.revealed[:] = 1
+        #self.level.revealed[:] = 1
         return self.level
 
 
