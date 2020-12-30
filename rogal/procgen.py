@@ -339,9 +339,13 @@ class RoomsWithStraightCorridorsLevelGenerator:
 
     def spawn_entities(self):
         """Spawn entities."""
+        # Occupied postions
+        occupied = set()
+
         # Spawn Player in the center of the first room
         player = entities.create(self.ecs, entities.PLAYER)
         entities.spawn(self.ecs, player, self.level.id, self.rooms[0].center)
+        occupied.add(self.rooms[0].center)
 
         # Doors
         for corridor in self.corridors:
@@ -370,12 +374,11 @@ class RoomsWithStraightCorridorsLevelGenerator:
             max_monsters_num = min(3, max_monsters_num)
             monsters_num = random.randint(min_monsters_num, max_monsters_num)
             room_positions = list(room.inner.positions)
-            monster_positions = set()
             for i in range(monsters_num):
                 position = random.choice(room_positions)
-                while position in monster_positions:
+                while position in occupied:
                     position = random.choice(room_positions)
-                monster_positions.add(position)
+                occupied.add(position)
                 self.spawn_monster(position)
 
 
