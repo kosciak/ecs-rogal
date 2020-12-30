@@ -17,49 +17,67 @@ SCROLLABLE_CAMERA = False
 SHOW_BOUNDARIES = True
 
 
-def render_message_log(panel):
-    """Render logging records."""
-    for offset, msg in enumerate(reversed(logs.LOGS_HISTORY), start=1):
-        if offset > panel.height:
-            break
-        panel.print(msg.message, Position(0, panel.height-offset), colors=Colors(fg=msg.fg))
+class Camera(Rectangle):
 
+    def __init__(self, panel, ecs, scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
+        self.panel = panel
+        super().__init__(Position.ZERO, self.panel.size)
 
-def render_camera(panel, ecs, level, player, 
-        scrollable=SCROLLABLE_CAMERA, 
-        show_boundaries=SHOW_BOUNDARIES):
-    """Render level contets viewed through (scrollable) camera."""
+        self.ecs = ecs
 
-    player_position = player.get(components.Location).position
+        self.scrollable = scrollable
+        self.show_boundaries = show_boundaries
 
-    # Select what camera should be centered on
-    if scrollable:
-        # Player position, relative to level
-        cam_center = player_position
-    else:
-        # Level center
-        cam_center = level.center
+    def set_center(self, level, position=None):
+        """Select what camera should be centered on."""
+        if not position or not self.scrollable:
+            # Use center of given level
+            position = level.center
+        self.position = Position(
+            position.x-self.panel.width//2, 
+            position.y-self.panel.height//2
+        )
 
-    # Camera, position relative to level
-    camera = Rectangle(
-        Position(cam_center.x-panel.width//2, cam_center.y-panel.height//2),
-        panel.size
-    )
-    # For level-centered camera need to move camera if level.size > camera.size and approaching edge
-    # Adjust top-left corner
-    adjusted_position = Position(
-        min(camera.x, player_position.x-1),
-        min(camera.y, player_position.y-1)
-    )
-    # Adjust bottom-right corner
-    adjust_move = Position(
-       max(0, 2+player_position.x-camera.x2),
-       max(0, 2+player_position.y-camera.y2), 
-    )
-    camera.position = adjusted_position+adjust_move
+        # For level-centered camera need to move camera if level.size > camera.size and approaching edge
+        # TODO: Test it, and... 
+        # TODO: Maybe use viewshed.view_range for adjustments? Whole viewshed should be rendered
+        # Adjust top-left corner
+        adjusted_position = Position(
+            min(self.x, position.x-1),
+            min(self.y, position.y-1)
+        )
+        # Adjust bottom-right corner
+        adjust_move = Position(
+        max(0, 2+position.x-self.x2),
+        max(0, 2+position.y-self.y2), 
+        )
+        self.position = adjusted_position + adjust_move
 
-    # Draw BOUNDARIES of the map/level
-    if show_boundaries:
+    def get_coverage(self, level):
+        """Return part of the level that is covered by camera."""
+        coverage = self & level
+        return coverage
+
+    def get_revealed(self, level, coverage):
+        """Return visible masks."""
+        revealed = level.revealed[
+            coverage.x : coverage.x2,
+            coverage.y : coverage.y2
+        ]
+        return revealed
+
+    def get_visible(self, level, coverage):
+        """Return revealed masks."""
+        visible = level.visible[
+            coverage.x : coverage.x2,
+            coverage.y : coverage.y2
+        ]
+        return visible
+
+    def draw_boundaries(self, level):
+        """Draw BOUNDARIES of the level."""
+        if not self.show_boundaries:
+            return
         boundaries = set()
         for boundary in [
             Rectangle(Position(-1,-1), Size(level.width+2, 1)),
@@ -67,80 +85,102 @@ def render_camera(panel, ecs, level, player,
             Rectangle(Position(-1, 0), Size(1, level.height)),
             Rectangle(Position(level.width, 0), Size(1, level.height)),
         ]:
-            intersection = boundary & camera
+            intersection = self & boundary
             if intersection:
                 boundaries.update(intersection.positions)
         for position in boundaries:
-            panel.draw(tiles.BOUNDARY.tile, position.offset(camera.position))
+            self.panel.draw(tiles.BOUNDARY.tile, position.offset(self.position))
 
-    # Part of level that is covered by camera
-    cam_coverage = camera & level
-    if not cam_coverage:
-        # Nothing to display, nothing to do here...
-        return
+    def draw_terrain(self, level, coverage, revealed, visible):
+        """Draw TERRAIN tiles."""
+        # Slice level.terrain to get part that is covered by camera
+        covered_terrain = level.terrain[
+            coverage.x : coverage.x2,
+            coverage.y : coverage.y2
+        ]
 
-    # Slice level.terrain to get part that is covered by camera
-    terrain = level.terrain[
-        cam_coverage.x : cam_coverage.x2,
-        cam_coverage.y : cam_coverage.y2
-    ]
+        # Offset for drawing a terrain tile with a mask
+        # It's mirrored camera.position but only with x,y values > 0
+        mask_offset = Position(max(0, self.x*-1), max(0, self.y*-1))
 
-    # Visibility info
-    revealed = level.revealed[
-        cam_coverage.x : cam_coverage.x2,
-        cam_coverage.y : cam_coverage.y2
-    ]
-    visible = level.visible[
-        cam_coverage.x : cam_coverage.x2,
-        cam_coverage.y : cam_coverage.y2
-    ]
-    revealed_not_visible = revealed ^ visible
+        revealed_not_visible = revealed ^ visible
 
-    # Offset for drawing a terrain tile with a mask
-    # It's mirrored camera.position but only with x,y values > 0
-    mask_offset = Position(max(0, camera.x*-1), max(0, camera.y*-1))
-
-    # Draw TERRAIN tiles
-    renderables = ecs.manage(components.Renderable)
-    for terrain_id in np.unique(terrain):
-        if not terrain_id:
-            continue
-        terrain_mask = terrain == terrain_id
-        renderable = renderables.get(ecs.get(terrain_id))
-        # Visible
-        mask = terrain_mask & visible
-        if np.any(mask):
-            tile = renderable.tile_visible
-            panel.mask(tile, mask, mask_offset)
-        # Revealed but not visible
-        mask = terrain_mask & revealed_not_visible
-        if np.any(mask):
-            tile = renderable.tile_revealed
-            panel.mask(tile, mask, mask_offset)
-
-    # Draw all renderable ENTITIES, in order described by Renderable.render_order
-    locations = ecs.manage(components.Location)
-    for renderable, location in sorted(ecs.join(renderables, locations)):
-        if not location.level_id == level.id:
-            # Not on the map/level we are rendering, skip!
-            continue
-        if not location.position in cam_coverage:
-            # Not inside area covered by camera, skip!
-            continue
-
-        tile = None
-        if level.visible[location.position]:
-            # Visible by player
-            tile = renderable.tile_visible
-        elif level.revealed[location.position]:
-            # Not visible, but revealed
-            if renderable.render_order == RenderOrder.PROPS:
+        renderables = self.ecs.manage(components.Renderable)
+        for terrain_id in np.unique(covered_terrain):
+            if not terrain_id:
+                continue
+            terrain_mask = covered_terrain == terrain_id
+            terrain = self.ecs.get(terrain_id)
+            renderable = renderables.get(terrain)
+            # Visible
+            mask = terrain_mask & visible
+            if np.any(mask):
+                tile = renderable.tile_visible
+                self.panel.mask(tile, mask, mask_offset)
+            # Revealed but not visible
+            mask = terrain_mask & revealed_not_visible
+            if np.any(mask):
                 tile = renderable.tile_revealed
-        # TODO: Some components checks like entity.has(components.Hidden)
-        if tile is not None:
-            render_position = location.position.offset(camera.position)
-            if not tile.ch:
-                panel.paint(tile.colors, render_position)
-            else:
-                panel.draw(tile, render_position)
+                self.panel.mask(tile, mask, mask_offset)
+
+    def draw_entities(self, level, coverage, revealed, visible):
+        """Draw all renderable ENTITIES, in order described by Renderable.render_order."""
+        renderables = self.ecs.manage(components.Renderable)
+        locations = self.ecs.manage(components.Location)
+        for renderable, location in sorted(self.ecs.join(renderables, locations)):
+            if not location.level_id == level.id:
+                # Not on the map/level we are rendering, skip!
+                continue
+            if not location.position in coverage:
+                # Not inside area covered by camera, skip!
+                continue
+
+            tile = None
+            if level.visible[location.position]:
+                # Visible by player
+                tile = renderable.tile_visible
+            elif level.revealed[location.position]:
+                # Not visible, but revealed
+                if renderable.render_order == RenderOrder.PROPS:
+                    tile = renderable.tile_revealed
+            # TODO: Some components checks like entity.has(components.Hidden)
+
+            if tile is not None:
+                render_position = location.position.offset(self.position)
+                if not tile.ch:
+                    self.panel.paint(tile.colors, render_position)
+                else:
+                    self.panel.draw(tile, render_position)
+
+    def render(self, entity=None, level=None):
+        position = None
+        if entity:
+            locations = self.ecs.manage(components.Location)
+            location = locations.get(entity)
+            if location:
+                position = location.position
+                level = self.ecs.levels.get(location.level_id)
+
+        self.set_center(level, position)
+
+        coverage = self.get_coverage(level)
+        if not coverage:
+            # Nothing to display, nothing to do here...
+            return
+
+        # Calculate visibility masks
+        revealed = self.get_revealed(level, coverage)
+        visible = self.get_visible(level, coverage)
+
+        self.draw_boundaries(level)
+        self.draw_terrain(level, coverage, revealed, visible)
+        self.draw_entities(level, coverage, revealed, visible)
+
+
+def render_message_log(panel):
+    """Render logging records."""
+    for offset, msg in enumerate(reversed(logs.LOGS_HISTORY), start=1):
+        if offset > panel.height:
+            break
+        panel.print(msg.message, Position(0, panel.height-offset), colors=Colors(fg=msg.fg))
 

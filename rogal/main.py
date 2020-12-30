@@ -19,7 +19,7 @@ from . import systems
 
 from .run_state import RunState
 
-from .render import render_message_log, render_camera
+from .render import Camera, render_message_log
 
 from . import ai
 from .player import try_move
@@ -47,7 +47,8 @@ def render(wrapper, root_panel, ecs, level, player):
 
     render_message_log(message_log.framed('logs'))
 
-    render_camera(camera.framed('mapcam'), ecs, level, player)
+    cam = Camera(camera.framed('mapcam'), ecs)
+    cam.render(player, level)
 
     # Show rendered panel
     wrapper.flush(root_panel)
