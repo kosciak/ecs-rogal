@@ -10,10 +10,10 @@ ACTION_COST = 60
 
 
 def try_move(ecs, level, player, direction):
+    locations = ecs.manage(components.Location)
+    location = locations.get(player)
+
     movement_directions = ecs.manage(components.WantsToMove)
-
-    location = player.get(components.Location)
-
     exits = level.get_exits(location.position)
     if direction in exits:
         movement_directions.insert(player, direction)

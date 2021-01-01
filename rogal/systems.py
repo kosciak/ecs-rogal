@@ -107,13 +107,14 @@ class MeleeCombatSystem(System):
     def run(self, ecs, *args, **kwargs):
         names = ecs.manage(components.Name)
         melee_targets = ecs.manage(components.WantsToMelee)
+        locations = ecs.manage(components.Location)
 
         for entity, target_id in ecs.join(ecs.entities, melee_targets):
             target = ecs.get(target_id)
             log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
             # TODO: Do some damage!
             particle = create_meele_hit_particle(ecs)
-            location = target.get(components.Location)
+            location = locations.get(target)
             spawn(ecs, particle, location.level_id, location.position)
 
         # Clear processed targets
