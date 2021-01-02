@@ -98,9 +98,8 @@ def loop(wrapper, root_panel, ecs):
         # Run clocks
         ecs.run(RunState.TICKING)
 
+        # Each actor performs action
         for actor, location in ecs.join(acts_now.entities, locations):
-            # Each actor performs action
-
             if actor in players:
                 player = actor
                 # Handle user input until action is performed

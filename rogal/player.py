@@ -18,7 +18,7 @@ def try_move(ecs, level, player, direction):
     if direction in exits:
         movement_directions.insert(player, direction)
         return ACTION_COST
-    
+
     target_position = location.position.move(direction)
     target_entities = level.get_entities(target_position)
 

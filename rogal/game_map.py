@@ -8,7 +8,7 @@ from .ecs import EntitiesSet
 from .flags import Flag
 from .geometry import Direction, Position, Rectangle
 
-    
+
 class GameMap(Rectangle):
 
     def __init__(self, map_id, size, depth):
