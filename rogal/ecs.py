@@ -191,7 +191,7 @@ class Entity:
             if not component_type in self:
                 return False
         return True
-    
+
     def get(self, component_type):
         if isinstance(component_type, Component):
             component_type = type(component_type)

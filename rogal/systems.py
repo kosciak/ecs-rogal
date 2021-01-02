@@ -221,15 +221,16 @@ class VisibilitySystem(System):
 class MapIndexingSystem(System):
 
     INCLUDE_STATES = {
-        RunState.PRE_RUN, 
-        RunState.ACTION_PERFORMED, 
+        RunState.PRE_RUN,
+        RunState.ACTION_PERFORMED,
     }
 
     def calculate_base_flags(self, ecs, level, *args, **kwargs):
         if not np.any(level.base_flags):
             for terrain_id in np.unique(level.terrain):
                 terrain_mask = level.terrain == terrain_id
-                terrain_flags = get_flags(ecs.get(terrain_id))
+                terrain = ecs.get(terrain_id)
+                terrain_flags = get_flags(ecs, terrain)
                 level.base_flags[terrain_mask] = terrain_flags
 
     def clear_flags(self, ecs, *args, **kwargs):
@@ -251,7 +252,7 @@ class MapIndexingSystem(System):
             level.entities[location.position].add(entity)
 
             # Update flags
-            entity_flags = get_flags(entity)
+            entity_flags = get_flags(ecs, entity)
             level.flags[location.position] |= entity_flags
 
     def run(self, ecs, *args, **kwargs):
