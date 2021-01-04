@@ -149,7 +149,7 @@ class RoomsWithStraightCorridorsLevelGenerator:
         self.max_room_height = int(self.size.height * self.MAX_ROOM_SIZE_FACTOR)
         self.max_room_area = self.max_room_width * self.max_room_height * self.MAX_ROOM_AREA_FACTOR
         self.min_rooms_area = self.size.area * self.MIN_ROOMS_AREA_FACTOR
-        self.max_rooms_distance = max(self.size) * self.MAX_ROOMS_DISTANCE_FACTOR
+        self.max_corridor_distance = max(self.size) * self.MAX_ROOMS_DISTANCE_FACTOR
 
         self.rooms = []
         self.corridors = []
@@ -157,14 +157,15 @@ class RoomsWithStraightCorridorsLevelGenerator:
         self.connections = collections.defaultdict(set)
         self.distances = collections.defaultdict(list)
 
-        self.init_rng(seed)
+        self.rng = self.init_rng(seed)
 
     def init_rng(self, seed):
         """Init RNG with given seed, or generate new seed for generation."""
         if seed is None:
             seed = uuid.uuid4()
         log.debug(f'LevelGenerator({self.size}) seed= {seed}')
-        random.seed(seed)
+        rng = random.Random(seed)
+        return rng
 
     @property
     def level(self):
@@ -185,12 +186,12 @@ class RoomsWithStraightCorridorsLevelGenerator:
     def generate_room(self):
         """Generate random room."""
         size = Size(
-            random.randint(self.MIN_ROOM_SIZE, self.max_room_width),
-            random.randint(self.MIN_ROOM_SIZE, self.max_room_height)
+            self.rng.randint(self.MIN_ROOM_SIZE, self.max_room_width),
+            self.rng.randint(self.MIN_ROOM_SIZE, self.max_room_height)
         )
         position = Position(
-            random.randint(1, self.level.width-size.width-1),
-            random.randint(1, self.level.height-size.height-1),
+            self.rng.randint(1, self.level.width-size.width-1),
+            self.rng.randint(1, self.level.height-size.height-1),
         )
         return Room(position, size)
 
@@ -229,7 +230,7 @@ class RoomsWithStraightCorridorsLevelGenerator:
     def connect_vertical(self, room, other):
         """Try creating vertical corridor by randomly checking possible connections."""
         corridors = self.get_vertical_corridors(room, other)
-        for corridor in random.sample(corridors, len(corridors)):
+        for corridor in self.rng.sample(corridors, len(corridors)):
             # Do NOT create corridors intersecting with rooms
             if any(corridor.intersection(r) for r in self.rooms
                if not (r == room or r == other)):
@@ -240,7 +241,7 @@ class RoomsWithStraightCorridorsLevelGenerator:
     def connect_horizontal(self, room, other):
         """Try creating horizontal corridor by randomly checking possible connections."""
         corridors = self.get_horizontal_corridors(room, other)
-        for corridor in random.sample(corridors, len(corridors)):
+        for corridor in self.rng.sample(corridors, len(corridors)):
             # Do NOT create corridors intersecting with rooms
             if any(corridor.intersection(r) for r in self.rooms
                if not (r == room or r == other)):
@@ -267,13 +268,13 @@ class RoomsWithStraightCorridorsLevelGenerator:
                 continue
             if not other in rooms:
                 continue
-            if distance > self.max_rooms_distance:
+            if distance > self.max_corridor_distance:
                 continue
             if self.connect(room, other):
                 connected = True
                 # There's small chance for creating extra connection from this room
                 next_room_chance = 1/(len(self.connections[room])*5)
-                if random.random() > next_room_chance:
+                if self.rng.random() > next_room_chance:
                     break
                 log.debug(f'Another corridor from: {room}')
         return connected
@@ -301,12 +302,12 @@ class RoomsWithStraightCorridorsLevelGenerator:
         if not disconnected:
             # Nothing to fix here, all rooms are nicely connected
             return []
-        # On each try increase max_rooms_distance, on last try it will be twice as big
-        self.max_rooms_distance *= (1.+.1*tries)
+        # On each try increase max_corridor_distance, on last try it will be twice as big
+        self.max_corridor_distance *= (1.+.1*tries)
         if tries > max_tries:
             return disconnected
         # Try to connect disconnected rooms with connected ones
-        for room in random.sample(disconnected, len(disconnected)):
+        for room in self.rng.sample(disconnected, len(disconnected)):
             log.debug(f'Fixing: {room}')
             if self.connect_room(room, rooms=connected):
                 break
@@ -356,10 +357,10 @@ class RoomsWithStraightCorridorsLevelGenerator:
             elif corridor.length > 2:
                 # Never spawn doors in corridors with length == 2
                 # Otherwise there's 25% chance of door on each end of corridor
-                if random.random() < .25:
+                if self.rng.random() < .25:
                     position = corridor.get_position(0)
                     self.spawn_closed_door(position)
-                if random.random() < .25:
+                if self.rng.random() < .25:
                     position = corridor.get_position(-1)
                     self.spawn_closed_door(position)
 
@@ -372,12 +373,12 @@ class RoomsWithStraightCorridorsLevelGenerator:
             if max_monsters_num > 3:
                 min_monsters_num = 1
             max_monsters_num = min(3, max_monsters_num)
-            monsters_num = random.randint(min_monsters_num, max_monsters_num)
+            monsters_num = self.rng.randint(min_monsters_num, max_monsters_num)
             room_positions = list(room.inner.positions)
             for i in range(monsters_num):
-                position = random.choice(room_positions)
+                position = self.rng.choice(room_positions)
                 while position in occupied:
-                    position = random.choice(room_positions)
+                    position = self.rng.choice(room_positions)
                 occupied.add(position)
                 self.spawn_monster(position)
 
