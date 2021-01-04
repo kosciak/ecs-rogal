@@ -123,8 +123,8 @@ class RoomGenerator:
                 self.rng.randint(self.MIN_SIZE, max_size.height)
             )
         position = Position(
-            self.rng.randint(area.x+1, area.x+area.width-size.width-1),
-            self.rng.randint(area.y+1, area.y+area.height-size.height-1),
+            self.rng.randint(1, area.width-size.width-1),
+            self.rng.randint(1, area.height-size.height-1),
         )
         return Room(position, size)
 
@@ -185,7 +185,7 @@ class RoomsWithStraightCorridorsLevelGenerator:
 
         self.rng = self.init_rng(seed)
 
-        self.room_generator = RoomGenerator(self.rng, self.level)
+        self.room_generator = RoomGenerator(self.rng, self.size)
 
         self.min_rooms_area = self.size.area * self.MIN_ROOMS_AREA_FACTOR
         self.max_corridor_distance = max(self.size) * self.MAX_ROOMS_DISTANCE_FACTOR
