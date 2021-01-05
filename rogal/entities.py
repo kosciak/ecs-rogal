@@ -76,29 +76,32 @@ CLOSED_DOOR = (
 
 # Actors
 
-PLAYER = (
-    components.Player(),
-    components.Name('Player'),
-    components.Renderable(tiles.PLAYER, RenderOrder.ACTORS),
-    components.BlocksMovement(),
-    components.Viewshed(view_range=12),
-    components.WaitsForAction(1),
-    components.HitPoints(20),
-    components.Attack(10),
-    components.Defence(10),
-)
+def create_player(ecs):
+    return ecs.create(
+        components.Player(),
+        components.Name('Player'),
+        components.Renderable(tiles.PLAYER, RenderOrder.ACTORS),
+        components.BlocksMovement(),
+        components.Viewshed(view_range=12),
+        components.WaitsForAction(1),
+        components.HitPoints(20),
+        components.Attack(10),
+        components.Defence(10),
+    )
 
-MONSTER = (
-    components.Monster(),
-    components.Name('Monster'),
-    components.Renderable(tiles.MONSTER, RenderOrder.ACTORS),
-    components.BlocksMovement(),
-    components.Viewshed(view_range=12),
-    components.WaitsForAction(random.randint(2,10)),
-    components.HitPoints(10),
-    components.Attack(5),
-    components.Defence(5),
-)
+
+def create_monster(ecs):
+    return ecs.create(
+        components.Monster(),
+        components.Name('Monster'),
+        components.Renderable(tiles.MONSTER, RenderOrder.ACTORS),
+        components.BlocksMovement(),
+        components.Viewshed(view_range=12),
+        components.WaitsForAction(random.randint(2,10)),
+        components.HitPoints(10),
+        components.Attack(5),
+        components.Defence(5),
+    )
 
 
 # Particles
@@ -109,6 +112,7 @@ def create_particle(ecs, tile, ttl):
         components.Particle(ttl),
         components.Renderable(tile, RenderOrder.PARTICLES),
     )
+
 
 def create_meele_hit_particle(ecs):
     return create_particle(ecs, tiles.MEELE_HIT, .075)
