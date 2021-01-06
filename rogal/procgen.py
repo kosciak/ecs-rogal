@@ -69,12 +69,12 @@ class Room(OffsetedRectangle):
             return []
         return list(range(*overlapping_y))
 
-    def horizontal_between(self, other):
+    def horizontal_spacing(self, other):
         min_x = min(self.x2, other.x2)
         max_x = max(self.inner.x, other.inner.x)
         return max_x-min_x
 
-    def vertical_between(self, other):
+    def vertical_spacing(self, other):
         min_y = min(self.y2, other.y2)
         max_y = max(self.inner.y, other.inner.y)
         return max_y-min_y
@@ -83,7 +83,66 @@ class Room(OffsetedRectangle):
         level.terrain[self.x:self.x2+1, self.y:self.y2+1] = wall.id
 
 
-class RoomGenerator:
+class VerticalCorridor(OffsetedRectangle):
+
+    INNER_OFFSET = Position(1, 0)
+
+    """Vertical corridor.
+
+    #.
+    #.
+    #.
+
+    """
+
+    def __init__(self, position, length):
+        self.length = length
+        super().__init__(position, Size(1, self.length))
+
+    def get_position(self, length):
+        if length < 0:
+            length += self.length
+        return Position(self.inner.x, self.y+length)
+
+
+class HorizontalCorridor(OffsetedRectangle):
+
+    INNER_OFFSET = Position(0, 1)
+
+    """Horizontal corridor.
+
+    #####
+    .....
+
+    """
+
+    def __init__(self, position, length):
+        self.length = length
+        super().__init__(position, Size(self.length, 1))
+
+    def get_position(self, length):
+        if length < 0:
+            length += self.length
+        return Position(self.x+length, self.inner.y)
+
+
+class Generator:
+
+    """Abstract Generator class. Use existing RNG or inits new using given seed."""
+
+    def __init__(self, rng=None, seed=None):
+        self.rng = rng or self.init_rng(seed)
+
+    def init_rng(self, seed=None):
+        """Init RNG with given seed, or generate new seed."""
+        if seed is None:
+            seed = uuid.uuid4()
+        log.debug(f'Generator seed: {seed}')
+        rng = random.Random(seed)
+        return rng
+
+
+class RoomGenerator(Generator):
 
     MIN_SIZE = 5    # Minimal width/height
     MAX_SIZE = 31   # Maximal width/height
@@ -98,7 +157,7 @@ class RoomGenerator:
         max_area_factor=MAX_AREA_FACTOR,
         area=None,
     ):
-        self.rng = rng
+        super().__init__(rng)
         self.min_size = min_size
         self.max_size = max_size
         self.max_size_factor = max_size_factor
@@ -146,53 +205,10 @@ class RoomGenerator:
         return Room(position, size)
 
 
-class VerticalCorridor(OffsetedRectangle):
-
-    INNER_OFFSET = Position(1, 0)
-
-    """Vertical corridor.
-
-    #.
-    #.
-    #.
-
-    """
-
-    def __init__(self, position, length):
-        self.length = length
-        super().__init__(position, Size(1, self.length))
-
-    def get_position(self, length):
-        if length < 0:
-            length += self.length
-        return Position(self.inner.x, self.y+length)
-
-
-class HorizontalCorridor(OffsetedRectangle):
-
-    INNER_OFFSET = Position(0, 1)
-
-    """Horizontal corridor.
-
-    #####
-    .....
-
-    """
-
-    def __init__(self, position, length):
-        self.length = length
-        super().__init__(position, Size(self.length, 1))
-
-    def get_position(self, length):
-        if length < 0:
-            length += self.length
-        return Position(self.x+length, self.inner.y)
-
-
-class RoomsGenerator:
+class RoomsGenerator(Generator):
 
     def __init__(self, rng):
-        self.rng = rng
+        super().__init__(rng)
         self.rooms = []
 
     def generate(self):
@@ -205,6 +221,8 @@ class RandomlyPlacedRoomsGenerator(RoomsGenerator):
     MAX_ROOM_AREA_FACTOR = .30
 
     MIN_ROOMS_AREA_FACTOR = .40
+
+    """Place non-overlapping rooms randomly until area big enough is covered."""
 
     def __init__(self, rng, level):
         super().__init__(rng)
@@ -236,7 +254,9 @@ class GridRoomsGenerator(RoomsGenerator):
     MAX_ROOM_SIZE_FACTOR = .95
     MAX_ROOM_AREA_FACTOR = .85
 
-    def __init__(self, rng, level, grid_size):
+    """Place rooms using grid with cells of approximately the same size."""
+
+    def __init__(self, rng, level, grid):
         super().__init__(rng)
 
         self.room_generator = RoomGenerator(
@@ -247,29 +267,30 @@ class GridRoomsGenerator(RoomsGenerator):
         )
 
         self.level = level
-        self.grid_size = grid_size
+        self.grid = grid
+
+    def get_cell_sizes(self, total_size, cells_num):
+        """Return list of widths/heights for each cell in grid."""
+        # total_size-1 because we leave out right and bottom edge for room walls
+        even_size = (total_size-1) // cells_num
+        sizes = []
+        for i in range(cells_num):
+            sizes.append(even_size)
+        # Randomly increase size of cells so total_size is used
+        rest = (total_size-1) % cells_num
+        for i in self.rng.sample(range(len(sizes)), rest):
+            sizes[i] += 1
+        return sizes
 
     def generate(self):
-        width = (self.level.width-1) // self.grid_size.width
-        widths = []
-        for i in range(self.grid_size.width):
-            widths.append(width)
-        rest = (self.level.width-1) % self.grid_size.width
-        for i in self.rng.sample(range(len(widths)), rest):
-            widths[i] += 1
-
-        height = (self.level.height-1) // self.grid_size.height
-        heights = []
-        for i in range(self.grid_size.height):
-            heights.append(height)
-        rest = (self.level.height-1) % self.grid_size.height
-        for i in self.rng.sample(range(len(heights)), rest):
-            heights[i] += 1
+        widths = self.get_cell_sizes(self.level.width, self.grid.width)
+        heights = self.get_cell_sizes(self.level.height, self.grid.height)
 
         x = 0
         for width in widths:
             y = 0
             for height in heights:
+                # Size with width/height+1 because we want rooms to touch
                 area = Rectangle(Position(x, y), Size(width+1, height+1))
                 room = self.room_generator.generate(area)
                 self.rooms.append(room)
@@ -279,12 +300,12 @@ class GridRoomsGenerator(RoomsGenerator):
         return self.rooms
 
 
-class StraightCorridorsGenerator:
+class StraightCorridorsGenerator(Generator):
 
     MAX_CORRIDOR_DISTANCE_FACTOR = .30
 
     def __init__(self, rng, size):
-        self.rng = rng
+        super().__init__(rng)
 
         self.rooms = []
         self.corridors = []
@@ -309,7 +330,7 @@ class StraightCorridorsGenerator:
         corridors = []
         for x in room.horizontal_overlap(other):
             y = min(room.y2, other.y2)
-            length = room.vertical_between(other)
+            length = room.vertical_spacing(other)
             corridor = VerticalCorridor(Position(x, y), length)
             corridors.append(corridor)
         return corridors
@@ -319,7 +340,7 @@ class StraightCorridorsGenerator:
         corridors = []
         for y in room.vertical_overlap(other):
             x = min(room.x2, other.x2)
-            length = room.horizontal_between(other)
+            length = room.horizontal_spacing(other)
             corridor = HorizontalCorridor(Position(x, y), length)
             corridors.append(corridor)
         return corridors
@@ -422,30 +443,22 @@ class StraightCorridorsGenerator:
         return self.corridors
 
 
-class RoomsLevelGenerator:
+class RoomsLevelGenerator(Generator):
 
     def __init__(self, ecs, size, depth=0, seed=SEED):
+        super().__init__(seed=seed)
+
         self.ecs = ecs
 
         self.size = size
         self.depth = depth
         self.level = GameMap.create(self.size, self.depth)
 
-        self.rng = self.init_rng(seed)
-
         self.rooms = []
         self.rooms_generator = None
 
         self.corridors = []
         self.corridors_generator = None
-
-    def init_rng(self, seed):
-        """Init RNG with given seed, or generate new seed for generation."""
-        if seed is None:
-            seed = uuid.uuid4()
-        log.debug(f'LevelGenerator({self.size}) seed= {seed}')
-        rng = random.Random(seed)
-        return rng
 
     def generate_rooms(self):
         self.rooms = self.rooms_generator.generate()
@@ -506,7 +519,7 @@ class RoomsWithStraightCorridorsLevelGenerator(RoomsLevelGenerator):
         super().__init__(ecs, size, depth, seed=seed)
 
         #self.rooms_generator = RandomlyPlacedRoomsGenerator(self.rng, self.level)
-        self.rooms_generator = GridRoomsGenerator(self.rng, self.level, Size(3, 3))
+        self.rooms_generator = GridRoomsGenerator(self.rng, self.level, Size(4, 3))
         self.corridors_generator = StraightCorridorsGenerator(self.rng, self.level.size)
 
     def spawn_entities(self):
