@@ -330,9 +330,11 @@ class GridRoomsGenerator(RoomsGenerator):
         return sizes
 
     def generate_rooms(self):
+        # Calculate widths and heights for all grid cells
         widths = self.get_cell_sizes(self.level.width, self.grid.width)
         heights = self.get_cell_sizes(self.level.height, self.grid.height)
 
+        # Generate all rooms in grid
         y = 0
         for height in heights:
             x = 0
@@ -344,11 +346,91 @@ class GridRoomsGenerator(RoomsGenerator):
                 x += width
             y += height
 
-        # TODO: Ramdomly delete rooms from grid
+        # Randomly remove room(s)
+        remove_room_chance = .6
+        while True:
+            if self.rng.random() < remove_room_chance:
+                remove_idx = self.rng.randrange(0, len(self.rooms))
+                log.debug(f'Removing room: {remove_idx}')
+                self.rooms[remove_idx] = None
+                remove_room_chance /= 2
+            else:
+                break
+
         return self.rooms
 
 
+class StraightCorridorGenerator(Generator):
+
+    def __init__(self, rng):
+        super().__init__(rng)
+
+    def vertical_corridors(self, room, other):
+        """Yield all possible vertical corridors connecting to other room."""
+        length = room.vertical_spacing(other)
+        y = min(room.y2, other.y2)
+        overlaps = room.horizontal_overlap(other)
+        for x in random.sample(overlaps, len(overlaps)):
+            corridor = VerticalCorridor(Position(x, y), length)
+            yield (corridor, )
+
+    def horizontal_corridors(self, room, other):
+        """Yield all possible horizontal corridors connecting to other room."""
+        length = room.horizontal_spacing(other)
+        x = min(room.x2, other.x2)
+        overlaps = room.vertical_overlap(other)
+        for y in random.sample(overlaps, len(overlaps)):
+            corridor = HorizontalCorridor(Position(x, y), length)
+            yield (corridor, )
+
+
+class ZShapeCorridorGenerator(StraightCorridorGenerator):
+
+    def __init__(self, rng):
+        super().__init__(rng)
+
+    def vertical_corridors(self, room, other):
+        """Yield all possible vertical corridors connecting to other room."""
+        length = room.vertical_spacing(other)
+        if length < 3:
+            yield from super().vertical_corridors(room, other)
+            return
+        y = min(room.y2, other.y2)
+        y2 = y + length
+        y_break = self.rng.randrange(y+1, y2-1)
+        if y == room.y2:
+            x = self.rng.randrange(room.inner.x, room.x2)
+            x2 = self.rng.randrange(other.inner.x, other.x2)
+        else:
+            x = self.rng.randrange(other.inner.x, other.x2)
+            x2 = self.rng.randrange(room.inner.x, room.x2)
+        yield VerticalCorridor(Position(x, y), y_break-y+1),\
+              HorizontalCorridor(Position(min(x, x2), y_break), abs(x2-x)),\
+              VerticalCorridor(Position(x2, y_break), y2-y_break)
+
+    def horizontal_corridors(self, room, other):
+        """Yield all possible horizontal corridors connecting to other room."""
+        length = room.horizontal_spacing(other)
+        if length < 3:
+            yield from super().horizontal_corridors(room, other)
+            return
+        x = min(room.x2, other.x2)
+        x2 = x + length
+        x_break = self.rng.randrange(x+1, x2-1)
+        if x == room.x2:
+            y = self.rng.randrange(room.inner.y, room.y2)
+            y2 = self.rng.randrange(other.inner.y, other.y2)
+        else:
+            y = self.rng.randrange(other.inner.y, other.y2)
+            y2 = self.rng.randrange(room.inner.y, room.y2)
+        yield HorizontalCorridor(Position(x, y), x_break-x+1),\
+              VerticalCorridor(Position(x_break, min(y, y2)), abs(y2-y)),\
+              HorizontalCorridor(Position(x_break, y2), x2-x_break)
+
+
 class StraightCorridorsGenerator(Generator):
+
+    # TODO: Split algorithm selecting which rooms to connect, and corridor creation
 
     MAX_CORRIDOR_DISTANCE_FACTOR = .30
 
@@ -358,61 +440,46 @@ class StraightCorridorsGenerator(Generator):
         self.rooms = []
         self.corridors = []
 
+        #self.corridor_generator = StraightCorridorGenerator(self.rng)
+        self.corridor_generator = ZShapeCorridorGenerator(self.rng)
+
         self.max_corridor_distance = max(size) * self.MAX_CORRIDOR_DISTANCE_FACTOR
 
         self.connections = collections.defaultdict(set)
         self.distances = collections.defaultdict(list)
 
-    def get_vertical_corridors(self, room, other):
-        """Return all possible vertical corridors connecting to other room."""
-        corridors = []
-        for x in room.horizontal_overlap(other):
-            y = min(room.y2, other.y2)
-            length = room.vertical_spacing(other)
-            corridor = VerticalCorridor(Position(x, y), length)
-            corridors.append(corridor)
-        return corridors
-
-    def get_horizontal_corridors(self, room, other):
-        """Return all possible horizontal corridors connecting to other room."""
-        corridors = []
-        for y in room.vertical_overlap(other):
-            x = min(room.x2, other.x2)
-            length = room.horizontal_spacing(other)
-            corridor = HorizontalCorridor(Position(x, y), length)
-            corridors.append(corridor)
-        return corridors
-
-    def select_corridor(self, corridors, rooms):
-        """Select random corridor that do NOT intersect with given rooms."""
-        for corridor in self.rng.sample(corridors, len(corridors)):
-            # Do NOT create corridors intersecting with rooms
+    def is_valid(self, corridors, rooms):
+        """Return True if given corridor can be craeted."""
+        # Do NOT create corridors intersecting with rooms
+        for corridor in corridors:
             if any(corridor.intersection(r) for r in rooms):
-                continue
-            return corridor
+                return False
+        return True
 
     def connect_vertical(self, room, other):
-        """Try creating vertical corridor by randomly checking possible connections."""
-        corridors = self.get_vertical_corridors(room, other)
+        """Try creating vertical corridor by checking possible connections."""
         rooms = set(self.rooms) - {room, other}
-        return self.select_corridor(corridors, rooms)
+        for corridors in self.corridor_generator.vertical_corridors(room, other):
+            if self.is_valid(corridors, rooms):
+                return corridors
 
     def connect_horizontal(self, room, other):
-        """Try creating horizontal corridor by randomly checking possible connections."""
-        corridors = self.get_horizontal_corridors(room, other)
+        """Try creating horizontal corridor by checking possible connections."""
         rooms = set(self.rooms) - {room, other}
-        return self.select_corridor(corridors, rooms)
+        for corridors in self.corridor_generator.horizontal_corridors(room, other):
+            if self.is_valid(corridors, rooms):
+                return corridors
 
     def connect(self, room, other):
         """Try creating vertical or horizontal corridor to other room."""
-        vertical_corridor = self.connect_vertical(room, other)
-        horizontal_corridor = self.connect_horizontal(room, other)
-        corridor = vertical_corridor or horizontal_corridor
-        if corridor:
-            self.corridors.append(corridor)
+        vertical_corridors = self.connect_vertical(room, other)
+        horizontal_corridors = self.connect_horizontal(room, other)
+        corridors = vertical_corridors or horizontal_corridors
+        if corridors:
+            self.corridors.extend(corridors)
             self.connections[room].add(other)
             self.connections[other].add(room)
-            return corridor
+            return corridors
 
     def nearest_rooms(self, room, rooms=None):
         """Yield (distance, other) pairs from nearest to furthest room."""
@@ -424,22 +491,20 @@ class StraightCorridorsGenerator(Generator):
     def connect_room(self, room, rooms=None):
         """Try connecting given room with closest room, not yet connected with it."""
         rooms = rooms or self.rooms
-        connected = False
         for distance, other in self.nearest_rooms(room, rooms):
             if other in self.connections[room]:
+                # Already connected to this room
                 continue
             if not other in rooms:
+                # No need to connect to this room
                 continue
             if distance > self.max_corridor_distance:
+                # Room too far
                 continue
-            if self.connect(room, other):
-                connected = True
-                # There's small chance for creating extra connection from this room
-                next_room_chance = 1/(len(self.connections[room])*5)
-                if self.rng.random() > next_room_chance:
-                    break
-                log.debug(f'Another corridor from: {room}')
-        return connected
+            corridors = self.connect(room, other)
+            if corridors:
+                return corridors, other
+        return None, None
 
     def get_connections(self, room, connections=None):
         """Return recursively all connected rooms with given room."""
@@ -467,7 +532,8 @@ class StraightCorridorsGenerator(Generator):
         # Try to connect disconnected rooms with connected ones
         for room in self.rng.sample(disconnected, len(disconnected)):
             log.debug(f'Fixing: {room}')
-            if self.connect_room(room, rooms=connected):
+            corridor, other = self.connect_room(room, rooms=connected)
+            if other:
                 break
         tries += 1
         return self.fix_connections(tries)
@@ -476,8 +542,20 @@ class StraightCorridorsGenerator(Generator):
         self.distances = distances
         self.rooms = list(self.distances.keys())
 
-        for room in self.rooms:
-            self.connect_room(room)
+        # Try to connect each room with nearest neighbour
+        for room in self.rng.sample(self.rooms, len(self.rooms)):
+            corridor, other = self.connect_room(room)
+
+        # There's small chance for creating additional connections from each room
+        for room in self.rng.sample(self.rooms, len(self.rooms)):
+            if self.connections[room]:
+                next_room_chance = 1/(len(self.connections[room])*5)
+            else:
+                next_room_chance = .9
+            if self.rng.random() > next_room_chance:
+                continue
+            log.debug(f'Another corridor from: {room}')
+            corridor, other = self.connect_room(room)
 
         # Check for rooms that are not connected with others
         disconnected = self.fix_connections()
@@ -564,7 +642,7 @@ class RoomsWithStraightCorridorsLevelGenerator(RoomsLevelGenerator):
     def __init__(self, ecs, size, depth=0, seed=SEED):
         super().__init__(ecs, size, depth, seed=seed)
 
-        #self.rooms_generator = RandomlyPlacedRoomsGenerator(self.rng, self.level)
+        # self.rooms_generator = RandomlyPlacedRoomsGenerator(self.rng, self.level)
         self.rooms_generator = GridRoomsGenerator(self.rng, self.level, Size(4, 3))
         self.corridors_generator = StraightCorridorsGenerator(self.rng, self.level.size)
 
