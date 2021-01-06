@@ -37,8 +37,6 @@ class OffsetedRectangle(Rectangle):
 
 class Room(OffsetedRectangle):
 
-    INNER_OFFSET = Position(1, 1)
-
     """Rectangular room.
 
     Left and top border are considered walls, so rooms can share walls with each other when adjecent.
@@ -50,6 +48,8 @@ class Room(OffsetedRectangle):
     #....
 
     """
+
+    INNER_OFFSET = Position(1, 1)
 
     def horizontal_overlap(self, other):
         overlapping_x = (
@@ -85,8 +85,6 @@ class Room(OffsetedRectangle):
 
 class VerticalCorridor(OffsetedRectangle):
 
-    INNER_OFFSET = Position(1, 0)
-
     """Vertical corridor.
 
     #.
@@ -94,6 +92,8 @@ class VerticalCorridor(OffsetedRectangle):
     #.
 
     """
+
+    INNER_OFFSET = Position(1, 0)
 
     def __init__(self, position, length):
         self.length = length
@@ -107,14 +107,14 @@ class VerticalCorridor(OffsetedRectangle):
 
 class HorizontalCorridor(OffsetedRectangle):
 
-    INNER_OFFSET = Position(0, 1)
-
     """Horizontal corridor.
 
     #####
     .....
 
     """
+
+    INNER_OFFSET = Position(0, 1)
 
     def __init__(self, position, length):
         self.length = length
@@ -209,20 +209,41 @@ class RoomsGenerator(Generator):
 
     def __init__(self, rng):
         super().__init__(rng)
+
         self.rooms = []
+        self.distances = collections.defaultdict(list)
+
+    def calc_room_distances(self, room):
+        """Calculate distances from given room."""
+        return {}
+
+    def calc_distances(self):
+        """Calculate distances between all rooms."""
+        self.distances.clear()
+        for room in self.rooms:
+            if room is None:
+                continue
+            room_distances = self.calc_room_distances(room)
+            for distance, others in room_distances.items():
+                self.distances[room].append([distance, others])
+
+    def generate_rooms(self):
+        raise NotImplementedError()
 
     def generate(self):
-        return self.rooms
+        self.generate_rooms()
+        self.calc_distances()
+        return self.distances
 
 
 class RandomlyPlacedRoomsGenerator(RoomsGenerator):
+
+    """Place non-overlapping rooms randomly until area big enough is covered."""
 
     MAX_ROOM_SIZE_FACTOR = .45
     MAX_ROOM_AREA_FACTOR = .30
 
     MIN_ROOMS_AREA_FACTOR = .40
-
-    """Place non-overlapping rooms randomly until area big enough is covered."""
 
     def __init__(self, rng, level):
         super().__init__(rng)
@@ -236,7 +257,17 @@ class RandomlyPlacedRoomsGenerator(RoomsGenerator):
 
         self.min_rooms_area = level.area * self.MIN_ROOMS_AREA_FACTOR
 
-    def generate(self):
+    def calc_room_distances(self, room):
+        """Calculate distances from given room."""
+        room_distances = collections.defaultdict(set)
+        for other in self.rooms:
+            if other == room:
+                continue
+            distance = room.center.distance(other.center)
+            room_distances[distance].add(other)
+        return room_distances
+
+    def generate_rooms(self):
         """Generate rooms covering at least min_rooms_area of the level area."""
         while sum(room.area for room in self.rooms) < self.min_rooms_area:
             room = self.room_generator.generate()
@@ -250,11 +281,11 @@ class RandomlyPlacedRoomsGenerator(RoomsGenerator):
 
 class GridRoomsGenerator(RoomsGenerator):
 
+    """Place rooms using grid with cells of approximately the same size."""
+
     MIN_ROOM_SIZE = 4
     MAX_ROOM_SIZE_FACTOR = .95
     MAX_ROOM_AREA_FACTOR = .85
-
-    """Place rooms using grid with cells of approximately the same size."""
 
     def __init__(self, rng, level, grid):
         super().__init__(rng)
@@ -269,6 +300,22 @@ class GridRoomsGenerator(RoomsGenerator):
         self.level = level
         self.grid = grid
 
+    def calc_room_distances(self, room):
+        """Calculate distances from given room."""
+        room_distances = collections.defaultdict(set)
+        room_idx = self.rooms.index(room)
+        width = self.grid.width
+        # cell_length to get tiles-based distances instead of grid cell-based distances
+        cell_length = sum([self.level.width//self.grid.width, self.level.height//self.grid.height])//2
+        for other_idx, other in enumerate(self.rooms):
+            if other is None:
+                continue
+            if other == room:
+                continue
+            distance = abs(other_idx%width-room_idx%width) + abs(other_idx//width-room_idx//width)
+            room_distances[distance*cell_length].add(other)
+        return room_distances
+
     def get_cell_sizes(self, total_size, cells_num):
         """Return list of widths/heights for each cell in grid."""
         # total_size-1 because we leave out right and bottom edge for room walls
@@ -282,21 +329,22 @@ class GridRoomsGenerator(RoomsGenerator):
             sizes[i] += 1
         return sizes
 
-    def generate(self):
+    def generate_rooms(self):
         widths = self.get_cell_sizes(self.level.width, self.grid.width)
         heights = self.get_cell_sizes(self.level.height, self.grid.height)
 
-        x = 0
-        for width in widths:
-            y = 0
-            for height in heights:
+        y = 0
+        for height in heights:
+            x = 0
+            for width in widths:
                 # Size with width/height+1 because we want rooms to touch
                 area = Rectangle(Position(x, y), Size(width+1, height+1))
                 room = self.room_generator.generate(area)
                 self.rooms.append(room)
-                y += height
-            x += width
+                x += width
+            y += height
 
+        # TODO: Ramdomly delete rooms from grid
         return self.rooms
 
 
@@ -314,16 +362,6 @@ class StraightCorridorsGenerator(Generator):
 
         self.connections = collections.defaultdict(set)
         self.distances = collections.defaultdict(list)
-
-    def calc_room_distances(self):
-        """Calculate distances between rooms."""
-        self.distances.clear()
-        for room in self.rooms:
-            for other in self.rooms:
-                if other == room:
-                    continue
-                distance = room.center.distance(other.center)
-                self.distances[room].append([distance, other])
 
     def get_vertical_corridors(self, room, other):
         """Return all possible vertical corridors connecting to other room."""
@@ -376,12 +414,18 @@ class StraightCorridorsGenerator(Generator):
             self.connections[other].add(room)
             return corridor
 
+    def nearest_rooms(self, room, rooms=None):
+        """Yield (distance, other) pairs from nearest to furthest room."""
+        rooms = rooms or self.rooms
+        for distance, others in sorted(self.distances[room]):
+            for other in self.rng.sample(others, len(others)):
+                yield distance, other
+
     def connect_room(self, room, rooms=None):
         """Try connecting given room with closest room, not yet connected with it."""
         rooms = rooms or self.rooms
-        distances = sorted(self.distances[room], key=lambda e: e[0])
         connected = False
-        for distance, other in distances:
+        for distance, other in self.nearest_rooms(room, rooms):
             if other in self.connections[room]:
                 continue
             if not other in rooms:
@@ -428,9 +472,9 @@ class StraightCorridorsGenerator(Generator):
         tries += 1
         return self.fix_connections(tries)
 
-    def generate(self, rooms):
-        self.rooms = rooms
-        self.calc_room_distances()
+    def generate(self, distances):
+        self.distances = distances
+        self.rooms = list(self.distances.keys())
 
         for room in self.rooms:
             self.connect_room(room)
@@ -454,6 +498,7 @@ class RoomsLevelGenerator(Generator):
         self.depth = depth
         self.level = GameMap.create(self.size, self.depth)
 
+        self.distances = {}
         self.rooms = []
         self.rooms_generator = None
 
@@ -461,10 +506,11 @@ class RoomsLevelGenerator(Generator):
         self.corridors_generator = None
 
     def generate_rooms(self):
-        self.rooms = self.rooms_generator.generate()
+        self.distances = self.rooms_generator.generate()
+        self.rooms = list(self.distances.keys())
 
     def generate_corridors(self):
-        self.corridors = self.corridors_generator.generate(self.rooms)
+        self.corridors = self.corridors_generator.generate(self.distances)
 
     def fill(self, terrain):
         """Fill whole level with given terrain."""
