@@ -10,7 +10,7 @@ from .tilesheets import TERMINAL_12x12_CP
 from .wrappers import TcodWrapper
 from . import keys
 
-from .procgen import LevelGenerator
+from .procgen.dungeons import LevelGenerator
 
 from .ecs import ECS
 from . import components
