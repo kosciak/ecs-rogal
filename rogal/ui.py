@@ -1,6 +1,6 @@
 import collections
 
-from .geometry import Position, Size, WithSizeMixin, Rectangle
+from .geometry import Position, Size, WithSizeMixin, Rectangular, Rectangle
 from .colors import RGB
 from .renderable import Tile, Colors
 
@@ -34,15 +34,15 @@ class AbstractTilesGrid(WithSizeMixin):
         return Tile.create(DEFAULT_CH, fg=fg, bg=bg)
 
     def clear(self, colors=None, *args, **kwargs):
-        """Clear whole Rectangle wigh default values."""
+        """Clear whole area with default values."""
         tile = self.empty_tile(colors)
         return self.fill(tile)
 
     def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
         """Print text on given Position.
-        
+
         Use Colors if provided, otherwise don't change alredy defined fg and bg.
-        
+
         """
         raise NotImplementedError()
 
@@ -77,29 +77,32 @@ class AbstractTilesGrid(WithSizeMixin):
     # TODO: blit_from, blit_to
 
 
-class Panel(AbstractTilesGrid, Rectangle):
+class Panel(Rectangular, AbstractTilesGrid):
 
     """Representation of rectangular part of Tiles based drawing area.
-    
+
     Allows manipulation of data using local coordinates (relative to self).
     NOTE: center() returns Position relative to self so it can be used in draw/paint methods.
 
     """
 
+    __slots__ = ('position', 'size', 'root', )
+
     def __init__(self, root, offset, size):
         # NOTE: position is relative to parent
         #       offset is relative to root
-        super().__init__(offset, size)
+        self.position = offset
+        self.size = size
         self.root = root
 
     @property
     def center(self):
         """Return center Position relative to self!"""
-        return super(Rectangle, self).center
+        return super(Rectangular, self).center
 
     def offset(self, position, root=None):
         """Return Position relative to root.
-        
+
         self.offset(local_pos) -> pos relative to root
         root.offset(pos, panel) -> local_pos relative to panel
         self.offset(local_pos, other) -> pos relative to other
@@ -176,11 +179,11 @@ class HorizontalContainer(Container):
             height = int(self.height * height)
         if top:
             top = self.create_panel(
-                Position.ZERO, 
+                Position.ZERO,
                 Size(self.width, self.height-height),
             )
             bottom = self.create_panel(
-                Position(0, self.height-height), 
+                Position(0, self.height-height),
                 Size(self.width, height),
             )
             self.panels = [top, bottom]
@@ -210,18 +213,18 @@ class VerticalContainer(Container):
                 Size(self.width-width, self.height),
             )
             right = self.create_panel(
-                Position(self.width-width, 0), 
+                Position(self.width-width, 0),
                 Size(width, self.height),
             )
             self.panels = [left, right]
             return left, right
         elif right:
             left = self.create_panel(
-                Position.ZERO, 
+                Position.ZERO,
                 Size(width, self.height),
             )
             right = self.create_panel(
-                Position(width, 0), 
+                Position(width, 0),
                 Size(self.width-width, self.height),
             )
             self.panels = [left, right]
@@ -308,7 +311,7 @@ class TcodRootPanel(RootPanel):
         bg = self.rgb(tile.bg)
         if size:
             return self._draw_rect(
-                position.x, position.y, size.width, size.height, tile.ch, 
+                position.x, position.y, size.width, size.height, tile.ch,
                 fg=fg, bg=bg, *args, **kwargs)
         else:
             return self._print(

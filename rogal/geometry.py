@@ -41,7 +41,7 @@ class Direction(Enum):
 
 class Position(collections.namedtuple(
     'Position', [
-        'x', 
+        'x',
         'y',
     ])):
 
@@ -101,7 +101,7 @@ class WithPositionMixin:
 
 class Size(collections.namedtuple(
     'Size', [
-        'width', 
+        'width',
         'height',
     ])):
 
@@ -149,15 +149,11 @@ class WithSizeMixin:
         return Position(self.width/2, self.height/2)
 
 
-class Rectangle(WithPositionMixin, WithSizeMixin):
+class Rectangular(WithPositionMixin, WithSizeMixin):
 
-    """Rectangle on 2D plane with Position on top-left corner."""
+    """Rectangle on 2D plane with Size, and Position on top-left corner."""
 
-    __slots__ = ('position', 'size', )
-
-    def __init__(self, position, size):
-        self.position = position
-        self.size = size
+    __slots__ = ()
 
     @property
     def x2(self):
@@ -217,4 +213,15 @@ class Rectangle(WithPositionMixin, WithSizeMixin):
 
     def __repr__(self):
         return f'<{self.__class__.__name__} x={self.x}, y={self.y}, width={self.width}, height={self.height}, x2={self.x2}, y2={self.y2}>'
+
+
+class Rectangle(Rectangular, collections.namedtuple(
+    'Rectangle', [
+        'position',
+        'size',
+    ])):
+
+    """Immutable rectangle."""
+
+    __slots__ = ()
 

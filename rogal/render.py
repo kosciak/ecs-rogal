@@ -3,7 +3,7 @@ import numpy as np
 from . import logs
 
 from . import components
-from .geometry import Position, Size, Rectangle
+from .geometry import Rectangular, Position, Size, Rectangle
 from .glyphs import Glyph
 from .renderable import RenderOrder, Colors, Tile
 from .terrain import Type
@@ -66,11 +66,13 @@ BITMASK_DLINE = {
 }
 
 
-class Camera(Rectangle):
+class Camera(Rectangular):
 
     def __init__(self, panel, ecs, scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
         self.panel = panel
-        super().__init__(Position.ZERO, self.panel.size)
+
+        self.position = Position.ZERO
+        self.size = self.panel.size
 
         self.ecs = ecs
 

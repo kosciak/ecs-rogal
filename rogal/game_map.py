@@ -6,16 +6,16 @@ import numpy as np
 from . import dtypes
 from .ecs import EntitiesSet
 from .flags import Flag
-from .geometry import Direction, Position, Rectangle
+from .geometry import Rectangular, Direction, Position
 
 
-class GameMap(Rectangle):
+class GameMap(Rectangular):
 
     def __init__(self, map_id, size, depth):
-        super().__init__(Position.ZERO, size)
-
         self.id = map_id
 
+        self.position = Position.ZERO
+        self.size = size
         self.depth = depth
 
         self.terrain = np.zeros(self.size, dtype=dtypes.terrain_id_dt)

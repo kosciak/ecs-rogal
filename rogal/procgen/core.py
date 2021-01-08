@@ -1,8 +1,9 @@
+import collections
 import logging
 import random
 import uuid
 
-from ..geometry import Position, Size, Rectangle
+from ..geometry import Rectangular, Position, Size, Rectangle
 
 
 log = logging.getLogger(__name__)
@@ -28,16 +29,16 @@ class Generator:
         return rng
 
 
-class OffsetedRectangle(Rectangle):
+class OffsetedRectangle(Rectangular):
+
+    __slots__ = ('position', 'size', 'inner', )
 
     INNER_OFFSET = Position.ZERO
 
     def __init__(self, position, size):
+        self.position = position-self.INNER_OFFSET
+        self.size = Size(size.width+self.INNER_OFFSET.x, size.height+self.INNER_OFFSET.y)
         self.inner = Rectangle(position, size)
-        super().__init__(
-            position-self.INNER_OFFSET,
-            Size(size.width+self.INNER_OFFSET.x, size.height+self.INNER_OFFSET.y)
-        )
 
     @property
     def center(self):
