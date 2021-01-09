@@ -48,8 +48,8 @@ class RoomGenerator(Generator):
         if not area:
             return None
         max_size = Size(
-            min(self.max_size, int((area.width-2) * self.max_size_factor)),
-            min(self.max_size, int((area.height-2) * self.max_size_factor))
+            min(self.max_size, int((area.width-Room.OFFSET.x) * self.max_size_factor)),
+            min(self.max_size, int((area.height-Room.OFFSET.y) * self.max_size_factor))
         )
         return max_size
 
@@ -69,8 +69,8 @@ class RoomGenerator(Generator):
                 self.rng.randint(self.min_size, max_size.height)
             )
         position = Position(
-            self.rng.randint(area.x+1, area.x+area.width-size.width-1),
-            self.rng.randint(area.y+1, area.y+area.height-size.height-1),
+            self.rng.randint(area.x+Room.OFFSET.x, area.x+area.width-size.width),
+            self.rng.randint(area.y+Room.OFFSET.y, area.y+area.height-size.height),
         )
         return Room(position, size)
 
@@ -82,7 +82,6 @@ class RoomsGenerator(Generator):
     def __init__(self, rng):
         super().__init__(rng)
         self.rooms = []
-        self.distances = collections.defaultdict(list)
 
     def calc_room_distances(self, room):
         """Calculate distances from given room."""
@@ -90,21 +89,22 @@ class RoomsGenerator(Generator):
 
     def calc_distances(self):
         """Calculate distances between all rooms."""
-        self.distances.clear()
+        distances = collections.defaultdict(list)
         for room in self.rooms:
             if room is None:
                 continue
             room_distances = self.calc_room_distances(room)
             for distance, others in room_distances.items():
-                self.distances[room].append([distance, others])
+                distances[room].append([distance, others])
+        return distances
 
     def generate_rooms(self):
         raise NotImplementedError()
 
     def generate(self):
         self.generate_rooms()
-        self.calc_distances()
-        return self.distances
+        distances = self.calc_distances()
+        return distances
 
 
 class RandomlyPlacedRoomsGenerator(RoomsGenerator):
@@ -119,11 +119,15 @@ class RandomlyPlacedRoomsGenerator(RoomsGenerator):
     def __init__(self, rng, level):
         super().__init__(rng)
 
+        rooms_area = Rectangle(
+            Position.ZERO,
+            Size(level.width-Room.OFFSET.x, level.height-Room.OFFSET.y)
+        )
         self.room_generator = RoomGenerator(
             self.rng,
             max_size_factor=self.MAX_ROOM_SIZE_FACTOR,
             max_area_factor=self.MAX_ROOM_AREA_FACTOR,
-            area=level,
+            area=rooms_area,
         )
 
         self.min_rooms_area = level.area * self.MIN_ROOMS_AREA_FACTOR
@@ -190,20 +194,20 @@ class GridRoomsGenerator(RoomsGenerator):
     def get_cell_sizes(self, total_size, cells_num):
         """Return list of widths/heights for each cell in grid."""
         # total_size-1 because we leave out right and bottom edge for room walls
-        even_size = (total_size-1) // cells_num
+        even_size = (total_size) // cells_num
         sizes = []
         for i in range(cells_num):
             sizes.append(even_size)
         # Randomly increase size of cells so total_size is used
-        rest = (total_size-1) % cells_num
+        rest = (total_size) % cells_num
         for i in self.rng.sample(range(len(sizes)), rest):
             sizes[i] += 1
         return sizes
 
     def generate_rooms(self):
         # Calculate widths and heights for all grid cells
-        widths = self.get_cell_sizes(self.level.width, self.grid.width)
-        heights = self.get_cell_sizes(self.level.height, self.grid.height)
+        widths = self.get_cell_sizes(self.level.width-Room.OFFSET.x, self.grid.width)
+        heights = self.get_cell_sizes(self.level.height-Room.OFFSET.y, self.grid.height)
 
         # Generate all rooms in grid
         y = 0
@@ -211,7 +215,7 @@ class GridRoomsGenerator(RoomsGenerator):
             x = 0
             for width in widths:
                 # Size with width/height+1 because we want rooms to touch
-                area = Rectangle(Position(x, y), Size(width+1, height+1))
+                area = Rectangle(Position(x, y), Size(width, height))
                 room = self.room_generator.generate(area)
                 self.rooms.append(room)
                 x += width

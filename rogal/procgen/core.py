@@ -33,11 +33,11 @@ class OffsetedRectangle(Rectangular):
 
     __slots__ = ('position', 'size', 'inner', )
 
-    INNER_OFFSET = Position.ZERO
+    OFFSET = Position.ZERO
 
     def __init__(self, position, size):
-        self.position = position-self.INNER_OFFSET
-        self.size = Size(size.width+self.INNER_OFFSET.x, size.height+self.INNER_OFFSET.y)
+        self.position = position-self.OFFSET
+        self.size = Size(size.width+self.OFFSET.x, size.height+self.OFFSET.y)
         self.inner = Rectangle(position, size)
 
     @property
@@ -65,7 +65,7 @@ class Room(Digable):
 
     """
 
-    INNER_OFFSET = Position(1, 1)
+    OFFSET = Position(1, 1)
 
     def __init__(self, position, size):
         super().__init__(position, size)
@@ -100,7 +100,7 @@ class Room(Digable):
         return max_y-min_y
 
     def set_walls(self, level, wall):
-        level.terrain[self.x:self.x2+1, self.y:self.y2+1] = wall.id
+        level.terrain[self.x:self.x2+self.OFFSET.x, self.y:self.y2+self.OFFSET.y] = wall.id
 
 
 class Corridor(Digable):
@@ -123,7 +123,7 @@ class VerticalCorridor(Corridor):
 
     """
 
-    INNER_OFFSET = Position(1, 0)
+    OFFSET = Position(1, 0)
 
     is_horizontal = False
 
@@ -146,7 +146,7 @@ class HorizontalCorridor(Corridor):
 
     """
 
-    INNER_OFFSET = Position(0, 1)
+    OFFSET = Position(0, 1)
 
     is_horizontal = True
 

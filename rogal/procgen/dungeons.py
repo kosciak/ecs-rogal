@@ -91,7 +91,8 @@ class RoomsWithStraightCorridorsLevelGenerator(RoomsLevelGenerator):
         super().__init__(ecs, size, depth, seed=seed)
 
         # self.rooms_generator = RandomlyPlacedRoomsGenerator(self.rng, self.level)
-        self.rooms_generator = GridRoomsGenerator(self.rng, self.level, Size(3, 3))
+        # self.rooms_generator = GridRoomsGenerator(self.rng, self.level, Size(3, 3))
+        self.rooms_generator = GridRoomsGenerator(self.rng, self.level, Size(4, 3))
         self.rooms_connector = RoomsConnector(self.rng, self.level.size)
 
     def spawn_entities(self):
