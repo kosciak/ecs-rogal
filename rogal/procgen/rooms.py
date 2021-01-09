@@ -3,11 +3,112 @@ import logging
 
 from ..geometry import Position, Size, Rectangle
 
-from .core import Generator
-from .core import Room
+from .core import Generator, Digable
 
 
 log = logging.getLogger(__name__)
+
+
+class Room(Digable):
+
+    """Rectangular room.
+
+    Left and top border are considered walls, so rooms can share walls with each other when adjecent.
+
+    Room with Size(5, 3) has inner floor area of Size(4, 2) with offset (1, 1)
+
+    #####
+    #....
+    #....
+
+    """
+
+    OFFSET = Position(1, 1)
+
+    def __init__(self, position, size):
+        super().__init__(position, size)
+        self.connected_rooms = set()
+
+    def horizontal_overlap(self, other):
+        overlapping_x = (
+            max(self.inner.x, other.inner.x),
+            min(self.inner.x2, other.x2)
+        )
+        if overlapping_x[0] > overlapping_x[1]:
+            return []
+        return list(range(*overlapping_x))
+
+    def vertical_overlap(self, other):
+        overlapping_y = (
+            max(self.inner.y, other.inner.y),
+            min(self.inner.y2, other.y2)
+        )
+        if overlapping_y[0] > overlapping_y[1]:
+            return []
+        return list(range(*overlapping_y))
+
+    def horizontal_spacing(self, other):
+        min_x = min(self.x2, other.x2)
+        max_x = max(self.inner.x, other.inner.x)
+        return max_x-min_x
+
+    def vertical_spacing(self, other):
+        min_y = min(self.y2, other.y2)
+        max_y = max(self.inner.y, other.inner.y)
+        return max_y-min_y
+
+    def set_walls(self, level, wall):
+        level.terrain[self.x:self.x2+self.OFFSET.x, self.y:self.y2+self.OFFSET.y] = wall.id
+
+
+    """Rectangular room.
+
+    Left and top border are considered walls, so rooms can share walls with each other when adjecent.
+
+    Room with Size(5, 3) has inner floor area of Size(4, 2) with offset (1, 1)
+
+    #####
+    #....
+    #....
+
+    """
+
+    OFFSET = Position(1, 1)
+
+    def __init__(self, position, size):
+        super().__init__(position, size)
+        self.connected_rooms = set()
+
+    def horizontal_overlap(self, other):
+        overlapping_x = (
+            max(self.inner.x, other.inner.x),
+            min(self.inner.x2, other.x2)
+        )
+        if overlapping_x[0] > overlapping_x[1]:
+            return []
+        return list(range(*overlapping_x))
+
+    def vertical_overlap(self, other):
+        overlapping_y = (
+            max(self.inner.y, other.inner.y),
+            min(self.inner.y2, other.y2)
+        )
+        if overlapping_y[0] > overlapping_y[1]:
+            return []
+        return list(range(*overlapping_y))
+
+    def horizontal_spacing(self, other):
+        min_x = min(self.x2, other.x2)
+        max_x = max(self.inner.x, other.inner.x)
+        return max_x-min_x
+
+    def vertical_spacing(self, other):
+        min_y = min(self.y2, other.y2)
+        max_y = max(self.inner.y, other.inner.y)
+        return max_y-min_y
+
+    def set_walls(self, level, wall):
+        level.terrain[self.x:self.x2+self.OFFSET.x, self.y:self.y2+self.OFFSET.y] = wall.id
 
 
 class RoomGenerator(Generator):
@@ -79,9 +180,15 @@ class RoomsGenerator(Generator):
 
     """Generate Rooms and calculate distances between them."""
 
-    def __init__(self, rng):
+    def __init__(self, rng, level):
         super().__init__(rng)
+
         self.rooms = []
+        self.level = level
+        self.rooms_area = Rectangle(
+            Position.ZERO,
+            Size(level.width-Room.OFFSET.x, level.height-Room.OFFSET.y)
+        )
 
     def calc_room_distances(self, room):
         """Calculate distances from given room."""
@@ -117,19 +224,13 @@ class RandomlyPlacedRoomsGenerator(RoomsGenerator):
     MIN_ROOMS_AREA_FACTOR = .40
 
     def __init__(self, rng, level):
-        super().__init__(rng)
-
-        rooms_area = Rectangle(
-            Position.ZERO,
-            Size(level.width-Room.OFFSET.x, level.height-Room.OFFSET.y)
-        )
+        super().__init__(rng, level)
         self.room_generator = RoomGenerator(
             self.rng,
             max_size_factor=self.MAX_ROOM_SIZE_FACTOR,
             max_area_factor=self.MAX_ROOM_AREA_FACTOR,
-            area=rooms_area,
+            area=self.rooms_area,
         )
-
         self.min_rooms_area = level.area * self.MIN_ROOMS_AREA_FACTOR
 
     def calc_room_distances(self, room):
@@ -148,6 +249,7 @@ class RandomlyPlacedRoomsGenerator(RoomsGenerator):
             room = self.room_generator.generate()
             if any(room.intersection(other) for other in self.rooms):
                 continue
+            log.debug(f'Room: {len(self.rooms):2d} - {room}')
             self.rooms.append(room)
 
         log.debug(f'Rooms: {len(self.rooms)}')
@@ -163,17 +265,15 @@ class GridRoomsGenerator(RoomsGenerator):
     MAX_ROOM_AREA_FACTOR = .85
 
     def __init__(self, rng, level, grid):
-        super().__init__(rng)
+        super().__init__(rng, level)
 
+        self.grid = grid
         self.room_generator = RoomGenerator(
             self.rng,
             min_size=self.MIN_ROOM_SIZE,
             max_size_factor=self.MAX_ROOM_SIZE_FACTOR,
             max_area_factor=self.MAX_ROOM_AREA_FACTOR,
         )
-
-        self.level = level
-        self.grid = grid
 
     def calc_room_distances(self, room):
         """Calculate distances from given room."""
@@ -206,8 +306,8 @@ class GridRoomsGenerator(RoomsGenerator):
 
     def generate_rooms(self):
         # Calculate widths and heights for all grid cells
-        widths = self.get_cell_sizes(self.level.width-Room.OFFSET.x, self.grid.width)
-        heights = self.get_cell_sizes(self.level.height-Room.OFFSET.y, self.grid.height)
+        widths = self.get_cell_sizes(self.rooms_area.width, self.grid.width)
+        heights = self.get_cell_sizes(self.rooms_area.height, self.grid.height)
 
         # Generate all rooms in grid
         y = 0
@@ -217,6 +317,7 @@ class GridRoomsGenerator(RoomsGenerator):
                 # Size with width/height+1 because we want rooms to touch
                 area = Rectangle(Position(x, y), Size(width, height))
                 room = self.room_generator.generate(area)
+                log.debug(f'Room: {len(self.rooms):2d} - {room}')
                 self.rooms.append(room)
                 x += width
             y += height

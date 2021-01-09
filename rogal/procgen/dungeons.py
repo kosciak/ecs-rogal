@@ -7,7 +7,7 @@ from ..terrain import Terrain
 
 from .core import Generator
 from .rooms import GridRoomsGenerator, RandomlyPlacedRoomsGenerator
-from .corridors import RoomsConnector
+from .corridors import RandomToNearestRoomsConnector, FollowToNearestRoomsConnector
 
 
 log = logging.getLogger(__name__)
@@ -93,7 +93,9 @@ class RoomsWithStraightCorridorsLevelGenerator(RoomsLevelGenerator):
         # self.rooms_generator = RandomlyPlacedRoomsGenerator(self.rng, self.level)
         # self.rooms_generator = GridRoomsGenerator(self.rng, self.level, Size(3, 3))
         self.rooms_generator = GridRoomsGenerator(self.rng, self.level, Size(4, 3))
-        self.rooms_connector = RoomsConnector(self.rng, self.level.size)
+
+        # self.rooms_connector = RandomToNearestRoomsConnector(self.rng, self.level.size)
+        self.rooms_connector = FollowToNearestRoomsConnector(self.rng, self.level.size)
 
     def spawn_entities(self):
         """Spawn entities."""
