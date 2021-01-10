@@ -7,7 +7,7 @@ from ..terrain import Terrain
 
 from .core import Generator
 from .rooms import GridRoomsGenerator, RandomlyPlacedRoomsGenerator
-from .corridors import RandomToNearestRoomsConnector, FollowToNearestRoomsConnector
+from .rooms_connectors import RandomToNearestRoomsConnector, FollowToNearestRoomsConnector
 
 
 log = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class RoomsLevelGenerator(Generator):
         self.rooms = list(self.distances.keys())
 
     def connect_rooms(self):
-        self.corridors = self.rooms_connector.generate(self.distances)
+        self.corridors = self.rooms_connector.connect(self.distances)
 
     def fill(self, terrain):
         """Fill whole level with given terrain."""

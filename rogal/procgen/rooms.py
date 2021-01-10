@@ -225,6 +225,7 @@ class RandomlyPlacedRoomsGenerator(RoomsGenerator):
 
     def __init__(self, rng, level):
         super().__init__(rng, level)
+
         self.room_generator = RoomGenerator(
             self.rng,
             max_size_factor=self.MAX_ROOM_SIZE_FACTOR,
@@ -291,15 +292,14 @@ class GridRoomsGenerator(RoomsGenerator):
             room_distances[distance*cell_length].add(other)
         return room_distances
 
-    def get_cell_sizes(self, total_size, cells_num):
+    def get_cell_sizes(self, length, cells_num):
         """Return list of widths/heights for each cell in grid."""
-        # total_size-1 because we leave out right and bottom edge for room walls
-        even_size = (total_size) // cells_num
+        even_size = (length) // cells_num
         sizes = []
         for i in range(cells_num):
             sizes.append(even_size)
-        # Randomly increase size of cells so total_size is used
-        rest = (total_size) % cells_num
+        # Randomly increase size of cells so length is used
+        rest = (length) % cells_num
         for i in self.rng.sample(range(len(sizes)), rest):
             sizes[i] += 1
         return sizes
