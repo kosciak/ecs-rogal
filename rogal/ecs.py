@@ -429,7 +429,7 @@ class ECS:
         systems = [system for system in self.systems if system.should_run(state)]
         log.debug(f'systems.run({state.name}): {systems}')
         for system in systems:
-            system.run(self, *args, **kwargs)
+            system.run(self, state, *args, **kwargs)
 
     def add_level(self, level):
         self.levels.add(level)

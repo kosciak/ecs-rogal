@@ -29,7 +29,7 @@ class System:
             return False
         return True
 
-    def run(self, ecs, *args, **kwargs):
+    def run(self, ecs, state, *args, **kwargs):
         return
 
     def __repr__(self):
@@ -42,7 +42,7 @@ class ActionsQueueSystem(System):
         RunState.TICKING,
     }
 
-    def run(self, ecs, *args, **kwargs):
+    def run(self, ecs, state, *args, **kwargs):
         acts_now = ecs.manage(components.ActsNow)
         waiting = ecs.manage(components.WaitsForAction)
 
@@ -93,7 +93,7 @@ class MovementSystem(System):
         # Clear processed has_moved
         has_moved.clear()
 
-    def run(self, ecs, *args, **kwargs):
+    def run(self, ecs, state, *args, **kwargs):
         self.apply_move(ecs, *args, **kwargs)
         self.post_movement(ecs, *args, **kwargs)
 
@@ -104,7 +104,7 @@ class MeleeCombatSystem(System):
         RunState.ACTION_PERFORMED,
     }
 
-    def run(self, ecs, *args, **kwargs):
+    def run(self, ecs, state, *args, **kwargs):
         names = ecs.manage(components.Name)
         melee_targets = ecs.manage(components.WantsToMelee)
         locations = ecs.manage(components.Location)
@@ -127,7 +127,7 @@ class OperateSystem(System):
         RunState.ACTION_PERFORMED,
     }
 
-    def run(self, ecs, *args, **kwargs):
+    def run(self, ecs, state, *args, **kwargs):
         names = ecs.manage(components.Name)
         operate_targets = ecs.manage(components.WantsToOperate)
         operations = ecs.manage(components.OnOperate)
@@ -213,7 +213,7 @@ class VisibilitySystem(System):
                 level.visible[:] = fov
                 level.revealed |= fov
 
-    def run(self, ecs, *args, **kwargs):
+    def run(self, ecs, state, *args, **kwargs):
         self.apply_blocks_vision_changes(ecs, *args, **kwargs)
         self.update_viewsheds(ecs, *args, **kwargs)
 
@@ -255,7 +255,7 @@ class MapIndexingSystem(System):
             entity_flags = get_flags(ecs, entity)
             level.flags[location.position] |= entity_flags
 
-    def run(self, ecs, *args, **kwargs):
+    def run(self, ecs, state, *args, **kwargs):
         self.clear_flags(ecs, *args, **kwargs)
         self.update_indexes(ecs, *args, **kwargs)
 
@@ -268,7 +268,7 @@ class ParticlesSystem(System):
         RunState.ANIMATIONS,
     }
 
-    def run(self, ecs, *args, **kwargs):
+    def run(self, ecs, state, *args, **kwargs):
         particles = ecs.manage(components.Particle)
         outdated = set()
         now = time.time()
