@@ -18,13 +18,16 @@ class Generator:
     """Abstract Generator class. Use existing RNG or init new using given seed."""
 
     def __init__(self, rng=None, seed=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.rng = rng or self.init_rng(seed)
 
     def init_rng(self, seed=None):
         """Init RNG with given seed, or generate new seed."""
         if seed is None:
             seed = uuid.uuid4()
-        log.debug(f'Generator seed: {seed}')
+        log.debug(f'{self.__class__.__name__}(seed="{seed}")')
+        with open(f'{self.__class__.__name__}.seed', 'w') as f:
+            f.write(f'{seed}\n')
         rng = random.Random(seed)
         return rng
 

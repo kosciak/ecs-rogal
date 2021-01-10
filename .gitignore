@@ -13,6 +13,11 @@ venv/
 .*.swp
 *~
 
+# Project related files
+
 # Saved games
 *.sav
+
+# Saved seeds
+*.seed
 
