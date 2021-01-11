@@ -36,20 +36,20 @@ class RoomsConnector(Generator):
         self.rooms = list(self.distances.keys())
         self.corridors = []
 
-    def get_connections(self, room, connections=None):
+    def get_all_connected_from(self, room, connections=None):
         """Return recursively all connected rooms with given room."""
         connections = connections or set()
         connections.add(room)
         for connected in room.connected_rooms:
             if connected in connections:
                 continue
-            connections.update(self.get_connections(connected, connections))
+            connections.update(self.get_all_connected_from(connected, connections))
         return connections
 
     def fix_connections(self, tries=1, max_tries=10):
         """Check for all disconnected rooms, and try to fix them."""
         # Get all rooms that are accessible from first room
-        connected = self.get_connections(self.rooms[0])
+        connected = self.get_all_connected_from(self.rooms[0])
         # Get rooms that are NOT connected and not accessible
         disconnected = [room for room in self.rooms if not room in connected]
         if not disconnected:
@@ -62,7 +62,7 @@ class RoomsConnector(Generator):
         # Try to connect disconnected rooms with connected ones
         for room in self.rng.sample(disconnected, len(disconnected)):
             log.debug(f'Fixing: {room}')
-            other = self.connect_room(room, rooms=connected)
+            other = self.connect_to_nearest(room, include_rooms=connected)
             if other:
                 break
         tries += 1
@@ -79,12 +79,6 @@ class RoomsConnector(Generator):
                    if corridor.is_horizontal == c.is_horizontal):
                 return False
         return True
-
-    def nearest_rooms(self, room):
-        """Yield (distance, other) pairs from nearest to furthest room."""
-        for distance, others in sorted(self.distances[room]):
-            for other in self.rng.sample(others, len(others)):
-                yield distance, other
 
     def generate_corridors(self, room, other):
         rooms = set(self.rooms) - {room, other}
@@ -107,8 +101,22 @@ class RoomsConnector(Generator):
             return False
         return True
 
-    def connect_room(self, room, include_rooms=None):
+    def nearest_rooms(self, room):
+        """Yield (distance, other) pairs from nearest to furthest room."""
+        for distance, others in sorted(self.distances[room]):
+            for other in self.rng.sample(others, len(others)):
+                yield distance, other
+
+    def create_connection(self, room, other, corridors):
+        self.corridors.extend(corridors)
+        corridors[0].allow_door(0)
+        corridors[-1].allow_door(-1)
+        room.connected_rooms.add(other)
+        other.connected_rooms.add(room)
+
+    def connect_to_nearest(self, room, include_rooms=None):
         """Try connecting given room with closest valid room, not yet connected with it."""
+        connected = None
         if include_rooms is None:
             include_rooms = self.rooms
         for distance, other in self.nearest_rooms(room):
@@ -116,15 +124,23 @@ class RoomsConnector(Generator):
                 continue
             corridors = self.generate_corridors(room, other)
             if corridors:
-                self.corridors.extend(corridors)
-                corridors[0].allow_door(0)
-                corridors[-1].allow_door(-1)
-                room.connected_rooms.add(other)
-                other.connected_rooms.add(room)
-                return other
-        return None
+                self.create_connection(room, other, corridors)
+                connected = other
+                break
+        log.debug(f'Connected: {self.rooms.index(room)} -> {connected and self.rooms.index(connected)}')
+        return connected
 
-    def connect(self, distances):
+    def connect_to_unconnected(self, room):
+        unconnected_rooms = {r for r in self.rooms if not r.connected_rooms}
+        other = self.connect_to_nearest(room, unconnected_rooms)
+        return other
+
+    def connect_to_connected(self, room):
+        connected_rooms = {r for r in self.rooms if r.connected_rooms}
+        other = self.connect_to_nearest(room, connected_rooms)
+        return other
+
+    def connect_rooms(self, distances):
         self.set_distances(distances)
 
         log.error('Implement me!')
@@ -134,13 +150,12 @@ class RoomsConnector(Generator):
 
 class RandomToNearestRoomsConnector(RoomsConnector):
 
-    def connect(self, distances):
+    def connect_rooms(self, distances):
         self.set_distances(distances)
 
         # Try to connect each room with nearest neighbour
         for room in self.rng.sample(self.rooms, len(self.rooms)):
-            other = self.connect_room(room)
-            log.debug(f'Connected: {self.rooms.index(room)} -> {other and self.rooms.index(other)}')
+            other = self.connect_to_nearest(room)
 
         # There's small chance for creating additional connections from each room
         for room in self.rng.sample(self.rooms, len(self.rooms)):
@@ -151,8 +166,7 @@ class RandomToNearestRoomsConnector(RoomsConnector):
             if self.rng.random() > next_room_chance:
                 continue
             log.debug(f'Extra from: {self.rooms.index(room)}')
-            other = self.connect_room(room)
-            log.debug(f'Connected: {self.rooms.index(room)} -> {other and self.rooms.index(other)}')
+            other = self.connect_to_nearest(room)
 
         # Check for rooms that are not connected with others
         disconnected = self.fix_connections()
@@ -170,15 +184,13 @@ class FollowToNearestRoomsConnector(RoomsConnector):
 
     """
 
-    def connect(self, distances):
+    def connect_rooms(self, distances):
         self.set_distances(distances)
 
         # Randomly choose starting room, and connect with one of not connected
         room = self.rng.choice(self.rooms)
         while room:
-            unconnected = {r for r in self.rooms if not r.connected_rooms}
-            other = self.connect_room(room, unconnected)
-            log.debug(f'Connected: {self.rooms.index(room)} -> {other and self.rooms.index(other)}')
+            other = self.connect_to_unconnected(room)
             # Use this room as new starting one
             room = other
 
@@ -193,18 +205,17 @@ class FollowToNearestRoomsConnector(RoomsConnector):
                 distance_factor = 1
             tries -= 1
             room = self.rng.choice(unconnected)
-            connected = {r for r in self.rooms if r.connected_rooms}
-            other = self.connect_room(room, connected)
-            log.debug(f'Connected: {self.rooms.index(room)} -> {other and self.rooms.index(other)}')
+            other = self.connect_to_connected(room)
             unconnected = [r for r in self.rooms if not r.connected_rooms]
+
+        # TODO: For yet unknown reason sometimes rng state differs here!
 
         # Some extra connections
         self.max_connection_distance *= distance_factor
         extra_connections_num = self.rng.randint(1, int(math.sqrt(len(self.rooms))))
         log.debug(f'Extra connections: {extra_connections_num}')
         for room in self.rng.sample(self.rooms, extra_connections_num):
-            other = self.connect_room(room)
-            log.debug(f'Connected: {self.rooms.index(room)} -> {other and self.rooms.index(other)}')
+            other = self.connect_to_nearest(room)
 
         # Check for rooms that are not connected with others
         disconnected = self.fix_connections()

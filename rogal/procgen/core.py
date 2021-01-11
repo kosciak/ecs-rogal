@@ -9,10 +9,6 @@ from ..geometry import Rectangular, Position, Size, Rectangle
 log = logging.getLogger(__name__)
 
 
-SEED = None
-#SEED = uuid.UUID( '137ad920-fd42-470a-a99c-6ed52b7c05b5' )
-
-
 class Generator:
 
     """Abstract Generator class. Use existing RNG or init new using given seed."""
