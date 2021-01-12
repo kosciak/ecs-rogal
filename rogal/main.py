@@ -31,10 +31,12 @@ log = logging.getLogger(__name__)
 PALETTE = TANGO_DARK
 
 CONSOLE_SIZE = Size(80, 48)
+CONSOLE_SIZE = Size(80, 60)
 
 CAMERA_SIZE = Size(15, 15)
+
 LEVEL_SIZE = Size(21,21)
-LEVEL_SIZE = Size(78,34)
+LEVEL_SIZE = Size(CONSOLE_SIZE.width-2, CONSOLE_SIZE.height-14)
 
 
 def render(wrapper, root_panel, ecs, level, player):

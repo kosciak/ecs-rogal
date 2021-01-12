@@ -117,7 +117,7 @@ class RoomGenerator(Generator):
     """Generate single Room with random size and position on given area."""
 
     MIN_SIZE = 5    # Minimal width/height
-    MAX_SIZE = 31   # Maximal width/height
+    MAX_SIZE = 25   # Maximal width/height
     MAX_SIZE_FACTOR = 1.0   # Maximal width/height relative to area
     MAX_AREA_FACTOR = 1.0   # Maximal room area relative to area
 
@@ -239,33 +239,45 @@ class RoomsGenerator(Generator):
 
         """
         room_distances = collections.defaultdict(set)
+
         for other in self.rooms:
             if other is None:
                 continue
             if other == room:
                 continue
-            distance = room.center.distance(other.center)
+            distance = int(room.center.distance(other.center)//5)
             room_distances[distance].add(other)
+
         return room_distances
 
-    def calc_distances(self):
+    def calc_rooms_distances(self):
         """Calculate distances between all rooms."""
-        distances = collections.defaultdict(list)
+        rooms_distances = collections.defaultdict(list)
         for room in self.rooms:
             if room is None:
                 continue
             room_distances = self.calc_room_distances(room)
             for distance, others in room_distances.items():
-                distances[room].append([distance, others])
-        return distances
+                rooms_distances[room].append([distance, others])
+        return rooms_distances
+
+    def rooms_distances_stats(self, rooms_distances):
+        distance_counts = collections.Counter()
+        for room, room_distances in rooms_distances.items():
+            for distance, other in room_distances:
+                distance_counts[distance] += 1
+        for distance in sorted(distance_counts.keys()):
+            count = distance_counts[distance]
+            print(f'{distance} - {count}')
 
     def generate_rooms(self):
         raise NotImplementedError()
 
     def generate(self):
         self.rooms = self.generate_rooms()
-        distances = self.calc_distances()
-        return distances
+        rooms_distances = self.calc_rooms_distances()
+        # self.rooms_distances_stats(rooms_distances)
+        return rooms_distances
 
 
 class RandomlyPlacedRoomsGenerator(RoomsGenerator):
@@ -323,17 +335,17 @@ class GridRoomsGenerator(RoomsGenerator):
     def calc_room_distances(self, room):
         """Calculate distances from given room."""
         room_distances = collections.defaultdict(set)
+
         room_idx = self.rooms.index(room)
         width = self.grid.width
-        # cell_length to get tiles-based distances instead of grid cell-based distances
-        cell_length = sum([self.level.width//self.grid.width, self.level.height//self.grid.height])//2
         for other_idx, other in enumerate(self.rooms):
             if other is None:
                 continue
             if other == room:
                 continue
             distance = abs(other_idx%width-room_idx%width) + abs(other_idx//width-room_idx//width)
-            room_distances[distance*cell_length].add(other)
+            room_distances[distance].add(other)
+
         return room_distances
 
     def get_cell_sizes(self, length, cells_num):
@@ -397,19 +409,35 @@ class BSPRoomsGenerator(RoomsGenerator):
             min_size=int(self.MIN_ROOM_SIZE*1.5),
         )
         self.bsp_tree = None
+        self.room_nodes = {}
 
-    # TODO: Calculating distances "BSP way"
+    def calc_room_distances(self, room):
+        """Calculate distances from given room."""
+        room_distances = collections.defaultdict(set)
+
+        room_node = self.room_nodes[room]
+        for other in self.rooms:
+            if other == room:
+                continue
+            if other is None:
+                continue
+            other_node = self.room_nodes[other]
+            distance = room_node.distance(other_node)
+            room_distances[distance].add(other)
+
+        return room_distances
 
     def generate_rooms(self):
+        self.room_nodes.clear()
         rooms = []
         self.bsp_tree = self.bsp_generator.generate(4)
-        for node in self.bsp_tree.post_order():
-            if not node.children:
-                room = self.generate_room(node)
-                if room is None:
-                    continue
-                log.debug(f'Room: {len(rooms):2d} - {room}')
-                rooms.append(room)
+        for node in self.bsp_tree.leaves():
+            room = self.generate_room(node)
+            if room is None:
+                continue
+            log.debug(f'Room: {len(rooms):2d} - {room}')
+            rooms.append(room)
+            self.room_nodes[room] = node
 
         return rooms
 

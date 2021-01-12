@@ -33,9 +33,9 @@ class VerticalCorridor(Corridor):
 
     is_horizontal = False
 
-    def __init__(self, position, length):
+    def __init__(self, position, length, width=1):
         self.length = length
-        super().__init__(position, Size(1, self.length))
+        super().__init__(position, Size(width, self.length))
 
     def get_position(self, length):
         if length < 0:
@@ -56,9 +56,9 @@ class HorizontalCorridor(Corridor):
 
     is_horizontal = True
 
-    def __init__(self, position, length):
+    def __init__(self, position, length, width=1):
         self.length = length
-        super().__init__(position, Size(self.length, 1))
+        super().__init__(position, Size(self.length, width))
 
     def get_position(self, length):
         if length < 0:
