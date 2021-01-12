@@ -11,6 +11,10 @@ class Tree:
     def clear(self):
         self.children = []
 
+    @property
+    def is_leaf(self):
+        return not self.children
+
     def path(self):
         if self.parent:
             yield from self.parent.path()
@@ -19,6 +23,22 @@ class Tree:
     @property
     def level(self):
         return len(list(self.path())) - 1
+
+    def distance(self, other):
+        path = set(self.path())
+        other_path = set(other.path())
+        common_parents = path & other_path
+        if not common_parents:
+            return None
+        return len(path) + len(other_path) - 2*len(common_parents)
+
+    def leaves(self):
+        if self.is_leaf:
+            yield self
+        for child in self.children:
+            if child is None:
+                continue
+            yield from child.leaves()
 
     def pre_order(self):
         yield self
@@ -34,8 +54,12 @@ class Tree:
             yield from child.post_order()
         yield self
 
-    def pprint(self):
+    def pprint_pre_order(self):
         for node in self.pre_order():
+            print(f"{'  '*node.level}{node}")
+
+    def pprint_post_order(self):
+        for node in self.post_order():
             print(f"{'  '*node.level}{node}")
 
 
@@ -73,4 +97,8 @@ class BinaryTree(Tree):
         yield self
         if self.right:
             yield from self.right.in_order()
+
+    def pprint_in_order(self):
+        for node in self.in_order():
+            print(f"{'    '*node.level}{node}")
 
