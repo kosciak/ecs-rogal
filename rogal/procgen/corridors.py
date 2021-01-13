@@ -2,6 +2,7 @@ import collections
 import logging
 
 from ..geometry import Position, Size
+from ..rng import RandomTable
 
 from .core import Generator, Digable
 
@@ -82,7 +83,7 @@ class CorridorGenerator(Generator):
             self.generate_vertical,
             self.generate_horizontal,
         ]
-        for generator_fn in self.rng.sample(generator_fns, len(generator_fns)):
+        for generator_fn in self.rng.shuffled(generator_fns):
             yield from generator_fn(room, other)
 
 
@@ -95,7 +96,7 @@ class StraightCorridorGenerator(CorridorGenerator):
         length = room.vertical_spacing(other)
         y = min(room.y2, other.y2)
         overlaps = room.horizontal_overlap(other)
-        for x in self.rng.sample(overlaps, len(overlaps)):
+        for x in self.rng.shuffled(overlaps):
             corridor = VerticalCorridor(Position(x, y), length)
             yield (corridor, )
 
@@ -104,7 +105,7 @@ class StraightCorridorGenerator(CorridorGenerator):
         length = room.horizontal_spacing(other)
         x = min(room.x2, other.x2)
         overlaps = room.vertical_overlap(other)
-        for y in self.rng.sample(overlaps, len(overlaps)):
+        for y in self.rng.shuffled(overlaps):
             corridor = HorizontalCorridor(Position(x, y), length)
             yield (corridor, )
 
@@ -167,17 +168,13 @@ class MixedCorridorGenerator(CorridorGenerator):
     def __init__(self, corridor_generators, rng=None, seed=None, *args, **kwargs):
         super().__init__(rng=rng, seed=seed, *args, **kwargs)
 
-        self.corridor_generators = []
-        self.weights = []
-        for generator, weight in corridor_generators:
-            self.corridor_generators.append(generator)
-            self.weights.append(weight)
+        self.corridor_generators = RandomTable(self.rng, *corridor_generators)
 
     def generate_vertical(self, room, other):
-        generator = self.rng.choices(self.corridor_generators, self.weights, k=1)[0]
+        generator = self.corridor_generators.choice()
         return generator.generate_vertical(room, other)
 
     def generate_horizontal(self, room, other):
-        generator = self.rng.choices(self.corridor_generators, self.weights, k=1)[0]
+        generator = self.corridor_generators.choice()
         return generator.generate_horizontal(room, other)
 

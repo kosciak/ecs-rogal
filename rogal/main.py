@@ -10,7 +10,7 @@ from .tilesheets import TERMINAL_12x12_CP
 from .wrappers import TcodWrapper
 from . import keys
 
-from .procgen.dungeons import LevelGenerator
+from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerator, BSPLevelGenerator
 
 from .ecs import ECS
 from . import components
@@ -31,12 +31,19 @@ log = logging.getLogger(__name__)
 PALETTE = TANGO_DARK
 
 CONSOLE_SIZE = Size(80, 48)
-CONSOLE_SIZE = Size(80, 60)
+#CONSOLE_SIZE = Size(80, 60)
 
 CAMERA_SIZE = Size(15, 15)
 
 LEVEL_SIZE = Size(21,21)
 LEVEL_SIZE = Size(CONSOLE_SIZE.width-2, CONSOLE_SIZE.height-14)
+
+# LEVEL_GENERATOR_CLS = RandomDungeonLevelGenerator
+LEVEL_GENERATOR_CLS = RogueGridLevelGenerator
+# LEVEL_GENERATOR_CLS = BSPLevelGenerator
+
+SEED = None
+# SEED = uuid.UUID("f6df641c-d526-4037-8ee8-c9866ba1199d")
 
 
 def render(wrapper, root_panel, ecs, level, player):
@@ -160,7 +167,7 @@ def run():
         root_panel = wrapper.create_panel()
 
         # Level(s) generation
-        level = LevelGenerator(ecs, LEVEL_SIZE).generate()
+        level = LEVEL_GENERATOR_CLS(ecs, LEVEL_SIZE, seed=SEED).generate()
         ecs.add_level(level)
 
         loop(wrapper, root_panel, ecs)

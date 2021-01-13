@@ -5,17 +5,14 @@ from .. import entities
 from ..game_map import GameMap
 from ..geometry import Size
 from ..terrain import Terrain
+from ..utils import perf
 
 from .core import Generator
-from .rooms import GridRoomsGenerator, RandomlyPlacedRoomsGenerator, BSPRoomsGenerator
+from .rooms import RandomlyPlacedRoomsGenerator, GridRoomsGenerator, BSPRoomsGenerator
 from .rooms_connectors import RandomToNearestRoomsConnector, FollowToNearestRoomsConnector, BSPRoomsConnector
 
 
 log = logging.getLogger(__name__)
-
-
-SEED = None
-# SEED = uuid.UUID("f6df641c-d526-4037-8ee8-c9866ba1199d")
 
 
 class RoomsLevelGenerator(Generator):
@@ -27,7 +24,7 @@ class RoomsLevelGenerator(Generator):
 
         self.size = size
         self.depth = depth
-        self.level = GameMap.create(self.size, self.depth)
+        self._level = None
 
         self.rooms = []
         self.rooms_generator = None
@@ -35,12 +32,25 @@ class RoomsLevelGenerator(Generator):
         self.corridors = []
         self.rooms_connector = None
 
+    @property
+    def level(self):
+        if self._level is None:
+            self._level = GameMap.create(self.size, self.depth)
+        return self._level
+
+    def clear(self):
+        self._level = None
+        self.rooms = []
+        self.corridors = []
+
     def generate_rooms(self):
+        log.info(f'Generating rooms: {self.rooms_generator}')
         rooms_distances = self.rooms_generator.generate()
         self.rooms = list(rooms_distances.keys())
         return rooms_distances
 
     def connect_rooms(self, rooms_distances):
+        log.info(f'Connecting rooms: {self.rooms_connector}')
         self.corridors = self.rooms_connector.connect_rooms(rooms_distances)
 
     def fill(self, terrain):
@@ -75,6 +85,8 @@ class RoomsLevelGenerator(Generator):
         raise NotImplementedError()
 
     def generate(self):
+        self.clear()
+        log.info(f'Generating: {self.level}')
         rooms_distances = self.generate_rooms()
         # print('--------------')
         # print(self.rng.random())
@@ -84,33 +96,27 @@ class RoomsLevelGenerator(Generator):
         # print(self.rng.random())
         # print('--------------')
 
-        self.fill(Terrain.VOID)
+        #self.fill(Terrain.VOID)
+        self.fill(Terrain.STONE_WALL)
+
         self.dig_rooms(wall=Terrain.STONE_WALL, floor=Terrain.STONE_FLOOR)
         self.dig_corridors(floor=Terrain.STONE_FLOOR)
 
         self.spawn_entities()
 
-        self.level.revealed[:] = 1
+        #self.level.revealed[:] = 1
         return self.level
 
 
-class DungeonsLevelGenerator(RoomsLevelGenerator):
+class RandomDungeonLevelGenerator(RoomsLevelGenerator):
 
     """LevelGenerator creating random rooms connected with straight corridors."""
 
-    def __init__(self, ecs, size, depth=0, seed=SEED):
+    def __init__(self, ecs, size, depth=0, seed=None):
         super().__init__(ecs, size, depth, seed=seed)
 
         self.rooms_generator = RandomlyPlacedRoomsGenerator(self.rng, self.level)
-        # self.rooms_generator = GridRoomsGenerator(self.rng, self.level, Size(3, 3))
-        # self.rooms_generator = GridRoomsGenerator(self.rng, self.level, Size(4, 3))
-        # self.rooms_generator = GridRoomsGenerator(self.rng, self.level, Size(4, 4))
-        # self.rooms_generator = GridRoomsGenerator(self.rng, self.level, Size(5, 5))
-        # self.rooms_generator = BSPRoomsGenerator(self.rng, self.level)
-
-        self.rooms_connector = RandomToNearestRoomsConnector(self.rng, self.level.size)
-        # self.rooms_connector = FollowToNearestRoomsConnector(self.rng, self.level.size)
-        # self.rooms_connector = BSPRoomsConnector(self.rng, self.level.size)
+        self.rooms_connector = RandomToNearestRoomsConnector(self.rng)
 
     def spawn_entities(self):
         """Spawn entities."""
@@ -160,7 +166,27 @@ class DungeonsLevelGenerator(RoomsLevelGenerator):
                 self.spawn_monster(position)
 
 
-LevelGenerator = DungeonsLevelGenerator
+class RogueGridLevelGenerator(RandomDungeonLevelGenerator):
+
+    def __init__(self, ecs, size, depth=0, seed=None):
+        super().__init__(ecs, size, depth, seed=seed)
+
+        grid = Size(
+            size.width//18,
+            size.height//11,
+        )
+        self.rooms_generator = GridRoomsGenerator(self.rng, self.level, grid)
+        self.rooms_connector = FollowToNearestRoomsConnector(self.rng)
+
+
+class BSPLevelGenerator(RandomDungeonLevelGenerator):
+
+    def __init__(self, ecs, size, depth=0, seed=None):
+        super().__init__(ecs, size, depth, seed=seed)
+
+        split_depth = size.width//18
+        self.rooms_generator = BSPRoomsGenerator(self.rng, self.level, split_depth)
+        self.rooms_connector = BSPRoomsConnector(self.rng)
 
 
 def generate_static_level(ecs, size):

@@ -100,13 +100,13 @@ class BSPGenerator(Generator):
 
         if width is None or height is None:
             # Only vertical OR horizontal split possible
-            left, right =  bsp_node.split(width=width, height=height)
+            left, right = bsp_node.split(width=width, height=height)
         else:
             # Both splits possible, choose one randomly
-            if self.rng.randint(0, 1):
-                left, right =  bsp_node.split(width=width)
+            if self.rng.randbool():
+                left, right = bsp_node.split(width=width)
             else:
-                left, right =  bsp_node.split(height=height)
+                left, right = bsp_node.split(height=height)
 
         # Check if valid children were generated, if not clear results and try again
         if not self.is_split_valid(left, right):

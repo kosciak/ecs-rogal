@@ -1,9 +1,9 @@
 import collections
 import logging
-import random
 import uuid
 
 from ..geometry import Rectangular, Position, Size, Rectangle
+from ..rng import RNG
 
 
 log = logging.getLogger(__name__)
@@ -24,8 +24,11 @@ class Generator:
         log.debug(f'{self.__class__.__name__}(seed="{seed}")')
         with open(f'{self.__class__.__name__}.seed', 'w') as f:
             f.write(f'{seed}\n')
-        rng = random.Random(seed)
+        rng = RNG(seed)
         return rng
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__}>'
 
 
 class OffsetedRectangle(Rectangular):
