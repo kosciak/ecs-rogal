@@ -121,6 +121,11 @@ CONFIG = dict(
     loggers = {
         'rogal': {
             'level': logging.DEBUG,
+            'handlers': ['console', ],
+            'propagate': False,
+        },
+        'rogal.messages': {
+            'level': logging.INFO,
             'handlers': ['console', 'history', ],
             'propagate': False,
         },

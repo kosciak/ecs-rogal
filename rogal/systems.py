@@ -13,6 +13,7 @@ from .run_state import RunState
 
 
 log = logging.getLogger(__name__)
+msg_log = logging.getLogger('rogal.messages')
 
 
 """Systems running ecs."""
@@ -70,7 +71,7 @@ class MovementSystem(System):
         has_moved = ecs.manage(components.HasMoved)
 
         for entity, location, direction in ecs.join(ecs.entities, locations, movement_directions):
-            log.info(f'{names.get(entity)} MOVE: {direction}')
+            msg_log.info(f'{names.get(entity)} MOVE: {direction}')
 
             # Update position
             location.position = location.position.move(direction)
@@ -111,7 +112,7 @@ class MeleeCombatSystem(System):
 
         for entity, target_id in ecs.join(ecs.entities, melee_targets):
             target = ecs.get(target_id)
-            log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
+            msg_log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
             # TODO: Do some damage!
             particle = create_meele_hit_particle(ecs)
             location = locations.get(target)
@@ -135,7 +136,7 @@ class OperateSystem(System):
 
         for entity, target_id in ecs.join(ecs.entities, operate_targets):
             target = ecs.get(target_id)
-            log.info(f'{names.get(entity)} OPERATE: {names.get(target)}')
+            msg_log.info(f'{names.get(entity)} OPERATE: {names.get(target)}')
             operation = operations.get(target)
             for component in operation.insert:
                 if component == components.BlocksVision:
