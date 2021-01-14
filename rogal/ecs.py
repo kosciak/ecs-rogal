@@ -387,6 +387,24 @@ class EntitiesManager(JoinableManager):
         return f'<{self.__class__.__name__}>'
 
 
+class SystemsManager:
+
+    def __init__(self):
+        self.systems = []
+
+    def register(self, system):
+        self.systems.append(system)
+
+    def run(self, state, *args, **kwargs):
+        systems = [system for system in self if system.should_run(state)]
+        log.debug(f'systems.run({state.name}): {systems}')
+        for system in systems:
+            system.run(state, *args, **kwargs)
+
+    def __iter__(self):
+        yield from self.systems
+
+
 class LevelsManager:
 
     def __init__(self):
@@ -406,8 +424,7 @@ class ECS:
 
     def __init__(self):
         self.entities = EntitiesManager()
-        # TODO: self.systems = SystemsManager()
-        self.systems = []
+        self.systems = SystemsManager()
         self.levels = LevelsManager()
 
     def create(self, *components, entity_id=None):
@@ -423,13 +440,10 @@ class ECS:
         yield from JoinIterator(*managers)
 
     def register(self, system):
-        self.systems.append(system)
+        self.systems.register(system(self))
 
     def run(self, state, *args, **kwargs):
-        systems = [system for system in self.systems if system.should_run(state)]
-        log.debug(f'systems.run({state.name}): {systems}')
-        for system in systems:
-            system.run(self, state, *args, **kwargs)
+        self.systems.run(state, *args, **kwargs)
 
     def add_level(self, level):
         self.levels.add(level)

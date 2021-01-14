@@ -7,7 +7,7 @@ import numpy as np
 import tcod
 
 from . import components
-from .entities import create_meele_hit_particle, spawn
+from .entities import EntityLoader
 from .flags import Flag, get_flags
 from .run_state import RunState
 
@@ -23,6 +23,10 @@ class System:
     INCLUDE_STATES = set()
     EXCLUDE_STATES = set()
 
+    def __init__(self, ecs):
+        self.ecs = ecs
+        self.entity_loader = EntityLoader(self.ecs)
+
     def should_run(self, state):
         if self.EXCLUDE_STATES and state in self.EXCLUDE_STATES:
             return False
@@ -30,7 +34,7 @@ class System:
             return False
         return True
 
-    def run(self, ecs, state, *args, **kwargs):
+    def run(self, state, *args, **kwargs):
         return
 
     def __repr__(self):
@@ -43,14 +47,14 @@ class ActionsQueueSystem(System):
         RunState.TICKING,
     }
 
-    def run(self, ecs, state, *args, **kwargs):
-        acts_now = ecs.manage(components.ActsNow)
-        waiting = ecs.manage(components.WaitsForAction)
+    def run(self, state, *args, **kwargs):
+        acts_now = self.ecs.manage(components.ActsNow)
+        waiting = self.ecs.manage(components.WaitsForAction)
 
         # Clear previous ActsNow flags
         acts_now.clear()
 
-        for entity, waits in ecs.join(ecs.entities, waiting):
+        for entity, waits in self.ecs.join(self.ecs.entities, waiting):
             # Decrease wait time
             waits -= 1
             if waits <= 0:
@@ -64,13 +68,13 @@ class MovementSystem(System):
         RunState.ACTION_PERFORMED,
     }
 
-    def apply_move(self, ecs, *args, **kwargs):
-        names = ecs.manage(components.Name)
-        locations = ecs.manage(components.Location)
-        movement_directions = ecs.manage(components.WantsToMove)
-        has_moved = ecs.manage(components.HasMoved)
+    def apply_move(self, *args, **kwargs):
+        names = self.ecs.manage(components.Name)
+        locations = self.ecs.manage(components.Location)
+        movement_directions = self.ecs.manage(components.WantsToMove)
+        has_moved = self.ecs.manage(components.HasMoved)
 
-        for entity, location, direction in ecs.join(ecs.entities, locations, movement_directions):
+        for entity, location, direction in self.ecs.join(self.ecs.entities, locations, movement_directions):
             msg_log.info(f'{names.get(entity)} MOVE: {direction}')
 
             # Update position
@@ -80,13 +84,13 @@ class MovementSystem(System):
         # Clear processed movement intents
         movement_directions.clear()
 
-    def post_movement(self, ecs, *args, **kwargs):
+    def post_movement(self, *args, **kwargs):
         # Pocess effects of movement
         # Invalidate Viewshed after moving
-        has_moved = ecs.manage(components.HasMoved)
-        viewsheds = ecs.manage(components.Viewshed)
+        has_moved = self.ecs.manage(components.HasMoved)
+        viewsheds = self.ecs.manage(components.Viewshed)
 
-        for viewshed, moved in ecs.join(viewsheds, has_moved):
+        for viewshed, moved in self.ecs.join(viewsheds, has_moved):
             viewshed.invalidate()
 
         # TODO: Other effects of movement
@@ -94,9 +98,9 @@ class MovementSystem(System):
         # Clear processed has_moved
         has_moved.clear()
 
-    def run(self, ecs, state, *args, **kwargs):
-        self.apply_move(ecs, *args, **kwargs)
-        self.post_movement(ecs, *args, **kwargs)
+    def run(self, state, *args, **kwargs):
+        self.apply_move(*args, **kwargs)
+        self.post_movement(*args, **kwargs)
 
 
 class MeleeCombatSystem(System):
@@ -105,18 +109,17 @@ class MeleeCombatSystem(System):
         RunState.ACTION_PERFORMED,
     }
 
-    def run(self, ecs, state, *args, **kwargs):
-        names = ecs.manage(components.Name)
-        melee_targets = ecs.manage(components.WantsToMelee)
-        locations = ecs.manage(components.Location)
+    def run(self, state, *args, **kwargs):
+        names = self.ecs.manage(components.Name)
+        melee_targets = self.ecs.manage(components.WantsToMelee)
+        locations = self.ecs.manage(components.Location)
 
-        for entity, target_id in ecs.join(ecs.entities, melee_targets):
-            target = ecs.get(target_id)
+        for entity, target_id in self.ecs.join(self.ecs.entities, melee_targets):
+            target = self.ecs.get(target_id)
             msg_log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
             # TODO: Do some damage!
-            particle = create_meele_hit_particle(ecs)
             location = locations.get(target)
-            spawn(ecs, particle, location.level_id, location.position)
+            self.entity_loader.spawn('HIT_PARTICLE', location.level_id, location.position)
 
         # Clear processed targets
         melee_targets.clear()
@@ -128,25 +131,25 @@ class OperateSystem(System):
         RunState.ACTION_PERFORMED,
     }
 
-    def run(self, ecs, state, *args, **kwargs):
-        names = ecs.manage(components.Name)
-        operate_targets = ecs.manage(components.WantsToOperate)
-        operations = ecs.manage(components.OnOperate)
-        blocks_vision_changes = ecs.manage(components.BlocksVisionChanged)
+    def run(self, state, *args, **kwargs):
+        names = self.ecs.manage(components.Name)
+        operate_targets = self.ecs.manage(components.WantsToOperate)
+        operations = self.ecs.manage(components.OnOperate)
+        blocks_vision_changes = self.ecs.manage(components.BlocksVisionChanged)
 
-        for entity, target_id in ecs.join(ecs.entities, operate_targets):
-            target = ecs.get(target_id)
+        for entity, target_id in self.ecs.join(self.ecs.entities, operate_targets):
+            target = self.ecs.get(target_id)
             msg_log.info(f'{names.get(entity)} OPERATE: {names.get(target)}')
             operation = operations.get(target)
             for component in operation.insert:
                 if component == components.BlocksVision:
                     blocks_vision_changes.insert(target)
-                manager = ecs.manage(component)
+                manager = self.ecs.manage(component)
                 manager.insert(target, component=component)
             for component in operation.remove:
                 if component == components.BlocksVision:
                     blocks_vision_changes.insert(target)
-                manager = ecs.manage(component)
+                manager = self.ecs.manage(component)
                 manager.remove(target)
 
         # Clear processed targets
@@ -156,36 +159,36 @@ class OperateSystem(System):
 class VisibilitySystem(System):
 
     INCLUDE_STATES = {
-        RunState.PRE_RUN, 
-        RunState.ACTION_PERFORMED, 
+        RunState.PRE_RUN,
+        RunState.ACTION_PERFORMED,
     }
 
-    def apply_blocks_vision_changes(self, ecs, *args, **kwargs):
-        blocks_vision_changes = ecs.manage(components.BlocksVisionChanged)
-        locations = ecs.manage(components.Location)
-        viewsheds = ecs.manage(components.Viewshed)
+    def apply_blocks_vision_changes(self, *args, **kwargs):
+        blocks_vision_changes = self.ecs.manage(components.BlocksVisionChanged)
+        locations = self.ecs.manage(components.Location)
+        viewsheds = self.ecs.manage(components.Viewshed)
 
         # Invalidate Viewshed of all entities with target in viewshed
         positions_per_level = collections.defaultdict(set)
-        for location, changed in ecs.join(locations, blocks_vision_changes):
+        for location, changed in self.ecs.join(locations, blocks_vision_changes):
             positions_per_level[location.level_id].add(location.position)
 
-        viewsheds = ecs.manage(components.Viewshed)
-        for viewshed, location in ecs.join(viewsheds, locations):
+        viewsheds = self.ecs.manage(components.Viewshed)
+        for viewshed, location in self.ecs.join(viewsheds, locations):
             if viewshed.visible_tiles & positions_per_level[location.level_id]:
                 viewshed.invalidate()
 
         # Clear processed flags
         blocks_vision_changes.clear()
 
-    def update_viewsheds(self, ecs, *args, **kwargs):
-        players = ecs.manage(components.Player)
-        locations = ecs.manage(components.Location)
-        viewsheds = ecs.manage(components.Viewshed)
+    def update_viewsheds(self, *args, **kwargs):
+        players = self.ecs.manage(components.Player)
+        locations = self.ecs.manage(components.Location)
+        viewsheds = self.ecs.manage(components.Viewshed)
 
         #  Update Viesheds that needs update
-        for entity, location, viewshed in ecs.join(ecs.entities, locations, viewsheds):
-            level = ecs.levels.get(location.level_id)
+        for entity, location, viewshed in self.ecs.join(self.ecs.entities, locations, viewsheds):
+            level = self.ecs.levels.get(location.level_id)
             if not location.position in level:
                 # Outside map/level boundaries
                 continue
@@ -212,9 +215,9 @@ class VisibilitySystem(System):
                 # If player, update visible and revealed flags
                 level.update_visibility(fov)
 
-    def run(self, ecs, state, *args, **kwargs):
-        self.apply_blocks_vision_changes(ecs, *args, **kwargs)
-        self.update_viewsheds(ecs, *args, **kwargs)
+    def run(self, state, *args, **kwargs):
+        self.apply_blocks_vision_changes(*args, **kwargs)
+        self.update_viewsheds(*args, **kwargs)
 
 
 class MapIndexingSystem(System):
@@ -224,39 +227,39 @@ class MapIndexingSystem(System):
         RunState.ACTION_PERFORMED,
     }
 
-    def calculate_base_flags(self, ecs, level, *args, **kwargs):
+    def calculate_base_flags(self, level, *args, **kwargs):
         if not np.any(level.base_flags):
             for terrain_id in np.unique(level.terrain):
                 terrain_mask = level.terrain == terrain_id
-                terrain = ecs.get(terrain_id)
-                terrain_flags = get_flags(ecs, terrain)
+                terrain = self.ecs.get(terrain_id)
+                terrain_flags = get_flags(self.ecs, terrain)
                 level.base_flags[terrain_mask] = terrain_flags
 
-    def clear_flags(self, ecs, *args, **kwargs):
-        for level in ecs.levels:
+    def clear_flags(self, *args, **kwargs):
+        for level in self.ecs.levels:
             # Calculate base_flags if needed
-            self.calculate_base_flags(ecs, level, *args, **kwargs)
+            self.calculate_base_flags(level, *args, **kwargs)
 
             # Clear previous data
             level.entities.clear()
             level.flags[:] = level.base_flags
 
-    def update_indexes(self, ecs, *args, **kwargs):
-        locations = ecs.manage(components.Location)
+    def update_indexes(self, *args, **kwargs):
+        locations = self.ecs.manage(components.Location)
 
-        for entity, location in ecs.join(ecs.entities, locations):
-            level = ecs.levels.get(location.level_id)
+        for entity, location in self.ecs.join(self.ecs.entities, locations):
+            level = self.ecs.levels.get(location.level_id)
 
             # Update entities on location
             level.entities[location.position].add(entity)
 
             # Update flags
-            entity_flags = get_flags(ecs, entity)
+            entity_flags = get_flags(self.ecs, entity)
             level.flags[location.position] |= entity_flags
 
-    def run(self, ecs, state, *args, **kwargs):
-        self.clear_flags(ecs, *args, **kwargs)
-        self.update_indexes(ecs, *args, **kwargs)
+    def run(self, state, *args, **kwargs):
+        self.clear_flags(*args, **kwargs)
+        self.update_indexes(*args, **kwargs)
 
 
 class ParticlesSystem(System):
@@ -267,12 +270,12 @@ class ParticlesSystem(System):
         RunState.ANIMATIONS,
     }
 
-    def run(self, ecs, state, *args, **kwargs):
-        particles = ecs.manage(components.Particle)
+    def run(self, state, *args, **kwargs):
+        particles = self.ecs.manage(components.Particle)
         outdated = set()
         now = time.time()
-        for entity, ttl in ecs.join(ecs.entities, particles):
+        for entity, ttl in self.ecs.join(self.ecs.entities, particles):
             if ttl < now:
                 outdated.add(entity)
-        ecs.entities.remove(*outdated)
+        self.ecs.entities.remove(*outdated)
 

@@ -11,6 +11,7 @@ from .wrappers import TcodWrapper
 from . import keys
 
 from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerator, BSPLevelGenerator
+from .procgen.dungeons import StaticLevel
 
 from .ecs import ECS
 from . import components
@@ -41,6 +42,7 @@ LEVEL_SIZE = Size(CONSOLE_SIZE.width-2, CONSOLE_SIZE.height-14)
 # LEVEL_GENERATOR_CLS = RandomDungeonLevelGenerator
 LEVEL_GENERATOR_CLS = RogueGridLevelGenerator
 # LEVEL_GENERATOR_CLS = BSPLevelGenerator
+LEVEL_GENERATOR_CLS = StaticLevel
 
 SEED = None
 # SEED = uuid.UUID("f6df641c-d526-4037-8ee8-c9866ba1199d")
@@ -140,20 +142,22 @@ def run():
 
     # Register systems
     # NOTE: Systems are run in order they were registered
-    ecs.register(systems.ParticlesSystem())
+    ecs.register(systems.ParticlesSystem)
 
-    ecs.register(systems.ActionsQueueSystem())
+    ecs.register(systems.ActionsQueueSystem)
 
-    ecs.register(systems.MeleeCombatSystem())
-    ecs.register(systems.MovementSystem())
-    ecs.register(systems.OperateSystem())
+    ecs.register(systems.MeleeCombatSystem)
+    ecs.register(systems.MovementSystem)
+    ecs.register(systems.OperateSystem)
 
-    ecs.register(systems.MapIndexingSystem())
-    ecs.register(systems.VisibilitySystem())
+    ecs.register(systems.MapIndexingSystem)
+    ecs.register(systems.VisibilitySystem)
 
     # Entities initialization
-    for entity_id, template in entities.ALL_TERRAIN:
-        entities.create(ecs, template, entity_id=entity_id)
+
+    entity_loader = entities.EntityLoader(ecs)
+    for entity_id, name in entities.TERRAIN.items():
+        entity_loader.create(name, entity_id=entity_id)
 
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
@@ -167,7 +171,7 @@ def run():
         root_panel = wrapper.create_panel()
 
         # Level(s) generation
-        level = LEVEL_GENERATOR_CLS(ecs, LEVEL_SIZE, seed=SEED).generate()
+        level = LEVEL_GENERATOR_CLS(entity_loader, LEVEL_SIZE, seed=SEED).generate()
         ecs.add_level(level)
 
         loop(wrapper, root_panel, ecs)

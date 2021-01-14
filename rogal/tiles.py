@@ -66,7 +66,7 @@ class TermTiles(Tilesset):
     MONSTER =       ('M', Color.LIME)
 
     # Particles
-    MEELE_HIT =     (0, None, Color.BRIGHT_RED)
+    MELEE_HIT =     (0, None, Color.BRIGHT_RED)
 
     @property
     def revealed(self):

@@ -1,0 +1,105 @@
+
+# Terrain
+
+VOID:
+  Terrain:
+  Name: Empty void of darkness
+  Renderable:
+    tile: VOID
+    render_order: TERRAIN
+  BlocksVision:
+  BlocksMovement:
+
+STONE_WALL:
+  Terrain:
+  Name: Stone wall
+  Renderable:
+    tile: STONE_WALL
+    render_order: TERRAIN
+  BlocksVision:
+  BlocksMovement:
+
+STONE_FLOOR:
+  Terrain:
+  Name: Stone floor
+  Renderable:
+    tile: STONE_FLOOR
+    render_order: TERRAIN
+
+SHALLOW_WATER:
+  Terrain:
+  Name: Shallow water
+  Renderable:
+    tile: SHALLOW_WATER
+    render_order: TERRAIN
+
+
+# Foliage
+
+
+# Props
+
+OPEN_DOOR: &OPEN_DOOR
+  Prop:
+  Name: Open door
+  Renderable:
+    tile: OPEN_DOOR
+    render_order: PROPS
+
+CLOSED_DOOR:
+  Prop:
+  Name: Closed door,
+  Renderable:
+    tile: CLOSED_DOOR
+    render_order: PROPS
+  BlocksMovement:
+  BlocksVision:
+  OnOperate:
+    insert: *OPEN_DOOR
+    remove:
+      - BlocksVision
+      - BlocksMovement
+      - OnOperate
+
+# Items
+
+
+# Actors
+
+PLAYER:
+  Player:
+  Name: Player
+  Renderable:
+    tile: PLAYER
+    render_order: ACTORS
+  BlocksMovement:
+  Viewshed: 12
+  WaitsForAction: 1
+  HitPoints: 20
+  Attack: 10
+  Defence: 10
+
+
+MONSTER:
+  Monster:
+  Name: Monster
+  Renderable:
+    tile: MONSTER
+    render_order: ACTORS
+  BlocksMovement:
+  Viewshed: 12
+  WaitsForAction: 2 # randint(2,10)
+  HitPoints: 10
+  Attack: 5
+  Defence: 5
+
+
+# Particles
+
+HIT_PARTICLE:
+  Animation:
+  Particle: .075
+  Renderable:
+    tile: MELEE_HIT
+    render_order: PARTICLES
+
