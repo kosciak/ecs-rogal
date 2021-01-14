@@ -1,6 +1,6 @@
 import collections
 import logging
-import uuid
+import os
 
 from ..geometry import Rectangular, Position, Size, Rectangle
 from ..rng import RNG
@@ -19,12 +19,14 @@ class Generator:
 
     def init_rng(self, seed=None):
         """Init RNG with given seed, or generate new seed."""
-        if seed is None:
-            seed = uuid.uuid4()
-        log.debug(f'{self.__class__.__name__}(seed="{seed}")')
-        with open(f'{self.__class__.__name__}.seed', 'w') as f:
-            f.write(f'{seed}\n')
         rng = RNG(seed)
+        log.debug(f'{self.__class__.__name__}(seed="{rng.seed}")')
+        fn = os.path.join('.seeds', f'{self.__class__.__name__}.seed')
+        fn_dir = os.path.dirname(fn)
+        if not os.path.exists(fn_dir):
+            os.mkdir(fn_dir)
+        with open(fn, 'w') as f:
+            f.write(f'{seed}\n')
         return rng
 
     def __repr__(self):
