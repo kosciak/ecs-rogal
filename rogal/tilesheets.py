@@ -1,6 +1,12 @@
 import collections
+import os.path
 
 import tcod
+
+
+ASSETS_DIR = 'assets'
+FONTS_DIR = os.path.join(ASSETS_DIR, 'fonts')
+
 
 
 class Tilesheet(collections.namedtuple(
@@ -15,10 +21,16 @@ class Tilesheet(collections.namedtuple(
 
 
 DEJAVU_10x10_TC = Tilesheet(
-    "data/fonts/dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD,
+    os.path.join(FONTS_DIR, "dejavu10x10_gs_tc.png"),
+    32,
+    8,
+    tcod.tileset.CHARMAP_TCOD,
 )
 
 TERMINAL_12x12_CP = Tilesheet(
-    "data/fonts/terminal12x12_gs_ro.png", 16, 16, tcod.tileset.CHARMAP_CP437,
+    os.path.join(FONTS_DIR, "terminal12x12_gs_ro.png"),
+    16,
+    16,
+    tcod.tileset.CHARMAP_CP437,
 )
 
