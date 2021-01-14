@@ -36,6 +36,20 @@ class GameMap(Rectangular):
         map_id = uuid.uuid4()
         return GameMap(map_id, size, depth)
 
+    @property
+    def transparent(self):
+        return self.flags & Flag.BLOCKS_VISION == 0
+
+    def reveal(self, fov=None):
+        if fov is None:
+            self.revealed[:] = 1
+        else:
+            self.revealed |= fov
+
+    def update_visibility(self, fov):
+        self.visible[:] = fov
+        self.reveal(fov)
+
     def get_entities(self, position):
         return self.entities.get(position)
 
@@ -62,4 +76,7 @@ class GameMap(Rectangular):
                 terrain=terrain,
             )}
         return data
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__} id={self.id} depth={self.depth} size={self.size}>'
 

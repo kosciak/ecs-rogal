@@ -193,26 +193,24 @@ class VisibilitySystem(System):
                 # No need to recalculate
                 continue
 
-            transparency = level.flags & Flag.BLOCKS_VISION == 0
-            pov = location.position
             fov = tcod.map.compute_fov(
-                transparency, pov=pov, 
-                radius=viewshed.view_range, 
+                transparency=level.transparent,
+                pov=location.position,
+                radius=viewshed.view_range,
                 light_walls=True,
                 algorithm=tcod.FOV_BASIC,
-                #algorithm=tcod.FOV_SHADOW,
-                #algorithm=tcod.FOV_DIAMOND,
-                #algorithm=tcod.FOV_RESTRICTIVE,
-                #algorithm=tcod.FOV_PERMISSIVE(1),
-                #algorithm=tcod.FOV_PERMISSIVE(8),
-                #algorithm=tcod.FOV_SYMMETRIC_SHADOWCAST,
+                # algorithm=tcod.FOV_SHADOW,
+                # algorithm=tcod.FOV_DIAMOND,
+                # algorithm=tcod.FOV_RESTRICTIVE,
+                # algorithm=tcod.FOV_PERMISSIVE(1),
+                # algorithm=tcod.FOV_PERMISSIVE(8),
+                # algorithm=tcod.FOV_SYMMETRIC_SHADOWCAST,
             )
 
             viewshed.update(fov)
             if entity in players:
                 # If player, update visible and revealed flags
-                level.visible[:] = fov
-                level.revealed |= fov
+                level.update_visibility(fov)
 
     def run(self, ecs, state, *args, **kwargs):
         self.apply_blocks_vision_changes(ecs, *args, **kwargs)
