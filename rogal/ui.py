@@ -178,27 +178,17 @@ class HorizontalContainer(Container):
         if height and height < 1:
             height = int(self.height * height)
         if top:
-            top = self.create_panel(
-                Position.ZERO,
-                Size(self.width, self.height-height),
-            )
-            bottom = self.create_panel(
-                Position(0, self.height-height),
-                Size(self.width, height),
-            )
-            self.panels = [top, bottom]
-            return top, bottom
-        elif bottom:
-            top = self.create_panel(
-                Position.ZERO,
-                Size(self.width, height),
-            )
-            bottom = self.create_panel(
-                Position(0, height),
-                Size(self.width, self.height-height),
-            )
-            self.panels = [top, bottom]
-            return top, bottom
+            height = self.height - height
+        top = self.create_panel(
+            Position.ZERO,
+            Size(self.width, height),
+        )
+        bottom = self.create_panel(
+            Position(0, top.height),
+            Size(self.width, self.height-top.height),
+        )
+        self.panels = [top, bottom]
+        return top, bottom
 
 
 class VerticalContainer(Container):
@@ -208,27 +198,17 @@ class VerticalContainer(Container):
         if width and width < 1:
             width = int(self.width * width)
         if left:
-            left = self.create_panel(
-                Position.ZERO,
-                Size(self.width-width, self.height),
-            )
-            right = self.create_panel(
-                Position(self.width-width, 0),
-                Size(width, self.height),
-            )
-            self.panels = [left, right]
-            return left, right
-        elif right:
-            left = self.create_panel(
-                Position.ZERO,
-                Size(width, self.height),
-            )
-            right = self.create_panel(
-                Position(width, 0),
-                Size(self.width-width, self.height),
-            )
-            self.panels = [left, right]
-            return left, right
+            width = self.width - width
+        left = self.create_panel(
+            Position.ZERO,
+            Size(width, self.height),
+        )
+        right = self.create_panel(
+            Position(left.width, 0),
+            Size(self.width-left.width, self.height),
+        )
+        self.panels = [left, right]
+        return left, right
 
 
 class SplittablePanel(Panel):
