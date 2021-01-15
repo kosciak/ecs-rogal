@@ -1,12 +1,10 @@
 import logging
 import os.path
 
-import yaml
-
 from . import components
+from .data_loaders import DATA_DIR, YAMLDataLoader
 from .renderable import RenderOrder
 from .terrain import Terrain
-from .tiles import TermTiles as tiles
 
 
 log = logging.getLogger(__name__)
@@ -18,8 +16,6 @@ log = logging.getLogger(__name__)
 #   - Split data/entities.yaml into data/terrain.yaml, data/actors.yaml 
 #   - Use qualified names when loading "terrain.STONE_WALL", "actors.PLAYER", etc
 
-DATA_DIR = 'data'
-
 TERRAIN = {
     Terrain.VOID.id: 'VOID',
     Terrain.STONE_WALL.id: 'STONE_WALL',
@@ -28,16 +24,17 @@ TERRAIN = {
 }
 
 
-class EntityLoader:
+class Entities(YAMLDataLoader):
 
     _data = None
 
-    def __init__(self, ecs):
+    def __init__(self, ecs, tileset):
         self.fn = os.path.join(
             DATA_DIR,
             'entities.yaml'
         )
         self.ecs = ecs
+        self.tileset = tileset
 
     @property
     def data(self):
@@ -45,16 +42,10 @@ class EntityLoader:
             self._data = self.load_data(self.fn)
         return self._data
 
-    def load_data(self, fn):
-        log.debug(f'Loading data: {fn}')
-        with open(self.fn, 'r') as f:
-            data = yaml.safe_load(f)
-            return data
-
     # def parse_<value_name>(self, value): return parsed_value
 
     def parse_tile(self, value):
-        return getattr(tiles, value)
+        return self.tileset.get(value)
 
     def parse_render_order(self, value):
         return getattr(RenderOrder, value)

@@ -80,10 +80,6 @@ class Renderable(Component):
         self.render_order = render_order
 
     @property
-    def tile(self):
-        return self._tile.tile
-
-    @property
     def tile_visible(self):
         return self._tile.visible
 

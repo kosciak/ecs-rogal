@@ -139,7 +139,7 @@ class Glyph:
     APPROXIMATION = 247     # ≈
 
     BULLET_SQUARE = 9632    # ■
-    
+
     # NOTE: These might not be consistent among all tilesets!
     RESERVED = 8976         # ⌐
     COPYRIGHT = 9557        # ╕
@@ -150,6 +150,12 @@ class Glyph:
     UMLAUT = 8729           # ∙
     POW1 = 8730             # √
     POW3 = 8319             # ⁿ
+
+
+def get(name):
+    if not isinstance(name, str):
+        return name
+    return getattr(Glyph, name, name)
 
 
 def show_charmap(charmap, columns=16):

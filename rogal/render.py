@@ -156,8 +156,8 @@ class Camera(Rectangular):
         for position in boundaries:
             self.panel.draw(tiles.BOUNDARY.tile, position.offset(self.position))
 
-    def draw_terrain_tile(self, 
-        terrain_mask, visible, revealed, mask_offset, 
+    def draw_terrain_tile(self,
+        terrain_mask, visible, revealed, mask_offset,
         renderable, ch=None,
     ):
         # Visible
@@ -177,7 +177,7 @@ class Camera(Rectangular):
             self.panel.mask(tile, mask, mask_offset)
 
     def draw_bitmasked_terrain_tile(self,
-        walls_mask, terrain_mask, visible, revealed, mask_offset, 
+        walls_mask, terrain_mask, visible, revealed, mask_offset,
         renderable,
     ):
         for bitmask in np.unique(walls_mask):
@@ -219,14 +219,14 @@ class Camera(Rectangular):
 
             if MIN_BITMASK_ID <= terrain_id < MAX_BITMASK_ID:
                 self.draw_bitmasked_terrain_tile(
-                    walls_mask, 
+                    walls_mask,
                     terrain_mask, visible, revealed_not_visible, mask_offset,
-                    renderable, 
+                    renderable,
                 )
             else:
                 self.draw_terrain_tile(
                     terrain_mask, visible, revealed_not_visible, mask_offset,
-                    renderable, 
+                    renderable,
                 )
 
     def draw_entities(self, level, coverage, revealed, visible):

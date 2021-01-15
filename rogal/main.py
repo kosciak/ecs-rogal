@@ -1,10 +1,10 @@
 import logging
 import time
+import os.path
 
 import tcod
 
 from .geometry import Position, Size
-from .colors.x11 import Color, TANGO_DARK, TANGO_LIGHT
 from .tilesheets import TERMINAL_12x12_CP
 
 from .wrappers import TcodWrapper
@@ -15,7 +15,8 @@ from .procgen.dungeons import StaticLevel
 
 from .ecs import ECS
 from . import components
-from . import entities
+from .entities import TERRAIN, Entities
+from .renderable import Tileset
 from . import systems
 
 from .run_state import RunState
@@ -29,7 +30,11 @@ from .player import try_move
 log = logging.getLogger(__name__)
 
 
-PALETTE = TANGO_DARK
+DATA_DIR = 'data'
+
+ENTITIES_DATA_FN = os.path.join(DATA_DIR, 'entities.yaml')
+TILESET_DATA_FN = os.path.join(DATA_DIR, 'tiles.yaml')
+
 
 CONSOLE_SIZE = Size(80, 48)
 #CONSOLE_SIZE = Size(80, 60)
@@ -140,28 +145,32 @@ def run():
     # ECS initialization
     ecs = ECS()
 
-    # Register systems
-    # NOTE: Systems are run in order they were registered
-    ecs.register(systems.ParticlesSystem)
+    # Tileset initialization
 
-    ecs.register(systems.ActionsQueueSystem)
-
-    ecs.register(systems.MeleeCombatSystem)
-    ecs.register(systems.MovementSystem)
-    ecs.register(systems.OperateSystem)
-
-    ecs.register(systems.MapIndexingSystem)
-    ecs.register(systems.VisibilitySystem)
+    tileset = Tileset()
 
     # Entities initialization
 
-    entity_loader = entities.EntityLoader(ecs)
-    for entity_id, name in entities.TERRAIN.items():
-        entity_loader.create(name, entity_id=entity_id)
+    entities = Entities(ecs, tileset)
+    for entity_id, name in TERRAIN.items():
+        entities.create(name, entity_id=entity_id)
+
+    # Register systems
+    # NOTE: Systems are run in order they were registered
+    ecs.register(systems.ParticlesSystem(ecs, entities))
+
+    ecs.register(systems.ActionsQueueSystem(ecs, entities))
+
+    ecs.register(systems.MeleeCombatSystem(ecs, entities))
+    ecs.register(systems.MovementSystem(ecs, entities))
+    ecs.register(systems.OperateSystem(ecs, entities))
+
+    ecs.register(systems.MapIndexingSystem(ecs, entities))
+    ecs.register(systems.VisibilitySystem(ecs, entities))
 
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
-        palette=PALETTE,
+        palette=tileset.palette,
         tilesheet=TERMINAL_12x12_CP,
         resizable=False,
         title='Rogal test'
@@ -171,7 +180,7 @@ def run():
         root_panel = wrapper.create_panel()
 
         # Level(s) generation
-        level = LEVEL_GENERATOR_CLS(entity_loader, LEVEL_SIZE, seed=SEED).generate()
+        level = LEVEL_GENERATOR_CLS(entities, LEVEL_SIZE, seed=SEED).generate()
         ecs.add_level(level)
 
         loop(wrapper, root_panel, ecs)
