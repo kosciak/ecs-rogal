@@ -440,7 +440,7 @@ class ECS:
         yield from JoinIterator(*managers)
 
     def register(self, system):
-        self.systems.register(system(self))
+        self.systems.register(system)
 
     def run(self, state, *args, **kwargs):
         self.systems.run(state, *args, **kwargs)

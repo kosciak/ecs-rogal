@@ -7,7 +7,6 @@ import numpy as np
 import tcod
 
 from . import components
-from .entities import EntityLoader
 from .flags import Flag, get_flags
 from .run_state import RunState
 
@@ -23,9 +22,9 @@ class System:
     INCLUDE_STATES = set()
     EXCLUDE_STATES = set()
 
-    def __init__(self, ecs):
+    def __init__(self, ecs, entities):
         self.ecs = ecs
-        self.entity_loader = EntityLoader(self.ecs)
+        self.entities = entities
 
     def should_run(self, state):
         if self.EXCLUDE_STATES and state in self.EXCLUDE_STATES:
@@ -119,7 +118,7 @@ class MeleeCombatSystem(System):
             msg_log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
             # TODO: Do some damage!
             location = locations.get(target)
-            self.entity_loader.spawn('HIT_PARTICLE', location.level_id, location.position)
+            self.entities.spawn('HIT_PARTICLE', location.level_id, location.position)
 
         # Clear processed targets
         melee_targets.clear()

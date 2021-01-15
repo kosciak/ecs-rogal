@@ -17,10 +17,10 @@ log = logging.getLogger(__name__)
 
 class RoomsLevelGenerator(Generator):
 
-    def __init__(self, entity_loader, size, depth=0, seed=None):
+    def __init__(self, entities, size, depth=0, seed=None):
         super().__init__(seed=seed)
 
-        self.entity_loader = entity_loader
+        self.entities = entities
 
         self.size = size
         self.depth = depth
@@ -70,13 +70,13 @@ class RoomsLevelGenerator(Generator):
             corridor.dig_floor(self.level, floor)
 
     def spawn_closed_door(self, position):
-        self.entity_loader.spawn('CLOSED_DOOR', self.level.id, position)
+        self.entities.spawn('CLOSED_DOOR', self.level.id, position)
 
     def spawn_player(self, position):
-        self.entity_loader.spawn('PLAYER', self.level.id, position)
+        self.entities.spawn('PLAYER', self.level.id, position)
 
     def spawn_monster(self, position):
-        self.entity_loader.spawn('MONSTER', self.level.id, position)
+        self.entities.spawn('MONSTER', self.level.id, position)
 
     def spawn_entities(self):
         raise NotImplementedError()
@@ -159,8 +159,8 @@ class RandomDungeonLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
     """LevelGenerator creating random rooms connected with straight corridors."""
 
-    def __init__(self, entity_loader, size, depth=0, seed=None):
-        super().__init__(entity_loader, size, depth, seed=seed)
+    def __init__(self, entities, size, depth=0, seed=None):
+        super().__init__(entities, size, depth, seed=seed)
 
         self.rooms_generator = RandomlyPlacedRoomsGenerator(self.rng, self.level)
         self.rooms_connector = RandomToNearestRoomsConnector(self.rng)
@@ -168,8 +168,8 @@ class RandomDungeonLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
 class RogueGridLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
-    def __init__(self, entity_loader, size, depth=0, seed=None):
-        super().__init__(entity_loader, size, depth, seed=seed)
+    def __init__(self, entities, size, depth=0, seed=None):
+        super().__init__(entities, size, depth, seed=seed)
 
         grid = Size(
             size.width//18,
@@ -181,8 +181,8 @@ class RogueGridLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
 class BSPLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
-    def __init__(self, entity_loader, size, depth=0, seed=None):
-        super().__init__(entity_loader, size, depth, seed=seed)
+    def __init__(self, entities, size, depth=0, seed=None):
+        super().__init__(entities, size, depth, seed=seed)
 
         split_depth = size.width//18
         self.rooms_generator = BSPRoomsGenerator(self.rng, self.level, split_depth)
