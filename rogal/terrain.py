@@ -63,26 +63,3 @@ class Terrain(Enum):
     def hex(self):
         return f'{self.id:02x}'
 
-
-
-# TODO: Remove after migrating to entities
-BLOCKS_VISION = {
-    Type.VOID,
-    Type.WALL,
-}
-
-ALLOW_SWIMMING = {
-    Type.LIQUID,
-    Type.SHALLOW_LIQUID,
-}
-
-BLOCKS_WALKING = {
-    Type.LIQUID,
-    Type.CHASM,
-}
-
-BLOCKS_MOVEMENT = {
-    Type.VOID,
-    Type.WALL,
-}
-
