@@ -7,7 +7,6 @@ from .geometry import Rectangular, Position, Size, Rectangle
 from .glyphs import Glyph
 from .renderable import RenderOrder, Colors, Tile
 from .terrain import Type
-from .tiles import TermTiles as tiles
 
 
 """Rendering components."""
@@ -68,8 +67,10 @@ BITMASK_DLINE = {
 
 class Camera(Rectangular):
 
-    def __init__(self, panel, ecs, scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
+    def __init__(self, panel, tileset, ecs, scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
         self.panel = panel
+
+        self.tileset = tileset
 
         self.position = Position.ZERO
         self.size = self.panel.size
@@ -154,7 +155,8 @@ class Camera(Rectangular):
             if intersection:
                 boundaries.update(intersection.positions)
         for position in boundaries:
-            self.panel.draw(tiles.BOUNDARY.tile, position.offset(self.position))
+            tile = self.tileset.get('BOUNDARY').visible
+            self.panel.draw(tile, position.offset(self.position))
 
     def draw_terrain_tile(self,
         terrain_mask, visible, revealed, mask_offset,

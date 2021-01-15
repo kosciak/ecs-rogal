@@ -53,7 +53,7 @@ SEED = None
 # SEED = uuid.UUID("f6df641c-d526-4037-8ee8-c9866ba1199d")
 
 
-def render(wrapper, root_panel, ecs, level, player):
+def render(wrapper, root_panel, tileset, ecs, level, player):
     if not level or not player:
         return
     log.debug(f'Render @ {time.time()}')
@@ -63,7 +63,7 @@ def render(wrapper, root_panel, ecs, level, player):
 
     render_message_log(message_log.framed('logs'))
 
-    cam = Camera(camera.framed('mapcam'), ecs)
+    cam = Camera(camera.framed('mapcam'), tileset, ecs)
     cam.render(player, level)
 
     # Show rendered panel
@@ -96,7 +96,7 @@ def handle_events(wrapper, ecs, level, player):
             raise SystemExit()
 
 
-def loop(wrapper, root_panel, ecs):
+def loop(wrapper, root_panel, tileset, ecs):
     acts_now = ecs.manage(components.ActsNow)
     players = ecs.manage(components.Player)
     locations = ecs.manage(components.Location)
@@ -123,7 +123,7 @@ def loop(wrapper, root_panel, ecs):
                 while not action_cost:
                     ecs.run(RunState.WAITING_FOR_INPUT)
                     level = ecs.levels.get(location.level_id)
-                    render(wrapper, root_panel, ecs, level, actor)
+                    render(wrapper, root_panel, tileset, ecs, level, actor)
                     action_cost = handle_events(wrapper, ecs, level, actor)
 
             else:
@@ -183,5 +183,5 @@ def run():
         level = LEVEL_GENERATOR_CLS(entities, LEVEL_SIZE, seed=SEED).generate()
         ecs.add_level(level)
 
-        loop(wrapper, root_panel, ecs)
+        loop(wrapper, root_panel, tileset, ecs)
 
