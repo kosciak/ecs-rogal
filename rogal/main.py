@@ -137,7 +137,7 @@ def loop(wrapper, root_panel, tileset, ecs):
             # Render real time animated effects
             while len(pending_animations):
                 ecs.run(RunState.ANIMATIONS)
-                render(wrapper, root_panel, ecs, level, player)
+                render(wrapper, root_panel, tileset, ecs, level, player)
                 time.sleep(1/60)
 
 
