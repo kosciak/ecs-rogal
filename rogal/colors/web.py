@@ -1,4 +1,5 @@
-from .core import HEX, ColorPalette
+from .core import HEX
+from .palette import ColorNames, ColorPalette
 
 
 # Web colors
@@ -157,7 +158,7 @@ WEB_COLORS = [
 ]
 
 
-class WebColor:
+class WebColor(ColorNames):
     # Base web colors
     BLACK = 0
     MAROON = 1
@@ -318,6 +319,7 @@ WEB = ColorPalette(
     name='Web colors',
     fg=WEB_COLORS[Color.WHITE],
     bg=WEB_COLORS[Color.BLACK],
+    color_names=WebColor,
     colors=WEB_COLORS,
 )
 

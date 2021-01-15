@@ -1,7 +1,7 @@
 import collections
 
 from .geometry import Position, Size, WithSizeMixin, Rectangular, Rectangle
-from .colors import RGB
+from .colors import RGB, Color
 from .renderable import Tile, Colors
 
 
@@ -259,6 +259,8 @@ class RootPanel(SplittablePanel):
     def rgb(self, color):
         if not color:
             return None
+        if isinstance(color, Color):
+            return color.rgb
         if isinstance(color, tuple):
             if len(color) == 3:
                 return color

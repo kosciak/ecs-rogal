@@ -1,4 +1,5 @@
-from .core import HEX, ColorMap, ColorPalette
+from .core import HEX
+from .palette import ColorMap, ColorNames, ColorPalette
 
 
 # X11 default colors
@@ -269,14 +270,14 @@ X11_COLORS = [
 ]
 
 
-class X11SystemColor:
+class X11SystemColor(ColorNames):
     # Base system colors
     TERM_BLACK = 0
     TERM_RED = 1
     TERM_GREEN = 2
     TERM_YELLOW = 3
     TERM_BLUE = 4
-    TERM_MAGENTA = 5 
+    TERM_MAGENTA = 5
     TERM_CYAN = 6
     TERM_WHITE = 7
 
@@ -347,7 +348,7 @@ class X11SystemColor:
     WHITE = 15
 
 
-class X11BaseColor:
+class X11BaseColor(ColorNames):
     # Base system colors
     BLACK = 0
     RED = 1
@@ -359,7 +360,7 @@ class X11BaseColor:
     WHITE = 7
 
 
-class X11BrightColor:
+class X11BrightColor(ColorNames):
     # Bright version of base system colors
     BLACK = 8
     RED = 9
@@ -371,7 +372,7 @@ class X11BrightColor:
     WHITE = 15
 
 
-class X11ExtendedColor:
+class X11ExtendedColor(ColorNames):
     # 216 ANSI colors
     GREY0 = 16
     NAVYBLUE = 17
@@ -591,7 +592,7 @@ class X11ExtendedColor:
     GREY100 = 231
 
 
-class X11GreyscaleColor:
+class X11GreyscaleColor(ColorNames):
     # Grayscale colors
     GREY0 = 16
     GREY3 = 232
@@ -665,6 +666,7 @@ TANGO_DARK = ColorPalette(
     name='Tango Dark',
     fg=HEX("#d3d7cf"),
     bg=HEX("#2e3436"),
+    color_names=X11Color,
     colors=[
         *TANGO_COLORS,
         *X11_COLORS[16:],
@@ -674,6 +676,7 @@ TANGO_LIGHT = ColorPalette(
     name='Tango Light',
     fg=HEX("#2e3436"),
     bg=HEX("#eeeeec"),
+    color_names=X11Color,
     colors=[
         *TANGO_COLORS,
         *X11_COLORS[16:],
@@ -684,6 +687,7 @@ CGA_TERM = ColorPalette(
     name='CGA',
     fg=HEX('#FFFFFF'),
     bg=HEX('#000000'),
+    color_names=X11SystemColor,
     colors=[
         # Order rearanged to match term colors
         HEX('#000000'),

@@ -8,7 +8,7 @@ import math
 
 class Color(collections.namedtuple(
     'Color', [
-        'values', 
+        'values',
         'alpha',
     ])):
 
@@ -56,7 +56,7 @@ class Color(collections.namedtuple(
     def interpolate(self, other, level=0.5):
         # Linear color interpolation
         # TODO: For HSV see: https://www.alanzucconi.com/2016/01/06/colour-interpolation/2/
-        values = [(other.values[i]-self.values[i])*level + self.values[i] 
+        values = [(other.values[i]-self.values[i])*level + self.values[i]
                   for i in range(len(self.values))]
         alpha = (other.alpha-self.alpha)*level + self.alpha
         return self.__class__(values, alpha)
@@ -67,7 +67,7 @@ class Color(collections.namedtuple(
         # TODO: Consider: for value in np.linspace(0, 1, steps)
         for step in range(steps):
             level = step / (steps - 1)
-            values = [values_diff[i]*level + self.values[i] 
+            values = [values_diff[i]*level + self.values[i]
                       for i in range(len(self.values))]
             alpha = (other.alpha-self.alpha)*level + self.alpha
             yield self.__class__(values, alpha)
@@ -189,7 +189,7 @@ class HSVColor(Color):
             values = self.hsva
         else:
             values = self.hsv
-        hex_val = format(values[0], '03x') 
+        hex_val = format(values[0], '03x')
         hex_val += ''.join([format(val, '02x') for val in values[1:]])
         return '#' + hex_val.upper()
 
@@ -198,11 +198,11 @@ class HSVColor(Color):
 
 
 def RGB(red, green, blue, alpha=255):
-    """Return RGB color. 
+    """Return RGB color.
 
     Values of Red, Green, Blue are in range of 0-255.
     Value of Alpha is in range of 0-255.
-    
+
     """
     return RGBColor((red/255., green/255., blue/255.), alpha/255.)
 
@@ -212,7 +212,7 @@ def HSV(hue, saturation, value, alpha=255):
 
     Saturation is in range of 0-360 degrees, Hue, and value in range of 0-100%.
     Value of Alpha is in range of 0-255.
-    
+
     """
     return HSVColor((hue/360.%1., saturation/100., value/100.), alpha/255.)
 
@@ -234,69 +234,4 @@ def HEX(color):
         saturation = int(color[3:5], 16)
         value = int(color[5:7], 16)
         return HSV(hue, saturation, value, alpha)
-
-
-class ColorMap:
-
-    """ColorMap consisting of list of Colors."""
-
-    def __init__(self, colors):
-        self.colors = colors
-
-    @property
-    def steps(self):
-        return len(self.colors)
-
-    def get(self, value):
-        """Return Color associated with given value.
-
-        value = (0., 1.]
-
-        """
-        n = value / (1./self.steps)
-        if value and math.floor(n) == n:
-            n -= 1
-        return self.colors[int(n)]
-
-    @staticmethod
-    def from_hsv_gradient(color_min, color_max, steps=256):
-        """Return ColorMap as gradient between two HSV colors, with given number of steps."""
-        colors = []
-        for color in color_min.to_hsv().gradient(color_max, steps=steps):
-            colors.append(color.to_rgb())
-        return ColorMap(colors)
-
-    @staticmethod
-    def from_rgb_gradient(color_min, color_max, steps=256):
-        """Return ColorMap as gradient between two RGB colors, with given number of steps."""
-        colors = []
-        for color in color_min.to_rgb().gradient(color_max, steps=steps):
-            colors.append(color.to_rgb())
-        return ColorMap(colors)
-
-
-class ColorPalette:
-
-    def __init__(self, name, fg, bg, colors):
-        self.name = name
-        self.fg = fg
-        self.bg = bg
-        #self.cursor_fg = None
-        #self.cursor_bg = None
-        self.colors = colors
-
-    def __len__(self):
-        return len(self.colors)
-
-    def get(self, key):
-        return self.colors[key]
-
-    def __getitem__(self, key):
-        return self.colors[key]
-
-    def invert(self, name=None):
-        return ColorPalette(name or self.name, self.bg, self.fg, self.colors)
-
-    def __repr__(self):
-        return f'<ColorPalette name="{self.name}">'
 
