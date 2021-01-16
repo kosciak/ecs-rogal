@@ -46,7 +46,7 @@ BITMASK_LINE = {
 }
 
 BITMASK_DLINE = {
-    0:  Glyph.RADIO_UNSET,
+    0:  Glyph.BULLET_SQUARE,
     1:  Glyph.DVLINE,   # N
     2:  Glyph.DVLINE,   #   S
     3:  Glyph.DVLINE,   # N+S
@@ -86,7 +86,7 @@ class Camera(Rectangular):
             # Use center of given level
             position = level.center
         self.position = Position(
-            position.x-self.panel.width//2, 
+            position.x-self.panel.width//2,
             position.y-self.panel.height//2
         )
 
@@ -101,7 +101,7 @@ class Camera(Rectangular):
         # Adjust bottom-right corner
         adjust_move = Position(
         max(0, 2+position.x-self.x2),
-        max(0, 2+position.y-self.y2), 
+        max(0, 2+position.y-self.y2),
         )
         self.position = adjusted_position + adjust_move
 
@@ -132,11 +132,23 @@ class Camera(Rectangular):
         shape = terrain_mask.shape
         terrain_mask = np.pad(terrain_mask, 1)
 
-        bit_mask = np.zeros(shape, dtype=int)
-        bit_mask += terrain_mask[1:-1 ,  :-2] << 0 # N
-        bit_mask += terrain_mask[1:-1 , 2:  ] << 1 # S
-        bit_mask += terrain_mask[ :-2 , 1:-1] << 2 # W
-        bit_mask += terrain_mask[2:   , 1:-1] << 3 # E
+        ordinal_mask = np.zeros(shape, dtype=int)
+        ordinal_mask += terrain_mask[ 1:-1 ,  :-2] << 0 # N
+        ordinal_mask += terrain_mask[ 1:-1 , 2:  ] << 1 # S
+        ordinal_mask += terrain_mask[  :-2 , 1:-1] << 2 # W
+        ordinal_mask += terrain_mask[ 2:   , 1:-1] << 3 # E
+
+        diagonal_mask = np.zeros(shape, dtype=int)
+        diagonal_mask += terrain_mask[  :-2 ,  :-2] << 0 # NW
+        diagonal_mask += terrain_mask[ 2:   , 2:  ] << 1 # SE
+        diagonal_mask += terrain_mask[  :-2 , 2:  ] << 2 # SW
+        diagonal_mask += terrain_mask[ 2:   ,  :-2] << 3 # NE
+
+        bit_mask = ordinal_mask.copy()
+        bit_mask -= ((ordinal_mask & 13 == 13) & (diagonal_mask & 9 == 9)) << 0
+        bit_mask -= ((ordinal_mask & 14 == 14) & (diagonal_mask & 6 == 6)) << 1
+        bit_mask -= ((ordinal_mask & 7 == 7) & (diagonal_mask & 5 == 5)) << 2
+        bit_mask -= ((ordinal_mask & 11 == 11) & (diagonal_mask & 10 == 10)) << 3
 
         return bit_mask
 
@@ -218,6 +230,8 @@ class Camera(Rectangular):
             terrain_mask = covered_terrain == terrain_id
             terrain = self.ecs.get(terrain_id)
             renderable = renderables.get(terrain)
+            if not renderable:
+                continue
 
             if MIN_BITMASK_ID <= terrain_id < MAX_BITMASK_ID:
                 self.draw_bitmasked_terrain_tile(
