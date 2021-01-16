@@ -70,6 +70,7 @@ class RoomsLevelGenerator(Generator):
             corridor.dig_floor(self.level, floor)
 
     def spawn_closed_door(self, position):
+        self.level.terrain[position] = Terrain.DOOR.id
         self.entities.spawn('CLOSED_DOOR', self.level.id, position)
 
     def spawn_player(self, position):

@@ -10,6 +10,9 @@ VOID:
   BlocksVision:
   BlocksMovement:
 
+DOOR:
+  Terrain:
+
 STONE_WALL:
   Terrain:
   Name: Stone wall

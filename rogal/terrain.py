@@ -38,6 +38,8 @@ class Terrain(Enum):
     VOID = (Type.VOID, Material.NONE)
     CHASM = (Type.CHASM, Material.NONE)
 
+    DOOR = (Type.WALL, Material.NONE)
+
     STONE_FLOOR = (Type.FLOOR, Material.STONE)
     STONE_WALL = (Type.WALL, Material.STONE)
 
