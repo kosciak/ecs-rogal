@@ -19,7 +19,7 @@ Work in progress [gallery](https://imgur.com/a/0R8ZwQX)
 ## How to run
 Python >= 3.6 required!
 
-Linux:
+#### Linux:
 
     # Create and activate virtualenv:
     $ python3 -m venv env
@@ -33,7 +33,7 @@ Linux:
     # OR:
     $ python -m rogal
 
-Windows? 
+#### Windows
 Huh... That's a very good question :)
 
 **WARNING!** Things might break, things might not work as expected, things might change in any time! 
