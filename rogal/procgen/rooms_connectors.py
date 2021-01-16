@@ -88,8 +88,13 @@ class RoomsConnector(Generator):
 
     def create_connection(self, room, other, corridors):
         self.corridors.extend(corridors)
-        corridors[0].allow_door(0)
-        corridors[-1].allow_door(-1)
+        if corridors[0] == corridors[-1]:
+            if not 1 < corridors[0].length < 4:
+                corridors[0].allow_door(0)
+                corridors[0].allow_door(-1)
+        elif max(corridor.length for corridor in corridors) > 2:
+            corridors[0].allow_door(0)
+            corridors[-1].allow_door(-1)
         room.add_connected_room(other)
         other.add_connected_room(room)
 

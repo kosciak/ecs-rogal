@@ -1,8 +1,11 @@
 
+create_on_load: [VOID, DOOR, STONE_WALL, STONE_FLOOR, ROCK_FLOOR, SHALLOW_WATER, ]
+
 # Terrain
 
 VOID:
   Terrain:
+    type: VOID
   Name: Empty void of darkness
   Renderable:
     tile: VOID
@@ -12,9 +15,12 @@ VOID:
 
 DOOR:
   Terrain:
+    type: WALL
 
 STONE_WALL:
   Terrain:
+    type: WALL
+    material: STONE
   Name: Stone wall
   Renderable:
     tile: STONE_WALL
@@ -24,13 +30,26 @@ STONE_WALL:
 
 STONE_FLOOR:
   Terrain:
+    type: FLOOR
+    material: STONE
   Name: Stone floor
   Renderable:
     tile: STONE_FLOOR
     render_order: TERRAIN
 
+ROCK_FLOOR:
+  Terrain:
+    type: FLOOR
+    material: ROCK
+  Name: Rock floor
+  Renderable:
+    tile: ROCK_FLOOR
+    render_order: TERRAIN
+
 SHALLOW_WATER:
   Terrain:
+    type: LIQUID
+    material: WATER
   Name: Shallow water
   Renderable:
     tile: SHALLOW_WATER
@@ -58,7 +77,8 @@ CLOSED_DOOR:
   BlocksMovement:
   BlocksVision:
   OnOperate:
-    insert: *OPEN_DOOR
+    insert: 
+      *OPEN_DOOR
     remove:
       - BlocksVision
       - BlocksMovement

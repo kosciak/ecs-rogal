@@ -34,7 +34,14 @@ class Material(IntEnum):
     LAVA = auto()
 
 
+def get_terrain_id(terrain):
+    material = terrain.material or Material.NONE
+    return material + (terrain.type<<4)
+
+
 class Terrain(Enum):
+    # TODO: Remove it? All data is in ECS already, only used in procgen for setting terrain
+    #       This should be declared in yaml file with details about level generation
     VOID = (Type.VOID, Material.NONE)
     CHASM = (Type.CHASM, Material.NONE)
 

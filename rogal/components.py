@@ -19,7 +19,13 @@ BlocksVisionChanged = Flag('BlocksVisionChanged')
 
 # Entity type
 
-Terrain = Flag('Terrain')
+class Terrain(Component):
+    __slots__ = ('type', 'material')
+
+    def __init__(self, type, material=None):
+        self.type = type
+        self.material = material
+
 
 Foliage = Flag('Foliage')
 
@@ -65,7 +71,7 @@ class Location(WithPositionMixin, Component):
     def serialize(self):
         data = dict(
             level_id=str(self.level_id),
-            x=self.x, 
+            x=self.x,
             y=self.y,
         )
         return data
@@ -131,7 +137,7 @@ class PoolComponent(Component):
     @property
     def value(self):
         return self._value
-    
+
     @value.setter
     def value(self, value):
         self._value = max(0, min(value, self.max_value))

@@ -1,6 +1,7 @@
 import logging
 import time
 import os.path
+import uuid
 
 import tcod
 
@@ -15,7 +16,7 @@ from .procgen.dungeons import StaticLevel
 
 from .ecs import ECS
 from . import components
-from .entities import TERRAIN, Entities
+from .entities import Entities
 from .renderable import Tileset
 from . import systems
 
@@ -44,10 +45,10 @@ CAMERA_SIZE = Size(15, 15)
 LEVEL_SIZE = Size(21,21)
 LEVEL_SIZE = Size(CONSOLE_SIZE.width-2, CONSOLE_SIZE.height-14)
 
-# LEVEL_GENERATOR_CLS = RandomDungeonLevelGenerator
-LEVEL_GENERATOR_CLS = RogueGridLevelGenerator
+LEVEL_GENERATOR_CLS = RandomDungeonLevelGenerator
+# LEVEL_GENERATOR_CLS = RogueGridLevelGenerator
 # LEVEL_GENERATOR_CLS = BSPLevelGenerator
-LEVEL_GENERATOR_CLS = StaticLevel
+# LEVEL_GENERATOR_CLS = StaticLevel
 
 SEED = None
 # SEED = uuid.UUID("f6df641c-d526-4037-8ee8-c9866ba1199d")
@@ -152,8 +153,6 @@ def run():
     # Entities initialization
 
     entities = Entities(ecs, tileset)
-    for entity_id, name in TERRAIN.items():
-        entities.create(name, entity_id=entity_id)
 
     # Register systems
     # NOTE: Systems are run in order they were registered

@@ -6,7 +6,7 @@ from . import components
 from .geometry import Rectangular, Position, Size, Rectangle
 from .glyphs import Glyph
 from .renderable import RenderOrder, Colors, Tile
-from .terrain import Type
+from . import terrain
 
 
 """Rendering components."""
@@ -17,7 +17,7 @@ SCROLLABLE_CAMERA = False
 
 SHOW_BOUNDARIES = True
 
-BITMASK_TERRAIN_TYPE = Type.WALL
+BITMASK_TERRAIN_TYPE = terrain.Type.WALL
 if BITMASK_TERRAIN_TYPE:
     MIN_BITMASK_ID = BITMASK_TERRAIN_TYPE << 4
     MAX_BITMASK_ID = MIN_BITMASK_ID + (1 << 4)
@@ -210,7 +210,7 @@ class Camera(Rectangular):
             coverage.y : coverage.y2
         ]
 
-        # Bitshift masking for Type.WALL terrain
+        # Bitshift masking for terrain.Type.WALL terrain
         walls_mask = self.walls_bitmask(level)[
             coverage.x : coverage.x2,
             coverage.y : coverage.y2

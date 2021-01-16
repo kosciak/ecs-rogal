@@ -108,14 +108,12 @@ class ReplaceForeground:
         return Tile.create(tile.ch, fg=self.fg, bg=tile.bg)
 
 
-class RenderableTile(collections.namedtuple(
+RenderableTile = collections.namedtuple(
     'RenderableTile', [
         'name',
         'visible',
         'revealed',
-    ])):
-
-    __slots__ = ()
+    ])
 
 
 class Tileset(YAMLDataLoader):

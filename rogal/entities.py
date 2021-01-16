@@ -4,7 +4,7 @@ import os.path
 from . import components
 from .data_loaders import DATA_DIR, YAMLDataLoader
 from .renderable import RenderOrder
-from .terrain import Terrain
+from . import terrain
 
 
 log = logging.getLogger(__name__)
@@ -15,13 +15,6 @@ log = logging.getLogger(__name__)
 # TODO: 
 #   - Split data/entities.yaml into data/terrain.yaml, data/actors.yaml 
 #   - Use qualified names when loading "terrain.STONE_WALL", "actors.PLAYER", etc
-
-TERRAIN = {
-    Terrain.VOID.id: 'VOID',
-    Terrain.STONE_WALL.id: 'STONE_WALL',
-    Terrain.STONE_FLOOR.id: 'STONE_FLOOR',
-    Terrain.SHALLOW_WATER.id: 'SHALLOW_WATER',
-}
 
 
 class Entities(YAMLDataLoader):
@@ -35,6 +28,7 @@ class Entities(YAMLDataLoader):
         )
         self.ecs = ecs
         self.tileset = tileset
+        self.on_init()
 
     @property
     def data(self):
@@ -44,22 +38,28 @@ class Entities(YAMLDataLoader):
 
     # def parse_<value_name>(self, value): return parsed_value
 
-    def parse_tile(self, value):
+    def parse_renderable_tile(self, value):
         return self.tileset.get(value)
 
-    def parse_render_order(self, value):
+    def parse_renderable_render_order(self, value):
         return getattr(RenderOrder, value)
 
-    def parse_insert(self, value):
+    def parse_onoperate_insert(self, value):
         return [self.get_component(n, v) for n, v in value.items()]
 
-    def parse_remove(self, value):
+    def parse_onoperate_remove(self, value):
         return [self.get_component_type(v) for v in value]
 
-    def parse_values(self, values):
+    def parse_terrain_type(self, value):
+        return getattr(terrain.Type, value)
+
+    def parse_terrain_material(self, value):
+        return getattr(terrain.Material, value)
+
+    def parse_values(self, component_name, values):
         parsed = {}
         for name, value in values.items():
-            parser_fn = getattr(self, f'parse_{name}')
+            parser_fn = getattr(self, f'parse_{component_name.lower()}_{name}', None)
             if parser_fn:
                 value = parser_fn(value)
             parsed[name] = value
@@ -73,7 +73,7 @@ class Entities(YAMLDataLoader):
         if values is None:
             component = component_type()
         elif isinstance(values, dict):
-            values = self.parse_values(values)
+            values = self.parse_values(name, values)
             component = component_type(**values)
         elif isinstance(values, list):
             component = component_type(*values)
@@ -89,8 +89,18 @@ class Entities(YAMLDataLoader):
             template.append(component)
         return template
 
+    def parse_entity_id(self, template):
+        for component in template:
+            if type(component) == components.Terrain:
+                return terrain.get_terrain_id(component)
+
+    def on_init(self):
+        for name in self.data.get('create_on_load'):
+            self.create(name)
+
     def create(self, name, entity_id=None):
         template = self.get_components(name)
+        entity_id = self.parse_entity_id(template)
         return self.ecs.create(*template, entity_id=entity_id)
 
     def spawn(self, name, level_id, position, entity_id=None):

@@ -12,6 +12,7 @@ tiles:
   VOID:           [FULL_BLOCK, BASE_BLACK]
   STONE_WALL:     ['#', BASE_YELLOW]
   STONE_FLOOR:    ['.', BASE_WHITE]
+  ROCK_FLOOR:     [BLOCK1, BASE_WHITE]
   SHALLOW_WATER:  ['~', BASE_BLUE]
 
   # Foliage
