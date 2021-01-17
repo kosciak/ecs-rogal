@@ -2,9 +2,9 @@ import numpy as np
 
 from . import logs
 
+from . import bitmask
 from . import components
 from .geometry import Rectangular, Position, Size, Rectangle
-from .glyphs import Glyph
 from .renderable import RenderOrder, Colors, Tile
 from . import terrain
 
@@ -18,51 +18,6 @@ SCROLLABLE_CAMERA = False
 SHOW_BOUNDARIES = True
 
 BITMASK_TERRAIN_TYPE = terrain.Type.WALL
-if BITMASK_TERRAIN_TYPE:
-    MIN_BITMASK_ID = BITMASK_TERRAIN_TYPE << 4
-    MAX_BITMASK_ID = MIN_BITMASK_ID + (1 << 4)
-else:
-    MIN_BITMASK_ID = 0
-    MAX_BITMASK_ID = 0
-
-
-BITMASK_LINE = {
-    0:  Glyph.RADIO_UNSET,
-    1:  Glyph.VLINE,    # N
-    2:  Glyph.VLINE,    #   S
-    3:  Glyph.VLINE,    # N+S
-    4:  Glyph.HLINE,    #     W
-    5:  Glyph.SE,       # N  +W
-    6:  Glyph.NE,       # S  +W
-    7:  Glyph.TEEW,     # N+S+W
-    8:  Glyph.HLINE,    #       E
-    9:  Glyph.SW,       # N    +E
-    10: Glyph.NW,       #   S  +E
-    11: Glyph.TEEE,     # N+S  +E
-    12: Glyph.HLINE,    #     W+E
-    13: Glyph.TEEN,     # N  +W+E
-    14: Glyph.TEES,     #   S+W+E
-    15: Glyph.CROSS,    # N+S+W+E
-}
-
-BITMASK_DLINE = {
-    0:  Glyph.BULLET_SQUARE,
-    1:  Glyph.DVLINE,   # N
-    2:  Glyph.DVLINE,   #   S
-    3:  Glyph.DVLINE,   # N+S
-    4:  Glyph.DHLINE,   #     W
-    5:  Glyph.DSE,      # N  +W
-    6:  Glyph.DNE,      # S  +W
-    7:  Glyph.DTEEW,    # N+S+W
-    8:  Glyph.DHLINE,   #       E
-    9:  Glyph.DSW,      # N    +E
-    10: Glyph.DNW,      #   S  +E
-    11: Glyph.DTEEE,    # N+S  +E
-    12: Glyph.DHLINE,   #     W+E
-    13: Glyph.DTEEN,    # N  +W+E
-    14: Glyph.DTEES,    #   S+W+E
-    15: Glyph.DCROSS,   # N+S+W+E
-}
 
 
 class Camera(Rectangular):
@@ -126,31 +81,11 @@ class Camera(Rectangular):
         ]
         return visible
 
-    def walls_bitmask(self, level):
-        terrain_mask = (MIN_BITMASK_ID <= level.terrain) & (level.terrain < MAX_BITMASK_ID)
-        terrain_mask &= level.revealed
-        shape = terrain_mask.shape
-        terrain_mask = np.pad(terrain_mask, 1)
-
-        ordinal_mask = np.zeros(shape, dtype=int)
-        ordinal_mask += terrain_mask[ 1:-1 ,  :-2] << 0 # N
-        ordinal_mask += terrain_mask[ 1:-1 , 2:  ] << 1 # S
-        ordinal_mask += terrain_mask[  :-2 , 1:-1] << 2 # W
-        ordinal_mask += terrain_mask[ 2:   , 1:-1] << 3 # E
-
-        diagonal_mask = np.zeros(shape, dtype=int)
-        diagonal_mask += terrain_mask[  :-2 ,  :-2] << 0 # NW
-        diagonal_mask += terrain_mask[ 2:   , 2:  ] << 1 # SE
-        diagonal_mask += terrain_mask[  :-2 , 2:  ] << 2 # SW
-        diagonal_mask += terrain_mask[ 2:   ,  :-2] << 3 # NE
-
-        bit_mask = ordinal_mask.copy()
-        bit_mask -= ((ordinal_mask & 13 == 13) & (diagonal_mask & 9 == 9)) << 0
-        bit_mask -= ((ordinal_mask & 14 == 14) & (diagonal_mask & 6 == 6)) << 1
-        bit_mask -= ((ordinal_mask & 7 == 7) & (diagonal_mask & 5 == 5)) << 2
-        bit_mask -= ((ordinal_mask & 11 == 11) & (diagonal_mask & 10 == 10)) << 3
-
-        return bit_mask
+    def walls_bitmask(self, level, terrain_type):
+        walls_mask = level.terrain >> 4 == terrain_type
+        # NOTE: We don't want bitmasking to spoil not revealed terrain!
+        walls_mask &= level.revealed
+        return bitmask.walls_bitmask(walls_mask)
 
     def draw_boundaries(self, level):
         """Draw BOUNDARIES of the level."""
@@ -194,9 +129,9 @@ class Camera(Rectangular):
         walls_mask, terrain_mask, visible, revealed, mask_offset,
         renderable,
     ):
-        for bitmask in np.unique(walls_mask):
-            ch = BITMASK_DLINE[bitmask]
-            mask = terrain_mask & (walls_mask == bitmask)
+        for bitmask_value in np.unique(walls_mask):
+            ch = bitmask.BITMASK_DLINE[bitmask_value]
+            mask = terrain_mask & (walls_mask == bitmask_value)
             self.draw_terrain_tile(
                 mask, visible, revealed, mask_offset,
                 renderable, ch,
@@ -211,7 +146,7 @@ class Camera(Rectangular):
         ]
 
         # Bitshift masking for terrain.Type.WALL terrain
-        walls_mask = self.walls_bitmask(level)[
+        walls_mask = self.walls_bitmask(level, BITMASK_TERRAIN_TYPE)[
             coverage.x : coverage.x2,
             coverage.y : coverage.y2
         ]
@@ -228,12 +163,11 @@ class Camera(Rectangular):
                 continue
 
             terrain_mask = covered_terrain == terrain_id
-            terrain = self.ecs.get(terrain_id)
-            renderable = renderables.get(terrain)
+            renderable = renderables.get(terrain_id)
             if not renderable:
                 continue
 
-            if MIN_BITMASK_ID <= terrain_id < MAX_BITMASK_ID:
+            if terrain_id >> 4 == BITMASK_TERRAIN_TYPE:
                 self.draw_bitmasked_terrain_tile(
                     walls_mask,
                     terrain_mask, visible, revealed_not_visible, mask_offset,
