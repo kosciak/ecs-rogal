@@ -3,7 +3,6 @@ import os.path
 
 from . import components
 from .data_loaders import DATA_DIR, YAMLDataLoader
-from .renderable import RenderOrder
 from . import terrain
 
 
@@ -41,20 +40,11 @@ class Entities(YAMLDataLoader):
     def parse_renderable_tile(self, value):
         return self.tileset.get(value)
 
-    def parse_renderable_render_order(self, value):
-        return getattr(RenderOrder, value)
-
     def parse_onoperate_insert(self, value):
         return [self.get_component(n, v) for n, v in value.items()]
 
     def parse_onoperate_remove(self, value):
         return [self.get_component_type(v) for v in value]
-
-    def parse_terrain_type(self, value):
-        return getattr(terrain.Type, value)
-
-    def parse_terrain_material(self, value):
-        return getattr(terrain.Material, value)
 
     def parse_values(self, component_name, values):
         parsed = {}

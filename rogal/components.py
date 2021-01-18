@@ -6,6 +6,8 @@ import numpy as np
 from .ecs import Component, ConstantValueComponent, SingleValueComponent
 from .ecs import Flag, Constant, Counter, component_type
 from .geometry import Position, WithPositionMixin
+from .renderable import RenderOrder
+from . import terrain
 
 
 # Flags
@@ -23,7 +25,11 @@ class Terrain(Component):
     __slots__ = ('type', 'material')
 
     def __init__(self, type, material=None):
+        if isinstance(type, str):
+            type = getattr(terrain.Type, type)
         self.type = type
+        if isinstance(material, str):
+            material = getattr(terrain.Material, material)
         self.material = material
 
 
@@ -83,6 +89,8 @@ class Renderable(Component):
 
     def __init__(self, tile, render_order):
         self._tile = tile
+        if isinstance(render_order, str):
+            render_order = getattr(RenderOrder, render_order)
         self.render_order = render_order
 
     @property
@@ -131,6 +139,8 @@ class PoolComponent(Component):
 
     def __init__(self, value, max_value=None):
         self._value = 0
+        value = int(value)
+        max_value = max_value and int(max_value)
         self.max_value = max_value or value
         self.value = value
 

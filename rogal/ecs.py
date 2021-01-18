@@ -23,6 +23,17 @@ class Component:
     def name(self):
         return f'{self.__class__.__name__}'
 
+    @property
+    def qualname(self):
+        return f'{self.__class__.__module__}.{self.name}'
+
+    def __reduce__(self):
+        data = []
+        params = self.params or self.__slots__
+        for param in params:
+            data.append(getattr(self, param))
+        return data
+
     def serialize(self):
         data = {}
         params = self.params or self.__slots__
@@ -85,6 +96,9 @@ class CounterComponent(SingleValueComponent):
     """Single value component that can be incremented/decremented, and compared to other values."""
 
     __slots__ = ()
+
+    def __init__(self, value):
+        super().__init__(int(value))
 
     def __add__(self, value):
         self.value += value
@@ -201,7 +215,7 @@ class Entity:
     def serialize(self):
         data = {}
         for component in self.components:
-            data[component.name] = component.serialize()
+            data[component.qualname] = component.serialize()
         return data
 
 

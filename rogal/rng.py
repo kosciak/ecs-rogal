@@ -64,6 +64,9 @@ class AbstractRNG:
             sample.append(r)
         return sample
 
+    def __reduce__(self):
+        return (self.__class__, (self.seed, ))
+
 
 class PyRandomRNG(AbstractRNG):
 
@@ -154,6 +157,36 @@ class NumpyRNG(AbstractRNG):
 
 RNG = PyRandomRNG
 # RNG = NumpyRNG
+
+
+# default instance if we don't care about seeds
+rng = RNG()
+
+
+class RandRange:
+
+    def __init__(self, start, stop=None):
+        self.rng = rng
+        self.start = start
+        self.stop = stop
+
+    def __int__(self):
+        return self.rng.randrange(self.start, self.stop)
+
+    def __reduce__(self):
+        return (RandRange, self.stop and (self.start, self.stop) or (self.start, ))
+
+
+class RandInt(RandRange):
+
+    def __init__(self, low, high=None):
+        if high is None:
+            high = low
+            low = 0
+        super().__init__(low, high)
+
+    def __reduce__(self):
+        return (RandInt, self.high and (self.low, self.high) or (self.low, ))
 
 
 class RandomTable:

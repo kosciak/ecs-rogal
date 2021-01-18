@@ -111,7 +111,7 @@ MONSTER:
     render_order: ACTORS
   BlocksMovement:
   Viewshed: 12
-  WaitsForAction: 2 # randint(2,10)
+  WaitsForAction: !randint [2, 10]
   HitPoints: 10
   Attack: 5
   Defence: 5
