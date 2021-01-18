@@ -401,6 +401,29 @@ class EntitiesManager(JoinableManager):
         return f'<{self.__class__.__name__}>'
 
 
+class System:
+
+    INCLUDE_STATES = set()
+    EXCLUDE_STATES = set()
+
+    def __init__(self, ecs, entities):
+        self.ecs = ecs
+        self.entities = entities
+
+    def should_run(self, state):
+        if self.EXCLUDE_STATES and state in self.EXCLUDE_STATES:
+            return False
+        if self.INCLUDE_STATES and not state in self.INCLUDE_STATES:
+            return False
+        return True
+
+    def run(self, state, *args, **kwargs):
+        return
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__}>'
+
+
 class SystemsManager:
 
     def __init__(self):
