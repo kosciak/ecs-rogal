@@ -9,10 +9,10 @@ from .flags import Flag
 from .geometry import Rectangular, Direction, Position
 
 
-class GameMap(Rectangular):
+class Level(Rectangular):
 
-    def __init__(self, map_id, size, depth):
-        self.id = map_id
+    def __init__(self, level_id, size, depth):
+        self.id = level_id
 
         self.position = Position.ZERO
         self.size = size
@@ -33,8 +33,8 @@ class GameMap(Rectangular):
 
     @staticmethod
     def create(size, depth):
-        map_id = uuid.uuid4()
-        return GameMap(map_id, size, depth)
+        level_id = uuid.uuid4()
+        return Level(level_id, size, depth)
 
     @property
     def transparent(self):
@@ -69,6 +69,7 @@ class GameMap(Rectangular):
         terrain = []
         for row in self.terrain.T:
             terrain.append(','.join([f'{terrain_id:02x}' for terrain_id in row]))
+        # TODO: Serialize: self.revealed
         data = {
             str(self.id): dict(
                 depth=self.depth,

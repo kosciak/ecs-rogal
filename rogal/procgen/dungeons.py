@@ -2,7 +2,7 @@ import logging
 import uuid
 
 from .. import entities
-from ..game_map import GameMap
+from ..level import Level
 from ..geometry import Size
 from ..terrain import Terrain
 from ..utils import perf
@@ -35,7 +35,7 @@ class RoomsLevelGenerator(Generator):
     @property
     def level(self):
         if self._level is None:
-            self._level = GameMap.create(self.size, self.depth)
+            self._level = Level.create(self.size, self.depth)
         return self._level
 
     def clear(self):
