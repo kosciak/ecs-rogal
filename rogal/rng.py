@@ -1,3 +1,4 @@
+import re
 import uuid
 
 
@@ -176,6 +177,12 @@ class RandRange:
     def __reduce__(self):
         return (RandRange, self.stop and (self.start, self.stop) or (self.start, ))
 
+    def __repr__(self):
+        if self.stop:
+            return f'<{self.__class__.__name__}({self.start}, {self.stop})>'
+        else:
+            return f'<{self.__class__.__name__}({self.start})>'
+
 
 class RandInt(RandRange):
 
@@ -183,10 +190,58 @@ class RandInt(RandRange):
         if high is None:
             high = low
             low = 0
-        super().__init__(low, high)
+        super().__init__(low, high+1)
 
     def __reduce__(self):
         return (RandInt, self.high and (self.low, self.high) or (self.low, ))
+
+    def __repr__(self):
+        if self.stop:
+            return f'<{self.__class__.__name__}({self.start}, {self.stop-1})>'
+        else:
+            return f'<{self.__class__.__name__}({self.start-1})>'
+
+
+class Dice:
+
+    PATTERN = re.compile(r"(\d+)d(\d+)([\+\-]\d+)?")
+
+    def __init__(self, n, sides, modifier=None):
+        self.rng = rng
+        self.n = int(n)
+        self.sides = int(sides)
+        self.modifier = int(modifier or 0)
+
+    @property
+    def dnd_notation(self):
+        notation = f'{self.n}d{self.sides}'
+        if self.modifier:
+            notation = f'{notation}{self.modifier:+d}'
+        return notation
+
+    @classmethod
+    def parse(cls, dnd_notation):
+        values = cls.PATTERN.match(dnd_notation).groups()
+        return cls(*values)
+
+    def roll(self):
+        total = 0
+        for n in range(self.n):
+            total += self.rng.randint(1, self.sides)
+        total += self.modifier
+        return total
+
+    def __int__(self):
+        return self.roll()
+
+    def __str__(self):
+        return self.dnd_notation
+
+    def __reduce__(self):
+        return (Dice, (self.n, self.sides, self.modifier))
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__} {self!s}>'
 
 
 class RandomTable:

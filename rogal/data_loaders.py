@@ -11,15 +11,24 @@ log = logging.getLogger(__name__)
 DATA_DIR = 'data'
 
 
-def from_sequence_constructor(loader, node):
-    values = loader.construct_sequence(node)
-    return rng.RandInt(*values)
+class Constructor:
 
+    def __init__(self, klass):
+        self.klass = klass
 
-class SequenceRepresenter:
+class Representer:
 
     def __init__(self, yaml_tag):
         self.yaml_tag = yaml_tag
+
+
+class SequenceConstructor(Constructor):
+
+    def __call__(self, loader, node):
+        values = loader.construct_sequence(node)
+        return self.klass(*values)
+
+class SequenceRepresenter(Representer):
 
     def __call__(self, dumper, data):
         return dumper.represent_sequence(
@@ -28,12 +37,30 @@ class SequenceRepresenter:
             flow_style=True
         )
 
-for yaml_tag, cls in [
-    ('!randint', rng.RandInt),
-    ('!randrange', rng.RandRange),
-]:
-    yaml.add_representer(cls, SequenceRepresenter(yaml_tag))
-    yaml.add_constructor(yaml_tag, from_sequence_constructor)
+def register_sequence(yaml_tag, klass):
+    yaml.add_representer(klass, SequenceRepresenter(yaml_tag))
+    yaml.add_constructor(yaml_tag, SequenceConstructor(klass))
+
+
+class ScalarConstructor(Constructor):
+
+    def __call__(self, loader, node):
+        value = loader.construct_scalar(node)
+        return self.klass.parse(value)
+
+class ScalarRepresenter(Representer):
+
+    def __call__(self, dumper, data):
+        return dumper.represent_scalar(self.yaml_tag, str(data))
+
+def register_scalar(yaml_tag, klass):
+    yaml.add_representer(klass, ScalarRepresenter(yaml_tag))
+    yaml.add_constructor(yaml_tag, ScalarConstructor(klass))
+
+
+register_sequence('!randint', rng.RandInt)
+register_sequence('!randrange', rng.RandRange)
+register_scalar('!dice', rng.Dice)
 
 
 class YAMLDataLoader:
