@@ -1,3 +1,6 @@
+import logging
+import time
+
 import numpy as np
 
 from . import logs
@@ -7,6 +10,9 @@ from . import components
 from .geometry import Rectangular, Position, Size, Rectangle
 from .renderable import RenderOrder, Colors, Tile
 from . import terrain
+
+
+log = logging.getLogger(__name__)
 
 
 """Rendering components."""
@@ -20,17 +26,46 @@ SHOW_BOUNDARIES = True
 BITMASK_TERRAIN_TYPE = terrain.Type.WALL
 
 
+class Renderer:
+
+    def __init__(self, ecs, wrapper, panel, tileset):
+        self.ecs = ecs
+
+        self.wrapper = wrapper
+        self.panel = panel
+        self.tileset = tileset
+
+    def render(self, actor):
+        if not actor:
+            return False
+        locations = self.ecs.manage(components.Location)
+        location = locations.get(actor)
+
+        log.debug(f'Render @ {time.time()}')
+        self.panel.clear()
+        camera, message_log = self.panel.split(bottom=12)
+        #camera = root_panel.create_panel(Position(10,10), CAMERA_SIZE)
+
+        render_message_log(message_log.framed('logs'))
+
+        cam = Camera(self.ecs, camera.framed('mapcam'), self.tileset)
+        cam.render(location=location)
+
+        # Show rendered panel
+        self.wrapper.flush(self.panel)
+        return True
+
+
 class Camera(Rectangular):
 
-    def __init__(self, panel, tileset, ecs, scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
-        self.panel = panel
+    def __init__(self, ecs, panel, tileset, scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
+        self.ecs = ecs
 
+        self.panel = panel
         self.tileset = tileset
 
         self.position = Position.ZERO
         self.size = self.panel.size
-
-        self.ecs = ecs
 
         self.scrollable = scrollable
         self.show_boundaries = show_boundaries
@@ -208,14 +243,11 @@ class Camera(Rectangular):
                 else:
                     self.panel.draw(tile, render_position)
 
-    def render(self, entity=None, level=None):
+    def render(self, location=None, level=None):
         position = None
-        if entity:
-            locations = self.ecs.manage(components.Location)
-            location = locations.get(entity)
-            if location:
-                position = location.position
-                level = self.ecs.levels.get(location.level_id)
+        if location:
+            position = location.position
+            level = self.ecs.levels.get(location.level_id)
 
         self.set_center(level, position)
 

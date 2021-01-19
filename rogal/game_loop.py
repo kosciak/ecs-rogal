@@ -54,7 +54,7 @@ class GameLoop:
     def render(self):
         if self.last_render and time.time() - self.last_render < self.frame:
             return
-        if self.renderer(self.player):
+        if self.renderer.render(self.player):
             self.last_render = time.time()
 
     def join(self):
