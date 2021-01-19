@@ -9,9 +9,11 @@ log = logging.getLogger(__name__)
 ACTION_COST = 60
 
 
-def try_move(ecs, level, player, direction):
+def try_move(ecs, player, direction):
     locations = ecs.manage(components.Location)
+
     location = locations.get(player)
+    level = ecs.levels.get(location.level_id)
 
     movement_directions = ecs.manage(components.WantsToMove)
     exits = level.get_exits(location.position)

@@ -26,10 +26,13 @@ class IOWrapper:
     def __exit__(self, *args):
         self.close()
 
+    def __repr__(self):
+        return f'<{self.__class__.__name__}>'
+
 
 class TcodWrapper(IOWrapper):
 
-    def __init__(self, 
+    def __init__(self,
         console_size,
         palette,
         tilesheet,
@@ -67,7 +70,7 @@ class TcodWrapper(IOWrapper):
     @palette.setter
     def palette(self, palette):
         # TODO: Some event on palette change forcing everything to redraw?
-        self._palette = palette  
+        self._palette = palette
 
     def load_tilesheet(self, tilesheet):
         return tcod.tileset.load_tilesheet(
@@ -122,7 +125,7 @@ class TcodWrapper(IOWrapper):
 
 class MockWrapper(IOWrapper):
 
-    def __init__(self, 
+    def __init__(self,
         console_size,
         palette,
     ):
@@ -136,7 +139,7 @@ class MockWrapper(IOWrapper):
     @palette.setter
     def palette(self, palette):
         # TODO: Some event on palette change forcing everything to redraw?
-        self._palette = palette  
+        self._palette = palette
 
     def create_console(self, size=None):
         size = size or self.console_size

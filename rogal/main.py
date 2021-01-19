@@ -1,3 +1,4 @@
+import functools
 import logging
 import time
 import os.path
@@ -20,12 +21,13 @@ from .entities import Entities
 from .renderable import Tileset
 from . import systems
 
-from .run_state import RunState
+from .game_loop import GameLoop
 
 from .render import Camera, render_message_log
 
-from . import ai
 from .player import try_move
+
+from .utils import perf
 
 
 log = logging.getLogger(__name__)
@@ -54,9 +56,14 @@ SEED = None
 # SEED = uuid.UUID("f6df641c-d526-4037-8ee8-c9866ba1199d")
 
 
-def render(wrapper, root_panel, tileset, ecs, level, player):
-    if not level or not player:
-        return
+@perf.timeit
+def render(wrapper, root_panel, tileset, ecs, player):
+    if not player:
+        return False
+    locations = ecs.manage(components.Location)
+    location = locations.get(player)
+    level = ecs.levels.get(location.level_id)
+
     log.debug(f'Render @ {time.time()}')
     root_panel.clear()
     camera, message_log = root_panel.split(bottom=12)
@@ -69,11 +76,11 @@ def render(wrapper, root_panel, tileset, ecs, level, player):
 
     # Show rendered panel
     wrapper.flush(root_panel)
+    return True
 
 
-def handle_events(wrapper, ecs, level, player):
-    #for event in wrapper.events(wait=1/30):
-    for event in wrapper.events():
+def handle_events(wrapper, ecs, player, wait=None):
+    for event in wrapper.events(wait):
         # Just print all events, and gracefully quit on closing window
         log.debug(f'Event: {event}')
 
@@ -90,7 +97,7 @@ def handle_events(wrapper, ecs, level, player):
 
             direction = keys.MOVE_KEYS.get(key)
             if direction:
-                return try_move(ecs, level, player, direction)
+                return try_move(ecs, player, direction)
 
         if event.type == 'QUIT':
             log.warning('Quitting...')
@@ -98,48 +105,10 @@ def handle_events(wrapper, ecs, level, player):
 
 
 def loop(wrapper, root_panel, tileset, ecs):
-    acts_now = ecs.manage(components.ActsNow)
-    players = ecs.manage(components.Player)
-    locations = ecs.manage(components.Location)
-    waiting = ecs.manage(components.WaitsForAction)
-
-    pending_animations = ecs.manage(components.Animation)
-
-    player = None
-    level = None
-
-    # Preparation
-    ecs.run(RunState.PRE_RUN)
-
-    while True:
-        # Run clocks
-        ecs.run(RunState.TICKING)
-
-        # Each actor performs action
-        for actor, location in ecs.join(acts_now.entities, locations):
-            if actor in players:
-                player = actor
-                # Handle user input until action is performed
-                action_cost = 0
-                while not action_cost:
-                    ecs.run(RunState.WAITING_FOR_INPUT)
-                    level = ecs.levels.get(location.level_id)
-                    render(wrapper, root_panel, tileset, ecs, level, actor)
-                    action_cost = handle_events(wrapper, ecs, level, actor)
-
-            else:
-                # Actor AI move
-                action_cost = ai.perform_action(ecs, actor)
-
-            # Action performed
-            ecs.run(RunState.ACTION_PERFORMED)
-            waiting.insert(actor, action_cost)
-
-            # Render real time animated effects
-            while len(pending_animations):
-                ecs.run(RunState.ANIMATIONS)
-                render(wrapper, root_panel, tileset, ecs, level, player)
-                time.sleep(1/60)
+    renderer = functools.partial(render, wrapper, root_panel, tileset, ecs)
+    input_handler = functools.partial(handle_events, wrapper, ecs)
+    game_loop = GameLoop(ecs, renderer, input_handler)
+    game_loop.join()
 
 
 def run():
