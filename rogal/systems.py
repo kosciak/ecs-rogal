@@ -92,10 +92,10 @@ class MeleeCombatSystem(System):
         melee_targets = self.ecs.manage(components.WantsToMelee)
         locations = self.ecs.manage(components.Location)
 
-        for entity, target_id in self.ecs.join(self.ecs.entities, melee_targets):
-            msg_log.info(f'{names.get(entity)} ATTACK: {names.get(target_id)}')
+        for entity, target in self.ecs.join(self.ecs.entities, melee_targets):
+            msg_log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
             # TODO: Do some damage!
-            location = locations.get(target_id)
+            location = locations.get(target)
             self.entities.spawn('HIT_PARTICLE', location.level_id, location.position)
 
         # Clear processed targets
@@ -114,10 +114,10 @@ class OperateSystem(System):
         operations = self.ecs.manage(components.OnOperate)
         blocks_vision_changes = self.ecs.manage(components.BlocksVisionChanged)
 
-        for entity, target_id in self.ecs.join(self.ecs.entities, operate_targets):
-            target = self.ecs.get(target_id)
-            msg_log.info(f'{names.get(entity)} OPERATE: {names.get(target_id)}')
-            operation = operations.get(target_id)
+        for entity, target in self.ecs.join(self.ecs.entities, operate_targets):
+            target = self.ecs.get(target)
+            msg_log.info(f'{names.get(entity)} OPERATE: {names.get(target)}')
+            operation = operations.get(target)
             for component in operation.insert:
                 if component == components.BlocksVision:
                     blocks_vision_changes.insert(target)
@@ -206,9 +206,9 @@ class MapIndexingSystem(System):
 
     def calculate_base_flags(self, level, *args, **kwargs):
         if not np.any(level.base_flags):
-            for terrain_id in np.unique(level.terrain):
-                terrain_mask = level.terrain == terrain_id
-                terrain_flags = get_flags(self.ecs, terrain_id)
+            for terrain in np.unique(level.terrain):
+                terrain_mask = level.terrain == terrain
+                terrain_flags = get_flags(self.ecs, terrain)
                 level.base_flags[terrain_mask] = terrain_flags
 
     def clear_flags(self, *args, **kwargs):

@@ -164,62 +164,24 @@ Constant = component_type(ConstantValueComponent, SingleValueComponent, )
 Counter = component_type(CounterComponent)
 
 
-class Entity:
+class Entity(int):
 
-    """Entity with set of Components.
+    """Entity is just and integer ID."""
 
-    Entity contains only one Component of given type.
+    __slots__ = ()
 
-    """
-
-    __slots__ = ('id', '_component_types', )
-
-    def __init__(self, entity_id):
-        self.id = entity_id
-        self._component_types = {}
+    def __new__(cls, entity_id=None):
+        if entity_id is None:
+            entity_id = uuid.uuid4().int
+        return super().__new__(cls, entity_id)
 
     def __repr__(self):
-        return f'<Entity id={self.id}, {list(self.components)}>'
-
-    def attach(self, manager):
-        self._component_types[manager.component_type] = manager
-
-    def remove(self, *component_types):
-        for component_type in component_types:
-            if isinstance(component_type, Component):
-                component_type = type(component_type)
-            self._component_types.pop(component_type, None)
-
-    def __contains__(self, component_type):
-        if isinstance(component_type, Component):
-            component_type = type(component_type)
-        return component_type in self._components
-
-    def has(self, *component_types):
-        for component_type in component_types:
-            if not component_type in self:
-                return False
-        return True
-
-    def get(self, component_type):
-        if isinstance(component_type, Component):
-            component_type = type(component_type)
-        manager = self._component_types.get(component_type)
-        return manager.get(self.id)
-
-    @property
-    def components(self):
-        for manager in self._component_types.values():
-            yield manager.get(self.id, unpack_constants=False)
-
-    def serialize(self):
-        data = {}
-        for component in self.components:
-            data[component.qualname] = component.serialize()
-        return data
+        hex = '%032x' % self
+        return '<Entity id="%s-%s-%s-%s-%s">' % (
+            hex[:8], hex[8:12], hex[12:16], hex[16:20], hex[20:])
 
 
-class EntityIDsIterator:
+class EntitiesIterator:
 
     __slots__ = ('managers', )
 
@@ -232,15 +194,15 @@ class EntityIDsIterator:
         if len(self.managers) == 1 and \
            isinstance(self.managers[0], EntitiesManager):
             # NOTE: Iterate through all entities, it's the only one manager
-            entity_ids = self.managers[0].entity_ids
+            entities = self.managers[0].entities
         else:
-            entity_ids = set.intersection(*(
-                manager.entity_ids
+            entities = set.intersection(*(
+                manager.entities
                 for manager in self.managers
                 # NOTE: No need to intersect with ALL entitites
                 if not isinstance(manager, EntitiesManager)
             ))
-        yield from entity_ids
+        yield from entities
 
 
 class JoinIterator:
@@ -253,11 +215,11 @@ class JoinIterator:
     def __iter__(self):
         if not all(self.managers):
             return
-        entity_ids = EntityIDsIterator(*self.managers)
+        entities = EntitiesIterator(*self.managers)
         # TODO: Consider filtering out FlagComponent no need to have element that is always True
-        for entity_id in entity_ids:
+        for entity in entities:
             values = [
-                manager.get(entity_id)
+                manager.get(entity)
                 for manager in self.managers
             ]
             yield values
@@ -268,61 +230,52 @@ class JoinableManager:
     __slots__ = ('_values', )
 
     def __init__(self):
-        self._values = {} # = {entity_id: value, }
-
-    def get_id(self, entity_id):
-        if isinstance(entity_id, uuid.UUID):
-            return entity_id
-        if isinstance(entity_id, Entity):
-            return entity_id.id
-        if entity_id is not None:
-            return uuid.UUID(int=entity_id)
+        self._values = {} # = {entity: value, }
 
     def __len__(self):
         return len(self._values)
 
     def __contains__(self, entity):
-        entity_id = self.get_id(entity)
-        return entity_id in self._values
+        return entity in self._values
 
     def get(self, entity):
-        entity_id = self.get_id(entity)
-        return self._values.get(entity_id)
+        return self._values.get(entity)
 
     def __iter__(self):
         yield from self._values.values()
+
+    def discard(self, entity):
+        self._values.pop(entity, None)
+
+    def remove(self, *entities):
+        for entity in entities:
+            self.discard(entity)
 
     def clear(self):
         self._values.clear()
 
     @property
-    def entity_ids(self):
-        return set(self._values.keys())
-
-    # TODO: Do I really need it at Manager level? Maybe ecs.join(*managers) should be enough?
-    def join(self, *managers):
-        yield from JoinIterator(self, *managers)
+    def entities(self):
+        return EntitiesSet(self._values.keys())
 
 
-# TODO: Rename? It's not set after all...
-class EntitiesSet(JoinableManager):
+class EntitiesSet(set):
 
-    def add(self, entity):
-        entity_id = self.get_id(entity)
-        self._values[entity_id] = entity
+    def get(self, entity):
+        if entity in self:
+            return entity
 
-    def discard(self, entity):
-        entity_id = self.get_id(entity)
-        self._values.pop(entity_id, None)
+    @property
+    def entities(self):
+        return self
 
 
 class ComponentManager(JoinableManager):
 
-    __slots__ = ('entities', 'component_type', )
+    __slots__ = ('component_type', )
 
     def __init__(self, component_type):
         super().__init__()
-        self.entities = EntitiesSet()
         self.component_type = component_type
 
     def get(self, entity, unpack_constants=True):
@@ -335,37 +288,17 @@ class ComponentManager(JoinableManager):
         if component and not type(component) == self.component_type:
             raise ValueError('Invalid component type!')
         component = component or self.component_type(*args, **kwargs)
-        entity.attach(self)
-        self._values[entity.id] = component
-        self.entities.add(entity)
-
-    def remove(self, *entities):
-        for entity in entities:
-            entity.remove(self.component_type)
-            self._values.pop(entity.id, None)
-            self.entities.discard(entity)
-
-    def clear(self):
-        for entity in self.entities:
-            entity.remove(self.component_type)
-        self.entities.clear()
-        super().clear()
+        self._values[entity] = component
 
     def __repr__(self):
         return f'<{self.__class__.__name__}({self.component_type.__name__})>'
 
 
-class EntitiesManager(JoinableManager):
+class EntitiesManager(EntitiesSet):
 
     def __init__(self):
         super().__init__()
         self._component_managers = {} # {component_type: ComponentManager(component_type), }
-
-    def get_id(self, entity_id):
-        if entity_id is None:
-            return uuid.uuid4()
-        else:
-            return super().get_id(entity_id)
 
     def manage(self, component_type):
         if isinstance(component_type, Component):
@@ -377,9 +310,8 @@ class EntitiesManager(JoinableManager):
         return self._component_managers[component_type]
 
     def create(self, *components, entity_id=None):
-        entity_id = self.get_id(entity_id)
         entity = Entity(entity_id)
-        self._values[entity.id] = entity
+        self.add(entity)
         for component in components:
             component_manager = self.manage(component)
             component_manager.insert(entity, component=component)
@@ -387,14 +319,13 @@ class EntitiesManager(JoinableManager):
 
     def remove(self, *entities):
         for entity in entities:
-            for component_manager in list(entity._component_types.values()):
-                component_manager.remove(entity)
-            self._values.pop(entity.id, None)
+            for component_manager in self._component_managers.values():
+                component_manager.discard(entity)
+            self.discard(entity)
 
     def serialize(self):
         data = {}
-        for entity in self:
-            data[str(entity.id)] = entity.serialize()
+        # TODO: Needs rewrite!!!
         return data
 
     def __repr__(self):

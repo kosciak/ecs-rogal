@@ -25,13 +25,13 @@ def try_move(ecs, level, player, direction):
     melee_targets = ecs.manage(components.WantsToMelee)
     with_hit_points = ecs.manage(components.HitPoints)
     for target, hit_points in ecs.join(target_entities, with_hit_points):
-        melee_targets.insert(player, target.id)
+        melee_targets.insert(player, target)
         return ACTION_COST
 
     operate_targets = ecs.manage(components.WantsToOperate)
     operables = ecs.manage(components.OnOperate)
     for target, is_operable in ecs.join(target_entities, operables):
-        operate_targets.insert(player, target.id)
+        operate_targets.insert(player, target)
         return ACTION_COST
 
     log.warning(f'{direction} blocked!')
