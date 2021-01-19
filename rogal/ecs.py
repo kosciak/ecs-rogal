@@ -323,9 +323,20 @@ class EntitiesManager(EntitiesSet):
                 component_manager.discard(entity)
             self.discard(entity)
 
+    def all_components(self, entity):
+        components = []
+        for component_manager in self._component_managers.values():
+            component = component_manager.get(entity)
+            if component:
+                components.append(component)
+        return components
+
     def serialize(self):
-        data = {}
-        # TODO: Needs rewrite!!!
+        data = collections.defaultdict(dict)
+        # TODO: Use: data = {component.qualname: {entity: component, }, } ?
+        for entity in self:
+            for component in self.all_components(entity):
+                data[entity][component.qualname] = component.serialize()
         return data
 
     def __repr__(self):
