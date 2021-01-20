@@ -71,13 +71,13 @@ class RoomsLevelGenerator(Generator):
 
     def spawn_closed_door(self, position):
         self.level.terrain[position] = Terrain.DOOR.id
-        self.entities.spawn('CLOSED_DOOR', self.level.id, position)
+        self.entities.spawn('props.CLOSED_DOOR', self.level.id, position)
 
     def spawn_player(self, position):
-        self.entities.spawn('PLAYER', self.level.id, position)
+        self.entities.spawn('actors.PLAYER', self.level.id, position)
 
     def spawn_monster(self, position):
-        self.entities.spawn('MONSTER', self.level.id, position)
+        self.entities.spawn('actors.MONSTER', self.level.id, position)
 
     def spawn_entities(self):
         raise NotImplementedError()

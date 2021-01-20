@@ -71,9 +71,25 @@ class Entities(YAMLDataLoader):
             component = component_type(values)
         return component
 
-    def get_components(self, name):
+    def get_data(self, path):
+        names = path.split('.')
+        data = self.data
+        for name in names:
+            data = data.get(name)
+        return data
+
+    def get_names(self, path):
+        path = path.rstrip('.*')
+        data = self.get_data(path)
+        if data:
+            names = [f'{path}.{name}' for name in data.keys()]
+        else:
+            names = []
+        return names
+
+    def get_template(self, name):
         template = []
-        entity_data = self.data.get(name)
+        entity_data = self.get_data(name)
         for name, values in entity_data.items():
             component = self.get_component(name, values)
             template.append(component)
@@ -85,11 +101,12 @@ class Entities(YAMLDataLoader):
                 return terrain.get_terrain_id(component)
 
     def on_init(self):
-        for name in self.data.get('create_on_load'):
+        on_load_create = self.get_data('on_load.create')
+        for name in self.get_names(on_load_create):
             self.create(name)
 
     def create(self, name, entity_id=None):
-        template = self.get_components(name)
+        template = self.get_template(name)
         entity_id = self.parse_entity_id(template)
         return self.ecs.create(*template, entity_id=entity_id)
 
