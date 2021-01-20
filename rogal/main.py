@@ -7,7 +7,6 @@ from .geometry import Position, Size
 from .tilesheets import TERMINAL_12x12_CP
 
 from .wrappers import TcodWrapper
-from . import keys
 
 from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerator, BSPLevelGenerator
 from .procgen.dungeons import StaticLevel
@@ -22,7 +21,7 @@ from .game_loop import GameLoop
 
 from .render import Renderer
 
-from .player import try_move
+from .input_handlers import PlayerActionsHandler
 
 from .utils import perf
 
@@ -51,38 +50,6 @@ LEVEL_GENERATOR_CLS = RandomDungeonLevelGenerator
 
 SEED = None
 # SEED = uuid.UUID("f6df641c-d526-4037-8ee8-c9866ba1199d")
-
-
-def handle_events(wrapper, ecs, player, wait=None):
-    for event in wrapper.events(wait):
-        # Just print all events, and gracefully quit on closing window
-        log.debug(f'Event: {event}')
-
-        # TODO: implement tcod.EventDispatch
-        if event.type == 'KEYDOWN':
-            key = event.sym
-            if key == keys.ESCAPE_KEY:
-                log.warning('Quitting...')
-                raise SystemExit()
-
-            if key in keys.WAIT_KEYS:
-                log.info('Waiting...')
-                return 60
-
-            direction = keys.MOVE_KEYS.get(key)
-            if direction:
-                return try_move(ecs, player, direction)
-
-        if event.type == 'QUIT':
-            log.warning('Quitting...')
-            raise SystemExit()
-
-
-def loop(wrapper, root_panel, tileset, ecs):
-    renderer = Renderer(ecs, wrapper, root_panel, tileset)
-    input_handler = functools.partial(handle_events, wrapper, ecs)
-    game_loop = GameLoop(ecs, renderer, input_handler)
-    game_loop.join()
 
 
 def run():
@@ -125,5 +92,8 @@ def run():
         level = LEVEL_GENERATOR_CLS(entities, LEVEL_SIZE, seed=SEED).generate()
         ecs.add_level(level)
 
-        loop(wrapper, root_panel, tileset, ecs)
+        renderer = Renderer(ecs, wrapper, root_panel, tileset)
+        input_handler = PlayerActionsHandler(ecs, wrapper)
+        game_loop = GameLoop(ecs, renderer, input_handler)
+        game_loop.join()
 

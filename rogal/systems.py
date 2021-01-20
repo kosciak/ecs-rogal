@@ -96,7 +96,7 @@ class MeleeCombatSystem(System):
             msg_log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
             # TODO: Do some damage!
             location = locations.get(target)
-            self.entities.spawn('HIT_PARTICLE', location.level_id, location.position)
+            self.entities.spawn('particles.HIT_PARTICLE', location.level_id, location.position)
 
         # Clear processed targets
         melee_targets.clear()
