@@ -110,6 +110,7 @@ actors:
     HitPoints: 20
     Attack: 10
     Defence: 10
+    MovementSpeed: 60
 
   MONSTER:
     Monster:
@@ -123,6 +124,35 @@ actors:
     HitPoints: 10
     Attack: 5
     Defence: 5
+    MovementSpeed: 60
+
+  BAT:
+    Monster:
+    Name: Bat
+    Renderable:
+      tile: BAT
+      render_order: ACTORS
+    BlocksMovement:
+    Viewshed: 12
+    WaitsForAction: !randint [2, 10]
+    HitPoints: 10
+    Attack: 5
+    Defence: 5
+    MovementSpeed: 30
+
+  SNAIL:
+    Monster:
+    Name: Snail
+    Renderable:
+      tile: SNAIL
+      render_order: ACTORS
+    BlocksMovement:
+    Viewshed: 12
+    WaitsForAction: !randint [2, 10]
+    HitPoints: 10
+    Attack: 5
+    Defence: 5
+    MovementSpeed: 120
 
 
 # Particles

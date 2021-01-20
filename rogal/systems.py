@@ -27,12 +27,12 @@ class ActionsQueueSystem(System):
 
     def run(self, state, *args, **kwargs):
         acts_now = self.ecs.manage(components.ActsNow)
-        waiting = self.ecs.manage(components.WaitsForAction)
+        waiting_queue = self.ecs.manage(components.WaitsForAction)
 
         # Clear previous ActsNow flags
         acts_now.clear()
 
-        for entity, waits in self.ecs.join(self.ecs.entities, waiting):
+        for entity, waits in self.ecs.join(self.ecs.entities, waiting_queue):
             # Decrease wait time
             waits -= 1
             if waits <= 0:

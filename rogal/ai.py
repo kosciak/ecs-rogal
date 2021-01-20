@@ -6,6 +6,11 @@ from . import components
 ACTION_COST = 60
 
 
+def get_movement_cost(ecs, actor):
+    movement_speed = ecs.manage(components.MovementSpeed)
+    return movement_speed.get(actor) or ACTION_COST
+
+
 def random_move(ecs, actor):
     """Return random move direction from allowed exits."""
     locations = ecs.manage(components.Location)
@@ -17,7 +22,7 @@ def random_move(ecs, actor):
     direction = random.choice(list(exits))
     movement_directions.insert(actor, direction)
 
-    return ACTION_COST
+    return get_movement_cost(ecs, actor)
 
 
 def perform_action(ecs, actor):

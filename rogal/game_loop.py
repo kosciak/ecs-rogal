@@ -28,7 +28,7 @@ class GameLoop:
     def queue_actions(self):
         # Each actor performs action
         acts_now = self.ecs.manage(components.ActsNow)
-        waiting = self.ecs.manage(components.WaitsForAction)
+        waiting_queue = self.ecs.manage(components.WaitsForAction)
         players = self.ecs.manage(components.Player)
         locations = self.ecs.manage(components.Location)
 
@@ -44,7 +44,7 @@ class GameLoop:
                 action_cost = ai.perform_action(self.ecs, actor)
 
             if action_cost:
-                waiting.insert(actor, action_cost)
+                waiting_queue.insert(actor, action_cost)
                 performed_action.add(actor)
                 self.run_state = RunState.ACTION_PERFORMED
                 # TODO: Perform all actions at once for all actors (including Player)?

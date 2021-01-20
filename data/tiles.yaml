@@ -26,6 +26,8 @@ tiles:
   # Actors
   PLAYER:         ['@', BRIGHT_WHITE]
   MONSTER:        ['M', LIME]
+  BAT:            ['B', NAVY]
+  SNAIL:          ['s', MAGENTA]
 
   # Particles
   MELEE_HIT:      [0, null, BRIGHT_RED]

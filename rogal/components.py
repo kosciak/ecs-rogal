@@ -158,21 +158,25 @@ HitPoints = Pool('HitPoints')
 
 
 class AttributeComponent(Component):
-    __slots__ = ('base', 'bonus')
-    params = ('base', 'bonus')
+    __slots__ = ('base', 'modifier')
+    params = ('base', 'modifier')
 
-    def __init__(self, base, bonus=None):
+    def __init__(self, base, modifier=None):
         self.base = base
-        self.bonus = bonus or 0
+        self.modifier = modifier or 0
 
     @property
     def total(self):
-        return self.base + self.bonus
+        return self.base + self.modifier
+
+    def __int__(self):
+        return self.total
 
 Attribute = component_type(AttributeComponent)
 
 Attack = Attribute('Attack')
 Defence = Attribute('Defence')
+MovementSpeed = Attribute('MovementSpeed')
 
 
 # Actions queue

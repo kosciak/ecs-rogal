@@ -38,9 +38,6 @@ class Renderer:
     def render(self, actor):
         if not actor:
             return False
-        locations = self.ecs.manage(components.Location)
-        location = locations.get(actor)
-
         log.debug(f'Render @ {time.time()}')
         self.panel.clear()
         camera, message_log = self.panel.split(bottom=12)
@@ -49,7 +46,7 @@ class Renderer:
         render_message_log(message_log.framed('logs'))
 
         cam = Camera(self.ecs, camera.framed('mapcam'), self.tileset)
-        cam.render(location=location)
+        cam.render(actor=actor)
 
         # Show rendered panel
         self.wrapper.flush(self.panel)
@@ -243,8 +240,11 @@ class Camera(Rectangular):
                 else:
                     self.panel.draw(tile, render_position)
 
-    def render(self, location=None, level=None):
+    def render(self, actor=None, location=None, level=None):
         position = None
+        if actor:
+            locations = self.ecs.manage(components.Location)
+            location = locations.get(actor)
         if location:
             position = location.position
             level = self.ecs.levels.get(location.level_id)

@@ -77,7 +77,12 @@ class RoomsLevelGenerator(Generator):
         self.entities.spawn('actors.PLAYER', self.level.id, position)
 
     def spawn_monster(self, position):
-        self.entities.spawn('actors.MONSTER', self.level.id, position)
+        monster = self.rng.choice([
+            'actors.MONSTER',
+            'actors.BAT',
+            'actors.SNAIL',
+        ])
+        self.entities.spawn(monster, self.level.id, position)
 
     def spawn_entities(self):
         raise NotImplementedError()
