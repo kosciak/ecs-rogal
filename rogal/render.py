@@ -38,7 +38,7 @@ class Renderer:
     def render(self, actor):
         if not actor:
             return False
-        log.debug(f'Render @ {time.time()}')
+        # log.debug(f'Render @ {time.time()}')
         self.panel.clear()
         camera, message_log = self.panel.split(bottom=12)
         #camera = root_panel.create_panel(Position(10,10), CAMERA_SIZE)

@@ -21,6 +21,7 @@ class GameLoop:
         self.player = None
         self.last_render = None
         self.frame = 1./self.FPS
+        self.wait = self.frame*3
 
     def run_systems(self):
         self.ecs.run(self.run_state)
@@ -38,7 +39,7 @@ class GameLoop:
             if actor in players:
                 self.run_state = RunState.WAITING_FOR_INPUT
                 self.player = actor
-                action_cost = self.input_handler.handle(wait=True, actor=self.player)
+                action_cost = self.input_handler.handle(wait=self.wait, actor=self.player)
             else:
                 # Actor AI move
                 action_cost = ai.perform_action(self.ecs, actor)

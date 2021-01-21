@@ -175,6 +175,14 @@ class Entity(int):
             entity_id = uuid.uuid4().int
         return super().__new__(cls, entity_id)
 
+    @property
+    def short_id(self):
+        hex = '%032x' % self
+        return hex[:8]
+
+    def __str__(self):
+        return self.short_id
+
     def __repr__(self):
         hex = '%032x' % self
         return '<Entity id="%s-%s-%s-%s-%s">' % (
@@ -376,7 +384,7 @@ class SystemsManager:
 
     def run(self, state, *args, **kwargs):
         systems = [system for system in self if system.should_run(state)]
-        log.debug(f'systems.run({state.name}): {systems}')
+        # log.debug(f'systems.run({state.name}): {systems}')
         for system in systems:
             system.run(state, *args, **kwargs)
 

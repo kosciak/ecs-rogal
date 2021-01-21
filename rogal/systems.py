@@ -47,13 +47,15 @@ class MovementSystem(System):
     }
 
     def apply_move(self, *args, **kwargs):
+        players = self.ecs.manage(components.Player)
         names = self.ecs.manage(components.Name)
         locations = self.ecs.manage(components.Location)
         movement_directions = self.ecs.manage(components.WantsToMove)
         has_moved = self.ecs.manage(components.HasMoved)
 
         for entity, location, direction in self.ecs.join(self.ecs.entities, locations, movement_directions):
-            msg_log.info(f'{names.get(entity)} MOVE: {direction}')
+            if entity in players:
+                msg_log.info(f'{names.get(entity)} MOVE: {direction}')
 
             # Update position
             location.position = location.position.move(direction)
@@ -88,12 +90,14 @@ class MeleeCombatSystem(System):
     }
 
     def run(self, state, *args, **kwargs):
+        players = self.ecs.manage(components.Player)
         names = self.ecs.manage(components.Name)
         melee_targets = self.ecs.manage(components.WantsToMelee)
         locations = self.ecs.manage(components.Location)
 
         for entity, target in self.ecs.join(self.ecs.entities, melee_targets):
-            msg_log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
+            if entity in players or target in players:
+                msg_log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
             # TODO: Do some damage!
             location = locations.get(target)
             self.entities.spawn('particles.HIT_PARTICLE', location.level_id, location.position)
@@ -109,6 +113,7 @@ class OperateSystem(System):
     }
 
     def run(self, state, *args, **kwargs):
+        players = self.ecs.manage(components.Player)
         names = self.ecs.manage(components.Name)
         operate_targets = self.ecs.manage(components.WantsToOperate)
         operations = self.ecs.manage(components.OnOperate)
@@ -116,7 +121,8 @@ class OperateSystem(System):
 
         for entity, target in self.ecs.join(self.ecs.entities, operate_targets):
             target = self.ecs.get(target)
-            msg_log.info(f'{names.get(entity)} OPERATE: {names.get(target)}')
+            if entity in players:
+                msg_log.info(f'{names.get(entity)} OPERATE: {names.get(target)}')
             operation = operations.get(target)
             for component in operation.insert:
                 if component == components.BlocksVision:
@@ -152,7 +158,7 @@ class VisibilitySystem(System):
 
         viewsheds = self.ecs.manage(components.Viewshed)
         for viewshed, location in self.ecs.join(viewsheds, locations):
-            if viewshed.visible_tiles & positions_per_level[location.level_id]:
+            if viewshed.positions & positions_per_level[location.level_id]:
                 viewshed.invalidate()
 
         # Clear processed flags
@@ -188,6 +194,7 @@ class VisibilitySystem(System):
             )
 
             viewshed.update(fov)
+
             if entity in players:
                 # If player, update visible and revealed flags
                 level.update_visibility(fov)

@@ -5,6 +5,7 @@ import numpy as np
 
 from .ecs import Component, ConstantValueComponent, SingleValueComponent
 from .ecs import Flag, Constant, Counter, component_type
+from .ecs import EntitiesSet
 from .geometry import Position, WithPositionMixin
 from .renderable import RenderOrder
 from . import terrain
@@ -114,23 +115,23 @@ class Renderable(Component):
 
 
 class Viewshed(Component):
-    __slots__ = ('view_range', 'visible_tiles', 'needs_update', )
+    __slots__ = ('view_range', 'positions', 'needs_update', )
     params = ('view_range', )
 
     def __init__(self, view_range):
         self.view_range = view_range
-        self.visible_tiles = set()
+        self.positions = set()
         self.needs_update = True
 
     def invalidate(self):
-        self.visible_tiles = set()
+        self.positions.clear()
         self.needs_update = True
 
     def update(self, fov):
         self.needs_update = False
-        self.visible_tiles = {
+        self.positions.update(
             Position(x, y) for x, y in np.transpose(fov.nonzero())
-        }
+        )
 
 
 class PoolComponent(Component):
