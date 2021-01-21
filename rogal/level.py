@@ -27,8 +27,8 @@ class Level(Rectangular):
         self.flags = np.zeros(self.size, dtype=dtypes.flags_dt)
         self.movement_cost = np.zeros(self.size, dtype=dtypes.movement_cost_dt)
 
-        self.visible = np.zeros(self.size, dtype=np.bool)
-        self.revealed = np.zeros(self.size, dtype=np.bool)
+        # self.visible = np.zeros(self.size, dtype=np.bool)
+        # self.revealed = np.zeros(self.size, dtype=np.bool)
 
         self.entities = collections.defaultdict(EntitiesSet)
 
@@ -41,15 +41,15 @@ class Level(Rectangular):
     def transparent(self):
         return self.flags & Flag.BLOCKS_VISION == 0
 
-    def reveal(self, fov=None):
-        if fov is None:
-            self.revealed[:] = 1
-        else:
-            self.revealed |= fov
+    # def reveal(self, fov=None):
+    #     if fov is None:
+    #         self.revealed[:] = 1
+    #     else:
+    #         self.revealed |= fov
 
-    def update_visibility(self, fov):
-        self.visible[:] = fov
-        self.reveal(fov)
+    # def update_visibility(self, fov):
+    #     # self.visible[:] = fov
+    #     self.reveal(fov)
 
     def get_entities(self, *positions):
         entities = EntitiesSet()

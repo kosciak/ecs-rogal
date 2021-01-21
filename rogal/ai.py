@@ -19,8 +19,9 @@ def random_move(ecs, actor):
     location = locations.get(actor)
     level = ecs.levels.get(location.level_id)
     exits = level.get_exits(location.position)
-    direction = random.choice(list(exits))
-    movement_directions.insert(actor, direction)
+    if exits:
+        direction = random.choice(list(exits))
+        movement_directions.insert(actor, direction)
 
     return get_movement_cost(ecs, actor)
 

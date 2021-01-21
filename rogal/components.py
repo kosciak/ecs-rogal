@@ -115,24 +115,46 @@ class Renderable(Component):
 
 
 class Viewshed(Component):
-    __slots__ = ('view_range', 'positions', 'entities', 'needs_update', )
+    __slots__ = ('view_range', 'fov', '_positions', 'entities', 'needs_update', )
     params = ('view_range', )
 
     def __init__(self, view_range):
         self.view_range = view_range
-        self.positions = set()
+        self.fov = None
+        self._positions = set()
         self.entities = set()
         self.needs_update = True
 
     def invalidate(self):
-        self.positions.clear()
+        self.fov = None
+        self._positions.clear()
         self.needs_update = True
 
     def update(self, fov):
+        self.fov = fov
         self.needs_update = False
-        self.positions.update(
-            Position(x, y) for x, y in np.transpose(fov.nonzero())
-        )
+
+    @property
+    def positions(self):
+        if self.fov is not None and \
+           not self._positions:
+            self._positions.update(
+                Position(x, y) for x, y in np.transpose(self.fov.nonzero())
+            )
+        return self._positions
+
+
+class LevelMemory(Component):
+    __slots__ = ('revealed', )
+    params = ()
+
+    def __init__(self):
+        self.revealed = {}
+
+    def update(self, level, fov):
+        if not level.id in self.revealed:
+            self.revealed[level.id] = np.zeros(level.size, dtype=np.bool)
+        self.revealed[level.id] |= fov
 
 
 class PoolComponent(Component):

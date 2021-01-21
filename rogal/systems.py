@@ -169,6 +169,7 @@ class VisibilitySystem(System):
         players = self.ecs.manage(components.Player)
         locations = self.ecs.manage(components.Location)
         viewsheds = self.ecs.manage(components.Viewshed)
+        level_memories = self.ecs.manage(components.LevelMemory)
 
         #  Update Viesheds that needs update
         for entity, location, viewshed in self.ecs.join(self.ecs.entities, locations, viewsheds):
@@ -185,10 +186,10 @@ class VisibilitySystem(System):
                 pov=location.position,
                 radius=viewshed.view_range,
                 light_walls=True,
-                algorithm=tcod.FOV_BASIC,
+                # algorithm=tcod.FOV_BASIC,
                 # algorithm=tcod.FOV_SHADOW,
                 # algorithm=tcod.FOV_DIAMOND,
-                # algorithm=tcod.FOV_RESTRICTIVE,
+                algorithm=tcod.FOV_RESTRICTIVE,
                 # algorithm=tcod.FOV_PERMISSIVE(1),
                 # algorithm=tcod.FOV_PERMISSIVE(8),
                 # algorithm=tcod.FOV_SYMMETRIC_SHADOWCAST,
@@ -196,9 +197,14 @@ class VisibilitySystem(System):
 
             viewshed.update(fov)
 
-            if entity in players:
-                # If player, update visible and revealed flags
-                level.update_visibility(fov)
+            # if entity in players:
+            #     # If player, update visible and revealed flags
+            #     level.update_visibility(fov)
+
+            memory = level_memories.get(entity)
+            if memory:
+                memory = level_memories.get(entity)
+                memory.update(level, fov)
 
     def spotted_alert(self, *args, **kwargs):
         players = self.ecs.manage(components.Player)
@@ -217,7 +223,7 @@ class VisibilitySystem(System):
 
             if spotted_entities:
                 # TODO: Need to set this alert information!
-                print(f'{entity} Spotted: {spotted_entities}')
+                log.debug(f'{entity} Spotted: {spotted_entities}')
             if spotted_entities and entity in players:
                 names = self.ecs.manage(components.Name)
                 monsters = self.ecs.manage(components.Monster)

@@ -97,26 +97,26 @@ class Camera(Rectangular):
         coverage = self & level
         return coverage
 
-    def get_revealed(self, level, coverage):
+    def get_revealed(self, seen, coverage):
         """Return visible masks."""
-        revealed = level.revealed[
+        revealed = seen[
             coverage.x : coverage.x2,
             coverage.y : coverage.y2
         ]
         return revealed
 
-    def get_visible(self, level, coverage):
+    def get_visible(self, fov, coverage):
         """Return revealed masks."""
-        visible = level.visible[
+        visible = fov[
             coverage.x : coverage.x2,
             coverage.y : coverage.y2
         ]
         return visible
 
-    def walls_bitmask(self, level, terrain_type):
+    def walls_bitmask(self, level, revealed, terrain_type):
         walls_mask = level.terrain >> 4 == terrain_type
         # NOTE: We don't want bitmasking to spoil not revealed terrain!
-        walls_mask &= level.revealed
+        walls_mask &= revealed
         return bitmask.walls_bitmask(walls_mask)
 
     def draw_boundaries(self, level):
@@ -178,7 +178,7 @@ class Camera(Rectangular):
         ]
 
         # Bitshift masking for terrain.Type.WALL terrain
-        walls_mask = self.walls_bitmask(level, BITMASK_TERRAIN_TYPE)[
+        walls_mask = self.walls_bitmask(level, revealed, BITMASK_TERRAIN_TYPE)[
             coverage.x : coverage.x2,
             coverage.y : coverage.y2
         ]
@@ -224,10 +224,10 @@ class Camera(Rectangular):
                 continue
 
             tile = None
-            if level.visible[location.position]:
+            if visible[location.position]:
                 # Visible by player
                 tile = renderable.tile_visible
-            elif level.revealed[location.position]:
+            elif revealed[location.position]:
                 # Not visible, but revealed
                 if renderable.render_order == RenderOrder.PROPS:
                     tile = renderable.tile_revealed
@@ -242,12 +242,26 @@ class Camera(Rectangular):
 
     def render(self, actor=None, location=None, level=None):
         position = None
+        fov = None
+        seen = None
         if actor:
             locations = self.ecs.manage(components.Location)
+            viewsheds = self.ecs.manage(components.Viewshed)
             location = locations.get(actor)
+            fov = viewsheds.get(actor).fov
         if location:
             position = location.position
             level = self.ecs.levels.get(location.level_id)
+
+        if fov is None:
+            fov = np.ones(level.size, dtype=np.bool)
+
+        level_memories = self.ecs.manage(components.LevelMemory)
+        memory = level_memories.get(actor)
+        if memory:
+            seen = memory.revealed.get(level.id)
+        else:
+            seen = np.ones(level.size, dtype=np.bool)
 
         self.set_center(level, position)
 
@@ -257,8 +271,8 @@ class Camera(Rectangular):
             return
 
         # Calculate visibility masks
-        revealed = self.get_revealed(level, coverage)
-        visible = self.get_visible(level, coverage)
+        revealed = self.get_revealed(seen, coverage)
+        visible = self.get_visible(fov, coverage)
 
         self.draw_boundaries(level)
         self.draw_terrain(level, coverage, revealed, visible)

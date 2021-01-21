@@ -5,6 +5,8 @@ from . import ai
 from . import components
 from .run_state import RunState
 
+from .utils import perf
+
 
 log = logging.getLogger(__name__)
 
