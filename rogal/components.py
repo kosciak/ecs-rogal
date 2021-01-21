@@ -115,12 +115,13 @@ class Renderable(Component):
 
 
 class Viewshed(Component):
-    __slots__ = ('view_range', 'positions', 'needs_update', )
+    __slots__ = ('view_range', 'positions', 'entities', 'needs_update', )
     params = ('view_range', )
 
     def __init__(self, view_range):
         self.view_range = view_range
         self.positions = set()
+        self.entities = set()
         self.needs_update = True
 
     def invalidate(self):

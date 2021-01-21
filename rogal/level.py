@@ -11,10 +11,11 @@ from .geometry import Rectangular, Direction, Position
 
 class Level(Rectangular):
 
+    position = Position.ZERO
+
     def __init__(self, level_id, size, depth):
         self.id = level_id
 
-        self.position = Position.ZERO
         self.size = size
         self.depth = depth
 
@@ -50,8 +51,11 @@ class Level(Rectangular):
         self.visible[:] = fov
         self.reveal(fov)
 
-    def get_entities(self, position):
-        return self.entities.get(position)
+    def get_entities(self, *positions):
+        entities = EntitiesSet()
+        for position in positions:
+            entities.update(self.entities[position])
+        return entities
 
     def is_blocked(self, position):
         return self.flags[position] & Flag.BLOCKS_MOVEMENT

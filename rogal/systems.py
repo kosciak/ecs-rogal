@@ -8,6 +8,7 @@ import tcod
 
 from . import components
 from .ecs import System
+from .ecs import EntitiesSet
 from .flags import Flag, get_flags
 from .run_state import RunState
 
@@ -199,9 +200,38 @@ class VisibilitySystem(System):
                 # If player, update visible and revealed flags
                 level.update_visibility(fov)
 
+    def spotted_alert(self, *args, **kwargs):
+        players = self.ecs.manage(components.Player)
+        locations = self.ecs.manage(components.Location)
+        viewsheds = self.ecs.manage(components.Viewshed)
+
+        for entity, location, viewshed in self.ecs.join(self.ecs.entities, locations, viewsheds):
+            level = self.ecs.levels.get(location.level_id)
+            if not location.position in level:
+                # Outside map/level boundaries
+                continue
+
+            visible_entities = level.get_entities(*viewshed.positions)
+            spotted_entities = EntitiesSet(visible_entities - viewshed.entities)
+            viewshed.entities = visible_entities
+
+            if spotted_entities:
+                # TODO: Need to set this alert information!
+                print(f'{entity} Spotted: {spotted_entities}')
+            if spotted_entities and entity in players:
+                names = self.ecs.manage(components.Name)
+                monsters = self.ecs.manage(components.Monster)
+                spotted_targets = []
+                for target, is_monster, name in self.ecs.join(spotted_entities, monsters, names):
+                    spotted_targets.append(name)
+                if spotted_targets:
+                    names = ', '.join(spotted_targets)
+                    msg_log.info(f'You see: {names}')
+
     def run(self, state, *args, **kwargs):
         self.apply_blocks_vision_changes(*args, **kwargs)
         self.update_viewsheds(*args, **kwargs)
+        self.spotted_alert(*args, **kwargs)
 
 
 class MapIndexingSystem(System):
