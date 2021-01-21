@@ -2,6 +2,10 @@ import re
 import uuid
 
 
+def generate_seed():
+    return uuid.uuid4()
+
+
 class AbstractRNG:
 
     """Abstract Random Number Generator.
@@ -11,15 +15,27 @@ class AbstractRNG:
     """
 
     def __init__(self, seed=None):
-        self.seed = seed or uuid.uuid4()
-        self.rng = self.init_rng(self.seed)
+        seed = seed or generate_seed()
+        self.rng = self.init_rng(seed)
 
     def init_rng(self, seed):
+        raise NotImplementedError()
+
+    def seed(self, seed):
+        """Set seed for random generator."""
+        raise NotImplementedError()
+
+    def randbytes(self, n):
+        """Return n random bytes."""
         raise NotImplementedError()
 
     def random(self):
         """Return random floats in the half-open interval [0.0, 1.0)."""
         return self.rng.random()
+
+    def uuid4(self):
+        """Return random UUID version 4."""
+        return uuid.UUID(bytes=self.randbytes(16), version=4)
 
     def randrange(self, start, stop=None):
         """Return random integer from range(start, stop)."""
@@ -65,9 +81,6 @@ class AbstractRNG:
             sample.append(r)
         return sample
 
-    def __reduce__(self):
-        return (self.__class__, (self.seed, ))
-
 
 class PyRandomRNG(AbstractRNG):
 
@@ -75,7 +88,15 @@ class PyRandomRNG(AbstractRNG):
 
     def init_rng(self, seed):
         import random
-        return random.Random(self.seed.int)
+        return random.Random(seed.int)
+
+    def seed(self, seed):
+        """Set seed for random generator."""
+        self.rng.seed(seed.int)
+
+    def randbytes(self, n):
+        """Return n random bytes."""
+        return self.rng.randbytes(n)
 
     def randrange(self, start, stop=None):
         """Return random integer from range(start, stop)."""
@@ -119,7 +140,15 @@ class NumpyRNG(AbstractRNG):
 
     def init_rng(self, seed):
         import numpy.random
-        return numpy.random.default_rng(self.seed.int)
+        return numpy.random.default_rng(seed.int)
+
+    def seed(self, seed):
+        """Set seed for random generator."""
+        self.rng = self.init_rng(seed)
+
+    def randbytes(self, n):
+        """Return n random bytes."""
+        return self.rng.bytes(n)
 
     def randint(self, low, high=None):
         """Return random integer in range [low, high] or [0, low] if high not provieded."""

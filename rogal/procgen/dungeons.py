@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 class RoomsLevelGenerator(Generator):
 
-    def __init__(self, entities, size, depth=0, seed=None):
+    def __init__(self, seed, entities, size, depth=0):
         super().__init__(seed=seed)
 
         self.entities = entities
@@ -35,7 +35,12 @@ class RoomsLevelGenerator(Generator):
     @property
     def level(self):
         if self._level is None:
+            # Generate UUID using rng, so it will be same UUID using same rng
+            level_id = self.rng.uuid4()
             self._level = Level.create(self.size, self.depth)
+            self._level = Level(level_id, self.size, self.depth)
+            # Reseed generator to just generated level_id, this way levels with same seed are gennerated same way
+            self.rng.seed(level_id)
         return self._level
 
     def clear(self):
@@ -165,8 +170,8 @@ class RandomDungeonLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
     """LevelGenerator creating random rooms connected with straight corridors."""
 
-    def __init__(self, entities, size, depth=0, seed=None):
-        super().__init__(entities, size, depth, seed=seed)
+    def __init__(self, seed, entities, size, depth=0):
+        super().__init__(seed, entities, size, depth)
 
         self.rooms_generator = RandomlyPlacedRoomsGenerator(self.rng, self.level)
         self.rooms_connector = RandomToNearestRoomsConnector(self.rng)
@@ -174,8 +179,8 @@ class RandomDungeonLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
 class RogueGridLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
-    def __init__(self, entities, size, depth=0, seed=None):
-        super().__init__(entities, size, depth, seed=seed)
+    def __init__(self, seed, entities, size, depth=0):
+        super().__init__(seed, entities, size, depth)
 
         grid = Size(
             size.width//18,
@@ -187,8 +192,8 @@ class RogueGridLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
 class BSPLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
-    def __init__(self, entities, size, depth=0, seed=None):
-        super().__init__(entities, size, depth, seed=seed)
+    def __init__(self, seed, entities, size, depth=0):
+        super().__init__(seed, entities, size, depth)
 
         split_depth = size.width//18
         self.rooms_generator = BSPRoomsGenerator(self.rng, self.level, split_depth)

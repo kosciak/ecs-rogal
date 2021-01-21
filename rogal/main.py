@@ -8,11 +8,12 @@ from .tilesheets import TERMINAL_12x12_CP
 
 from .wrappers import TcodWrapper
 
+from .rng import generate_seed
 from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerator, BSPLevelGenerator
 from .procgen.dungeons import StaticLevel
 
-from .ecs import ECS
 from . import components
+from .ecs import ECS
 from .entities import Entities
 from .renderable import Tileset
 from . import systems
@@ -22,8 +23,6 @@ from .game_loop import GameLoop
 from .render import Renderer
 
 from .input_handlers import PlayerActionsHandler
-
-from .utils import perf
 
 
 log = logging.getLogger(__name__)
@@ -52,30 +51,38 @@ SEED = None
 # SEED = uuid.UUID("f6df641c-d526-4037-8ee8-c9866ba1199d")
 
 
+def register_systems(ecs, entities):
+    # NOTE: Systems are run in order they were registered
+    for system in [
+        systems.ParticlesSystem,
+
+        systems.ActionsQueueSystem,
+
+        systems.MeleeCombatSystem,
+        systems.MovementSystem,
+        systems.OperateSystem,
+
+        systems.MapIndexingSystem,
+        systems.VisibilitySystem,
+    ]:
+        ecs.register(system(ecs, entities))
+
+
 def run():
+    # Generate seed
+    seed = SEED or generate_seed()
+
     # ECS initialization
     ecs = ECS()
 
     # Tileset initialization
-
     tileset = Tileset()
 
     # Entities initialization
-
     entities = Entities(ecs, tileset)
 
     # Register systems
-    # NOTE: Systems are run in order they were registered
-    ecs.register(systems.ParticlesSystem(ecs, entities))
-
-    ecs.register(systems.ActionsQueueSystem(ecs, entities))
-
-    ecs.register(systems.MeleeCombatSystem(ecs, entities))
-    ecs.register(systems.MovementSystem(ecs, entities))
-    ecs.register(systems.OperateSystem(ecs, entities))
-
-    ecs.register(systems.MapIndexingSystem(ecs, entities))
-    ecs.register(systems.VisibilitySystem(ecs, entities))
+    register_systems(ecs, entities)
 
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
@@ -89,7 +96,7 @@ def run():
         root_panel = wrapper.create_panel()
 
         # Level(s) generation
-        level = LEVEL_GENERATOR_CLS(entities, LEVEL_SIZE, seed=SEED).generate()
+        level = LEVEL_GENERATOR_CLS(seed, entities, LEVEL_SIZE).generate()
         ecs.add_level(level)
 
         renderer = Renderer(ecs, wrapper, root_panel, tileset)

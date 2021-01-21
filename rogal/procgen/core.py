@@ -20,7 +20,7 @@ class Generator:
     def init_rng(self, seed=None):
         """Init RNG with given seed, or generate new seed."""
         rng = RNG(seed)
-        log.debug(f'{self.__class__.__name__}(seed="{rng.seed}")')
+        log.debug(f'{self.__class__.__name__}(seed="{seed}")')
         fn = os.path.join('.seeds', f'{self.__class__.__name__}.seed')
         fn_dir = os.path.dirname(fn)
         if not os.path.exists(fn_dir):
