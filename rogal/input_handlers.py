@@ -1,4 +1,5 @@
 import logging
+import time
 
 from . import keys
 from .player import try_move
@@ -32,12 +33,20 @@ class InputHandler:
 
 class PlayerActionsHandler(InputHandler):
 
+    REPEAT_LIMI = 1./17
+
     def __init__(self, ecs, wrapper):
         self.ecs = ecs
         super().__init__(wrapper)
+        self.last_keydown = None
 
     def on_keydown(self, event, actor):
+        if event.repeat:
+            if self.last_keydown and time.time() - self.last_keydown < self.REPEAT_LIMI:
+                # Skip repeated keys to prevent stacking of unprocessed events
+                return
         key = event.sym
+        self.last_keydown = time.time()
         if key == keys.ESCAPE_KEY:
             log.warning('Quitting...')
             raise SystemExit()

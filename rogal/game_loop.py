@@ -58,7 +58,9 @@ class GameLoop:
         acts_now.remove(*performed_action)
 
     def render(self, force=False):
-        if not force and self.last_render and time.time() - self.last_render < self.frame:
+        if not force and \
+           self.last_render and time.time() - self.last_render < self.frame:
+            # Do NOT render more often than once a frame
             return
         if self.renderer.render(self.player):
             self.last_render = time.time()
