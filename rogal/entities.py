@@ -41,7 +41,10 @@ class Entities(YAMLDataLoader):
         return self.tileset.get(value)
 
     def parse_onoperate_insert(self, value):
-        return [self.get_component(n, v) for n, v in value.items()]
+        components = [component for component_type, component
+                      in (self.get_component(n, v) for n, v in value.items())
+                      if component]
+        return components
 
     def parse_onoperate_remove(self, value):
         return [self.get_component_type(v) for v in value]
@@ -67,9 +70,13 @@ class Entities(YAMLDataLoader):
             component = component_type(**values)
         elif isinstance(values, list):
             component = component_type(*values)
-        else:
+        elif values is not False:
             component = component_type(values)
-        return component
+        else:
+            # If value is False do NOT create component
+            # This way you can use some prefabs and disable component from this prefab
+            component = None
+        return component_type, component
 
     def get_data(self, path):
         names = path.split('.')
@@ -88,12 +95,12 @@ class Entities(YAMLDataLoader):
         return names
 
     def get_template(self, name):
-        template = []
+        template = {}
         entity_data = self.get_data(name)
         for name, values in entity_data.items():
-            component = self.get_component(name, values)
-            template.append(component)
-        return template
+            component_type, component = self.get_component(name, values)
+            template[component_type] = component
+        return [component for component in template.values() if component]
 
     def parse_entity_id(self, template):
         for component in template:
@@ -114,4 +121,5 @@ class Entities(YAMLDataLoader):
         entity = self.create(name, entity_id=entity_id)
         locations = self.ecs.manage(components.Location)
         locations.insert(entity, level_id, position)
+        return entity
 

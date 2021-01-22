@@ -33,15 +33,18 @@ class GameLoop:
         acts_now = self.ecs.manage(components.ActsNow)
         waiting_queue = self.ecs.manage(components.WaitsForAction)
         players = self.ecs.manage(components.Player)
-        locations = self.ecs.manage(components.Location)
 
         performed_action = set()
-        for actor, location in self.ecs.join(acts_now.entities, locations):
+        for actor in acts_now:
             action_cost = 0
             if actor in players:
                 self.run_state = RunState.WAITING_FOR_INPUT
+                if not self.player == actor:
+                    self.render(force=True)
                 self.player = actor
                 action_cost = self.input_handler.handle(wait=self.wait, actor=self.player)
+                if not action_cost:
+                    break
             else:
                 # Actor AI move
                 action_cost = ai.perform_action(self.ecs, actor)
@@ -54,8 +57,8 @@ class GameLoop:
                 break
         acts_now.remove(*performed_action)
 
-    def render(self):
-        if self.last_render and time.time() - self.last_render < self.frame:
+    def render(self, force=False):
+        if not force and self.last_render and time.time() - self.last_render < self.frame:
             return
         if self.renderer.render(self.player):
             self.last_render = time.time()

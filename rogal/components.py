@@ -145,11 +145,19 @@ class Viewshed(Component):
 
 
 class LevelMemory(Component):
-    __slots__ = ('revealed', )
-    params = ()
+    __slots__ = ('shared', 'revealed', )
+    params = ('shared', )
 
-    def __init__(self):
-        self.revealed = {}
+    _SHARED = {}
+
+    def __new__(cls, shared=False):
+        memory = shared and cls._SHARED.get(shared)
+        if not memory:
+            memory = super(Component, cls).__new__(cls)
+            memory.shared = shared
+            memory.revealed = {}
+            cls._SHARED[shared] = memory
+        return memory
 
     def update(self, level, fov):
         if not level.id in self.revealed:

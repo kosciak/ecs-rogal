@@ -76,10 +76,10 @@ class RoomsLevelGenerator(Generator):
 
     def spawn_closed_door(self, position):
         self.level.terrain[position] = Terrain.DOOR.id
-        self.entities.spawn('props.CLOSED_DOOR', self.level.id, position)
+        return self.entities.spawn('props.CLOSED_DOOR', self.level.id, position)
 
     def spawn_player(self, position):
-        self.entities.spawn('actors.PLAYER', self.level.id, position)
+        return self.entities.spawn('actors.PLAYER', self.level.id, position)
 
     def spawn_monster(self, position):
         monster = self.rng.choice([
@@ -87,7 +87,7 @@ class RoomsLevelGenerator(Generator):
             'actors.BAT',
             'actors.SNAIL',
         ])
-        self.entities.spawn(monster, self.level.id, position)
+        return self.entities.spawn(monster, self.level.id, position)
 
     def spawn_entities(self):
         raise NotImplementedError()
@@ -127,6 +127,11 @@ class RandomEntitiesMixin:
         position = self.rooms[0].center
         self.spawn_player(position)
         occupied.add(position)
+
+        # Spawn SECOND player
+        # position = self.rng.choice(self.rooms).center
+        # self.spawn_player(position)
+        # occupied.add(position)
 
         # Doors
         for corridor in self.corridors:

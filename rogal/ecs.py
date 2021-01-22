@@ -17,7 +17,7 @@ class Component:
     """
 
     __slots__ = ()
-    params = ()
+    params = None
 
     @property
     def name(self):
@@ -27,17 +27,22 @@ class Component:
     def qualname(self):
         return f'{self.__class__.__module__}.{self.name}'
 
+    @property
+    def parameters(self):
+        parameters = self.params
+        if params is None:
+            params = self.__slots__
+        return parameters
+
     def __reduce__(self):
         data = []
-        params = self.params or self.__slots__
-        for param in params:
+        for param in self.parameters:
             data.append(getattr(self, param))
         return data
 
     def serialize(self):
         data = {}
-        params = self.params or self.__slots__
-        for param in params:
+        for param in self.parameters:
             data[param] = getattr(self, param)
         return data
 
@@ -49,11 +54,7 @@ class Component:
     #    return id(self) == id(other)
 
     def __repr__(self):
-        param_values = []
-        if self.params:
-            param_values = [(param, getattr(self, param)) for param in self.params]
-        elif self.__slots__:
-            param_values = [(param, getattr(self, param)) for param in self.__slots__]
+        param_values = [(param, getattr(self, param)) for param in self.parameters]
         if not param_values:
             return f'<{self.name}>'
         else:
@@ -250,7 +251,7 @@ class JoinableManager:
         return self._values.get(entity)
 
     def __iter__(self):
-        yield from self._values.values()
+        yield from self._values.keys()
 
     def discard(self, entity):
         self._values.pop(entity, None)

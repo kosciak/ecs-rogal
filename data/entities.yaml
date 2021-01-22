@@ -12,8 +12,8 @@ terrain:
     Renderable:
       tile: VOID
       render_order: TERRAIN
-    BlocksVision:
-    BlocksMovement:
+    BlocksVision: true
+    BlocksMovement: true
 
   DOOR:
     Terrain:
@@ -27,8 +27,8 @@ terrain:
     Renderable:
       tile: STONE_WALL
       render_order: TERRAIN
-    BlocksVision:
-    BlocksMovement:
+    BlocksVision: true
+    BlocksMovement: true
 
   STONE_FLOOR:
     Terrain:
@@ -67,20 +67,20 @@ foliage:
 
 props:
   OPEN_DOOR: &OPEN_DOOR
-    Prop:
+    Prop: true
     Name: Open door
     Renderable:
       tile: OPEN_DOOR
       render_order: PROPS
 
   CLOSED_DOOR:
-    Prop:
+    Prop: true
     Name: Closed door,
     Renderable:
       tile: CLOSED_DOOR
       render_order: PROPS
-    BlocksMovement:
-    BlocksVision:
+    BlocksMovement: true
+    BlocksVision: true
     OnOperate:
       insert: 
         *OPEN_DOOR
@@ -99,13 +99,15 @@ items:
 
 actors:
   PLAYER:
-    Player:
+    Player: true
     Name: Player
     Renderable:
       tile: PLAYER
       render_order: ACTORS
-    BlocksMovement:
+    BlocksMovement: true
     Viewshed: 12
+    LevelMemory: 
+      shared: players
     WaitsForAction: 1
     HitPoints: 20
     Attack: 10
@@ -113,12 +115,12 @@ actors:
     MovementSpeed: 60
 
   MONSTER:
-    Monster:
+    Monster: true
     Name: Monster
     Renderable:
       tile: MONSTER
       render_order: ACTORS
-    BlocksMovement:
+    BlocksMovement: true
     Viewshed: 12
     WaitsForAction: !randint [2, 10]
     HitPoints: 10
@@ -127,12 +129,12 @@ actors:
     MovementSpeed: 60
 
   BAT:
-    Monster:
+    Monster: true
     Name: Bat
     Renderable:
       tile: BAT
       render_order: ACTORS
-    BlocksMovement:
+    BlocksMovement: true
     Viewshed: 12
     WaitsForAction: !randint [2, 10]
     HitPoints: 10
@@ -141,12 +143,12 @@ actors:
     MovementSpeed: 30
 
   SNAIL:
-    Monster:
+    Monster: true
     Name: Snail
     Renderable:
       tile: SNAIL
       render_order: ACTORS
-    BlocksMovement:
+    BlocksMovement: true
     Viewshed: 12
     WaitsForAction: !randint [2, 10]
     HitPoints: 10
@@ -159,7 +161,7 @@ actors:
 
 particles:
   HIT_PARTICLE:
-    Animation:
+    Animation: true
     Particle: .075
     Renderable:
       tile: MELEE_HIT
