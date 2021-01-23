@@ -1,3 +1,5 @@
+import enum
+
 import numpy as np
 
 from .glyphs import Glyph
@@ -72,76 +74,141 @@ That's why we use diagonal bitmasking to fix it
 
 """
 
+class Cardinal(enum.IntFlag):
+    NONE = 0
+    N = 1 << 0
+    S = 1 << 1
+    W = 1 << 2
+    E = 1 << 3
+    NW = N | W
+    NE = N | E
+    SW = S | W
+    SE = S | E
+    NS = N | S
+    WE = W | E
+    NSW = NS | W
+    NSE = NS | E
+    WEN = WE | N
+    WES = WE | S
+    NSWE = NS | WE
 
-BITMASK_LINE = {
-    0:  Glyph.RADIO_UNSET,
-    1:  Glyph.VLINE,    # N
-    2:  Glyph.VLINE,    #   S
-    3:  Glyph.VLINE,    # N+S
-    4:  Glyph.HLINE,    #     W
-    5:  Glyph.SE,       # N  +W
-    6:  Glyph.NE,       # S  +W
-    7:  Glyph.TEEW,     # N+S+W
-    8:  Glyph.HLINE,    #       E
-    9:  Glyph.SW,       # N    +E
-    10: Glyph.NW,       #   S  +E
-    11: Glyph.TEEE,     # N+S  +E
-    12: Glyph.HLINE,    #     W+E
-    13: Glyph.TEEN,     # N  +W+E
-    14: Glyph.TEES,     #   S+W+E
-    15: Glyph.CROSS,    # N+S+W+E
+
+class Diagonal(enum.IntFlag):
+    NONE = 0
+    NW = 1 << 0
+    SE = 1 << 1
+    SW = 1 << 2
+    NE = 1 << 3
+    N = NW | NE
+    S = SW | SE
+    W = NW | SW
+    E = NE | SE
+    NSWE = N | S
+
+
+WALLS_LINE = {
+    Cardinal.NONE   : Glyph.RADIO_UNSET,
+    Cardinal.N      : Glyph.VLINE,    # N
+    Cardinal.S      : Glyph.VLINE,    #   S
+    Cardinal.NS     : Glyph.VLINE,    # N+S
+    Cardinal.W      : Glyph.HLINE,    #     W
+    Cardinal.NW     : Glyph.SE,       # N  +W
+    Cardinal.SW     : Glyph.NE,       # S  +W
+    Cardinal.NSW    : Glyph.TEEW,     # N+S+W
+    Cardinal.E      : Glyph.HLINE,    #       E
+    Cardinal.NE     : Glyph.SW,       # N    +E
+    Cardinal.SE     : Glyph.NW,       #   S  +E
+    Cardinal.NSE    : Glyph.TEEE,     # N+S  +E
+    Cardinal.WE     : Glyph.HLINE,    #     W+E
+    Cardinal.WEN    : Glyph.TEEN,     # N  +W+E
+    Cardinal.WES    : Glyph.TEES,     #   S+W+E
+    Cardinal.NSWE   : Glyph.CROSS,    # N+S+W+E
 }
 
-BITMASK_DLINE = {
-    0:  Glyph.BULLET_SQUARE,
-    1:  Glyph.DVLINE,   # N
-    2:  Glyph.DVLINE,   #   S
-    3:  Glyph.DVLINE,   # N+S
-    4:  Glyph.DHLINE,   #     W
-    5:  Glyph.DSE,      # N  +W
-    6:  Glyph.DNE,      # S  +W
-    7:  Glyph.DTEEW,    # N+S+W
-    8:  Glyph.DHLINE,   #       E
-    9:  Glyph.DSW,      # N    +E
-    10: Glyph.DNW,      #   S  +E
-    11: Glyph.DTEEE,    # N+S  +E
-    12: Glyph.DHLINE,   #     W+E
-    13: Glyph.DTEEN,    # N  +W+E
-    14: Glyph.DTEES,    #   S+W+E
-    15: Glyph.DCROSS,   # N+S+W+E
+WALLS_DLINE = {
+    Cardinal.NONE   : Glyph.BULLET_SQUARE,
+    Cardinal.N      : Glyph.DVLINE,    # N
+    Cardinal.S      : Glyph.DVLINE,    #   S
+    Cardinal.NS     : Glyph.DVLINE,    # N+S
+    Cardinal.W      : Glyph.DHLINE,    #     W
+    Cardinal.NW     : Glyph.DSE,       # N  +W
+    Cardinal.SW     : Glyph.DNE,       # S  +W
+    Cardinal.NSW    : Glyph.DTEEW,     # N+S+W
+    Cardinal.E      : Glyph.DHLINE,    #       E
+    Cardinal.NE     : Glyph.DSW,       # N    +E
+    Cardinal.SE     : Glyph.DNW,       #   S  +E
+    Cardinal.NSE    : Glyph.DTEEE,     # N+S  +E
+    Cardinal.WE     : Glyph.DHLINE,    #     W+E
+    Cardinal.WEN    : Glyph.DTEEN,     # N  +W+E
+    Cardinal.WES    : Glyph.DTEES,     #   S+W+E
+    Cardinal.NSWE   : Glyph.DCROSS,    # N+S+W+E
 }
 
 
-def cardinal_bitmask(shape, padded):
-    cardinal = np.zeros(shape, dtype=int)
-    cardinal += padded[ 1:-1 ,  :-2] << 0 # N
-    cardinal += padded[ 1:-1 , 2:  ] << 1 # S
-    cardinal += padded[  :-2 , 1:-1] << 2 # W
-    cardinal += padded[ 2:   , 1:-1] << 3 # E
-    return cardinal
+def is_set(check, bits):
+    """Return True if all bits are set."""
+    return check & bits == bits
 
 
-def diagonal_bitmask(shape, padded):
-    diagonal = np.zeros(shape, dtype=int)
-    diagonal += padded[  :-2 ,  :-2] << 0 # NW
-    diagonal += padded[ 2:   , 2:  ] << 1 # SE
-    diagonal += padded[  :-2 , 2:  ] << 2 # SW
-    diagonal += padded[ 2:   ,  :-2] << 3 # NE
-    return diagonal
+def get_cardinals(shape, padded):
+    """Return bitmask for cardinal neighbours."""
+    cardinals = np.zeros(shape, dtype=int)
+    cardinals |= padded[ 1:-1 ,  :-2] << 0 # N
+    cardinals |= padded[ 1:-1 , 2:  ] << 1 # S
+    cardinals |= padded[  :-2 , 1:-1] << 2 # W
+    cardinals |= padded[ 2:   , 1:-1] << 3 # E
+    return cardinals
 
 
-def walls_bitmask(walls):
-    shape = walls.shape
-    padded = np.pad(walls, 1)
+def get_diagonals(shape, padded):
+    """Return bitmask for diagonal neighbours."""
+    diagonals = np.zeros(shape, dtype=int)
+    diagonals |= padded[  :-2 ,  :-2] << 0 # NW
+    diagonals |= padded[ 2:   , 2:  ] << 1 # SE
+    diagonals |= padded[  :-2 , 2:  ] << 2 # SW
+    diagonals |= padded[ 2:   ,  :-2] << 3 # NE
+    return diagonals
 
-    cardinal = cardinal_bitmask(shape, padded)
-    diagonal = diagonal_bitmask(shape, padded)
 
-    bitmask = cardinal.copy()
-    bitmask -= ((cardinal & 13 == 13) & (diagonal & 9 == 9)) << 0
-    bitmask -= ((cardinal & 14 == 14) & (diagonal & 6 == 6)) << 1
-    bitmask -= ((cardinal & 7 == 7) & (diagonal & 5 == 5)) << 2
-    bitmask -= ((cardinal & 11 == 11) & (diagonal & 10 == 10)) << 3
+def shape_padded(array, pad_width=1, pad_value=None):
+    """Return shape of array and padded array with padding of pad_with with pad_values."""
+    shape = array.shape
+    padded = np.pad(array, pad_width, constant_values=pad_value)
+    return shape, padded
+
+
+def bitmask(array, pad_value=None):
+    """Return 4-bit bitmask for cardinal neighbours."""
+    shape, padded = shape_padded(array, pad_value=pad_value)
+
+    cardinals = get_cardinals(shape, padded)
+    return cardinals
+
+
+def bitmask_8bit(array, pad_value=None):
+    """Return 8-bit bitmask for cardinal and diagonal neighbours."""
+    shape, padded = shape_padded(array, pad_value=pad_value)
+
+    cardinals = get_cardinals(shape, padded)
+    diagonals = get_diagonals(shape, padded)
+
+    # TODO: https://forum.unity.com/threads/2d-tile-bitmasking.513840/#post-3366221
+    bitmask = cardinals + (diagonals << 4)
+    return bitmask
+
+
+def bitmask_walls(array):
+    """Return 4-bit bitmask for walls neighbours."""
+    shape, padded = shape_padded(array)
+
+    cardinals = get_cardinals(shape, padded)
+    diagonals = get_diagonals(shape, padded)
+
+    bitmask = cardinals.copy()
+    bitmask ^= (is_set(cardinals, Cardinal.WEN) & is_set(diagonals, Diagonal.N)) << 0
+    bitmask ^= (is_set(cardinals, Cardinal.WES) & is_set(diagonals, Diagonal.S)) << 1
+    bitmask ^= (is_set(cardinals, Cardinal.NSW) & is_set(diagonals, Diagonal.W)) << 2
+    bitmask ^= (is_set(cardinals, Cardinal.NSE) & is_set(diagonals, Diagonal.E)) << 3
 
     return bitmask
 

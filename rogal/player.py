@@ -1,6 +1,7 @@
 import logging
 
 from . import components
+from . import bitmask
 
 
 log = logging.getLogger(__name__)
@@ -40,4 +41,21 @@ def try_move(ecs, player, direction):
 
     msg_log.warning(f'{direction} blocked!')
     return
+
+
+def reveal_level(ecs, player):
+    locations = ecs.manage(components.Location)
+    level_memories = ecs.manage(components.LevelMemory)
+
+    location = locations.get(player)
+    level = ecs.levels.get(location.level_id)
+    memory = level_memories.get(player)
+
+    non_transparent_bitmask = bitmask.bitmask_8bit(~level.transparent, pad_value=True)
+    print(non_transparent_bitmask[0,0])
+    memory.update(level, non_transparent_bitmask < 255)
+
+    msg_log.warning('Level revealed!')
+
+    return 0
 

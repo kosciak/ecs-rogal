@@ -24,6 +24,7 @@ SCROLLABLE_CAMERA = False
 SHOW_BOUNDARIES = True
 
 BITMASK_TERRAIN_TYPE = terrain.Type.WALL
+BITMASKED_WALLS = bitmask.WALLS_DLINE
 
 
 class Renderer:
@@ -117,7 +118,7 @@ class Camera(Rectangular):
         walls_mask = level.terrain >> 4 == terrain_type
         # NOTE: We don't want bitmasking to spoil not revealed terrain!
         walls_mask &= revealed
-        return bitmask.walls_bitmask(walls_mask)
+        return bitmask.bitmask_walls(walls_mask)
 
     def draw_boundaries(self, level):
         """Draw BOUNDARIES of the level."""
@@ -162,7 +163,7 @@ class Camera(Rectangular):
         renderable,
     ):
         for bitmask_value in np.unique(walls_mask):
-            ch = bitmask.BITMASK_DLINE[bitmask_value]
+            ch = BITMASKED_WALLS[bitmask_value]
             mask = terrain_mask & (walls_mask == bitmask_value)
             self.draw_terrain_tile(
                 mask, visible, revealed, mask_offset,

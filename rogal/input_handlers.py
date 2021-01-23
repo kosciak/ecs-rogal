@@ -2,7 +2,9 @@ import logging
 import time
 
 from . import keys
-from .player import try_move
+from .player import try_move, reveal_level
+
+import tcod.event
 
 
 log = logging.getLogger(__name__)
@@ -50,6 +52,9 @@ class PlayerActionsHandler(InputHandler):
         if key == keys.ESCAPE_KEY:
             log.warning('Quitting...')
             raise SystemExit()
+
+        if key == tcod.event.K_r:
+            return reveal_level(self.ecs, actor)
 
         if key in keys.WAIT_KEYS:
             log.info('Waiting...')
