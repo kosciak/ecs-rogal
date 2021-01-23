@@ -27,6 +27,7 @@ class Entities(YAMLDataLoader):
         )
         self.ecs = ecs
         self.tileset = tileset
+        self.entities_per_name = {}
         self.on_init()
 
     @property
@@ -112,10 +113,16 @@ class Entities(YAMLDataLoader):
         for name in self.get_names(on_load_create):
             self.create(name)
 
+    def get(self, name):
+        return self.entities_per_name.get(name)
+
     def create(self, name, entity_id=None):
         template = self.get_template(name)
         entity_id = self.parse_entity_id(template)
-        return self.ecs.create(*template, entity_id=entity_id)
+        entity = self.ecs.create(*template, entity_id=entity_id)
+        if entity_id is not None:
+            self.entities_per_name[name] = entity
+        return entity
 
     def spawn(self, name, level_id, position, entity_id=None):
         entity = self.create(name, entity_id=entity_id)

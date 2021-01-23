@@ -20,7 +20,7 @@ class Flag(IntFlag):
 def get_flags(ecs, entity):
     flags = Flag.NONE
 
-    if not entity:
+    if entity is None:
         return flags
 
     blocks_movement = ecs.manage(components.BlocksMovement)

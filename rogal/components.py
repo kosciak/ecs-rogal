@@ -86,7 +86,7 @@ class Location(WithPositionMixin, Component):
 
 class Renderable(Component):
     __slots__ = ('_tile', 'render_order', )
-    params = ('tile', 'render_order', )
+    params = ('tile_visible', 'tile_revealed', 'render_order', )
 
     def __init__(self, tile, render_order):
         self._tile = tile

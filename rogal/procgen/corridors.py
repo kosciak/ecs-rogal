@@ -30,7 +30,7 @@ class VerticalCorridor(Corridor):
 
     """
 
-    OFFSET = Position(1, 0)
+    OFFSET = Position(1, 1)
 
     is_horizontal = False
 
@@ -41,7 +41,7 @@ class VerticalCorridor(Corridor):
     def get_position(self, length):
         if length < 0:
             length += self.length
-        return Position(self.inner.x, self.y+length)
+        return Position(self.inner.x, self.inner.y+length)
 
 
 class HorizontalCorridor(Corridor):
@@ -53,7 +53,7 @@ class HorizontalCorridor(Corridor):
 
     """
 
-    OFFSET = Position(0, 1)
+    OFFSET = Position(1, 1)
 
     is_horizontal = True
 
@@ -64,7 +64,7 @@ class HorizontalCorridor(Corridor):
     def get_position(self, length):
         if length < 0:
             length += self.length
-        return Position(self.x+length, self.inner.y)
+        return Position(self.inner.x+length, self.inner.y)
 
 
 class CorridorGenerator(Generator):

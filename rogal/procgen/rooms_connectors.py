@@ -24,7 +24,7 @@ class RoomsConnector(Generator):
 
         self.corridor_generator = MixedCorridorGenerator([
             (StraightCorridorGenerator(self.rng), 1),
-            (ZShapeCorridorGenerator(self.rng), 6),
+            (ZShapeCorridorGenerator(self.rng), 4),
         ], self.rng)
 
         self.max_connection_distance = None
@@ -53,10 +53,16 @@ class RoomsConnector(Generator):
             # Do NOT create corridors intersecting with rooms
             if any(corridor.intersection(r) for r in rooms):
                 return False
+
             # Do NOT create corridors intersecting with other corridors on same vertical/horizontal plane
-            if any(corridor.intersection(c) for c in self.corridors
-                   if corridor.is_horizontal == c.is_horizontal):
+            # if any(corridor.intersection(c) for c in self.corridors
+            #        if corridor.is_horizontal == c.is_horizontal):
+            #     return False
+
+            # Do NOT create corridors intersecting with other corridors on same vertical/horizontal plane
+            if any(corridor.intersection(c) for c in self.corridors):
                 return False
+
         return True
 
     def generate_corridors(self, room, other):

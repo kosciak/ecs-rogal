@@ -63,7 +63,7 @@ class Room(Digable):
         return max_y-min_y
 
     def set_walls(self, level, wall):
-        level.terrain[self.x:self.x2+self.OFFSET.x, self.y:self.y2+self.OFFSET.y] = wall.id
+        level.terrain[self.x:self.x2+self.OFFSET.x, self.y:self.y2+self.OFFSET.y] = wall
 
 
 class RoomGenerator(Generator):
@@ -289,9 +289,14 @@ class GridRoomsGenerator(RoomsGenerator):
     MAX_ROOM_SIZE_FACTOR = .95
     MAX_ROOM_AREA_FACTOR = .85
 
-    def __init__(self, rng, level, grid):
+    def __init__(self, rng, level, grid=None):
         super().__init__(rng, level)
 
+        if grid is None:
+            grid = Size(
+                level.width//18,
+                level.height//11,
+            )
         self.grid = grid
 
     def calc_room_distances(self, room):
@@ -365,9 +370,11 @@ class BSPRoomsGenerator(RoomsGenerator):
     MAX_ROOM_SIZE_FACTOR = .95
     MAX_ROOM_AREA_FACTOR = .85
 
-    def __init__(self, rng, level, split_depth):
+    def __init__(self, rng, level, split_depth=None):
         super().__init__(rng, level)
 
+        if split_depth is None:
+            split_depth = level.width//18
         self.split_depth = split_depth
         self.bsp_generator = BSPGenerator(
             self.rng,

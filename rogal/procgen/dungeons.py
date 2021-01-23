@@ -4,7 +4,6 @@ import uuid
 from .. import entities
 from ..level import Level
 from ..geometry import Size
-from ..terrain import Terrain
 from ..utils import perf
 
 from .core import Generator
@@ -60,22 +59,25 @@ class RoomsLevelGenerator(Generator):
 
     def fill(self, terrain):
         """Fill whole level with given terrain."""
-        self.level.terrain[:] = terrain.id
+        self.level.terrain[:] = self.entities.get(terrain)
 
     def dig_rooms(self, wall, floor):
         """Dig rooms."""
+        wall = self.entities.get(wall)
+        floor = self.entities.get(floor)
         for room in self.rooms:
             room.set_walls(self.level, wall)
             room.dig_floor(self.level, floor)
 
     def dig_corridors(self, floor):
         """Dig corridors."""
+        floor = self.entities.get(floor)
         for corridor in self.corridors:
             # NOTE: No set_walls for now since corridors would be blocked by walls when crossing!
             corridor.dig_floor(self.level, floor)
 
     def spawn_closed_door(self, position):
-        self.level.terrain[position] = Terrain.DOOR.id
+        self.level.terrain[position] = self.entities.get('terrain.DOOR')
         return self.entities.spawn('props.CLOSED_DOOR', self.level.id, position)
 
     def spawn_player(self, position):
@@ -104,11 +106,12 @@ class RoomsLevelGenerator(Generator):
         # print(self.rng.random())
         # print('--------------')
 
-        #self.fill(Terrain.VOID)
-        self.fill(Terrain.STONE_WALL)
+        self.fill('terrain.STONE_WALL')
+        # self.fill('terrain.VOID')
 
-        self.dig_rooms(wall=Terrain.STONE_WALL, floor=Terrain.STONE_FLOOR)
-        self.dig_corridors(floor=Terrain.STONE_FLOOR)
+        self.dig_rooms(wall='terrain.STONE_WALL', floor='terrain.STONE_FLOOR')
+        self.dig_corridors(floor='terrain.STONE_FLOOR')
+        # self.dig_corridors(floor='terrain.ROCK_FLOOR')
 
         self.spawn_entities()
 
@@ -187,11 +190,7 @@ class RogueGridLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
     def __init__(self, seed, entities, size, depth=0):
         super().__init__(seed, entities, size, depth)
 
-        grid = Size(
-            size.width//18,
-            size.height//11,
-        )
-        self.rooms_generator = GridRoomsGenerator(self.rng, self.level, grid)
+        self.rooms_generator = GridRoomsGenerator(self.rng, self.level)
         self.rooms_connector = FollowToNearestRoomsConnector(self.rng)
 
 
@@ -200,8 +199,7 @@ class BSPLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
     def __init__(self, seed, entities, size, depth=0):
         super().__init__(seed, entities, size, depth)
 
-        split_depth = size.width//18
-        self.rooms_generator = BSPRoomsGenerator(self.rng, self.level, split_depth)
+        self.rooms_generator = BSPRoomsGenerator(self.rng, self.level)
         self.rooms_connector = BSPRoomsConnector(self.rng)
 
 

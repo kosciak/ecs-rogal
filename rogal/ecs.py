@@ -30,8 +30,8 @@ class Component:
     @property
     def parameters(self):
         parameters = self.params
-        if params is None:
-            params = self.__slots__
+        if parameters is None:
+            parameters = self.__slots__
         return parameters
 
     def __reduce__(self):
