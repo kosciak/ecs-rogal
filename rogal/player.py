@@ -52,7 +52,6 @@ def reveal_level(ecs, player):
     memory = level_memories.get(player)
 
     non_transparent_bitmask = bitmask.bitmask_8bit(~level.transparent, pad_value=True)
-    print(non_transparent_bitmask[0,0])
     memory.update(level, non_transparent_bitmask < 255)
 
     msg_log.warning('Level revealed!')

@@ -48,7 +48,8 @@ LEVEL_GENERATOR_CLS = RandomDungeonLevelGenerator
 # LEVEL_GENERATOR_CLS = StaticLevel
 
 SEED = None
-SEED = uuid.UUID("f6583dbd-83ce-4654-b0b0-278f13c5493b")
+# SEED = uuid.UUID("f6583dbd-83ce-4654-b0b0-278f13c5493b")
+# SEED = uuid.UUID("2d88638b-0391-4a4e-b345-ae2bb6da0070")
 
 
 def register_systems(ecs, entities):
