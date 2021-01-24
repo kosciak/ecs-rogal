@@ -203,8 +203,6 @@ def bitmask_walls(walls, revealed=None):
     cardinals = get_cardinals(shape, padded)
     diagonals = get_diagonals(shape, padded)
 
-    crosses = cardinals == Cardinal.NSWE
-
     bitmask = cardinals.copy()
     # Tees to straight lines
     bitmask ^= (is_set(cardinals, Cardinal.WEN) & is_set(diagonals, Diagonal.N)) << 0
@@ -223,6 +221,9 @@ def bitmask_walls(walls, revealed=None):
     bitmask ^= (is_set(cardinals, Cardinal.NSW) & is_set(diagonals, Diagonal.W)) << 2
     bitmask ^= (is_set(cardinals, Cardinal.NSE) & is_set(diagonals, Diagonal.E)) << 3
 
+    # Next step will mess crosses up...
+    crosses = cardinals == Cardinal.NSWE
+
     cardinals = get_cardinals(shape, padded)
 
     # Tees to corners NOTE: Breaks crosses, need to fix them later!
@@ -238,7 +239,7 @@ def bitmask_walls(walls, revealed=None):
     bitmask ^= (is_set(bitmask, Cardinal.WES) & is_set(cardinals, Cardinal.NE) & is_set(diagonals, Diagonal.SE)) << 3
     bitmask ^= (is_set(bitmask, Cardinal.WES) & is_set(cardinals, Cardinal.NW) & is_set(diagonals, Diagonal.SW)) << 2
 
-    # Fix revealed crosses!
+    # Fix crosses!
     bitmask[crosses] = Cardinal.NSWE
 
     return bitmask
