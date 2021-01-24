@@ -247,21 +247,13 @@ class MapIndexingSystem(System):
         RunState.ACTION_PERFORMED,
     }
 
-    def calculate_base_flags(self, level, *args, **kwargs):
-        if not np.any(level.base_flags):
-            for terrain in np.unique(level.terrain):
-                terrain_mask = level.terrain == terrain
-                terrain_flags = get_flags(self.ecs, terrain)
-                level.base_flags[terrain_mask] = terrain_flags
-
     def clear_flags(self, *args, **kwargs):
         for level in self.ecs.levels:
             # Calculate base_flags if needed
-            self.calculate_base_flags(level, *args, **kwargs)
+            level.calculate_base(self.ecs)
 
             # Clear previous data
-            level.entities.clear()
-            level.flags[:] = level.base_flags
+            level.clear()
 
     def update_indexes(self, *args, **kwargs):
         locations = self.ecs.manage(components.Location)

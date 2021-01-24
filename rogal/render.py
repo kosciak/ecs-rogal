@@ -261,8 +261,7 @@ class Camera(Rectangular):
         if memory:
             seen = memory.revealed.get(level.id)
         else:
-            non_transparent_bitmask = bitmask.bitmask_8bit(~level.transparent, pad_value=True)
-            seen = non_transparent_bitmask < 255
+            seen = level.revealable
 
         self.set_center(level, position)
 

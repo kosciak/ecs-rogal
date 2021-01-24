@@ -1,7 +1,6 @@
 import logging
 
 from . import components
-from . import bitmask
 
 
 log = logging.getLogger(__name__)
@@ -51,8 +50,7 @@ def reveal_level(ecs, player):
     level = ecs.levels.get(location.level_id)
     memory = level_memories.get(player)
 
-    non_transparent_bitmask = bitmask.bitmask_8bit(~level.transparent, pad_value=True)
-    memory.update(level, non_transparent_bitmask < 255)
+    memory.update(level, level.revealable)
 
     msg_log.warning('Level revealed!')
 
