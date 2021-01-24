@@ -117,8 +117,7 @@ class Camera(Rectangular):
     def walls_bitmask(self, level, revealed, terrain_type):
         walls_mask = level.terrain >> 4 == terrain_type
         # NOTE: We don't want bitmasking to spoil not revealed terrain!
-        walls_mask &= revealed
-        return bitmask.bitmask_walls(walls_mask)
+        return bitmask.bitmask_walls(walls_mask, revealed)
 
     def draw_boundaries(self, level):
         """Draw BOUNDARIES of the level."""
@@ -262,7 +261,8 @@ class Camera(Rectangular):
         if memory:
             seen = memory.revealed.get(level.id)
         else:
-            seen = np.ones(level.size, dtype=np.bool)
+            non_transparent_bitmask = bitmask.bitmask_8bit(~level.transparent, pad_value=True)
+            seen = non_transparent_bitmask < 255
 
         self.set_center(level, position)
 
