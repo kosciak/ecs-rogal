@@ -86,6 +86,8 @@ def run():
     # Entities initialization
     entities = Entities(ecs, tileset)
 
+    player = entities.create('actors.PLAYER')
+
     # Level generator
     level_generator = LEVEL_GENERATOR_CLS(seed, entities, LEVEL_SIZE)
 
@@ -104,8 +106,11 @@ def run():
         root_panel = wrapper.create_panel()
 
         # Level(s) generation
-        level = level_generator.generate()
+        level = level_generator.generate(player=player)
         ecs.add_level(level)
+        # for depth in range(1,4):
+        #     level = level_generator.generate(depth=depth)
+        #     ecs.add_level(level)
 
         renderer = Renderer(ecs, wrapper, root_panel, tileset)
         input_handler = PlayerActionsHandler(ecs, wrapper)

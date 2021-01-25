@@ -384,6 +384,7 @@ class SystemsManager:
     def register(self, system):
         self.systems.append(system)
 
+    # @perf.timeit
     def run(self, state, *args, **kwargs):
         systems = [system for system in self if system.should_run(state)]
         # log.debug(f'systems.run({state.name}): {systems}')

@@ -156,16 +156,36 @@ class RoomsGenerator(Generator):
     MAX_ROOM_SIZE_FACTOR = 1.0
     MAX_ROOM_AREA_FACTOR = 1.0
 
-    def __init__(self, rng, level):
+    def __init__(self, rng):
         super().__init__(rng)
 
-        self.level = level
-        self.rooms_area = Rectangle(
-            Position.ZERO,
-            Size(level.width-Room.OFFSET.x, level.height-Room.OFFSET.y)
-        )
+        self._level = None
+        self._rooms_area = None
         self.rooms = []
         self._room_generator = None
+
+    def clear(self):
+        self._rooms_area = None
+        self.rooms = []
+        self._room_generator = None
+
+    @property
+    def level(self):
+        return self._level
+
+    @level.setter
+    def level(self, level):
+        self._level = level
+        self.clear()
+
+    @property
+    def rooms_area(self):
+        if self._rooms_area is None:
+            self._rooms_area = Rectangle(
+                Position.ZERO,
+                Size(self.level.width-Room.OFFSET.x, self.level.height-Room.OFFSET.y)
+            )
+        return self._rooms_area
 
     def init_room_generator(self):
         room_generator = RoomGenerator(
@@ -181,9 +201,6 @@ class RoomsGenerator(Generator):
         if self._room_generator is None:
             self._room_generator = self.init_room_generator()
         return self._room_generator
-
-    def clear(self):
-        self.rooms = []
 
     def generate_room(self, area=None):
         room = self.room_generator.generate(area)
@@ -233,8 +250,8 @@ class RoomsGenerator(Generator):
     def generate_rooms(self):
         raise NotImplementedError()
 
-    def generate(self):
-        self.clear()
+    def generate(self, level):
+        self.level = level
         self.rooms = self.generate_rooms()
         rooms_distances = self.calc_rooms_distances()
         # self.rooms_distances_stats(rooms_distances)
@@ -251,10 +268,20 @@ class RandomlyPlacedRoomsGenerator(RoomsGenerator):
 
     MIN_ROOMS_AREA_FACTOR = .40
 
-    def __init__(self, rng, level):
-        super().__init__(rng, level)
+    def __init__(self, rng):
+        super().__init__(rng)
+        self._min_rooms_area = None
 
-        self.min_rooms_area = level.area * self.MIN_ROOMS_AREA_FACTOR
+    def clear(self):
+        super().clear()
+        self._min_rooms_area = None
+
+    @property
+    def min_rooms_area(self):
+        if self._min_rooms_area is None:
+            self._min_rooms_area = self.level.area * self.MIN_ROOMS_AREA_FACTOR
+        return self._min_rooms_area
+
 
     def init_room_generator(self):
         room_generator = RoomGenerator(
@@ -289,15 +316,24 @@ class GridRoomsGenerator(RoomsGenerator):
     MAX_ROOM_SIZE_FACTOR = .95
     MAX_ROOM_AREA_FACTOR = .85
 
-    def __init__(self, rng, level, grid=None):
-        super().__init__(rng, level)
+    def __init__(self, rng, grid=None):
+        super().__init__(rng)
+        self._grid = grid
+        self.fixed_grid = grid and True
 
-        if grid is None:
-            grid = Size(
-                level.width//18,
-                level.height//11,
+    def clear(self):
+        super().clear()
+        if not self.fixed_grid:
+            self._grid = None
+
+    @property
+    def grid(self):
+        if self._grid is None:
+            self._grid = Size(
+                self.level.width//18,
+                self.level.height//11,
             )
-        self.grid = grid
+        return self._grid
 
     def calc_room_distances(self, room):
         """Calculate distances from given room."""
@@ -360,9 +396,6 @@ class GridRoomsGenerator(RoomsGenerator):
 
         return rooms
 
-    def __repr__(self):
-        return f'<{self.__class__.__name__} grid={self.grid}>'
-
 
 class BSPRoomsGenerator(RoomsGenerator):
 
@@ -370,23 +403,37 @@ class BSPRoomsGenerator(RoomsGenerator):
     MAX_ROOM_SIZE_FACTOR = .95
     MAX_ROOM_AREA_FACTOR = .85
 
-    def __init__(self, rng, level, split_depth=None):
-        super().__init__(rng, level)
+    def __init__(self, rng, split_depth=None):
+        super().__init__(rng)
 
-        if split_depth is None:
-            split_depth = level.width//18
-        self.split_depth = split_depth
-        self.bsp_generator = BSPGenerator(
-            self.rng,
-            self.rooms_area.position, self.rooms_area.size,
-            min_size=int(self.MIN_ROOM_SIZE*1.5),
-        )
+        self._split_depth = split_depth
+        self.fixed_split_depth = split_depth and True
+        self._bsp_generator = None
         self.bsp_tree = None
         self.room_nodes = {}
 
     def clear(self):
         super().clear()
+        if not self.fixed_split_depth:
+            self._split_depth = None
+        self._bsp_generator = None
         self.room_nodes.clear()
+
+    @property
+    def split_depth(self):
+        if self._split_depth is None:
+            self._split_depth = self.level.width//18
+        return self._split_depth
+
+    @property
+    def bsp_generator(self):
+        if self._bsp_generator is None:
+            self._bsp_generator = BSPGenerator(
+                self.rng,
+                self.rooms_area.position, self.rooms_area.size,
+                min_size=int(self.MIN_ROOM_SIZE*1.5),
+            )
+        return self._bsp_generator
 
     def calc_room_distances(self, room):
         """Calculate distances from given room."""

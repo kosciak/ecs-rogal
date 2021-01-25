@@ -16,13 +16,12 @@ log = logging.getLogger(__name__)
 
 class RoomsLevelGenerator(Generator):
 
-    def __init__(self, seed, entities, size, depth=0):
+    def __init__(self, seed, entities, size):
         super().__init__(seed=seed)
 
         self.entities = entities
 
         self.size = size
-        self.depth = depth
         self._level = None
 
         self.rooms = []
@@ -31,25 +30,31 @@ class RoomsLevelGenerator(Generator):
         self.corridors = []
         self.rooms_connector = None
 
-    @property
-    def level(self):
-        if self._level is None:
-            # Generate UUID using rng, so it will be same UUID using same rng
-            level_id = self.rng.uuid4()
-            self._level = Level.create(self.size, self.depth)
-            self._level = Level(level_id, self.size, self.depth)
-            # Reseed generator to just generated level_id, this way levels with same seed are gennerated same way
-            self.rng.seed(level_id)
-        return self._level
-
     def clear(self):
-        self._level = None
         self.rooms = []
         self.corridors = []
 
+    def init_level(self, level_id=None, size=None, depth=0):
+        # Generate UUID using rng, so it will be same UUID using same rng
+        level_id = self.rng.uuid4()
+        size = size or self.size
+        level = Level(level_id, size, depth)
+        # Reseed generator to just generated level_id, this way levels with same seed are gennerated same way
+        self.rng.seed(level_id)
+        return level
+
+    @property
+    def level(self):
+        return self._level
+
+    @level.setter
+    def level(self, level):
+        self._level = level
+        self.clear()
+
     def generate_rooms(self):
         log.info(f'Generating rooms: {self.rooms_generator}')
-        rooms_distances = self.rooms_generator.generate()
+        rooms_distances = self.rooms_generator.generate(self.level)
         self.rooms = list(rooms_distances.keys())
         return rooms_distances
 
@@ -76,35 +81,15 @@ class RoomsLevelGenerator(Generator):
             # NOTE: No set_walls for now since corridors would be blocked by walls when crossing!
             corridor.dig_floor(self.level, floor)
 
-    def spawn_closed_door(self, position):
-        self.level.terrain[position] = self.entities.get('terrain.DOOR')
-        return self.entities.spawn('props.CLOSED_DOOR', self.level.id, position)
-
-    def spawn_player(self, position):
-        return self.entities.spawn('actors.PLAYER', self.level.id, position)
-
-    def spawn_monster(self, position):
-        monster = self.rng.choice([
-            'actors.MONSTER',
-            'actors.BAT',
-            'actors.SNAIL',
-        ])
-        return self.entities.spawn(monster, self.level.id, position)
-
-    def spawn_entities(self):
+    def spawn_entities(self, player=None):
         raise NotImplementedError()
 
-    def generate(self):
-        self.clear()
+    def generate(self, depth=0, player=None):
+        self.level = self.init_level(size=self.size, depth=depth)
         log.info(f'Generating: {self.level}')
+
         rooms_distances = self.generate_rooms()
-        # print('--------------')
-        # print(self.rng.random())
-        # print('--------------')
         self.connect_rooms(rooms_distances)
-        # print('--------------')
-        # print(self.rng.random())
-        # print('--------------')
 
         self.fill('terrain.STONE_WALL')
         # self.fill('terrain.VOID')
@@ -113,7 +98,7 @@ class RoomsLevelGenerator(Generator):
         self.dig_corridors(floor='terrain.STONE_FLOOR')
         # self.dig_corridors(floor='terrain.ROCK_FLOOR')
 
-        self.spawn_entities()
+        self.spawn_entities(player)
 
         # self.level.reveal()
         return self.level
@@ -121,20 +106,35 @@ class RoomsLevelGenerator(Generator):
 
 class RandomEntitiesMixin:
 
-    def spawn_entities(self):
+    # TODO: Move to separate EntitiesSpawner class?
+
+    def spawn_closed_door(self, position):
+        self.level.terrain[position] = self.entities.get('terrain.DOOR')
+        return self.entities.create_and_spawn('props.CLOSED_DOOR', self.level.id, position)
+
+    def spawn_player(self, position=None, player=None):
+        if player is None:
+            return
+        position = position or self.rooms[0].center
+        return self.entities.spawn(player, self.level.id, position)
+
+    def spawn_monster(self, position):
+        monster = self.rng.choice([
+            'actors.MONSTER',
+            'actors.BAT',
+            'actors.SNAIL',
+        ])
+        return self.entities.create_and_spawn(monster, self.level.id, position)
+
+    def spawn_entities(self, player=None):
         """Spawn entities."""
         # Occupied postions
         occupied = set()
 
         # Spawn Player in the center of the first room
         position = self.rooms[0].center
-        self.spawn_player(position)
+        self.spawn_player(position, player)
         occupied.add(position)
-
-        # Spawn SECOND player
-        # position = self.rng.choice(self.rooms).center
-        # self.spawn_player(position)
-        # occupied.add(position)
 
         # Doors
         for corridor in self.corridors:
@@ -178,28 +178,28 @@ class RandomDungeonLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
     """LevelGenerator creating random rooms connected with straight corridors."""
 
-    def __init__(self, seed, entities, size, depth=0):
-        super().__init__(seed, entities, size, depth)
+    def __init__(self, seed, entities, size):
+        super().__init__(seed, entities, size)
 
-        self.rooms_generator = RandomlyPlacedRoomsGenerator(self.rng, self.level)
+        self.rooms_generator = RandomlyPlacedRoomsGenerator(self.rng)
         self.rooms_connector = RandomToNearestRoomsConnector(self.rng)
 
 
 class RogueGridLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
-    def __init__(self, seed, entities, size, depth=0):
-        super().__init__(seed, entities, size, depth)
+    def __init__(self, seed, entities, size):
+        super().__init__(seed, entities, size)
 
-        self.rooms_generator = GridRoomsGenerator(self.rng, self.level)
+        self.rooms_generator = GridRoomsGenerator(self.rng)
         self.rooms_connector = FollowToNearestRoomsConnector(self.rng)
 
 
 class BSPLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
-    def __init__(self, seed, entities, size, depth=0):
-        super().__init__(seed, entities, size, depth)
+    def __init__(self, seed, entities, size):
+        super().__init__(seed, entities, size)
 
-        self.rooms_generator = BSPRoomsGenerator(self.rng, self.level)
+        self.rooms_generator = BSPRoomsGenerator(self.rng)
         self.rooms_connector = BSPRoomsConnector(self.rng)
 
 

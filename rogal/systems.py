@@ -107,7 +107,7 @@ class MeleeCombatSystem(System):
                 msg_log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
             # TODO: Do some damage!
             location = locations.get(target)
-            self.entities.spawn('particles.HIT_PARTICLE', location.level_id, location.position)
+            self.entities.create_and_spawn('particles.HIT_PARTICLE', location.level_id, location.position)
 
         # Clear processed targets
         melee_targets.clear()
@@ -179,12 +179,12 @@ class VisibilitySystem(System):
 
         #  Update Viesheds that needs update
         for entity, location, viewshed in self.ecs.join(self.ecs.entities, locations, viewsheds):
+            if not viewshed.needs_update:
+                # No need to recalculate
+                continue
             level = self.ecs.levels.get(location.level_id)
             if not location.position in level:
                 # Outside map/level boundaries
-                continue
-            if not viewshed.needs_update:
-                # No need to recalculate
                 continue
 
             fov = tcod.map.compute_fov(
@@ -202,10 +202,6 @@ class VisibilitySystem(System):
             )
 
             viewshed.update(fov)
-
-            # if entity in players:
-            #     # If player, update visible and revealed flags
-            #     level.update_visibility(fov)
 
             memory = level_memories.get(entity)
             if memory:
@@ -227,9 +223,9 @@ class VisibilitySystem(System):
             spotted_entities = EntitiesSet(visible_entities - viewshed.entities)
             viewshed.entities = visible_entities
 
-            if spotted_entities:
-                # TODO: Need to set this alert information!
-                log.debug(f'{entity} Spotted: {spotted_entities}')
+            # if spotted_entities:
+            #     # TODO: Need to set this alert information!
+            #     log.debug(f'{entity} Spotted: {spotted_entities}')
             if spotted_entities and entity in players:
                 names = self.ecs.manage(components.Name)
                 monsters = self.ecs.manage(components.Monster)
@@ -240,6 +236,7 @@ class VisibilitySystem(System):
                     names = ', '.join(spotted_targets)
                     msg_log.info(f'You see: {names}')
 
+    # @perf.timeit
     def run(self, state, *args, **kwargs):
         self.apply_blocks_vision_changes(*args, **kwargs)
         self.update_viewsheds(*args, **kwargs)
@@ -274,6 +271,7 @@ class MapIndexingSystem(System):
             entity_flags = get_flags(self.ecs, entity)
             level.flags[location.position] |= entity_flags
 
+    # @perf.timeit
     def run(self, state, *args, **kwargs):
         self.clear_flags(*args, **kwargs)
         self.update_indexes(*args, **kwargs)
