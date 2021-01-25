@@ -1,4 +1,4 @@
 #!/usr/bin/sh
 
-python -m rogal
+python -m rogal "$@"
 

@@ -3,6 +3,8 @@ import functools
 import logging
 import uuid
 
+from .utils import perf
+
 
 log = logging.getLogger(__name__)
 
@@ -357,9 +359,8 @@ class System:
     INCLUDE_STATES = set()
     EXCLUDE_STATES = set()
 
-    def __init__(self, ecs, entities):
+    def __init__(self, ecs):
         self.ecs = ecs
-        self.entities = entities
 
     def should_run(self, state):
         if self.EXCLUDE_STATES and state in self.EXCLUDE_STATES:

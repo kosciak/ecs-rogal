@@ -1,5 +1,10 @@
 import re
+import logging
+import os
 import uuid
+
+
+log = logging.getLogger(__name__)
 
 
 def generate_seed():
@@ -14,16 +19,31 @@ class AbstractRNG:
 
     """
 
-    def __init__(self, seed=None):
+    def __init__(self, seed=None, dump=None):
         seed = seed or generate_seed()
         self.rng = self.init_rng(seed)
+        self.dump_seed(seed, dump)
 
     def init_rng(self, seed):
         raise NotImplementedError()
 
-    def seed(self, seed):
+    def dump_seed(self, seed, name):
+        if not name:
+            return
+        if name is True:
+            name = self.__class__.__name__
+        log.debug(f'{name}(seed="{seed}")')
+        fn = os.path.join('.seeds', f'{name}.seed')
+        fn_dir = os.path.dirname(fn)
+        if not os.path.exists(fn_dir):
+            os.mkdir(fn_dir)
+        with open(fn, 'w') as f:
+            f.write(f'{seed}\n')
+
+    def seed(self, seed, dump=None):
         """Set seed for random generator."""
-        raise NotImplementedError()
+        self.rng = self.init_rng(seed)
+        self.dump_seed(seed, dump)
 
     def randbytes(self, n):
         """Return n random bytes."""
@@ -90,10 +110,6 @@ class PyRandomRNG(AbstractRNG):
         import random
         return random.Random(seed.int)
 
-    def seed(self, seed):
-        """Set seed for random generator."""
-        self.rng.seed(seed.int)
-
     def randbytes(self, n):
         """Return n random bytes."""
         return self.rng.randbytes(n)
@@ -141,10 +157,6 @@ class NumpyRNG(AbstractRNG):
     def init_rng(self, seed):
         import numpy.random
         return numpy.random.default_rng(seed.int)
-
-    def seed(self, seed):
-        """Set seed for random generator."""
-        self.rng = self.init_rng(seed)
 
     def randbytes(self, n):
         """Return n random bytes."""

@@ -11,6 +11,8 @@ from .geometry import Rectangular, Position, Size, Rectangle
 from .renderable import RenderOrder, Colors, Tile
 from . import terrain
 
+from .utils import perf
+
 
 log = logging.getLogger(__name__)
 

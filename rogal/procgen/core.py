@@ -1,6 +1,5 @@
 import collections
 import logging
-import os
 
 from ..geometry import Rectangular, Position, Size, Rectangle
 from ..rng import RNG
@@ -19,15 +18,7 @@ class Generator:
 
     def init_rng(self, seed=None):
         """Init RNG with given seed, or generate new seed."""
-        rng = RNG(seed)
-        log.debug(f'{self.__class__.__name__}(seed="{seed}")')
-        fn = os.path.join('.seeds', f'{self.__class__.__name__}.seed')
-        fn_dir = os.path.dirname(fn)
-        if not os.path.exists(fn_dir):
-            os.mkdir(fn_dir)
-        with open(fn, 'w') as f:
-            f.write(f'{seed}\n')
-        return rng
+        return RNG(seed, dump=self.__class__.__name__)
 
     def __repr__(self):
         return f'<{self.__class__.__name__}>'

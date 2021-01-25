@@ -12,6 +12,8 @@ from .ecs import EntitiesSet
 from .flags import Flag, get_flags
 from .run_state import RunState
 
+from .utils import perf
+
 
 log = logging.getLogger(__name__)
 msg_log = logging.getLogger('rogal.messages')
@@ -89,6 +91,10 @@ class MeleeCombatSystem(System):
     INCLUDE_STATES = {
         RunState.ACTION_PERFORMED,
     }
+
+    def __init__(self, ecs, entities):
+        super().__init__(ecs)
+        self.entities = entities
 
     def run(self, state, *args, **kwargs):
         players = self.ecs.manage(components.Player)
