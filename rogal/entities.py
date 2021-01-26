@@ -127,6 +127,9 @@ class Entities(YAMLDataLoader):
     def spawn(self, entity, level_id, position):
         locations = self.ecs.manage(components.Location)
         locations.insert(entity, level_id, position)
+        level = self.ecs.levels.get(level_id)
+        if level:
+            level.update_entity(self.ecs, entity, position)
         return entity
 
     def create_and_spawn(self, name, level_id, position, entity_id=None):

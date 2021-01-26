@@ -14,9 +14,9 @@ from . import terrain
 # Flags
 
 BlocksMovement = Flag('BlocksMovement')
+BlocksMovementChanged = Flag('BlocksMovementChanged')
 
 BlocksVision = Flag('BlocksVision')
-
 BlocksVisionChanged = Flag('BlocksVisionChanged')
 
 

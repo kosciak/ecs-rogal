@@ -13,7 +13,8 @@ log = logging.getLogger(__name__)
 
 class GameLoop:
 
-    FPS = 60
+    ANIMATIONS_FPS = 60
+    INPUT_FPS = 30
 
     def __init__(self, ecs, renderer, input_handler):
         self.ecs = ecs
@@ -22,7 +23,19 @@ class GameLoop:
         self.run_state = RunState.PRE_RUN
         self.player = None
         self.last_render = None
-        self.frame = 1./self.FPS
+        self.frame = None
+        self.wait = None
+        self.fps = self.INPUT_FPS
+        self.performed_count = 0
+
+    @property
+    def fps(self):
+        return self._fps
+
+    @fps.setter
+    def fps(self, fps):
+        self._fps = fps
+        self.frame = 1./self._fps
         self.wait = self.frame*3
 
     def run_systems(self):
@@ -31,6 +44,8 @@ class GameLoop:
     def queue_actions(self):
         # Each actor performs action
         acts_now = self.ecs.manage(components.ActsNow)
+        if not acts_now:
+            return
         waiting_queue = self.ecs.manage(components.WaitsForAction)
         players = self.ecs.manage(components.Player)
 
@@ -38,7 +53,9 @@ class GameLoop:
         for actor in acts_now:
             action_cost = 0
             if actor in players:
-                self.run_state = RunState.WAITING_FOR_INPUT
+                if self.performed_count:
+                    log.debug(f'Actions performed since: {self.performed_count}')
+                    self.performed_count = 0
                 if not self.player == actor:
                     self.render(force=True)
                 self.player = actor
@@ -52,10 +69,11 @@ class GameLoop:
             if action_cost:
                 waiting_queue.insert(actor, action_cost)
                 performed_action.add(actor)
-                self.run_state = RunState.ACTION_PERFORMED
-                # TODO: Perform all actions at once for all actors (including Player)?
-                break
+
+        self.performed_count += len(performed_action)
         acts_now.remove(*performed_action)
+        if not acts_now:
+            self.run_state = RunState.ACTION_PERFORMED
 
     def render(self, force=False):
         if not force and \
@@ -68,15 +86,22 @@ class GameLoop:
     def join(self):
         self.run_systems()
         while True:
-            self.render()
+            with perf.Perf('render.Renderer.render()'):
+                self.render()
             acts_now = self.ecs.manage(components.ActsNow)
             pending_animations = self.ecs.manage(components.Animation)
             if pending_animations:
                 self.run_state = RunState.ANIMATIONS
+                self.fps = self.ANIMATIONS_FPS
                 # NOTE: Sleep for half a frame, no need to run continously
                 time.sleep(self.frame/2)
             elif not acts_now:
                 self.run_state = RunState.TICKING
+                self.fps = self.INPUT_FPS
+            else:
+                # print('Acts:', len(acts_now))
+                self.run_state = RunState.WAITING_FOR_INPUT
+                self.fps = self.INPUT_FPS
             self.queue_actions()
             self.run_systems()
 

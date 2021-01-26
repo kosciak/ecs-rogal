@@ -192,30 +192,6 @@ class Entity(int):
             hex[:8], hex[8:12], hex[12:16], hex[16:20], hex[20:])
 
 
-class EntitiesIterator:
-
-    __slots__ = ('managers', )
-
-    def __init__(self, *managers):
-        self.managers = managers
-
-    def __iter__(self):
-        if not all(self.managers):
-            return
-        if len(self.managers) == 1 and \
-           isinstance(self.managers[0], EntitiesManager):
-            # NOTE: Iterate through all entities, it's the only one manager
-            entities = self.managers[0].entities
-        else:
-            entities = set.intersection(*(
-                manager.entities
-                for manager in self.managers
-                # NOTE: No need to intersect with ALL entitites
-                if not isinstance(manager, EntitiesManager)
-            ))
-        yield from entities
-
-
 class JoinIterator:
 
     __slots__ = ('managers', )
@@ -226,7 +202,12 @@ class JoinIterator:
     def __iter__(self):
         if not all(self.managers):
             return
-        entities = EntitiesIterator(*self.managers)
+        entities = set.intersection(*[
+            manager.entities
+            for manager in self.managers
+            # NOTE: No need to intersect with ALL entitites
+            if not isinstance(manager, EntitiesManager)
+        ])
         # TODO: Consider filtering out FlagComponent no need to have element that is always True
         for entity in entities:
             values = [
@@ -238,24 +219,32 @@ class JoinIterator:
 
 class JoinableManager:
 
-    __slots__ = ('_values', )
+    __slots__ = ('entities', '_values', )
 
     def __init__(self):
+        self.entities = EntitiesSet()
         self._values = {} # = {entity: value, }
 
     def __len__(self):
         return len(self._values)
 
     def __contains__(self, entity):
-        return entity in self._values
+        # return entity in self._values
+        return entity in self.entities
 
     def get(self, entity):
         return self._values.get(entity)
 
     def __iter__(self):
-        yield from self._values.keys()
+        # yield from self._values.keys()
+        yield from self.entities
+
+    def insert(self, entity, value):
+        self.entities.add(entity)
+        self._values[entity] = value
 
     def discard(self, entity):
+        self.entities.discard(entity)
         self._values.pop(entity, None)
 
     def remove(self, *entities):
@@ -263,18 +252,14 @@ class JoinableManager:
             self.discard(entity)
 
     def clear(self):
+        self.entities.clear()
         self._values.clear()
-
-    @property
-    def entities(self):
-        return EntitiesSet(self._values.keys())
 
 
 class EntitiesSet(set):
 
     def get(self, entity):
-        if entity in self:
-            return entity
+        return entity
 
     @property
     def entities(self):
@@ -299,7 +284,7 @@ class ComponentManager(JoinableManager):
         if component and not type(component) == self.component_type:
             raise ValueError('Invalid component type!')
         component = component or self.component_type(*args, **kwargs)
-        self._values[entity] = component
+        super().insert(entity, component)
 
     def __repr__(self):
         return f'<{self.__class__.__name__}({self.component_type.__name__})>'
@@ -384,7 +369,6 @@ class SystemsManager:
     def register(self, system):
         self.systems.append(system)
 
-    # @perf.timeit
     def run(self, state, *args, **kwargs):
         systems = [system for system in self if system.should_run(state)]
         # log.debug(f'systems.run({state.name}): {systems}')
@@ -433,7 +417,8 @@ class ECS:
         self.systems.register(system)
 
     def run(self, state, *args, **kwargs):
-        self.systems.run(state, *args, **kwargs)
+        with perf.Perf('ecs.Systems.run()'):
+            self.systems.run(state, *args, **kwargs)
 
     def add_level(self, level):
         self.levels.add(level)

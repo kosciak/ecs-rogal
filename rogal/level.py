@@ -22,12 +22,14 @@ class Level(Rectangular):
 
         self.terrain = np.zeros(self.size, dtype=dtypes.terrain_id_dt)
 
+        # TODO: Move to separate class?
         # base_* indexes - calculated from terrain
         self.base_flags = np.zeros(self.size, dtype=dtypes.flags_dt)
         self.base_movement_cost = np.zeros(self.size, dtype=dtypes.movement_cost_dt)
 
-        # NOTE: entities and indexes depend on MapIndexingSystem
-        self.entities = collections.defaultdict(EntitiesSet)
+        # NOTE: entities and indexes depend on IndexingSystem
+        self.entities = EntitiesSet()
+        self.entities_per_position = collections.defaultdict(EntitiesSet)
 
         # calculated from base_* indexes and entities
         self.flags = np.zeros(self.size, dtype=dtypes.flags_dt)
@@ -45,11 +47,39 @@ class Level(Rectangular):
                 terrain_mask = self.terrain == terrain
                 terrain_flags = get_flags(ecs, terrain)
                 self.base_flags[terrain_mask] = terrain_flags
+            self.clear()
 
     def clear(self):
         """Clear indexes."""
         self.entities.clear()
+        self.entities_per_position.clear()
         self.flags[:] = self.base_flags
+
+    def move_entity(self, ecs, entity, from_position, to_position):
+        flags = get_flags(ecs, entity)
+
+        if from_position:
+            self.flags[from_position] ^= flags
+            self.entities_per_position[from_position].discard(entity)
+
+        if to_position:
+            self.flags[to_position] |= flags
+            self.entities_per_position[to_position].add(entity)
+
+        if from_position and not to_position:
+            self.entities.discard(entity)
+        if to_position and not from_position:
+            self.entities.add(entity)
+
+    def update_entity(self, ecs, entity, position, prev_flags=None):
+        if prev_flags:
+            self.flags[position] ^= prev_flags
+        self.move_entity(ecs, entity, None, position)
+
+    def remove_entity(self, ecs, entity, position, prev_flags=None):
+        if prev_flags:
+            self.flags[position] ^= prev_flags
+        self.move_entity(ecs, entity, position, None)
 
     @property
     def transparent(self):
@@ -66,8 +96,12 @@ class Level(Rectangular):
     def get_entities(self, *positions):
         """Return entities on given position."""
         entities = EntitiesSet()
-        for position in positions:
-            entities.update(self.entities[position])
+        # for position in positions:
+        #     entities.update(self.entities_per_position[position])
+        positions = set(positions)
+        for position in self.entities_per_position.keys():
+            if position in positions:
+                entities.update(self.entities_per_position[position])
         return entities
 
     def is_movement_allowed(self, position):

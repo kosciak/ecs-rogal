@@ -41,7 +41,6 @@ class Renderer:
     def render(self, actor):
         if not actor:
             return False
-        # log.debug(f'Render @ {time.time()}')
         self.panel.clear()
         camera, message_log = self.panel.split(bottom=12)
         #camera = root_panel.create_panel(Position(10,10), CAMERA_SIZE)
@@ -217,10 +216,11 @@ class Camera(Rectangular):
         """Draw all renderable ENTITIES, in order described by Renderable.render_order."""
         renderables = self.ecs.manage(components.Renderable)
         locations = self.ecs.manage(components.Location)
-        for renderable, location in sorted(self.ecs.join(renderables, locations)):
-            if not location.level_id == level.id:
-                # Not on the map/level we are rendering, skip!
-                continue
+        # for renderable, location in sorted(self.ecs.join(renderables, locations)):
+        #     if not location.level_id == level.id:
+        #         # Not on the map/level we are rendering, skip!
+        #         continue
+        for renderable, entity, location in sorted(self.ecs.join(renderables, level.entities, locations)):
             if not location.position in coverage:
                 # Not inside area covered by camera, skip!
                 continue

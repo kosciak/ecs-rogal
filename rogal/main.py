@@ -53,6 +53,7 @@ SEED = None
 # SEED = uuid.UUID("acce1b71-a9a8-4558-9538-3f0b4a1a2976")
 # SEED = uuid.UUID("7cde54b5-6602-41f3-a8a3-a9e0ffc1817e")
 # SEED = uuid.UUID("7c0401fe-ffcd-4744-a5b3-ea5114a32b56")
+# SEED = uuid.UUID("63a630e9-6548-4291-a62a-fb29e1331a09") # Can't connect!
 
 
 def register_systems(ecs, entities):
@@ -66,8 +67,10 @@ def register_systems(ecs, entities):
         systems.MovementSystem(ecs),
         systems.OperateSystem(ecs),
 
-        systems.MapIndexingSystem(ecs),
+        systems.IndexingSystem(ecs),
         systems.VisibilitySystem(ecs),
+
+        systems.QueuecCleanupSystem(ecs),
     ]:
         ecs.register(system)
 
@@ -108,7 +111,7 @@ def run():
         # Level(s) generation
         level = level_generator.generate(player=player)
         ecs.add_level(level)
-        # for depth in range(1,4):
+        # for depth in range(1, 1):
         #     level = level_generator.generate(depth=depth)
         #     ecs.add_level(level)
 

@@ -25,7 +25,7 @@ class InputHandler:
 
     def handle(self, wait=None, *args, **kwargs):
         for event in self.wrapper.events(wait):
-            log.debug(f'Event: {event}')
+            # log.debug(f'Event: {event}')
             return self.dispatch(event, *args, **kwargs)
 
     def on_quit(self, event):
@@ -35,7 +35,7 @@ class InputHandler:
 
 class PlayerActionsHandler(InputHandler):
 
-    REPEAT_LIMI = 1./17
+    REPEAT_LIMIT = 1./6
 
     def __init__(self, ecs, wrapper):
         self.ecs = ecs
@@ -44,7 +44,7 @@ class PlayerActionsHandler(InputHandler):
 
     def on_keydown(self, event, actor):
         if event.repeat:
-            if self.last_keydown and time.time() - self.last_keydown < self.REPEAT_LIMI:
+            if self.last_keydown and time.time() - self.last_keydown < self.REPEAT_LIMIT:
                 # Skip repeated keys to prevent stacking of unprocessed events
                 return
         key = event.sym
