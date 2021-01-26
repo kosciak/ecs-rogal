@@ -86,9 +86,9 @@ class MeleeCombatSystem(System):
         RunState.ACTION_PERFORMED,
     }
 
-    def __init__(self, ecs, entities):
+    def __init__(self, ecs, spawner):
         super().__init__(ecs)
-        self.entities = entities
+        self.spawner = spawner
 
     def run(self, state, *args, **kwargs):
         players = self.ecs.manage(components.Player)
@@ -101,7 +101,7 @@ class MeleeCombatSystem(System):
                 msg_log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
             # TODO: Do some damage!
             location = locations.get(target)
-            self.entities.create_and_spawn('particles.HIT_PARTICLE', location.level_id, location.position)
+            self.spawner.create_and_spawn('particles.HIT_PARTICLE', location.level_id, location.position)
 
         # Clear processed targets
         melee_targets.clear()

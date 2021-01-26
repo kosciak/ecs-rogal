@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 #   - Use qualified names when loading "terrain.STONE_WALL", "actors.PLAYER", etc
 
 
-class Entities(YAMLDataLoader):
+class EntitiesSpawner(YAMLDataLoader):
 
     _data = None
 

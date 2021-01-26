@@ -1,7 +1,4 @@
-import collections
-from enum import Enum, IntEnum, IntFlag, auto
-
-from .flags import Flag
+from enum import IntEnum, auto
 
 
 class Type(IntEnum):

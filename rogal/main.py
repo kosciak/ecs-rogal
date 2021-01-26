@@ -14,7 +14,7 @@ from .procgen.dungeons import StaticLevel
 
 from . import components
 from .ecs import ECS
-from .entities import Entities
+from .entities_spawner import EntitiesSpawner
 from .renderable import Tileset
 from . import systems
 
@@ -56,14 +56,14 @@ SEED = None
 # SEED = uuid.UUID("63a630e9-6548-4291-a62a-fb29e1331a09") # Can't connect!
 
 
-def register_systems(ecs, entities):
+def register_systems(ecs, spawner):
     # NOTE: Systems are run in order they were registered
     for system in [
         systems.ParticlesSystem(ecs),
 
         systems.ActionsQueueSystem(ecs),
 
-        systems.MeleeCombatSystem(ecs, entities),
+        systems.MeleeCombatSystem(ecs, spawner),
         systems.MovementSystem(ecs),
         systems.OperateSystem(ecs),
 
@@ -86,16 +86,16 @@ def run():
     # Tileset initialization
     tileset = Tileset()
 
-    # Entities initialization
-    entities = Entities(ecs, tileset)
+    # Entities spawner initialization
+    spawner = EntitiesSpawner(ecs, tileset)
 
-    player = entities.create('actors.PLAYER')
+    player = spawner.create('actors.PLAYER')
 
     # Level generator
-    level_generator = LEVEL_GENERATOR_CLS(seed, entities, LEVEL_SIZE)
+    level_generator = LEVEL_GENERATOR_CLS(seed, spawner, LEVEL_SIZE)
 
     # Register systems
-    register_systems(ecs, entities)
+    register_systems(ecs, spawner)
 
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,

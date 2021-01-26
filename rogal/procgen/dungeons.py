@@ -1,7 +1,6 @@
 import logging
 import uuid
 
-from .. import entities
 from ..level import Level
 from ..geometry import Size
 from ..utils import perf
@@ -16,10 +15,10 @@ log = logging.getLogger(__name__)
 
 class RoomsLevelGenerator(Generator):
 
-    def __init__(self, seed, entities, size):
+    def __init__(self, seed, spawner, size):
         super().__init__(seed=seed)
 
-        self.entities = entities
+        self.spawner = spawner
 
         self.size = size
         self._level = None
@@ -64,19 +63,19 @@ class RoomsLevelGenerator(Generator):
 
     def fill(self, terrain):
         """Fill whole level with given terrain."""
-        self.level.terrain[:] = self.entities.get(terrain)
+        self.level.terrain[:] = self.spawner.get(terrain)
 
     def dig_rooms(self, wall, floor):
         """Dig rooms."""
-        wall = self.entities.get(wall)
-        floor = self.entities.get(floor)
+        wall = self.spawner.get(wall)
+        floor = self.spawner.get(floor)
         for room in self.rooms:
             room.set_walls(self.level, wall)
             room.dig_floor(self.level, floor)
 
     def dig_corridors(self, floor):
         """Dig corridors."""
-        floor = self.entities.get(floor)
+        floor = self.spawner.get(floor)
         for corridor in self.corridors:
             # NOTE: No set_walls for now since corridors would be blocked by walls when crossing!
             corridor.dig_floor(self.level, floor)
@@ -109,14 +108,14 @@ class RandomEntitiesMixin:
     # TODO: Move to separate EntitiesSpawner class?
 
     def spawn_closed_door(self, position):
-        self.level.terrain[position] = self.entities.get('terrain.DOOR')
-        return self.entities.create_and_spawn('props.CLOSED_DOOR', self.level.id, position)
+        self.level.terrain[position] = self.spawner.get('terrain.DOOR')
+        return self.spawner.create_and_spawn('props.CLOSED_DOOR', self.level.id, position)
 
     def spawn_player(self, position=None, player=None):
         if player is None:
             return
         position = position or self.rooms[0].center
-        return self.entities.spawn(player, self.level.id, position)
+        return self.spawner.spawn(player, self.level.id, position)
 
     def spawn_monster(self, position):
         monster = self.rng.choice([
@@ -124,7 +123,7 @@ class RandomEntitiesMixin:
             'actors.BAT',
             'actors.SNAIL',
         ])
-        return self.entities.create_and_spawn(monster, self.level.id, position)
+        return self.spawner.create_and_spawn(monster, self.level.id, position)
 
     def spawn_entities(self, player=None):
         """Spawn entities."""
@@ -178,8 +177,8 @@ class RandomDungeonLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
     """LevelGenerator creating random rooms connected with straight corridors."""
 
-    def __init__(self, seed, entities, size):
-        super().__init__(seed, entities, size)
+    def __init__(self, seed, spawner, size):
+        super().__init__(seed, spawner, size)
 
         self.rooms_generator = RandomlyPlacedRoomsGenerator(self.rng)
         self.rooms_connector = RandomToNearestRoomsConnector(self.rng)
@@ -187,8 +186,8 @@ class RandomDungeonLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
 class RogueGridLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
-    def __init__(self, seed, entities, size):
-        super().__init__(seed, entities, size)
+    def __init__(self, seed, spawner, size):
+        super().__init__(seed, spawner, size)
 
         self.rooms_generator = GridRoomsGenerator(self.rng)
         self.rooms_connector = FollowToNearestRoomsConnector(self.rng)
@@ -196,8 +195,8 @@ class RogueGridLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
 class BSPLevelGenerator(RandomEntitiesMixin, RoomsLevelGenerator):
 
-    def __init__(self, seed, entities, size):
-        super().__init__(seed, entities, size)
+    def __init__(self, seed, spawner, size):
+        super().__init__(seed, spawner, size)
 
         self.rooms_generator = BSPRoomsGenerator(self.rng)
         self.rooms_connector = BSPRoomsConnector(self.rng)
