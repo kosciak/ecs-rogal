@@ -6,6 +6,7 @@ import numpy as np
 from .ecs import Component, FloatComponent
 from .ecs import Flag, IntFlag, Int, Counter, String, EntityRef, component_type
 from .ecs import EntitiesSet
+from . import flags
 from .geometry import Direction, Position, WithPositionMixin
 from .renderable import RenderOrder
 from . import terrain
@@ -13,10 +14,10 @@ from . import terrain
 
 # Flags
 
-BlocksMovement = IntFlag('BlocksMovement', 2)
+BlocksMovement = IntFlag('BlocksMovement', flags.Flag.BLOCKS_MOVEMENT)
 BlocksMovementChanged = Flag('BlocksMovementChanged')
 
-BlocksVision = IntFlag('BlocksVision', 1)
+BlocksVision = IntFlag('BlocksVision', flags.Flag.BLOCKS_VISION)
 BlocksVisionChanged = Flag('BlocksVisionChanged')
 
 

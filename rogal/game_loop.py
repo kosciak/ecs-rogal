@@ -16,8 +16,9 @@ class GameLoop:
     ANIMATIONS_FPS = 60
     INPUT_FPS = 30
 
-    def __init__(self, ecs, renderer, input_handler):
+    def __init__(self, ecs, spatial, renderer, input_handler):
         self.ecs = ecs
+        self.spatial = spatial
         self.renderer = renderer
         self.input_handler = input_handler
         self.run_state = RunState.PRE_RUN
@@ -64,7 +65,7 @@ class GameLoop:
                     break
             else:
                 # Actor AI move
-                action_cost = ai.perform_action(self.ecs, actor)
+                action_cost = ai.perform_action(self.ecs, self.spatial, actor)
 
             if action_cost:
                 waiting_queue.insert(actor, action_cost)
@@ -95,6 +96,7 @@ class GameLoop:
                 self.fps = self.ANIMATIONS_FPS
                 # NOTE: Sleep for half a frame, no need to run continously
                 time.sleep(self.frame/2)
+                # TODO: When animation stops FPS drops and particle stays too long!
             elif not acts_now:
                 self.run_state = RunState.TICKING
                 self.fps = self.INPUT_FPS

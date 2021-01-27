@@ -10,21 +10,19 @@ msg_log = logging.getLogger('rogal.messages')
 ACTION_COST = 60
 
 
-def try_move(ecs, player, direction):
+def try_move(ecs, spatial, player, direction):
     locations = ecs.manage(components.Location)
-
-    location = locations.get(player)
-    level = ecs.levels.get(location.level_id)
-
     movement_directions = ecs.manage(components.WantsToMove)
     movement_speed = ecs.manage(components.MovementSpeed)
-    exits = level.get_exits(location.position)
+
+    location = locations.get(player)
+    exits = spatial.get_exits(location)
     if direction in exits:
         movement_directions.insert(player, direction)
         return movement_speed.get(player)
 
     target_position = location.position.move(direction)
-    target_entities = level.get_entities(target_position)
+    target_entities = spatial.get_entities(location, target_position)
 
     melee_targets = ecs.manage(components.WantsToMelee)
     with_hit_points = ecs.manage(components.HitPoints)
@@ -42,15 +40,14 @@ def try_move(ecs, player, direction):
     return
 
 
-def reveal_level(ecs, player):
+def reveal_level(ecs, spatial, player):
     locations = ecs.manage(components.Location)
     level_memories = ecs.manage(components.LevelMemory)
 
     location = locations.get(player)
-    level = ecs.levels.get(location.level_id)
     memory = level_memories.get(player)
-
-    memory.update(level, level.revealable)
+    level = ecs.levels.get(location.level_id)
+    memory.update(level, spatial.revealable(location.level_id))
 
     msg_log.warning('Level revealed!')
 

@@ -13,14 +13,13 @@ def get_movement_cost(ecs, actor):
     return movement_speed.get(actor) or ACTION_COST
 
 
-def random_move(ecs, actor):
+def random_move(ecs, spatial, actor):
     """Return random move direction from allowed exits."""
     locations = ecs.manage(components.Location)
     movement_directions = ecs.manage(components.WantsToMove)
 
     location = locations.get(actor)
-    level = ecs.levels.get(location.level_id)
-    exits = level.get_exits(location.position)
+    exits = spatial.get_exits(location)
     if exits:
         direction = random.choice(list(exits))
         movement_directions.insert(actor, direction)
@@ -28,7 +27,7 @@ def random_move(ecs, actor):
     return get_movement_cost(ecs, actor)
 
 
-def perform_action(ecs, actor, skip_if_not_seen=False):
+def perform_action(ecs, spatial, actor, skip_if_not_seen=False):
     if skip_if_not_seen:
         # Move only when seen by player
         players = ecs.manage(components.Player)
@@ -43,10 +42,10 @@ def perform_action(ecs, actor, skip_if_not_seen=False):
 
             player_viewshed = viewsheds.get(player)
             if actor_location.position in player_viewshed.positions:
-                return random_move(ecs, actor)
+                return random_move(ecs, spatial, actor)
 
         # Not in player viewshed, skip turn
         return get_movement_cost(ecs, actor)
 
     else:
-        return random_move(ecs, actor)
+        return random_move(ecs, spatial, actor)

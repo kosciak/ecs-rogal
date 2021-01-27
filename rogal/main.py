@@ -14,6 +14,7 @@ from .procgen.dungeons import StaticLevel
 
 from . import components
 from .ecs import ECS
+from .spatial_index import SpatialIndex
 from .entities_spawner import EntitiesSpawner
 from .renderable import Tileset
 from . import systems
@@ -56,19 +57,19 @@ SEED = None
 # SEED = uuid.UUID("63a630e9-6548-4291-a62a-fb29e1331a09") # Can't connect!
 
 
-def register_systems(ecs, spawner):
+def register_systems(ecs, spatial, spawner):
     # NOTE: Systems are run in order they were registered
     for system in [
-        systems.ParticlesSystem(ecs),
+        systems.ParticlesSystem(ecs, spatial),
 
         systems.ActionsQueueSystem(ecs),
 
         systems.MeleeCombatSystem(ecs, spawner),
-        systems.MovementSystem(ecs),
+        systems.MovementSystem(ecs, spatial),
         systems.OperateSystem(ecs),
 
-        systems.IndexingSystem(ecs),
-        systems.VisibilitySystem(ecs),
+        systems.IndexingSystem(ecs, spatial),
+        systems.VisibilitySystem(ecs, spatial),
 
         systems.QueuecCleanupSystem(ecs),
     ]:
@@ -83,11 +84,14 @@ def run():
     # ECS initialization
     ecs = ECS()
 
+    # Spatial index
+    spatial = SpatialIndex(ecs)
+
     # Tileset initialization
     tileset = Tileset()
 
     # Entities spawner initialization
-    spawner = EntitiesSpawner(ecs, tileset)
+    spawner = EntitiesSpawner(ecs, spatial, tileset)
 
     player = spawner.create('actors.PLAYER')
 
@@ -95,7 +99,7 @@ def run():
     level_generator = LEVEL_GENERATOR_CLS(seed, spawner, LEVEL_SIZE)
 
     # Register systems
-    register_systems(ecs, spawner)
+    register_systems(ecs, spatial, spawner)
 
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
@@ -111,12 +115,12 @@ def run():
         # Level(s) generation
         level = level_generator.generate(player=player)
         ecs.add_level(level)
-        # for depth in range(1, 1):
+        # for depth in range(1, 33):
         #     level = level_generator.generate(depth=depth)
         #     ecs.add_level(level)
 
-        renderer = Renderer(ecs, wrapper, root_panel, tileset)
-        input_handler = PlayerActionsHandler(ecs, wrapper)
-        game_loop = GameLoop(ecs, renderer, input_handler)
+        renderer = Renderer(ecs, spatial, wrapper, root_panel, tileset)
+        input_handler = PlayerActionsHandler(ecs, spatial, wrapper)
+        game_loop = GameLoop(ecs, spatial, renderer, input_handler)
         game_loop.join()
 

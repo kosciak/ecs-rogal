@@ -20,12 +20,13 @@ class EntitiesSpawner(YAMLDataLoader):
 
     _data = None
 
-    def __init__(self, ecs, tileset):
+    def __init__(self, ecs, spatial, tileset):
         self.fn = os.path.join(
             DATA_DIR,
             'entities.yaml'
         )
         self.ecs = ecs
+        self.spatial = spatial
         self.tileset = tileset
         self.entities_per_name = {}
         self.on_init()
@@ -126,10 +127,11 @@ class EntitiesSpawner(YAMLDataLoader):
 
     def spawn(self, entity, level_id, position):
         locations = self.ecs.manage(components.Location)
-        locations.insert(entity, level_id, position)
+        location = locations.insert(entity, level_id, position)
         level = self.ecs.levels.get(level_id)
         if level:
-            level.update_entity(self.ecs, entity, position)
+            # level.update_entity(self.ecs, entity, position)
+            self.spatial.add_entity(entity, location)
         return entity
 
     def create_and_spawn(self, name, level_id, position, entity_id=None):

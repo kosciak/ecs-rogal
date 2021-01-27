@@ -9,7 +9,6 @@ import tcod
 from . import components
 from .ecs import System
 from .ecs import EntitiesSet
-from .flags import Flag, get_flags
 from .run_state import RunState
 
 from .utils import perf
@@ -53,6 +52,10 @@ class MovementSystem(System):
         RunState.ACTION_PERFORMED,
     }
 
+    def __init__(self, ecs, spatial):
+        super().__init__(ecs)
+        self.spatial = spatial
+
     def apply_move(self, *args, **kwargs):
         players = self.ecs.manage(components.Player)
         names = self.ecs.manage(components.Name)
@@ -66,10 +69,8 @@ class MovementSystem(System):
 
             # Update position
             from_position = location.position
-            to_position = from_position.move(direction)
-            level = self.ecs.levels.get(location.level_id)
-            level.move_entity(self.ecs, entity, from_position, to_position)
-            location.position = to_position
+            location.position = location.position.move(direction)
+            self.spatial.update_entity(entity, location, from_position)
             has_moved.insert(entity)
 
         # Clear processed movement intents
@@ -152,7 +153,12 @@ class VisibilitySystem(System):
         RunState.ACTION_PERFORMED,
     }
 
-    def apply_blocks_vision_changes(self, *args, **kwargs):
+    def __init__(self, ecs, spatial):
+        super().__init__(ecs)
+        self.spatial = spatial
+
+    # TODO: rename this method!
+    def invalidate_blocks_vision_changed_viewsheds(self, *args, **kwargs):
         blocks_vision_changes = self.ecs.manage(components.BlocksVisionChanged)
         locations = self.ecs.manage(components.Location)
         viewsheds = self.ecs.manage(components.Viewshed)
@@ -170,7 +176,7 @@ class VisibilitySystem(System):
             if viewshed.positions & positions_per_level[location.level_id]:
                 viewshed.invalidate()
 
-    def invalidate_viewsheds(self, *args, **kwargs):
+    def invalidate_has_moved_viewsheds(self, *args, **kwargs):
         # Invalidate Viewshed after moving
         has_moved = self.ecs.manage(components.HasMoved)
         viewsheds = self.ecs.manage(components.Viewshed)
@@ -192,7 +198,7 @@ class VisibilitySystem(System):
             level = self.ecs.levels.get(location.level_id)
 
             fov = tcod.map.compute_fov(
-                transparency=level.transparent,
+                transparency=self.spatial.transparent(location.level_id),
                 pov=location.position,
                 radius=viewshed.view_range,
                 light_walls=True,
@@ -209,7 +215,6 @@ class VisibilitySystem(System):
 
             memory = level_memories.get(entity)
             if memory:
-                memory = level_memories.get(entity)
                 memory.update(level, fov)
 
     def spotted_alert(self, *args, **kwargs):
@@ -222,6 +227,7 @@ class VisibilitySystem(System):
             level = self.ecs.levels.get(location.level_id)
 
             # This! This is the part that is very costly
+            # TODO: Remake with spatial!
             visible_entities = level.get_entities(*viewshed.positions)
             spotted_entities = EntitiesSet(visible_entities - viewshed.entities)
             viewshed.entities = visible_entities
@@ -238,8 +244,8 @@ class VisibilitySystem(System):
 
     def run(self, state, *args, **kwargs):
         with perf.Perf('systems.VisibilitySystem.run()'):
-            self.apply_blocks_vision_changes(*args, **kwargs)
-            self.invalidate_viewsheds(*args, **kwargs)
+            self.invalidate_blocks_vision_changed_viewsheds(*args, **kwargs)
+            self.invalidate_has_moved_viewsheds(*args, **kwargs)
             self.update_viewsheds(*args, **kwargs)
             with perf.Perf('systems.VisibilitySystem.spotted_targets()'):
                 self.spotted_alert(*args, **kwargs)
@@ -252,27 +258,13 @@ class IndexingSystem(System):
         RunState.ACTION_PERFORMED,
     }
 
-    def calculate_base_indexes(self, *args, **kwargs):
-        for level in self.ecs.levels:
-            # Calculate base_flags if needed
-            level.calculate_base(self.ecs)
+    def __init__(self, ecs, spatial):
+        super().__init__(ecs)
+        self.spatial = spatial
 
-    def calculate_indexes(self, *args, **kwargs):
-        needs_update = set()
-        for level in self.ecs.levels:
-            if not level.entities:
-                needs_update.add(level.id)
-
-        if not needs_update:
-            return
-
-        locations = self.ecs.manage(components.Location)
-
-        for entity, location in self.ecs.join(self.ecs.entities, locations):
-            if not location.level_id in needs_update:
-                continue
-            level = self.ecs.levels.get(location.level_id)
-            level.update_entity(self.ecs, entity, location.position)
+    def calculate_spatial(self, *args, **kwargs):
+        if not self.spatial._entities:
+            self.spatial.calculate_entities()
 
     def update_flags(self, *args, **kwargs):
         blocks_vision_changes = self.ecs.manage(components.BlocksVisionChanged)
@@ -280,21 +272,14 @@ class IndexingSystem(System):
         locations = self.ecs.manage(components.Location)
 
         for entity, location in self.ecs.join(blocks_vision_changes.entities, locations):
-            level = self.ecs.levels.get(location.level_id)
-            flags = get_flags(self.ecs, entity)
-            prev_flags = flags ^ Flag.BLOCKS_VISION
-            level.update_entity(self.ecs, entity, location.position, prev_flags)
+            self.spatial.update_entity(entity, location)
 
         for entity, location in self.ecs.join(blocks_movement_changes.entities, locations):
-            level = self.ecs.levels.get(location.level_id)
-            flags = get_flags(self.ecs, entity)
-            prev_flags = flags ^ Flag.BLOCKS_MOVEMENT
-            level.update_entity(self.ecs, entity, location.position, prev_flags)
+            self.spatial.update_entity(entity, location)
 
     def run(self, state, *args, **kwargs):
         with perf.Perf('systems.IndexingSystem.run()'):
-            self.calculate_base_indexes(*args, **kwargs)
-            self.calculate_indexes(*args, **kwargs)
+            self.calculate_spatial(*args, **kwargs)
             self.update_flags(*args, **kwargs)
 
 
@@ -324,6 +309,10 @@ class ParticlesSystem(System):
         RunState.ANIMATIONS,
     }
 
+    def __init__(self, ecs, spatial):
+        super().__init__(ecs)
+        self.spatial = spatial
+
     def run(self, state, *args, **kwargs):
         particles = self.ecs.manage(components.Particle)
         outdated = EntitiesSet()
@@ -334,7 +323,6 @@ class ParticlesSystem(System):
 
         locations = self.ecs.manage(components.Location)
         for entity, location in self.ecs.join(outdated, locations):
-            level = self.ecs.levels.get(location.level_id)
-            level.remove_entity(self.ecs, entity, location.position)
+            self.spatial.remove_entity(entity, location)
         self.ecs.entities.remove(*outdated)
 

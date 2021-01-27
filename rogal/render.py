@@ -31,8 +31,9 @@ BITMASKED_WALLS = bitmask.WALLS_DLINE
 
 class Renderer:
 
-    def __init__(self, ecs, wrapper, panel, tileset):
+    def __init__(self, ecs, spatial, wrapper, panel, tileset):
         self.ecs = ecs
+        self.spatial = spatial
 
         self.wrapper = wrapper
         self.panel = panel
@@ -47,7 +48,7 @@ class Renderer:
 
         render_message_log(message_log.framed('logs'))
 
-        cam = Camera(self.ecs, camera.framed('mapcam'), self.tileset)
+        cam = Camera(self.ecs, self.spatial, camera.framed('mapcam'), self.tileset)
         cam.render(actor=actor)
 
         # Show rendered panel
@@ -57,8 +58,10 @@ class Renderer:
 
 class Camera(Rectangular):
 
-    def __init__(self, ecs, panel, tileset, scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
+    def __init__(self, ecs, spatial, panel, tileset,
+                 scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
         self.ecs = ecs
+        self.spatial = spatial
 
         self.panel = panel
         self.tileset = tileset
@@ -116,7 +119,7 @@ class Camera(Rectangular):
         return visible
 
     def walls_bitmask(self, level, revealed, terrain_type):
-        walls_mask = level.terrain >> 4 == terrain_type
+        walls_mask = self.spatial.terrain_type(level.id, terrain_type)
         # NOTE: We don't want bitmasking to spoil not revealed terrain!
         return bitmask.bitmask_walls(walls_mask, revealed)
 
@@ -216,11 +219,9 @@ class Camera(Rectangular):
         """Draw all renderable ENTITIES, in order described by Renderable.render_order."""
         renderables = self.ecs.manage(components.Renderable)
         locations = self.ecs.manage(components.Location)
-        # for renderable, location in sorted(self.ecs.join(renderables, locations)):
-        #     if not location.level_id == level.id:
-        #         # Not on the map/level we are rendering, skip!
-        #         continue
-        for renderable, entity, location in sorted(self.ecs.join(renderables, level.entities, locations)):
+
+        entities = self.spatial.entities(level.id)
+        for renderable, entity, location in sorted(self.ecs.join(renderables, entities, locations)):
             if not location.position in coverage:
                 # Not inside area covered by camera, skip!
                 continue
@@ -263,7 +264,8 @@ class Camera(Rectangular):
         if memory:
             seen = memory.revealed.get(level.id)
         else:
-            seen = level.revealable
+            # seen = level.revealable
+            seen = self.spatial.revealable(level.id)
 
         self.set_center(level, position)
 

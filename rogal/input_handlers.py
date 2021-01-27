@@ -37,8 +37,9 @@ class PlayerActionsHandler(InputHandler):
 
     REPEAT_LIMIT = 1./6
 
-    def __init__(self, ecs, wrapper):
+    def __init__(self, ecs, spatial, wrapper):
         self.ecs = ecs
+        self.spatial = spatial
         super().__init__(wrapper)
         self.last_keydown = None
 
@@ -54,7 +55,7 @@ class PlayerActionsHandler(InputHandler):
             raise SystemExit()
 
         if key == tcod.event.K_r:
-            return reveal_level(self.ecs, actor)
+            return reveal_level(self.ecs, self.spatial, actor)
 
         if key in keys.WAIT_KEYS:
             log.info('Waiting...')
@@ -62,5 +63,5 @@ class PlayerActionsHandler(InputHandler):
 
         direction = keys.MOVE_KEYS.get(key)
         if direction:
-            return try_move(self.ecs, actor, direction)
+            return try_move(self.ecs, self.spatial, actor, direction)
 

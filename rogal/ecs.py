@@ -280,6 +280,7 @@ class ComponentManager(JoinableManager):
             raise ValueError('Invalid component type!')
         component = component or self.component_type(*args, **kwargs)
         super().insert(entity, component)
+        return component
 
     def __repr__(self):
         return f'<{self.__class__.__name__}({self.component_type.__name__})>'

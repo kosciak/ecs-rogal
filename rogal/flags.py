@@ -16,19 +16,3 @@ class Flag(IntFlag):
 
     #BLOCKS_ITEMS = auto() # Blocks item placement?
 
-
-def get_flags(ecs, entity):
-    flags = Flag.NONE
-
-    if entity is None:
-        return flags
-
-    blocks_movement = ecs.manage(components.BlocksMovement)
-    blocks_vision = ecs.manage(components.BlocksVision)
-    if entity in blocks_movement:
-        flags |= Flag.BLOCKS_MOVEMENT
-    if entity in blocks_vision:
-        flags |= Flag.BLOCKS_VISION
-
-    return flags
-
