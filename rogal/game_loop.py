@@ -54,7 +54,7 @@ class GameLoop:
             action_cost = 0
             if actor in players:
                 if self.performed_count:
-                    log.debug(f'Actions performed since: {self.performed_count}')
+                    # log.debug(f'Actions performed since: {self.performed_count}')
                     self.performed_count = 0
                 if not self.player == actor:
                     self.render(force=True)

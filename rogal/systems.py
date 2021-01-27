@@ -300,6 +300,11 @@ class IndexingSystem(System):
 
 class QueuecCleanupSystem(System):
 
+    INCLUDE_STATES = {
+        RunState.PRE_RUN,
+        RunState.ACTION_PERFORMED,
+    }
+
     def run(self, state, *args, **kwargs):
         has_moved = self.ecs.manage(components.HasMoved)
         has_moved.clear()
@@ -314,7 +319,7 @@ class QueuecCleanupSystem(System):
 class ParticlesSystem(System):
 
     INCLUDE_STATES = {
-        #RunState.TICKING,
+        RunState.TICKING,
         RunState.WAITING_FOR_INPUT,
         RunState.ANIMATIONS,
     }

@@ -9,7 +9,31 @@ from .utils import perf
 log = logging.getLogger(__name__)
 
 
-@functools.total_ordering
+class Entity(int):
+
+    """Entity is just and integer ID."""
+
+    __slots__ = ()
+
+    def __new__(cls, entity_id=None):
+        if entity_id is None:
+            entity_id = uuid.uuid4().int
+        return super().__new__(cls, entity_id)
+
+    @property
+    def short_id(self):
+        hex = '%032x' % self
+        return hex[:8]
+
+    def __str__(self):
+        return self.short_id
+
+    def __repr__(self):
+        hex = '%032x' % self
+        return '<Entity id="%s-%s-%s-%s-%s">' % (
+            hex[:8], hex[8:12], hex[12:16], hex[16:20], hex[20:])
+
+
 class Component:
 
     """Component that hold some value(s).
@@ -48,9 +72,9 @@ class Component:
             data[param] = getattr(self, param)
         return data
 
-    def __lt__(self, other):
-        # Just some arbitrary comparison for total_ordering to work
-        return id(self) < id(other)
+    # def __lt__(self, other):
+    #     # Just some arbitrary comparison for total_ordering to work
+    #     return id(self) < id(other)
 
     #def __eq__(self, other):
     #    return id(self) == id(other)
@@ -58,99 +82,96 @@ class Component:
     def __repr__(self):
         param_values = [(param, getattr(self, param)) for param in self.parameters]
         if not param_values:
-            return f'<{self.name}>'
+            return f'<{self.name}={super().__repr__()}>'
         else:
             param_values_txt = ', '.join([f'{param}={value!r}' for param, value in param_values])
             return f'<{self.name} {param_values_txt}>'
 
 
-class ConstantValueComponent(Component):
-
-    """Component that holds constant value, when iterating only it's value is returned."""
-
+class Singleton:
     __slots__ = ()
 
-    def serialize(self):
-        return self.value
+    _INSTANCE = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._INSTANCE:
+            cls._INSTANCE = super().__new__(cls, *args, **kwargs)
+        return cls._INSTANCE
 
 
-class SingleValueComponent(Component):
+class IntComponent(Component, int):
+    __slots__ = ()
 
-    """Component that holds single value."""
+    def __new__(cls, value):
+        return super().__new__(cls, int(value))
 
-    __slots__ = ('value', )
-    params = ('value', )
 
-    def __init__(self, value):
-        self.value = value
+class BoolComponent(IntComponent):
+    __slots__ = ()
 
-    def serialize(self):
-        return self.value
-
-    def __eq__(self, other):
-        return self.value == other.value
+    def __new__(cls, value):
+        return super().__new__(cls, bool(value))
 
     def __repr__(self):
-        return f'<{self.__class__.__name__}={self.value!r}>'
+        return f'<{self.name}={bool(self)}>'
 
 
-class CounterComponent(SingleValueComponent):
+class FloatComponent(Component, float):
+    __slots__ = ()
+
+    def __new__(cls, value):
+        return super().__new__(cls, float(value))
+
+
+@functools.total_ordering
+class CounterComponent(Component):
 
     """Single value component that can be incremented/decremented, and compared to other values."""
 
-    __slots__ = ()
+    __slots__ = ('value', )
 
     def __init__(self, value):
-        super().__init__(int(value))
+        self.value = int(value)
 
-    def __add__(self, value):
+    def __int__(self):
+        return self.value
+
+    def __iadd__(self, value):
         self.value += value
         return self
 
-    def __sub__(self, value):
+    def __isub__(self, value):
         self.value -= value
         return self
 
     def __eq__(self, other):
-        if hasattr(other, 'value'):
-            other = other.value
         return self.value == other
 
     def __lt__(self, other):
         return self.value < other
 
-
-class FlagComponent(ConstantValueComponent):
-
-    """Constant value Component holding True as value."""
-
-    _INSTANCE = None
-
-    __slots__ = ()
-    params = ('value', )
-
-    def __new__(cls):
-        if not cls._INSTANCE:
-            # NOTE: Singleton
-            cls._INSTANCE = super().__new__(cls)
-        return cls._INSTANCE
-
-    @property
-    def value(self):
-        return True
-
     def __repr__(self):
-        return f'<{self.__class__.__name__}>'
+        return f'<{self.name}={self.value!r}>'
 
 
 def Flag(name):
-    """Returns FlagComponent instance of class with given name."""
-    bases = (FlagComponent, )
+    """Returns BoolComponent instance of class with given name."""
+    bases = (Singleton, BoolComponent, )
     attrs = dict(
         __slots__=(),
         __call__=lambda self, *args, **kwargs: self,
     )
-    return type(name, bases, attrs)()
+    return type(name, bases, attrs)(True)
+
+
+def IntFlag(name, value):
+    """Returns IntComponent instance of class with given name."""
+    bases = (Singleton, IntComponent, )
+    attrs = dict(
+        __slots__=(),
+        __call__=lambda self, *args, **kwargs: self,
+    )
+    return type(name, bases, attrs)(value)
 
 
 def _type_factory(name, bases):
@@ -163,33 +184,13 @@ def _type_factory(name, bases):
 def component_type(*bases):
     return functools.partial(_type_factory, bases=bases)
 
-Constant = component_type(ConstantValueComponent, SingleValueComponent, )
+
+Int = component_type(IntComponent)
+Bool = component_type(IntComponent)
+Float = component_type(IntComponent)
+String = component_type(Component, str)
+EntityRef = component_type(Component, Entity)
 Counter = component_type(CounterComponent)
-
-
-class Entity(int):
-
-    """Entity is just and integer ID."""
-
-    __slots__ = ()
-
-    def __new__(cls, entity_id=None):
-        if entity_id is None:
-            entity_id = uuid.uuid4().int
-        return super().__new__(cls, entity_id)
-
-    @property
-    def short_id(self):
-        hex = '%032x' % self
-        return hex[:8]
-
-    def __str__(self):
-        return self.short_id
-
-    def __repr__(self):
-        hex = '%032x' % self
-        return '<Entity id="%s-%s-%s-%s-%s">' % (
-            hex[:8], hex[8:12], hex[12:16], hex[16:20], hex[20:])
 
 
 class JoinIterator:
@@ -232,8 +233,8 @@ class JoinableManager:
         # return entity in self._values
         return entity in self.entities
 
-    def get(self, entity):
-        return self._values.get(entity)
+    def get(self, entity, default=None):
+        return self._values.get(entity, default)
 
     def __iter__(self):
         # yield from self._values.keys()
@@ -273,12 +274,6 @@ class ComponentManager(JoinableManager):
     def __init__(self, component_type):
         super().__init__()
         self.component_type = component_type
-
-    def get(self, entity, unpack_constants=True):
-        value = super().get(entity)
-        if unpack_constants and isinstance(value, ConstantValueComponent):
-            return value.value
-        return value
 
     def insert(self, entity, *args, component=None, **kwargs):
         if component and not type(component) == self.component_type:

@@ -3,20 +3,20 @@ import time
 
 import numpy as np
 
-from .ecs import Component, ConstantValueComponent, SingleValueComponent
-from .ecs import Flag, Constant, Counter, component_type
+from .ecs import Component, FloatComponent
+from .ecs import Flag, IntFlag, Int, Counter, String, EntityRef, component_type
 from .ecs import EntitiesSet
-from .geometry import Position, WithPositionMixin
+from .geometry import Direction, Position, WithPositionMixin
 from .renderable import RenderOrder
 from . import terrain
 
 
 # Flags
 
-BlocksMovement = Flag('BlocksMovement')
+BlocksMovement = IntFlag('BlocksMovement', 2)
 BlocksMovementChanged = Flag('BlocksMovementChanged')
 
-BlocksVision = Flag('BlocksVision')
+BlocksVision = IntFlag('BlocksVision', 1)
 BlocksVisionChanged = Flag('BlocksVisionChanged')
 
 
@@ -55,18 +55,18 @@ class OnOperate(Component):
 
 Animation = Flag('Animation')
 
-class Particle(ConstantValueComponent, SingleValueComponent):
+class Particle(FloatComponent):
     __slots__ = ()
 
-    def __init__(self, value):
-        super().__init__(time.time()+value)
+    def __new__(cls, value):
+        return super().__new__(cls, time.time()+value)
 
 # TODO: RealTimeParticles and TickBasedParticles based on ClockTicks like WaitsForAction
 
 
 # Common components
 
-Name = Constant('Name')
+Name = String('Name')
 
 class Location(WithPositionMixin, Component):
     __slots__ = ('level_id', 'position', )
@@ -220,22 +220,42 @@ WaitsForAction = Counter('WaitsForAction')
 
 # Action intentions
 
-class WantsToMove(ConstantValueComponent, SingleValueComponent):
+class WantsToMove(Component):
+    __slots__ = ('direction', )
 
     """Move one step in given Direction."""
 
+    def __init__(self, direction):
+        if isinstance(direction, str):
+            direction = getattr(Direction, direction)
+        self.direction = direction
+
+    @property
+    def dx(self):
+        return self.direction.dx
+
+    @property
+    def dy(self):
+        return self.direction.dy
+
     def serialize(self):
-        return self.value.name
+        return self.direction.name
+
+    def __str__(self):
+        return self.direction.name
+
+    def __repr__(self):
+        return f'<{self.name}={self.direction.name}>'
 
 HasMoved = Flag('HasMoved')
 
 
-WantsToMelee = Constant('WantsToMelee')
+WantsToMelee = EntityRef('WantsToMelee')
 
-WantsToOperate = Constant('WantsToOperate')
+WantsToOperate = EntityRef('WantsToOperate')
 
 
-# TODO: Rework as Constant?
+# TODO: Rework as EntityRef?
 
 class WantsToShoot(Component):
     __slots__ = ()
