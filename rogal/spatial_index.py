@@ -1,13 +1,13 @@
 import collections
 
+import numpy as np
+
 from .bitmask import bitmask_8bit
 from . import components
 from . import dtypes
 from .ecs import EntitiesSet
 from .flags import Flag
 from .geometry import Direction
-
-import numpy as np
 
 
 class SpatialIndex:
@@ -18,6 +18,16 @@ class SpatialIndex:
         self._entities_flags = {}
         self._entities = collections.defaultdict(EntitiesSet)
         self._entities_positions = collections.defaultdict(lambda: collections.defaultdict(EntitiesSet))
+
+    @staticmethod
+    def init_flags(size):
+        flags = np.zeros(size, dtype=dtypes.flags_dt)
+        return flags
+
+    @staticmethod
+    def init_terrain(size):
+        terrain = np.zeros(size, dtype=dtypes.terrain_dt)
+        return terrain
 
     def get_level(self, level_id):
         return self.ecs.levels.get(level_id)
@@ -32,7 +42,7 @@ class SpatialIndex:
         blocks_vision = self.ecs.manage(components.BlocksVision)
         blocks_movement = self.ecs.manage(components.BlocksMovement)
         level = self.get_level(level_id)
-        terrain_flags = np.zeros(level.size, dtype=dtypes.flags_dt)
+        terrain_flags = self.init_flags(level.size)
         for terrain in np.unique(level.terrain):
             terrain_mask = level.terrain == terrain
             flags = blocks_vision.get(terrain, 0) | blocks_movement.get(terrain, 0)
@@ -65,7 +75,7 @@ class SpatialIndex:
         blocks_movement = self.ecs.manage(components.BlocksMovement)
         locations = self.ecs.manage(components.Location)
         level = self.get_level(level_id)
-        entities_flags = np.zeros(level.size, dtype=dtypes.flags_dt)
+        entities_flags = self.init_flags(level.size)
         for entity, flag, location in self.ecs.join(self.entities(level_id), blocks_vision, locations):
             entities_flags[location.position] |= flag
         for entity, flag, location in self.ecs.join(self.entities(level_id), blocks_movement, locations):

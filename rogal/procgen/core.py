@@ -42,6 +42,6 @@ class OffsetedRectangle(Rectangular):
 
 class Digable(OffsetedRectangle):
 
-    def dig_floor(self, level, floor):
-        level.terrain[self.inner.x:self.inner.x2, self.inner.y:self.inner.y2] = floor
+    def dig_floor(self, terrain, floor):
+        terrain[self.inner.x:self.inner.x2, self.inner.y:self.inner.y2] = floor
 

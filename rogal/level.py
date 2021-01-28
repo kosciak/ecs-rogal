@@ -1,8 +1,3 @@
-import uuid
-
-import numpy as np
-
-from . import dtypes
 from .geometry import Rectangular, Position, Size
 
 
@@ -10,20 +5,15 @@ class Level(Rectangular):
 
     position = Position.ZERO
 
-    def __init__(self, level_id, size, depth):
+    def __init__(self, level_id, depth, terrain):
         self.id = level_id
 
         self.depth = depth
-        self.terrain = np.zeros(size, dtype=dtypes.terrain_id_dt)
+        self.terrain = terrain
 
     @property
     def size(self):
         return Size(*self.terrain.shape)
-
-    @staticmethod
-    def create(size, depth):
-        level_id = uuid.uuid4()
-        return Level(level_id, size, depth)
 
     def serialize(self):
         terrain = []

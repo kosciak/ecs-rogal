@@ -12,7 +12,7 @@ tile_rgb_dt = np.dtype([
 ])
 
 
-terrain_id_dt = np.dtype('u1')
+terrain_dt = np.dtype('u1')
 
 
 flags_dt = np.dtype('u4')
