@@ -321,8 +321,11 @@ class ParticlesSystem(System):
             if ttl < now:
                 outdated.add(particle)
 
+        if not outdated:
+            return
+
         locations = self.ecs.manage(components.Location)
         for particle, location in self.ecs.join(outdated, locations):
             self.spatial.remove_entity(particle, location)
-        self.ecs.entities.remove(*outdated)
+        self.ecs.remove(*outdated)
 

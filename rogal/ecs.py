@@ -38,6 +38,9 @@ class Component:
 
     """Component that hold some value(s).
 
+    Components should provide only setter/getter oriented methods.
+    All logic should be handled in Systems!
+
     params - values that are used by constructor and serialization
 
     """
@@ -195,9 +198,10 @@ Counter = component_type(CounterComponent)
 
 class JoinIterator:
 
-    __slots__ = ('managers', )
+    __slots__ = ('ignore', 'managers', )
 
-    def __init__(self, *managers):
+    def __init__(self, ignore, *managers):
+        self.ignore = ignore
         self.managers = managers
 
     def __iter__(self):
@@ -207,7 +211,7 @@ class JoinIterator:
             manager.entities
             for manager in self.managers
             # NOTE: No need to intersect with ALL entitites
-            if not isinstance(manager, EntitiesManager)
+            if not manager is self.ignore
         ])
         # TODO: Consider filtering out FlagComponent no need to have element that is always True
         for entity in entities:
@@ -263,7 +267,10 @@ class JoinableManager:
 
 class EntitiesSet(set):
 
+    """Entities container, compatibile with JoinManager interface."""
+
     def get(self, entity):
+        # NOTE: It's assumed that get() is called inside JoinIterator that already knows if entity is present
         return entity
 
     @property
@@ -290,55 +297,6 @@ class ComponentManager(JoinableManager):
         return f'<{self.__class__.__name__}({self.component_type.__name__})>'
 
 
-class EntitiesManager(EntitiesSet):
-
-    def __init__(self):
-        super().__init__()
-        self._component_managers = {} # {component_type: ComponentManager(component_type), }
-
-    def manage(self, component_type):
-        if isinstance(component_type, Component):
-            component_type = type(component_type)
-        component_manager = self._component_managers.get(component_type)
-        if component_manager is None:
-            component_manager = ComponentManager(component_type)
-            self._component_managers[component_type] = component_manager
-        return self._component_managers[component_type]
-
-    def create(self, *components, entity_id=None):
-        entity = Entity(entity_id)
-        self.add(entity)
-        for component in components:
-            component_manager = self.manage(component)
-            component_manager.insert(entity, component=component)
-        return entity
-
-    def remove(self, *entities):
-        for entity in entities:
-            for component_manager in self._component_managers.values():
-                component_manager.discard(entity)
-            self.discard(entity)
-
-    def all_components(self, entity):
-        components = []
-        for component_manager in self._component_managers.values():
-            component = component_manager.get(entity)
-            if component:
-                components.append(component)
-        return components
-
-    def serialize(self):
-        data = collections.defaultdict(dict)
-        # TODO: Use: data = {component.qualname: {entity: component, }, } ?
-        for entity in self:
-            for component in self.all_components(entity):
-                data[entity][component.qualname] = component.serialize()
-        return data
-
-    def __repr__(self):
-        return f'<{self.__class__.__name__}>'
-
-
 class System:
 
     INCLUDE_STATES = set()
@@ -347,6 +305,7 @@ class System:
     def __init__(self, ecs):
         self.ecs = ecs
 
+    @functools.lru_cache
     def should_run(self, state):
         if self.EXCLUDE_STATES and state in self.EXCLUDE_STATES:
             return False
@@ -381,21 +340,53 @@ class SystemsManager:
 
 class ECS:
 
+    """Entity Component System.
+
+    Entity - simple ID for object
+    Component - data associated with given object, pure data
+    System - implements all logic of interaction between components
+
+    """
+
     def __init__(self):
-        self.entities = EntitiesManager()
-        self.systems = SystemsManager()
+        self.entities = EntitiesSet()
+        self._components = {} # {component_type: ComponentManager(component_type), }
+        self._systems = SystemsManager()
 
     def create(self, *components, entity_id=None):
         """Create Entity with given components."""
-        return self.entities.create(*components, entity_id=entity_id)
-
-    def get(self, entity_id):
-        """Return all components of given Entity."""
-        return self.entities.all_components(entity_id)
+        entity = Entity(entity_id)
+        self.entities.add(entity)
+        for component in components:
+            component_manager = self.manage(component)
+            component_manager.insert(entity, component=component)
+        return entity
 
     def manage(self, component_type):
         """Return ComponentManager for given Component."""
-        return self.entities.manage(component_type)
+        if isinstance(component_type, Component):
+            component_type = type(component_type)
+        component_manager = self._components.get(component_type)
+        if component_manager is None:
+            component_manager = ComponentManager(component_type)
+            self._components[component_type] = component_manager
+        return component_manager
+
+    def get(self, entity_id):
+        """Return list of all components for given Entity."""
+        components = []
+        for component_manager in self._components.values():
+            component = component_manager.get(entity)
+            if component:
+                components.append(component)
+        return components
+
+    def remove(self, *entities):
+        """Remove Entity."""
+        for entity in entities:
+            for component_manager in self._components.values():
+                component_manager.discard(entity)
+            self.entities.discard(entity)
 
     def join(self, *managers):
         """Return iterator over values of multiple managers.
@@ -403,14 +394,14 @@ class ECS:
         If you only want to iterate for entity, component pairs iterate over manager itself!
 
         """
-        yield from JoinIterator(*managers)
+        yield from JoinIterator(self.entities, *managers)
 
     def register(self, system):
         """Register System."""
-        self.systems.register(system)
+        self._systems.register(system)
 
     def run(self, state, *args, **kwargs):
         """Run Systems for given RunState."""
         with perf.Perf('ecs.Systems.run()'):
-            self.systems.run(state, *args, **kwargs)
+            self._systems.run(state, *args, **kwargs)
 
