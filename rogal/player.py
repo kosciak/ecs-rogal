@@ -46,8 +46,7 @@ def reveal_level(ecs, spatial, player):
 
     location = locations.get(player)
     memory = level_memories.get(player)
-    level = ecs.levels.get(location.level_id)
-    memory.update(level, spatial.revealable(location.level_id))
+    memory.update(location.level_id, spatial.revealable(location.level_id))
 
     msg_log.warning('Level revealed!')
 

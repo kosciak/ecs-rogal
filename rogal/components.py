@@ -160,10 +160,11 @@ class LevelMemory(Component):
             cls._SHARED[shared] = memory
         return memory
 
-    def update(self, level, fov):
-        if not level.id in self.revealed:
-            self.revealed[level.id] = np.zeros(level.size, dtype=np.bool)
-        self.revealed[level.id] |= fov
+    def update(self, level_id, fov):
+        if not level_id in self.revealed:
+            self.revealed[level_id] = fov == True
+        else:
+            self.revealed[level_id] |= fov
 
 
 class PoolComponent(Component):

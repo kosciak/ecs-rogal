@@ -57,8 +57,7 @@ class SpatialIndex:
         return self._entities[level_id]
 
     def get_entities(self, location, position=None):
-        position = position or location.position
-        return self._entities_positions[location.level_id][position]
+        return self._entities_positions[location.level_id][position or location.position]
 
     def calculate_entities_flags(self, level_id):
         print(f'SpatialIndex.calculate_entities_flags({level_id})')

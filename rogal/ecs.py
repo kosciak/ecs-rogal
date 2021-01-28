@@ -386,6 +386,9 @@ class LevelsManager:
     def get(self, level_id):
         return self.levels.get(level_id)
 
+    def __contains__(self, level_id):
+        return level_id in self.levels
+
     def __iter__(self):
         yield from self.levels.values()
 

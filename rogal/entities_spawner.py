@@ -13,7 +13,6 @@ log = logging.getLogger(__name__)
 
 # TODO: 
 #   - Split data/entities.yaml into data/terrain.yaml, data/actors.yaml 
-#   - Use qualified names when loading "terrain.STONE_WALL", "actors.PLAYER", etc
 
 
 class EntitiesSpawner(YAMLDataLoader):
@@ -128,9 +127,7 @@ class EntitiesSpawner(YAMLDataLoader):
     def spawn(self, entity, level_id, position):
         locations = self.ecs.manage(components.Location)
         location = locations.insert(entity, level_id, position)
-        level = self.ecs.levels.get(level_id)
-        if level:
-            # level.update_entity(self.ecs, entity, position)
+        if location.level_id in self.ecs.levels:
             self.spatial.add_entity(entity, location)
         return entity
 

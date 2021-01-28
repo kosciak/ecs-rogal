@@ -264,7 +264,6 @@ class Camera(Rectangular):
         if memory:
             seen = memory.revealed.get(level.id)
         else:
-            # seen = level.revealable
             seen = self.spatial.revealable(level.id)
 
         self.set_center(level, position)

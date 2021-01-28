@@ -1,12 +1,9 @@
-import collections
 import uuid
 
 import numpy as np
 
 from . import dtypes
-from .ecs import EntitiesSet
-from .bitmask import bitmask_8bit
-from .geometry import Rectangular, Direction, Position
+from .geometry import Rectangular, Position, Size
 
 
 class Level(Rectangular):
@@ -16,30 +13,17 @@ class Level(Rectangular):
     def __init__(self, level_id, size, depth):
         self.id = level_id
 
-        self.size = size
         self.depth = depth
+        self.terrain = np.zeros(size, dtype=dtypes.terrain_id_dt)
 
-        self.terrain = np.zeros(self.size, dtype=dtypes.terrain_id_dt)
-
-        # NOTE: entities and indexes depend on IndexingSystem
-        self.entities = EntitiesSet()
-        self.entities_per_position = collections.defaultdict(EntitiesSet)
+    @property
+    def size(self):
+        return Size(*self.terrain.shape)
 
     @staticmethod
     def create(size, depth):
         level_id = uuid.uuid4()
         return Level(level_id, size, depth)
-
-    def get_entities(self, *positions):
-        """Return entities on given position."""
-        entities = EntitiesSet()
-        # for position in positions:
-        #     entities.update(self.entities_per_position[position])
-        positions = set(positions)
-        for position in self.entities_per_position.keys():
-            if position in positions:
-                entities.update(self.entities_per_position[position])
-        return entities
 
     def serialize(self):
         terrain = []

@@ -195,7 +195,6 @@ class VisibilitySystem(System):
             if not viewshed.needs_update:
                 # No need to recalculate
                 continue
-            level = self.ecs.levels.get(location.level_id)
 
             fov = tcod.map.compute_fov(
                 transparency=self.spatial.transparent(location.level_id),
@@ -215,7 +214,7 @@ class VisibilitySystem(System):
 
             memory = level_memories.get(entity)
             if memory:
-                memory.update(level, fov)
+                memory.update(location.level_id, fov)
 
     def spotted_alert(self, *args, **kwargs):
         # NOTE: It's SLOOOOOOOOOOOW!!! Use only for player for now, needs rewrite anyway
@@ -223,12 +222,14 @@ class VisibilitySystem(System):
         locations = self.ecs.manage(components.Location)
         viewsheds = self.ecs.manage(components.Viewshed)
 
+        # for entity, location, viewshed in self.ecs.join(self.ecs.entities, locations, viewsheds):
         for entity, location, viewshed in self.ecs.join(players.entities, locations, viewsheds):
-            level = self.ecs.levels.get(location.level_id)
 
             # This! This is the part that is very costly
-            # TODO: Remake with spatial!
-            visible_entities = level.get_entities(*viewshed.positions)
+            visible_entities = EntitiesSet()
+            visible_entities.update(*[entities for entities in 
+                                      [self.spatial.get_entities(location, position) 
+                                       for position in viewshed.positions]])
             spotted_entities = EntitiesSet(visible_entities - viewshed.entities)
             viewshed.entities = visible_entities
 
