@@ -118,21 +118,21 @@ class Camera(Rectangular):
         ]
         return visible
 
-    def walls_bitmask(self, level, revealed, terrain_type):
-        walls_mask = self.spatial.terrain_type(level.id, terrain_type)
+    def walls_bitmask(self, level_id, revealed, terrain_type):
+        walls_mask = self.spatial.terrain_type(level_id, terrain_type)
         # NOTE: We don't want bitmasking to spoil not revealed terrain!
         return bitmask.bitmask_walls(walls_mask, revealed)
 
-    def draw_boundaries(self, level):
+    def draw_boundaries(self, level_size):
         """Draw BOUNDARIES of the level."""
         if not self.show_boundaries:
             return
         boundaries = set()
         for boundary in [
-            Rectangle(Position(-1,-1), Size(level.width+2, 1)),
-            Rectangle(Position(-1,level.height), Size(level.width+2, 1)),
-            Rectangle(Position(-1, 0), Size(1, level.height)),
-            Rectangle(Position(level.width, 0), Size(1, level.height)),
+            Rectangle(Position(-1,-1), Size(level_size.width+2, 1)),
+            Rectangle(Position(-1,level_size.height), Size(level_size.width+2, 1)),
+            Rectangle(Position(-1, 0), Size(1, level_size.height)),
+            Rectangle(Position(level_size.width, 0), Size(1, level_size.height)),
         ]:
             intersection = self & boundary
             if intersection:
@@ -173,16 +173,16 @@ class Camera(Rectangular):
                 renderable, ch,
             )
 
-    def draw_terrain(self, level, coverage, revealed, visible):
+    def draw_terrain(self, level_id, terrain, coverage, revealed, visible):
         """Draw TERRAIN tiles."""
-        # Slice level.terrain to get part that is covered by camera
-        covered_terrain = level.terrain[
+        # Slice terrain to get part that is covered by camera
+        covered_terrain = terrain[
             coverage.x : coverage.x2,
             coverage.y : coverage.y2
         ]
 
         # Bitshift masking for terrain.Type.WALL terrain
-        walls_mask = self.walls_bitmask(level, revealed, BITMASK_TERRAIN_TYPE)[
+        walls_mask = self.walls_bitmask(level_id, revealed, BITMASK_TERRAIN_TYPE)[
             coverage.x : coverage.x2,
             coverage.y : coverage.y2
         ]
@@ -215,12 +215,12 @@ class Camera(Rectangular):
                     renderable,
                 )
 
-    def draw_entities(self, level, coverage, revealed, visible):
+    def draw_entities(self, level_id, coverage, revealed, visible):
         """Draw all renderable ENTITIES, in order described by Renderable.render_order."""
         renderables = self.ecs.manage(components.Renderable)
         locations = self.ecs.manage(components.Location)
 
-        entities = self.spatial.entities(level.id)
+        entities = self.spatial.entities(level_id)
         for renderable, entity, location in sorted(self.ecs.join(renderables, entities, locations)):
             if not location.position in coverage:
                 # Not inside area covered by camera, skip!
@@ -254,7 +254,7 @@ class Camera(Rectangular):
             fov = viewsheds.get(actor).fov
         if location:
             position = location.position
-            level = self.ecs.levels.get(location.level_id)
+        level = self.spatial.get_level(location.level_id)
 
         if fov is None:
             fov = np.ones(level.size, dtype=np.bool)
@@ -262,9 +262,9 @@ class Camera(Rectangular):
         level_memories = self.ecs.manage(components.LevelMemory)
         memory = level_memories.get(actor)
         if memory:
-            seen = memory.revealed.get(level.id)
+            seen = memory.revealed.get(location.level_id)
         else:
-            seen = self.spatial.revealable(level.id)
+            seen = self.spatial.revealable(location.level_id)
 
         self.set_center(level, position)
 
@@ -277,9 +277,9 @@ class Camera(Rectangular):
         revealed = self.get_revealed(seen, coverage)
         visible = self.get_visible(fov, coverage)
 
-        self.draw_boundaries(level)
-        self.draw_terrain(level, coverage, revealed, visible)
-        self.draw_entities(level, coverage, revealed, visible)
+        self.draw_boundaries(level.size)
+        self.draw_terrain(location.level_id, level.terrain, coverage, revealed, visible)
+        self.draw_entities(location.level_id, coverage, revealed, visible)
 
 
 def render_message_log(panel):

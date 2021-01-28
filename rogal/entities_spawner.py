@@ -127,8 +127,7 @@ class EntitiesSpawner(YAMLDataLoader):
     def spawn(self, entity, level_id, position):
         locations = self.ecs.manage(components.Location)
         location = locations.insert(entity, level_id, position)
-        if location.level_id in self.ecs.levels:
-            self.spatial.add_entity(entity, location)
+        self.spatial.add_entity(entity, location)
         return entity
 
     def create_and_spawn(self, name, level_id, position, entity_id=None):

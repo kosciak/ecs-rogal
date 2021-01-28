@@ -55,6 +55,7 @@ SEED = None
 # SEED = uuid.UUID("7cde54b5-6602-41f3-a8a3-a9e0ffc1817e")
 # SEED = uuid.UUID("7c0401fe-ffcd-4744-a5b3-ea5114a32b56")
 # SEED = uuid.UUID("63a630e9-6548-4291-a62a-fb29e1331a09") # Can't connect!
+# SEED = uuid.UUID("9996ca9c-a64b-4963-a42b-4566036aa067") # Lower part bitmasking...
 
 
 def register_systems(ecs, spatial, spawner):
@@ -114,10 +115,8 @@ def run():
 
         # Level(s) generation
         level = level_generator.generate(player=player)
-        ecs.add_level(level)
-        # for depth in range(1, 33):
+        # for depth in range(1, 55):
         #     level = level_generator.generate(depth=depth)
-        #     ecs.add_level(level)
 
         renderer = Renderer(ecs, spatial, wrapper, root_panel, tileset)
         input_handler = PlayerActionsHandler(ecs, spatial, wrapper)

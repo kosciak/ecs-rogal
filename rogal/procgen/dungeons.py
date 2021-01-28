@@ -57,44 +57,46 @@ class EntitiesSpawningGenerator(Generator):
     def __init__(self, rng, spawner):
         super().__init__(rng)
         self.spawner = spawner
+        self.spatial = spawner.spatial # TODO: ???
 
-    def spawn_closed_door(self, level, position):
+    def spawn_closed_door(self, level_id, position):
+        level = self.spatial.get_level(level_id)
         level.terrain[position] = self.spawner.get('terrain.DOOR')
-        return self.spawner.create_and_spawn('props.CLOSED_DOOR', level.id, position)
+        return self.spawner.create_and_spawn('props.CLOSED_DOOR', level_id, position)
 
-    def spawn_player(self, player, level, position):
+    def spawn_player(self, player, level_id, position):
         if player is None:
             return
-        return self.spawner.spawn(player, level.id, position)
+        return self.spawner.spawn(player, level_id, position)
 
-    def spawn_monster(self, level, position):
+    def spawn_monster(self, level_id, position):
         monster = self.rng.choice([
             'actors.MONSTER',
             'actors.BAT',
             'actors.SNAIL',
         ])
-        return self.spawner.create_and_spawn(monster, level.id, position)
+        return self.spawner.create_and_spawn(monster, level_id, position)
 
-    def generate_doors(self, level, corridors):
+    def generate_doors(self, level_id, corridors):
         for corridor in corridors:
             if corridor.length == 1:
                 # Always spawn door in corridors with length == 1
                 position = corridor.get_position(0)
                 if position in corridor.allowed_doors:
-                    self.spawn_closed_door(level, position)
+                    self.spawn_closed_door(level_id, position)
             elif corridor.length > 1:
                 # Never spawn doors in corridors with length == 2
                 # Otherwise there's 25% chance of door on each end of corridor
                 if self.rng.random() < .5:
                     position = corridor.get_position(0)
                     if position in corridor.allowed_doors:
-                        self.spawn_closed_door(level, position)
+                        self.spawn_closed_door(level_id, position)
                 if self.rng.random() < .5:
                     position = corridor.get_position(-1)
                     if position in corridor.allowed_doors:
-                        self.spawn_closed_door(level, position)
+                        self.spawn_closed_door(level_id, position)
 
-    def generate_monsters(self, level, rooms, occupied):
+    def generate_monsters(self, level_id, rooms, occupied):
         for room in rooms:
             area = room.inner.area
             min_monster_area = 5**2
@@ -110,22 +112,22 @@ class EntitiesSpawningGenerator(Generator):
                 while position in occupied:
                     position = self.rng.choice(room_positions)
                 occupied.add(position)
-                self.spawn_monster(level, position)
+                self.spawn_monster(level_id, position)
         return occupied
 
-    def generate(self, level, rooms, corridors, player=None):
+    def generate(self, level_id, rooms, corridors, player=None):
         """Spawn entities."""
         # Occupied postions
         occupied = set()
 
         # Spawn Player in the center of the first room
         position = rooms[0].center
-        self.spawn_player(player, level, position)
+        self.spawn_player(player, level_id, position)
         occupied.add(position)
 
-        self.generate_doors(level, corridors)
+        self.generate_doors(level_id, corridors)
 
-        occupied = self.generate_monsters(level, rooms, occupied)
+        occupied = self.generate_monsters(level_id, rooms, occupied)
 
 
 class DoorsEverywhereEntitiesSpawningGenerator(EntitiesSpawningGenerator):
@@ -182,8 +184,8 @@ class RoomsLevelGenerator(Generator):
     def generate_terrain(self, rooms, corridors):
         return self.terrain_genenrator.generate(self.size, rooms, corridors)
 
-    def generate_entities(self, level, rooms, corridors, player=None):
-        return self.entities_generator.generate(level, rooms, corridors, player)
+    def generate_entities(self, level_id, rooms, corridors, player=None):
+        return self.entities_generator.generate(level_id, rooms, corridors, player)
 
     def generate(self, depth=0, player=None):
         level_id = self.init_level()
@@ -193,11 +195,11 @@ class RoomsLevelGenerator(Generator):
         corridors = self.connect_rooms(rooms_distances)
         rooms = list(rooms_distances.keys())
         terrain = self.generate_terrain(rooms, corridors)
-        level = Level(level_id, depth, terrain)
+        level_id = self.spatial.create_level(level_id, depth, terrain)
 
-        self.generate_entities(level, rooms, corridors, player)
+        self.generate_entities(level_id, rooms, corridors, player)
 
-        return level
+        return level_id
 
 
 

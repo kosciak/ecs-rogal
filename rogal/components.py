@@ -7,7 +7,7 @@ from .ecs import Component, FloatComponent
 from .ecs import Flag, IntFlag, Int, Counter, String, EntityRef, component_type
 from .ecs import EntitiesSet
 from . import flags
-from .geometry import Direction, Position, WithPositionMixin
+from .geometry import Direction, Position, Size, Rectangular, WithPositionMixin
 from .renderable import RenderOrder
 from . import terrain
 
@@ -44,6 +44,34 @@ Item = Flag('Item')
 Player = Flag('Player')
 
 Monster = Flag('Monster')
+
+
+class Level(Component, Rectangular):
+    __slots__ = ('depth', 'terrain', )
+
+    position = Position.ZERO
+
+    def __init__(self, depth, terrain):
+        self.depth = depth
+        self.terrain = terrain
+
+    @property
+    def size(self):
+        return Size(*self.terrain.shape)
+
+    def serialize(self):
+        terrain = []
+        for row in self.terrain.T:
+            terrain.append(','.join([f'{terrain_id:02x}' for terrain_id in row]))
+        data = {
+            str(self.id): dict(
+                depth=self.depth,
+                terrain=terrain,
+            )}
+        return data
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__} depth={self.depth} size={self.size}>'
 
 
 class OnOperate(Component):

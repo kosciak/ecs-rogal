@@ -1,4 +1,5 @@
 import collections
+import logging
 
 import numpy as np
 
@@ -8,6 +9,9 @@ from . import dtypes
 from .ecs import EntitiesSet
 from .flags import Flag
 from .geometry import Direction
+
+
+log = logging.getLogger(__name__)
 
 
 class SpatialIndex:
@@ -29,8 +33,14 @@ class SpatialIndex:
         terrain = np.zeros(size, dtype=dtypes.terrain_dt)
         return terrain
 
+    def create_level(self, level_id, depth, terrain):
+        level = components.Level(depth, terrain)
+        return self.ecs.create(level, entity_id=level_id)
+
     def get_level(self, level_id):
-        return self.ecs.levels.get(level_id)
+        # return self.ecs.levels.get(level_id)
+        levels = self.ecs.manage(components.Level)
+        return levels.get(level_id)
 
     def terrain_type(self, level_id, terrain_type):
         """Return boolean mask of tiles with given terrain Type."""
@@ -38,15 +48,17 @@ class SpatialIndex:
         return level.terrain >> 4 == terrain_type
 
     def calculate_terrain_flags(self, level_id):
-        print(f'SpatialIndex.calculate_terrain_flags({level_id})')
+        log.debug(f'SpatialIndex.calculate_terrain_flags({level_id})')
         blocks_vision = self.ecs.manage(components.BlocksVision)
         blocks_movement = self.ecs.manage(components.BlocksMovement)
+
         level = self.get_level(level_id)
         terrain_flags = self.init_flags(level.size)
         for terrain in np.unique(level.terrain):
             terrain_mask = level.terrain == terrain
             flags = blocks_vision.get(terrain, 0) | blocks_movement.get(terrain, 0)
             terrain_flags[terrain_mask] = flags
+
         return terrain_flags
 
     def terrain_flags(self, level_id):
@@ -57,7 +69,7 @@ class SpatialIndex:
         return terrain_flags
 
     def calculate_entities(self):
-        print(f'SpatialIndex.calculate_entities()')
+        log.debug(f'SpatialIndex.calculate_entities()')
         locations = self.ecs.manage(components.Location)
         for entity, location in self.ecs.join(self.ecs.entities, locations):
             self._entities[location.level_id].add(entity)
@@ -70,16 +82,21 @@ class SpatialIndex:
         return self._entities_positions[location.level_id][position or location.position]
 
     def calculate_entities_flags(self, level_id):
-        print(f'SpatialIndex.calculate_entities_flags({level_id})')
+        log.debug(f'SpatialIndex.calculate_entities_flags({level_id})')
         blocks_vision = self.ecs.manage(components.BlocksVision)
         blocks_movement = self.ecs.manage(components.BlocksMovement)
-        locations = self.ecs.manage(components.Location)
+
         level = self.get_level(level_id)
         entities_flags = self.init_flags(level.size)
+        if not (blocks_vision or blocks_movement):
+            return entities_flags
+
+        locations = self.ecs.manage(components.Location)
         for entity, flag, location in self.ecs.join(self.entities(level_id), blocks_vision, locations):
             entities_flags[location.position] |= flag
         for entity, flag, location in self.ecs.join(self.entities(level_id), blocks_movement, locations):
             entities_flags[location.position] |= flag
+
         return entities_flags
 
     def entities_flags(self, level_id):
