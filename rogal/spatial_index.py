@@ -18,6 +18,7 @@ class SpatialIndex:
 
     def __init__(self, ecs):
         self.ecs = ecs
+        self.levels = self.ecs.manage(components.Level)
         self._terrain_flags = {}
         self._entities_flags = {}
         self._entities = collections.defaultdict(EntitiesSet)
@@ -38,9 +39,9 @@ class SpatialIndex:
         return self.ecs.create(level, entity_id=level_id)
 
     def get_level(self, level_id):
-        # return self.ecs.levels.get(level_id)
-        levels = self.ecs.manage(components.Level)
-        return levels.get(level_id)
+        return self.levels.get(level_id)
+
+    # TODO: destroy_level(self, level_id):
 
     def terrain_type(self, level_id, terrain_type):
         """Return boolean mask of tiles with given terrain Type."""
@@ -71,7 +72,7 @@ class SpatialIndex:
     def calculate_entities(self):
         log.debug(f'SpatialIndex.calculate_entities()')
         locations = self.ecs.manage(components.Location)
-        for entity, location in self.ecs.join(self.ecs.entities, locations):
+        for entity, location in locations:
             self._entities[location.level_id].add(entity)
             self._entities_positions[location.level_id][location.position].add(entity)
 

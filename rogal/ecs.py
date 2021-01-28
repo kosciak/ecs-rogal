@@ -230,15 +230,19 @@ class JoinableManager:
         return len(self._values)
 
     def __contains__(self, entity):
-        # return entity in self._values
         return entity in self.entities
 
     def get(self, entity, default=None):
         return self._values.get(entity, default)
 
     def __iter__(self):
-        # yield from self._values.keys()
-        yield from self.entities
+        """Yield (entity, component) pairs.
+
+        If you only want entities - iterate over manager.entities instead
+
+        """
+        # NOTE: Iterating over values dict directly boosted performance significantly!
+        yield from self._values.items()
 
     def insert(self, entity, value):
         self.entities.add(entity)
@@ -375,50 +379,38 @@ class SystemsManager:
         yield from self.systems
 
 
-class LevelsManager:
-
-    def __init__(self):
-        self.levels = {}
-
-    def add(self, level):
-        self.levels[level.id] = level
-
-    def get(self, level_id):
-        return self.levels.get(level_id)
-
-    def __contains__(self, level_id):
-        return level_id in self.levels
-
-    def __iter__(self):
-        yield from self.levels.values()
-
-
 class ECS:
 
     def __init__(self):
         self.entities = EntitiesManager()
         self.systems = SystemsManager()
-        self.levels = LevelsManager()
 
     def create(self, *components, entity_id=None):
+        """Create Entity with given components."""
         return self.entities.create(*components, entity_id=entity_id)
 
     def get(self, entity_id):
-        return self.entities.get(entity_id)
+        """Return all components of given Entity."""
+        return self.entities.all_components(entity_id)
 
     def manage(self, component_type):
+        """Return ComponentManager for given Component."""
         return self.entities.manage(component_type)
 
     def join(self, *managers):
+        """Return iterator over values of multiple managers.
+
+        If you only want to iterate for entity, component pairs iterate over manager itself!
+
+        """
         yield from JoinIterator(*managers)
 
     def register(self, system):
+        """Register System."""
         self.systems.register(system)
 
     def run(self, state, *args, **kwargs):
+        """Run Systems for given RunState."""
         with perf.Perf('ecs.Systems.run()'):
             self.systems.run(state, *args, **kwargs)
-
-    def add_level(self, level):
-        self.levels.add(level)
 

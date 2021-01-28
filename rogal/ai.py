@@ -35,7 +35,7 @@ def perform_action(ecs, spatial, actor, skip_if_not_seen=False):
         locations = ecs.manage(components.Location)
 
         actor_location = locations.get(actor)
-        for player in players:
+        for player in players.entities:
             player_location = locations.get(player)
             if not player_location.level_id == actor_location.level_id:
                 continue

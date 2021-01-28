@@ -51,11 +51,11 @@ class GameLoop:
         players = self.ecs.manage(components.Player)
 
         performed_action = set()
-        for actor in acts_now:
+        for actor in acts_now.entities:
             action_cost = 0
             if actor in players:
                 if self.performed_count:
-                    # log.debug(f'Actions performed since: {self.performed_count}')
+                    log.debug(f'Actions performed since: {self.performed_count}')
                     self.performed_count = 0
                 if not self.player == actor:
                     self.render(force=True)
@@ -81,14 +81,15 @@ class GameLoop:
            self.last_render and time.time() - self.last_render < self.frame:
             # Do NOT render more often than once a frame
             return
+        perf_stats = perf.Perf('render.Renderer.render()')
         if self.renderer.render(self.player):
             self.last_render = time.time()
+            perf_stats.elapsed()
 
     def join(self):
         self.run_systems()
         while True:
-            with perf.Perf('render.Renderer.render()'):
-                self.render()
+            self.render()
             acts_now = self.ecs.manage(components.ActsNow)
             pending_animations = self.ecs.manage(components.Animation)
             if pending_animations:

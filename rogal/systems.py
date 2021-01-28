@@ -34,7 +34,7 @@ class ActionsQueueSystem(System):
         # Clear previous ActsNow flags
         acts_now.clear()
 
-        for entity, waits in self.ecs.join(self.ecs.entities, waiting_queue):
+        for entity, waits in waiting_queue:
             # Decrease wait time
             waits -= 1
             if waits <= 0:
@@ -97,7 +97,7 @@ class MeleeCombatSystem(System):
         melee_targets = self.ecs.manage(components.WantsToMelee)
         locations = self.ecs.manage(components.Location)
 
-        for entity, target in self.ecs.join(self.ecs.entities, melee_targets):
+        for entity, target in melee_targets:
             if entity in players or target in players:
                 msg_log.info(f'{names.get(entity)} ATTACK: {names.get(target)}')
             # TODO: Do some damage!
@@ -122,8 +122,7 @@ class OperateSystem(System):
         blocks_vision_changes = self.ecs.manage(components.BlocksVisionChanged)
         blocks_movement_changes = self.ecs.manage(components.BlocksMovementChanged)
 
-        for entity, target in self.ecs.join(self.ecs.entities, operate_targets):
-            target = self.ecs.get(target)
+        for entity, target in operate_targets:
             if entity in players:
                 msg_log.info(f'{names.get(entity)} OPERATE: {names.get(target)}')
             operation = operations.get(target)
@@ -318,12 +317,12 @@ class ParticlesSystem(System):
         particles = self.ecs.manage(components.Particle)
         outdated = EntitiesSet()
         now = time.time()
-        for entity, ttl in self.ecs.join(self.ecs.entities, particles):
+        for particle, ttl in particles:
             if ttl < now:
-                outdated.add(entity)
+                outdated.add(particle)
 
         locations = self.ecs.manage(components.Location)
-        for entity, location in self.ecs.join(outdated, locations):
-            self.spatial.remove_entity(entity, location)
+        for particle, location in self.ecs.join(outdated, locations):
+            self.spatial.remove_entity(particle, location)
         self.ecs.entities.remove(*outdated)
 
