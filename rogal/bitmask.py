@@ -211,7 +211,7 @@ def bitmask_walls(walls, revealed=None):
     bitmask ^= (is_set(cardinals, Cardinal.NSE) & is_set(diagonals, Diagonal.E)) << 3
 
     # Now let's assume that what is not yet revealed might be wall as well
-    shape, padded = shape_padded((walls & revealed) | ~revealed)
+    shape, padded = shape_padded((walls & revealed) | ~revealed, pad_value=True)
     cardinals = bitmask.copy()
     diagonals = get_diagonals(shape, padded)
 
