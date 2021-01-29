@@ -164,6 +164,5 @@ class SpatialIndex:
 
     def add_entity(self, entity, location):
         self.entities(location.level_id).add(entity)
-        self.get_entities(location).add(entity)
-        self.calculate_entities_flags_position(location.level_id, location.position)
+        self.update_entity(entity, location)
 

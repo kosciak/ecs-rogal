@@ -40,6 +40,32 @@ def try_move(ecs, spatial, player, direction):
     return
 
 
+def try_change_level(ecs, player, direction):
+    levels = ecs.manage(components.Level)
+    locations = ecs.manage(components.Location)
+    location = locations.get(player)
+    wants_to_change_level = ecs.manage(components.WantsToChangeLevel)
+
+    if direction > 0:
+        # Next level
+        wants_to_change_level.insert(player, 0)
+        return ACTION_COST
+
+    if direction < 0:
+        # Previous level
+        level_ids = []
+        for level_id, levels in levels:
+            level_ids.append(level_id)
+        current_index = level_ids.index(location.level_id)
+        prev_index = max(0, current_index-1)
+        wants_to_change_level.insert(player, level_ids[prev_index])
+        return ACTION_COST
+
+    # Re-enter current level
+    wants_to_change_level.insert(player, location.level_id)
+    return ACTION_COST
+
+
 def reveal_level(ecs, spatial, player):
     locations = ecs.manage(components.Location)
     level_memories = ecs.manage(components.LevelMemory)

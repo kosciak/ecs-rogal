@@ -108,7 +108,7 @@ class PyRandomRNG(AbstractRNG):
 
     def init_rng(self, seed):
         import random
-        return random.Random(seed.int)
+        return random.Random(int(seed))
 
     def randbytes(self, n):
         """Return n random bytes."""
@@ -156,7 +156,7 @@ class NumpyRNG(AbstractRNG):
 
     def init_rng(self, seed):
         import numpy.random
-        return numpy.random.default_rng(seed.int)
+        return numpy.random.default_rng(int(seed))
 
     def randbytes(self, n):
         """Return n random bytes."""

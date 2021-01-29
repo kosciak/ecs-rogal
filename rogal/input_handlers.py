@@ -2,7 +2,7 @@ import logging
 import time
 
 from . import keys
-from .player import try_move, reveal_level
+from .player import try_move, try_change_level, reveal_level
 
 import tcod.event
 
@@ -56,6 +56,12 @@ class PlayerActionsHandler(InputHandler):
 
         if key == tcod.event.K_r:
             return reveal_level(self.ecs, self.spatial, actor)
+
+        if event.mod & tcod.event.KMOD_SHIFT:
+            if key == tcod.event.K_PERIOD:
+                return try_change_level(self.ecs, actor, 1)
+            if key == tcod.event.K_COMMA:
+                return try_change_level(self.ecs, actor, -1)
 
         if key in keys.WAIT_KEYS:
             log.info('Waiting...')

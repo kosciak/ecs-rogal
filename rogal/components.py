@@ -151,7 +151,7 @@ class Viewshed(Component):
         self.view_range = view_range
         self.fov = None
         self._positions = set()
-        self.entities = set()
+        self.entities = set() # TODO: Needs to be moved somewhere else
         self.needs_update = True
 
     def invalidate(self):
@@ -280,6 +280,9 @@ class WantsToMove(Component):
 HasMoved = Flag('HasMoved')
 
 
+WantsToChangeLevel = EntityRef('WantsToChangeLevel')
+
+
 WantsToMelee = EntityRef('WantsToMelee')
 
 WantsToOperate = EntityRef('WantsToOperate')
@@ -287,26 +290,26 @@ WantsToOperate = EntityRef('WantsToOperate')
 
 # TODO: Rework as EntityRef?
 
-class WantsToShoot(Component):
-    __slots__ = ()
-
-class WantsToDrink(Component):
-    __slots__ = ()
-class WantsToRead(Component):
-    __slots__ = ()
-class WantsToUseItem(Component):
-    # TODO: !!!
-    def __init__(self, item, target=None):
-        pass
-
-class WantsToPickupItem(Component):
-    __slots__ = ()
-class WantsToDropItem(Component):
-    __slots__ = ()
-class WantsToEquipItem(Component):
-    __slots__ = ()
-class WantsToUnEquipItem(Component):
-    __slots__ = ()
+#class WantsToShoot(Component):
+#    __slots__ = ()
+#
+#class WantsToDrink(Component):
+#    __slots__ = ()
+#class WantsToRead(Component):
+#    __slots__ = ()
+#class WantsToUseItem(Component):
+#    # TODO: !!!
+#    def __init__(self, item, target=None):
+#        pass
+#
+#class WantsToPickupItem(Component):
+#    __slots__ = ()
+#class WantsToDropItem(Component):
+#    __slots__ = ()
+#class WantsToEquipItem(Component):
+#    __slots__ = ()
+#class WantsToUnEquipItem(Component):
+#    __slots__ = ()
 
 
 

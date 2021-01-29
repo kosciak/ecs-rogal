@@ -109,6 +109,7 @@ actors:
     LevelMemory: 
       shared: players
     WaitsForAction: 1
+    WantsToChangeLevel: 0
     HitPoints: 20
     Attack: 10
     Defence: 10
