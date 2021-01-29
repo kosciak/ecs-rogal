@@ -11,7 +11,11 @@ log = logging.getLogger(__name__)
 
 class Entity(int):
 
-    """Entity is just and integer ID."""
+    """Entity is just and integer ID.
+
+    All data related to given Entity is stored in ComponentManagers.
+
+    """
 
     __slots__ = ()
 
@@ -36,9 +40,9 @@ class Entity(int):
 
 class Component:
 
-    """Component that hold some value(s).
+    """Component that holds some data.
 
-    Components should provide only setter/getter oriented methods.
+    Components should provide only setters and getters.
     All logic should be handled in Systems!
 
     params - values that are used by constructor and serialization
@@ -74,13 +78,6 @@ class Component:
         for param in self.parameters:
             data[param] = getattr(self, param)
         return data
-
-    # def __lt__(self, other):
-    #     # Just some arbitrary comparison for total_ordering to work
-    #     return id(self) < id(other)
-
-    #def __eq__(self, other):
-    #    return id(self) == id(other)
 
     def __repr__(self):
         param_values = [(param, getattr(self, param)) for param in self.parameters]
@@ -129,7 +126,11 @@ class FloatComponent(Component, float):
 @functools.total_ordering
 class CounterComponent(Component):
 
-    """Single value component that can be incremented/decremented, and compared to other values."""
+    """Single value component that can be incremented/decremented, and compared to other values.
+
+    Just change value without the need of reinserting changed value to manager (as with IntComponent)
+
+    """
 
     __slots__ = ('value', )
 
@@ -198,6 +199,12 @@ Counter = component_type(CounterComponent)
 
 class JoinIterator:
 
+    """Iterate through values of combined managers.
+
+    Only entities / components that are present in all provided managers are returned.
+
+    """
+
     __slots__ = ('ignore', 'managers', )
 
     def __init__(self, ignore, *managers):
@@ -224,9 +231,12 @@ class JoinIterator:
 
 class JoinableManager:
 
+    """Entity to value manager that can be used in JoinIterator."""
+
     __slots__ = ('entities', '_values', )
 
     def __init__(self):
+        # Keeping separate entities set and key-value dict gives slight performance boost.
         self.entities = EntitiesSet()
         self._values = {} # = {entity: value, }
 
@@ -308,6 +318,7 @@ class System:
 
     @functools.lru_cache
     def should_run(self, state):
+        """Return True if system should run with given RunState."""
         if self.EXCLUDE_STATES and state in self.EXCLUDE_STATES:
             return False
         if self.INCLUDE_STATES and not state in self.INCLUDE_STATES:
@@ -341,11 +352,11 @@ class SystemsManager:
 
 class ECS:
 
-    """Entity Component System.
+    """Entity Component System - data storage and processing.
 
     Entity - simple ID for object
     Component - data associated with given object, pure data
-    System - implements all logic of interaction between components
+    System - implements all logic of interaction between entities and their components
 
     """
 

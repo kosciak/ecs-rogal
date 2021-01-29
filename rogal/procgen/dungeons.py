@@ -2,7 +2,6 @@ import logging
 import uuid
 
 from ..geometry import Size
-from ..level import Level
 from ..utils import perf
 
 from .core import Generator
