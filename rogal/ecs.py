@@ -287,9 +287,10 @@ class ComponentManager(JoinableManager):
         self.component_type = component_type
 
     def insert(self, entity, *args, component=None, **kwargs):
-        if component and not type(component) == self.component_type:
+        if component is not None and not type(component) == self.component_type:
             raise ValueError('Invalid component type!')
-        component = component or self.component_type(*args, **kwargs)
+        if component is None:
+            component = self.component_type(*args, **kwargs)
         super().insert(entity, component)
         return component
 
@@ -372,7 +373,7 @@ class ECS:
             self._components[component_type] = component_manager
         return component_manager
 
-    def get(self, entity_id):
+    def get(self, entity):
         """Return list of all components for given Entity."""
         components = []
         for component_manager in self._components.values():

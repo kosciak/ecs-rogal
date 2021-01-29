@@ -101,7 +101,7 @@ class EntitiesSpawner(YAMLDataLoader):
         for name, values in entity_data.items():
             component_type, component = self.get_component(name, values)
             template[component_type] = component
-        return [component for component in template.values() if component]
+        return [component for component in template.values() if component is not None]
 
     def parse_entity_id(self, template):
         for component in template:
