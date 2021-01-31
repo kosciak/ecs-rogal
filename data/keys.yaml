@@ -1,0 +1,27 @@
+# Key bindings data
+
+common:
+  CONFIRM: [RETURN, KP_ENTER, ]
+  CANCEL: [ESCAPE, ]
+  MORE: [SPACE, ENTER, ]
+  YES: [y, Y, RETURN, KP_ENTER, ]
+  NO: [n, N, ESCAPE, ]
+  NEXT: [TAB, ]
+  PREV: [SHIFT_TAB, ]
+
+directions: 
+  N:  [UP,        k,  KP_8, ]
+  E:  [RIGHT,     l,  KP_6, ]
+  S:  [DOWN,      j,  KP_2, ]
+  W:  [LEFT,      h,  KP_4, ]
+  NE: [PAGE_UP,   u,  KP_9, ]
+  SE: [PAGE_DOWN, n,  KP_3, ]
+  SW: [END,       b,  KP_1, ]
+  NW: [HOME,      y,  KP_7, ]
+
+actions:
+  QUIT: ['^q', ESCAPE, ]
+  WAIT: ['.', KP_5, KP_0, CLEAR, ]
+  REVEAL_LEVEL: ['^r', ]
+  NEXT_LEVEL: ['Shift-.', ]
+  PREV_LEVEL: ['Shift-,', ]

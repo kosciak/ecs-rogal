@@ -1,8 +1,6 @@
 import logging
-import os.path
 
 from . import components
-from .data_loaders import DATA_DIR, YAMLDataLoader
 from . import terrain
 
 
@@ -15,25 +13,23 @@ log = logging.getLogger(__name__)
 #   - Split data/entities.yaml into data/terrain.yaml, data/actors.yaml 
 
 
-class EntitiesSpawner(YAMLDataLoader):
+class EntitiesSpawner:
 
     _data = None
 
-    def __init__(self, ecs, spatial, tileset):
-        self.fn = os.path.join(
-            DATA_DIR,
-            'entities.yaml'
-        )
+    def __init__(self, loader, ecs, spatial, tileset):
+        self.loader = loader
         self.ecs = ecs
         self.spatial = spatial
         self.tileset = tileset
+        self._data = None
         self.entities_per_name = {}
         self.on_init()
 
     @property
     def data(self):
         if self._data is None:
-            self._data = self.load_data(self.fn)
+            self._data = self.loader.load()
         return self._data
 
     # def parse_<value_name>(self, value): return parsed_value

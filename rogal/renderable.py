@@ -1,9 +1,7 @@
 import collections
 from enum import IntEnum, auto
 import importlib
-import os.path
 
-from .data_loaders import DATA_DIR, YAMLDataLoader
 from . import glyphs
 
 
@@ -116,13 +114,10 @@ RenderableTile = collections.namedtuple(
     ])
 
 
-class Tileset(YAMLDataLoader):
+class Tileset:
 
-    def __init__(self):
-        self.fn = os.path.join(
-            DATA_DIR,
-            'tiles.yaml'
-        )
+    def __init__(self, loader):
+        self.loader = loader
         self._palette = None
         self._revealed_fn = None
         self._tiles = {}
@@ -130,7 +125,7 @@ class Tileset(YAMLDataLoader):
     @property
     def tiles(self):
         if not self._tiles:
-            data = self.load_data(self.fn)
+            data = self.loader.load()
             self.parse_data(data)
         return self._tiles
 

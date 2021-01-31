@@ -1,4 +1,5 @@
 import logging
+import os.path
 
 import yaml
 
@@ -65,9 +66,24 @@ register_scalar('!dice', rng.Dice)
 
 class YAMLDataLoader:
 
-    def load_data(self, fn):
-        log.debug(f'Loading data: {fn}')
-        with open(self.fn, 'r') as f:
+    def __init__(self, fn):
+        self.data_fn = os.path.join(DATA_DIR, fn)
+
+    def load(self):
+        log.debug(f'Loading data: {self.data_fn}')
+        with open(self.data_fn, 'r') as f:
             data = yaml.load(f, yaml.Loader)
             return data
+
+
+DATA_LOADER_CLS = {
+    '.yaml': YAMLDataLoader,
+}
+
+
+class DataLoader:
+
+    def __new__(cls, fn):
+        root, ext = os.path.splitext(fn)
+        return DATA_LOADER_CLS[ext](fn)
 

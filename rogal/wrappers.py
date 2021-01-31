@@ -70,7 +70,7 @@ def get_key(sym, mod):
     if 32 <= sym <= 126:
         key = chr(sym)
     else:
-        key = TCOD_KEYS.get(sym, Key.UNKNOWN)
+        key = TCOD_KEYS.get(sym, str(sym))
     return Key.with_modifiers(
         key,
         ctrl=mod & tcod.event.KMOD_CTRL,

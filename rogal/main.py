@@ -1,6 +1,5 @@
 import functools
 import logging
-import os.path
 import uuid
 
 from .geometry import Position, Size
@@ -13,10 +12,11 @@ from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerat
 from .procgen.dungeons import StaticLevel
 
 from . import components
+from .data_loaders import DataLoader
 from .ecs import ECS
-from .spatial_index import SpatialIndex
 from .entities_spawner import EntitiesSpawner
 from .renderable import Tileset
+from .spatial_index import SpatialIndex
 from . import systems
 
 from .game_loop import GameLoop
@@ -24,15 +24,15 @@ from .game_loop import GameLoop
 from .render import Renderer
 
 from .input_handlers import PlayerActionsHandler
+from .keys import KeyBindings
 
 
 log = logging.getLogger(__name__)
 
 
-DATA_DIR = 'data'
-
-ENTITIES_DATA_FN = os.path.join(DATA_DIR, 'entities.yaml')
-TILESET_DATA_FN = os.path.join(DATA_DIR, 'tiles.yaml')
+ENTITIES_DATA_FN = 'entities.yaml'
+TILESET_DATA_FN = 'tiles.yaml'
+KEY_BINDINGS_DATA_FN = 'keys.yaml'
 
 
 CONSOLE_SIZE = Size(80, 48)
@@ -91,15 +91,20 @@ def run():
     spatial = SpatialIndex(ecs)
 
     # Tileset initialization
-    tileset = Tileset()
+    tileset = Tileset(DataLoader(TILESET_DATA_FN))
 
     # Entities spawner initialization
-    spawner = EntitiesSpawner(ecs, spatial, tileset)
+    spawner = EntitiesSpawner(
+        DataLoader(ENTITIES_DATA_FN),
+        ecs, spatial, tileset,
+    )
 
     player = spawner.create('actors.PLAYER')
 
     # Register systems
     register_systems(ecs, spatial, spawner)
+
+    key_bindings = KeyBindings(DataLoader(KEY_BINDINGS_DATA_FN))
 
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
@@ -118,7 +123,7 @@ def run():
         #     level, starting_position = level_generator.generate(depth=depth)
 
         renderer = Renderer(ecs, spatial, wrapper, root_panel, tileset)
-        input_handler = PlayerActionsHandler(ecs, spatial, wrapper)
+        input_handler = PlayerActionsHandler(ecs, spatial, wrapper, key_bindings)
         game_loop = GameLoop(ecs, spatial, renderer, input_handler)
         game_loop.join()
 

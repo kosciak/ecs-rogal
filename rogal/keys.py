@@ -1,6 +1,5 @@
+import collections
 import string
-
-import tcod.event
 
 from .geometry import Direction
 
@@ -116,74 +115,50 @@ class Key:
             with_modifiers = cls._with_ctrl(key, with_modifiers)
         return with_modifiers
 
-
-# *_MOVE_KEYS = {key_symbol: (dx, dy), }
-ARROW_MOVE_KEYS = {
-    Key.LEFT: Direction.W,
-    Key.RIGHT: Direction.E,
-    Key.UP: Direction.N,
-    Key.DOWN: Direction.S,
-    Key.HOME: Direction.NW,
-    Key.END: Direction.SW,
-    Key.PAGE_UP: Direction.NE,
-    Key.PAGE_DOWN: Direction.SE,
-}
-NUMPAD_MOVE_KEYS = {
-    Key.KP_1: Direction.SW,
-    Key.KP_2: Direction.S,
-    Key.KP_3: Direction.SE,
-    Key.KP_4: Direction.W,
-    Key.KP_6: Direction.E,
-    Key.KP_7: Direction.NW,
-    Key.KP_8: Direction.N,
-    Key.KP_9: Direction.NE,
-}
-VI_MOVE_KEYS = {
-    'h': Direction.W,
-    'j': Direction.S,
-    'k': Direction.N,
-    'l': Direction.E,
-    'y': Direction.NW,
-    'u': Direction.NE,
-    'b': Direction.SW,
-    'n': Direction.SE,
-}
-
-MOVE_KEYS = {}
-MOVE_KEYS.update(ARROW_MOVE_KEYS)
-MOVE_KEYS.update(NUMPAD_MOVE_KEYS)
-MOVE_KEYS.update(VI_MOVE_KEYS)
+    @staticmethod
+    def parse(key):
+        modifiers, sep, key = key.rpartition('-')
+        key = getattr(Key, key, key)
+        if modifiers:
+            key = f'{modifiers}-{key}'
+        return key
 
 
-WAIT_KEYS = {
-    '.',
-    Key.KP_5,
-    Key.CLEAR,
-}
+class Bindings(collections.defaultdict):
+
+    def __init__(self):
+        super().__init__(set)
+
+    def __getattr__(self, name):
+        return self[name]
+
+    @staticmethod
+    def parse(data):
+        bindings = Bindings()
+        for name, keys in data.items():
+            bindings[name].update(map(Key.parse, keys))
+        return bindings
 
 
-CONFIRM_KEYS = {
-    Key.RETURN,
-    Key.KP_ENTER,
-}
+class KeyBindings:
 
+    def __init__(self, loader):
+        self.loader = loader
+        self._bindings = None
 
-ESCAPE_KEY = Key.ESCAPE
+    @property
+    def bindings(self):
+        if self._bindings is None:
+            data = self.loader.load()
+            self._bindings = self.parse_bindings(data)
+        return self._bindings
 
+    def parse_bindings(self, data):
+        bindings = collections.defaultdict(Bindings)
+        for category, bindings_data in data.items():
+            bindings[category] = Bindings.parse(bindings_data)
+        return bindings
 
-# TODO: !!!
-MODIFIER_SHIFT_KEYS = {
-    tcod.event.K_LSHIFT,
-    tcod.event.K_RSHIFT,
-}
-MODIFIER_CTRL_KEYS = {
-    tcod.event.K_LCTRL,
-    tcod.event.K_RCTRL,
-}
-MODIFIER_ALT_KEYS = {
-    tcod.event.K_LALT,
-    tcod.event.K_RALT,
-}
-
-MODIFIER_KEYS = MODIFIER_SHIFT_KEYS | MODIFIER_CTRL_KEYS | MODIFIER_ALT_KEYS
+    def __getattr__(self, name):
+        return self.bindings[name]
 
