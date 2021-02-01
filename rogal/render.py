@@ -67,10 +67,13 @@ class Camera(Rectangular):
         self.tileset = tileset
 
         self.position = Position.ZERO
-        self.size = self.panel.size
 
         self.scrollable = scrollable
         self.show_boundaries = show_boundaries
+
+    @property
+    def size(self):
+        return self.panel.size
 
     def set_center(self, level, position=None):
         """Select what camera should be centered on."""
@@ -102,24 +105,16 @@ class Camera(Rectangular):
         coverage = self & level
         return coverage
 
-    def get_revealed(self, seen, coverage):
-        """Return visible masks."""
-        revealed = seen[
+    def get_covered(self, array, coverage):
+        """Return covered part of an array."""
+        return array[
             coverage.x : coverage.x2,
             coverage.y : coverage.y2
         ]
-        return revealed
 
-    def get_visible(self, fov, coverage):
-        """Return revealed masks."""
-        visible = fov[
-            coverage.x : coverage.x2,
-            coverage.y : coverage.y2
-        ]
-        return visible
-
-    def walls_bitmask(self, level_id, revealed, terrain_type):
+    def walls_bitmask(self, level_id, coverage, revealed, terrain_type):
         walls_mask = self.spatial.terrain_type(level_id, terrain_type)
+        walls_mask = self.get_covered(walls_mask, coverage)
         # NOTE: We don't want bitmasking to spoil not revealed terrain!
         return bitmask.bitmask_walls(walls_mask, revealed)
 
@@ -175,17 +170,9 @@ class Camera(Rectangular):
 
     def draw_terrain(self, level_id, terrain, coverage, revealed, visible):
         """Draw TERRAIN tiles."""
-        # Slice terrain to get part that is covered by camera
-        covered_terrain = terrain[
-            coverage.x : coverage.x2,
-            coverage.y : coverage.y2
-        ]
 
         # Bitshift masking for terrain.Type.WALL terrain
-        walls_mask = self.walls_bitmask(level_id, revealed, BITMASK_TERRAIN_TYPE)[
-            coverage.x : coverage.x2,
-            coverage.y : coverage.y2
-        ]
+        walls_mask = self.walls_bitmask(level_id, coverage, revealed, BITMASK_TERRAIN_TYPE)
 
         # Offset for drawing a terrain tile with a mask
         # It's mirrored camera.position but only with x,y values > 0
@@ -194,11 +181,11 @@ class Camera(Rectangular):
         revealed_not_visible = revealed ^ visible
 
         renderables = self.ecs.manage(components.Renderable)
-        for terrain_id in np.unique(covered_terrain):
+        for terrain_id in np.unique(terrain):
             if not terrain_id:
                 continue
 
-            terrain_mask = covered_terrain == terrain_id
+            terrain_mask = terrain == terrain_id
             renderable = renderables.get(terrain_id)
             if not renderable:
                 continue
@@ -227,10 +214,11 @@ class Camera(Rectangular):
                 continue
 
             tile = None
-            if visible[location.position]:
+            position = location.position.offset(coverage)
+            if visible[position]:
                 # Visible by player
                 tile = renderable.tile_visible
-            elif revealed[location.position]:
+            elif revealed[position]:
                 # Not visible, but revealed
                 if renderable.render_order == RenderOrder.PROPS:
                     tile = renderable.tile_revealed
@@ -274,11 +262,13 @@ class Camera(Rectangular):
             return
 
         # Calculate visibility masks
-        revealed = self.get_revealed(seen, coverage)
-        visible = self.get_visible(fov, coverage)
+        revealed = self.get_covered(seen, coverage)
+        visible = self.get_covered(fov, coverage)
+
+        terrain = self.get_covered(level.terrain, coverage)
 
         self.draw_boundaries(level.size)
-        self.draw_terrain(location.level_id, level.terrain, coverage, revealed, visible)
+        self.draw_terrain(location.level_id, terrain, coverage, revealed, visible)
         self.draw_entities(location.level_id, coverage, revealed, visible)
 
 
