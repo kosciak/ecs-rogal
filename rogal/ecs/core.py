@@ -3,7 +3,7 @@ import functools
 import logging
 import uuid
 
-from .utils import perf
+from ..utils import perf
 
 
 log = logging.getLogger(__name__)
@@ -86,115 +86,6 @@ class Component:
         else:
             param_values_txt = ', '.join([f'{param}={value!r}' for param, value in param_values])
             return f'<{self.name} {param_values_txt}>'
-
-
-class Singleton:
-    __slots__ = ()
-
-    _INSTANCE = None
-
-    def __new__(cls, *args, **kwargs):
-        if not cls._INSTANCE:
-            cls._INSTANCE = super().__new__(cls, *args, **kwargs)
-        return cls._INSTANCE
-
-
-class IntComponent(Component, int):
-    __slots__ = ()
-
-    def __new__(cls, value):
-        return super().__new__(cls, int(value))
-
-
-class BoolComponent(IntComponent):
-    __slots__ = ()
-
-    def __new__(cls, value):
-        return super().__new__(cls, bool(value))
-
-    def __repr__(self):
-        return f'<{self.name}={bool(self)}>'
-
-
-class FloatComponent(Component, float):
-    __slots__ = ()
-
-    def __new__(cls, value):
-        return super().__new__(cls, float(value))
-
-
-@functools.total_ordering
-class CounterComponent(Component):
-
-    """Single value component that can be incremented/decremented, and compared to other values.
-
-    Just change value without the need of reinserting changed value to manager (as with IntComponent)
-
-    """
-
-    __slots__ = ('value', )
-
-    def __init__(self, value):
-        self.value = int(value)
-
-    def __int__(self):
-        return self.value
-
-    def __iadd__(self, value):
-        self.value += value
-        return self
-
-    def __isub__(self, value):
-        self.value -= value
-        return self
-
-    def __eq__(self, other):
-        return self.value == other
-
-    def __lt__(self, other):
-        return self.value < other
-
-    def __repr__(self):
-        return f'<{self.name}={self.value!r}>'
-
-
-def Flag(name):
-    """Returns BoolComponent instance of class with given name."""
-    bases = (Singleton, BoolComponent, )
-    attrs = dict(
-        __slots__=(),
-        __call__=lambda self, *args, **kwargs: self,
-    )
-    return type(name, bases, attrs)(True)
-
-
-def IntFlag(name, value):
-    """Returns IntComponent instance of class with given name."""
-    bases = (Singleton, IntComponent, )
-    attrs = dict(
-        __slots__=(),
-        __call__=lambda self, *args, **kwargs: self,
-    )
-    return type(name, bases, attrs)(value)
-
-
-def _type_factory(name, bases):
-    """Returns class with given name, inheriting from bases."""
-    attrs = dict(
-        __slots__=(),
-    )
-    return type(name, bases, attrs)
-
-def component_type(*bases):
-    return functools.partial(_type_factory, bases=bases)
-
-
-Int = component_type(IntComponent)
-Bool = component_type(IntComponent)
-Float = component_type(IntComponent)
-String = component_type(Component, str)
-EntityRef = component_type(Component, Entity)
-Counter = component_type(CounterComponent)
 
 
 class JoinIterator:
@@ -297,7 +188,7 @@ class ComponentManager(JoinableManager):
         self.component_type = component_type
 
     def insert(self, entity, *args, component=None, **kwargs):
-        if component is not None and not type(component) == self.component_type:
+        if component is not None and not isinstance(component, self.component_type):
             raise ValueError('Invalid component type!')
         if component is None:
             component = self.component_type(*args, **kwargs)

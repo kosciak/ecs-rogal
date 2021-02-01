@@ -3,8 +3,9 @@ import time
 
 import numpy as np
 
-from .ecs import Component, FloatComponent
-from .ecs import Flag, IntFlag, Int, Counter, String, EntityRef, component_type
+from .ecs import Component
+from .ecs.components import Flag, IntFlag, Int, Counter, FloatComponent, String, EntityReference
+from .ecs.components import component_type
 from .ecs import EntitiesSet
 from . import flags
 from .geometry import Direction, Position, Size, Rectangular, WithPositionMixin
@@ -280,15 +281,15 @@ class WantsToMove(Component):
 HasMoved = Flag('HasMoved')
 
 
-WantsToChangeLevel = EntityRef('WantsToChangeLevel')
+WantsToChangeLevel = EntityReference('WantsToChangeLevel')
 
 
-WantsToMelee = EntityRef('WantsToMelee')
+WantsToMelee = EntityReference('WantsToMelee')
 
-WantsToOperate = EntityRef('WantsToOperate')
+WantsToOperate = EntityReference('WantsToOperate')
 
 
-# TODO: Rework as EntityRef?
+# TODO: Rework as EntityReference?
 
 #class WantsToShoot(Component):
 #    __slots__ = ()
