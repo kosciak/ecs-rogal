@@ -3,6 +3,8 @@ import functools
 import logging
 import uuid
 
+from .run_state import RunState
+
 from ..utils import perf
 
 
@@ -227,15 +229,16 @@ class SystemsManager:
 
     def __init__(self):
         self.systems = []
+        self.run_state = RunState.PRE_RUN
 
     def register(self, system):
         self.systems.append(system)
 
-    def run(self, state, *args, **kwargs):
-        systems = [system for system in self if system.should_run(state)]
-        # log.debug(f'systems.run({state.name}): {systems}')
+    def run(self, *args, **kwargs):
+        systems = [system for system in self if system.should_run(self.run_state)]
+        # log.debug(f'systems.run({self.run_state.name}): {systems}')
         for system in systems:
-            system.run(state, *args, **kwargs)
+            system.run(self.run_state, *args, **kwargs)
 
     def __iter__(self):
         yield from self.systems
@@ -255,6 +258,14 @@ class ECS:
         self.entities = EntitiesSet()
         self._components = {} # {component_type: ComponentManager(component_type), }
         self._systems = SystemsManager()
+
+    @property
+    def run_state(self):
+        return self._systems.run_state
+
+    @run_state.setter
+    def run_state(self, run_state):
+        self._systems.run_state = run_state
 
     def create(self, *components, entity_id=None):
         """Create Entity with given components."""
@@ -303,8 +314,8 @@ class ECS:
         """Register System."""
         self._systems.register(system)
 
-    def run(self, state, *args, **kwargs):
+    def run(self, *args, **kwargs):
         """Run Systems for given RunState."""
         with perf.Perf('ecs.Systems.run()'):
-            self._systems.run(state, *args, **kwargs)
+            self._systems.run(*args, **kwargs)
 

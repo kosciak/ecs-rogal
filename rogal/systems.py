@@ -7,9 +7,8 @@ import numpy as np
 import tcod
 
 from . import components
-from .ecs import System
-from .ecs import EntitiesSet
-from .run_state import RunState
+from .ecs import System, EntitiesSet
+from .ecs.run_state import RunState
 
 from .utils import perf
 
@@ -74,6 +73,9 @@ class ActionsQueueSystem(System):
                 # No more waiting, time for some action!
                 acts_now.insert(entity)
 
+        if acts_now:
+            self.ecs.run_state = RunState.WAITING_FOR_ACTIONS
+
     def run(self, state, *args, **kwargs):
         with perf.Perf('systems.ActionsQueueSystem.run()'):
             self.update_acts_now(*args, **kwargs)
@@ -88,6 +90,7 @@ class TakeActionsSystem(System):
     def run(self, state, *args, **kwargs):
         acts_now = self.ecs.manage(components.ActsNow)
         if not acts_now:
+            self.ecs.run_state = RunState.PERFOM_ACTIONS
             return
         input_handlers = self.ecs.manage(components.Input)
         waiting_queue = self.ecs.manage(components.WaitsForAction)
@@ -102,6 +105,8 @@ class TakeActionsSystem(System):
             actions_taken.add(actor)
 
         acts_now.remove(*actions_taken)
+        if not acts_now:
+            self.ecs.run_state = RunState.PERFOM_ACTIONS
 
 
 class MovementSystem(System):
@@ -342,8 +347,7 @@ class IndexingSystem(System):
             self.update_flags(*args, **kwargs)
 
 
-# TODO: Rename: -> ActionsPerformedSystem?
-class QueuecCleanupSystem(System):
+class ActionsPerformedSystem(System):
 
     INCLUDE_STATES = {
         RunState.PRE_RUN,
@@ -360,12 +364,13 @@ class QueuecCleanupSystem(System):
         blocks_movement_changes = self.ecs.manage(components.BlocksMovementChanged)
         blocks_movement_changes.clear()
 
+        self.ecs.run_state = RunState.TICKING
+
 
 class ParticlesSystem(System):
 
     INCLUDE_STATES = {
-        RunState.TICKING,
-        RunState.WAITING_FOR_ACTIONS,
+        RunState.PERFOM_ACTIONS,
         RunState.ANIMATIONS,
     }
 
@@ -375,6 +380,11 @@ class ParticlesSystem(System):
 
     def run(self, state, *args, **kwargs):
         particles = self.ecs.manage(components.Particle)
+        if particles:
+            self.ecs.run_state = RunState.ANIMATIONS
+        else:
+            self.ecs.run_state = RunState.TICKING
+            return
         outdated = EntitiesSet()
         now = time.time()
         for particle, ttl in particles:

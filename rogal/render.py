@@ -31,6 +31,8 @@ BITMASKED_WALLS = bitmask.WALLS_DLINE
 
 class Renderer:
 
+    FPS = 35
+
     def __init__(self, ecs, spatial, wrapper, panel, tileset):
         self.ecs = ecs
         self.spatial = spatial
@@ -39,8 +41,32 @@ class Renderer:
         self.panel = panel
         self.tileset = tileset
 
+        self._last_run = None
+        self._fps = None
+        self.frame = None
+        self.fps = self.FPS
+
+    @property
+    def fps(self):
+        return self._fps
+
+    @fps.setter
+    def fps(self, fps):
+        self._fps = fps
+        self.frame = 1./self._fps
+
+    def should_run(self):
+        now = time.time()
+        if self._last_run and now - self._last_run < self.frame:
+            # Do NOT render more often than once a frame
+            return False
+        self._last_run = now
+        return True
+
     def render(self, actor):
         if not actor:
+            return False
+        if not self.should_run():
             return False
         self.panel.clear()
         camera, message_log = self.panel.split(bottom=12)
@@ -218,10 +244,9 @@ class Camera(Rectangular):
             if visible[position]:
                 # Visible by player
                 tile = renderable.tile_visible
-            elif revealed[position]:
+            elif renderable.render_order == RenderOrder.PROPS and revealed[position]:
                 # Not visible, but revealed
-                if renderable.render_order == RenderOrder.PROPS:
-                    tile = renderable.tile_revealed
+                tile = renderable.tile_revealed
             # TODO: Some components checks like entity.has(components.Hidden)
 
             if tile is not None:

@@ -90,8 +90,6 @@ def run():
     for system in [
         systems.LevelsSystem(ecs, spatial, level_generator),
 
-        systems.ParticlesSystem(ecs, spatial),
-
         systems.ActionsQueueSystem(ecs),
         systems.TakeActionsSystem(ecs),
 
@@ -102,7 +100,9 @@ def run():
         systems.IndexingSystem(ecs, spatial),
         systems.VisibilitySystem(ecs, spatial),
 
-        systems.QueuecCleanupSystem(ecs),
+        systems.ActionsPerformedSystem(ecs),
+
+        systems.ParticlesSystem(ecs, spatial),
     ]:
         ecs.register(system)
 
