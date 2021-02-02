@@ -22,6 +22,6 @@ directions:
 actions:
   QUIT: ['^q', ESCAPE, ]
   WAIT: ['.', KP_5, KP_0, CLEAR, ]
-  REVEAL_LEVEL: ['^r', ]
+  REVEAL_LEVEL: [r, R, ]
   NEXT_LEVEL: ['Shift-.', ]
   PREV_LEVEL: ['Shift-,', ]

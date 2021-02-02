@@ -1,3 +1,5 @@
+# Renderable tiles data
+
 palette: rogal.colors.x11.TANGO_DARK
 
 revealed:

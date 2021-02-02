@@ -1,3 +1,4 @@
+# Entities spawner data
 
 on_load: 
   create: terrain.*
@@ -100,6 +101,8 @@ items:
 actors:
   PLAYER:
     Player: true
+    Input:
+      handler: PLAYER_INPUT
     Name: Player
     Renderable:
       tile: PLAYER
@@ -117,6 +120,8 @@ actors:
 
   MONSTER:
     Monster: true
+    Input:
+      handler: AI
     Name: Monster
     Renderable:
       tile: MONSTER
@@ -131,6 +136,8 @@ actors:
 
   BAT:
     Monster: true
+    Input:
+      handler: AI
     Name: Bat
     Renderable:
       tile: BAT
@@ -145,6 +152,8 @@ actors:
 
   SNAIL:
     Monster: true
+    Input:
+      handler: AI
     Name: Snail
     Renderable:
       tile: SNAIL

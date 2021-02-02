@@ -10,9 +10,10 @@ log = logging.getLogger(__name__)
 
 class InputHandler:
 
-    def __init__(self, wrapper, keys):
+    def __init__(self, wrapper, keys, wait=None):
         self.wrapper = wrapper
         self.keys = keys
+        self.wait = wait
 
     def dispatch(self, event, *args, **kwargs):
         if event.type is None:
@@ -22,10 +23,13 @@ class InputHandler:
         if fn:
             return fn(event, *args, **kwargs)
 
-    def handle(self, wait=None, *args, **kwargs):
-        for event in self.wrapper.events(wait):
+    def handle(self, *args, **kwargs):
+        for event in self.wrapper.events(self.wait):
             # log.debug(f'Event: {event}')
             return self.dispatch(event, *args, **kwargs)
+
+    def take_action(self, actor, *args, **kwargs):
+        return self.handle(actor=actor, *args, **kwargs)
 
     def on_quit(self, event):
         log.warning('Quitting...')
@@ -36,11 +40,16 @@ class PlayerActionsHandler(InputHandler):
 
     REPEAT_LIMIT = 1./6
 
-    def __init__(self, ecs, spatial, wrapper, keys):
-        super().__init__(wrapper, keys)
+    def __init__(self, ecs, spatial, wrapper, keys, wait=None):
+        super().__init__(wrapper, keys, wait)
         self.ecs = ecs
         self.spatial = spatial
         self.last_keydown = None
+
+    def get_direction(self, event):
+        for direction in Direction:
+            if event.key in self.keys.directions[direction.name]:
+                return direction
 
     def on_keydown(self, event, actor):
         # log.debug(f'Event: {event}')
@@ -67,7 +76,7 @@ class PlayerActionsHandler(InputHandler):
             log.info('Waiting...')
             return 60
 
-        for direction in Direction:
-            if event.key in self.keys.directions[direction.name]:
-                return try_move(self.ecs, self.spatial, actor, direction)
+        direction = self.get_direction(event)
+        if direction:
+            return try_move(self.ecs, self.spatial, actor, direction)
 

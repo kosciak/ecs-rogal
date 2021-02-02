@@ -54,35 +54,13 @@ SEED = None
 # SEED = uuid.UUID("40e5d1ea-0c1b-43c6-acd5-b561798a3a49")
 
 
-def register_systems(ecs, spatial, spawner):
-    # Generate seed
+def run():
+    # Generate seed and init RNG
     seed = SEED or generate_seed()
     rng.seed(seed, dump='rng')
 
-    # Level generator
-    level_generator = LEVEL_GENERATOR_CLS(seed, spawner, LEVEL_SIZE)
-
-    # NOTE: Systems are run in order they were registered
-    for system in [
-        systems.LevelsSystem(ecs, spatial, level_generator),
-
-        systems.ParticlesSystem(ecs, spatial),
-
-        systems.ActionsQueueSystem(ecs),
-
-        systems.MeleeCombatSystem(ecs, spawner),
-        systems.MovementSystem(ecs, spatial),
-        systems.OperateSystem(ecs),
-
-        systems.IndexingSystem(ecs, spatial),
-        systems.VisibilitySystem(ecs, spatial),
-
-        systems.QueuecCleanupSystem(ecs),
-    ]:
-        ecs.register(system)
-
-
-def run():
+    # Key bindings initialization
+    key_bindings = KeyBindings(DataLoader(KEY_BINDINGS_DATA_FN))
 
     # ECS initialization
     ecs = ECS()
@@ -99,12 +77,37 @@ def run():
         ecs, spatial, tileset,
     )
 
-    player = spawner.create('actors.PLAYER')
+    # Level generator
+    level_generator = LEVEL_GENERATOR_CLS(seed, spawner, LEVEL_SIZE)
+
+    # Pregenerate some levels for stress testing
+    # level, starting_position = level_generator.generate()
+    # for depth in range(1, 51):
+    #     level, starting_position = level_generator.generate(depth=depth)
 
     # Register systems
-    register_systems(ecs, spatial, spawner)
+    # NOTE: Systems are run in order they were registered
+    for system in [
+        systems.LevelsSystem(ecs, spatial, level_generator),
 
-    key_bindings = KeyBindings(DataLoader(KEY_BINDINGS_DATA_FN))
+        systems.ParticlesSystem(ecs, spatial),
+
+        systems.ActionsQueueSystem(ecs),
+        systems.TakeActionsSystem(ecs),
+
+        systems.MeleeCombatSystem(ecs, spawner),
+        systems.MovementSystem(ecs, spatial),
+        systems.OperateSystem(ecs),
+
+        systems.IndexingSystem(ecs, spatial),
+        systems.VisibilitySystem(ecs, spatial),
+
+        systems.QueuecCleanupSystem(ecs),
+    ]:
+        ecs.register(system)
+
+    # Create player
+    player = spawner.create('actors.PLAYER')
 
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
@@ -117,13 +120,16 @@ def run():
     with wrapper as wrapper:
         root_panel = wrapper.create_panel()
 
-        # Level(s) generation
-        # level, starting_position = level_generator.generate(player=player)
-        # for depth in range(1, 55):
-        #     level, starting_position = level_generator.generate(depth=depth)
-
         renderer = Renderer(ecs, spatial, wrapper, root_panel, tileset)
-        input_handler = PlayerActionsHandler(ecs, spatial, wrapper, key_bindings)
-        game_loop = GameLoop(ecs, spatial, renderer, input_handler)
+
+        # Init InputHandler and set to player
+        inputs = ecs.manage(components.Input)
+        input_handler = PlayerActionsHandler(
+            ecs, spatial, wrapper, key_bindings,
+            wait=1./60,
+        )
+        inputs.insert(player, input_handler)
+
+        game_loop = GameLoop(ecs, renderer)
         game_loop.join()
 

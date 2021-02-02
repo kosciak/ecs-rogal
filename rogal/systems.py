@@ -25,7 +25,7 @@ class LevelsSystem(System):
 
     INCLUDE_STATES = {
         RunState.PRE_RUN,
-        RunState.ACTION_PERFORMED,
+        RunState.PERFOM_ACTIONS,
     }
 
     def __init__(self, ecs, spatial, level_generator):
@@ -79,10 +79,35 @@ class ActionsQueueSystem(System):
             self.update_acts_now(*args, **kwargs)
 
 
+class TakeActionsSystem(System):
+
+    INCLUDE_STATES = {
+        RunState.WAITING_FOR_ACTIONS,
+    }
+
+    def run(self, state, *args, **kwargs):
+        acts_now = self.ecs.manage(components.ActsNow)
+        if not acts_now:
+            return
+        input_handlers = self.ecs.manage(components.Input)
+        waiting_queue = self.ecs.manage(components.WaitsForAction)
+
+        actions_taken = set()
+        for actor, handler in self.ecs.join(acts_now.entities, input_handlers):
+            action_cost = handler.take_action(actor)
+            if not action_cost:
+                break
+
+            waiting_queue.insert(actor, action_cost)
+            actions_taken.add(actor)
+
+        acts_now.remove(*actions_taken)
+
+
 class MovementSystem(System):
 
     INCLUDE_STATES = {
-        RunState.ACTION_PERFORMED,
+        RunState.PERFOM_ACTIONS,
     }
 
     def __init__(self, ecs, spatial):
@@ -117,7 +142,7 @@ class MovementSystem(System):
 class MeleeCombatSystem(System):
 
     INCLUDE_STATES = {
-        RunState.ACTION_PERFORMED,
+        RunState.PERFOM_ACTIONS,
     }
 
     def __init__(self, ecs, spawner):
@@ -144,7 +169,7 @@ class MeleeCombatSystem(System):
 class OperateSystem(System):
 
     INCLUDE_STATES = {
-        RunState.ACTION_PERFORMED,
+        RunState.PERFOM_ACTIONS,
     }
 
     def run(self, state, *args, **kwargs):
@@ -182,7 +207,7 @@ class VisibilitySystem(System):
 
     INCLUDE_STATES = {
         RunState.PRE_RUN,
-        RunState.ACTION_PERFORMED,
+        RunState.PERFOM_ACTIONS,
     }
 
     def __init__(self, ecs, spatial):
@@ -228,6 +253,7 @@ class VisibilitySystem(System):
                 # No need to recalculate
                 continue
 
+            # TODO: Move to separate module?
             fov = tcod.map.compute_fov(
                 transparency=self.spatial.transparent(location.level_id),
                 pov=location.position,
@@ -288,7 +314,7 @@ class IndexingSystem(System):
 
     INCLUDE_STATES = {
         RunState.PRE_RUN,
-        RunState.ACTION_PERFORMED,
+        RunState.PERFOM_ACTIONS,
     }
 
     def __init__(self, ecs, spatial):
@@ -316,11 +342,12 @@ class IndexingSystem(System):
             self.update_flags(*args, **kwargs)
 
 
+# TODO: Rename: -> ActionsPerformedSystem?
 class QueuecCleanupSystem(System):
 
     INCLUDE_STATES = {
         RunState.PRE_RUN,
-        RunState.ACTION_PERFORMED,
+        RunState.PERFOM_ACTIONS,
     }
 
     def run(self, state, *args, **kwargs):
@@ -338,7 +365,7 @@ class ParticlesSystem(System):
 
     INCLUDE_STATES = {
         RunState.TICKING,
-        RunState.WAITING_FOR_INPUT,
+        RunState.WAITING_FOR_ACTIONS,
         RunState.ANIMATIONS,
     }
 

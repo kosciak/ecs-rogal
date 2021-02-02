@@ -249,6 +249,16 @@ ActsNow = Flag('ActsNow')
 WaitsForAction = Counter('WaitsForAction')
 
 
+class Input(Component):
+    __slots__ = ('handler', )
+
+    def __init__(self, handler):
+        self.handler = handler
+
+    def take_action(self, entity):
+        return self.handler.take_action(entity)
+
+
 # Action intentions
 
 class WantsToMove(Component):

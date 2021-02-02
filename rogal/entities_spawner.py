@@ -1,6 +1,7 @@
 import logging
 
 from . import components
+from . import ai
 from . import terrain
 
 
@@ -33,6 +34,10 @@ class EntitiesSpawner:
         return self._data
 
     # def parse_<value_name>(self, value): return parsed_value
+
+    def parse_input_handler(self, value):
+        if value == 'AI':
+            return ai.MonsterAI(self.ecs, self.spatial)
 
     def parse_renderable_tile(self, value):
         return self.tileset.get(value)
