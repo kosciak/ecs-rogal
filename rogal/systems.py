@@ -77,8 +77,7 @@ class ActionsQueueSystem(System):
             self.ecs.run_state = RunState.WAITING_FOR_ACTIONS
 
     def run(self, state, *args, **kwargs):
-        with perf.Perf('systems.ActionsQueueSystem.run()'):
-            self.update_acts_now(*args, **kwargs)
+        self.update_acts_now(*args, **kwargs)
 
 
 class TakeActionsSystem(System):
@@ -140,8 +139,7 @@ class MovementSystem(System):
         movement_directions.clear()
 
     def run(self, state, *args, **kwargs):
-        with perf.Perf('systems.MovementSystem.run()'):
-            self.apply_move(*args, **kwargs)
+        self.apply_move(*args, **kwargs)
 
 
 class MeleeCombatSystem(System):
@@ -307,12 +305,11 @@ class VisibilitySystem(System):
                     msg_log.info(f'You see: {names}')
 
     def run(self, state, *args, **kwargs):
-        with perf.Perf('systems.VisibilitySystem.run()'):
-            self.invalidate_blocks_vision_changed_viewsheds(*args, **kwargs)
-            self.invalidate_has_moved_viewsheds(*args, **kwargs)
-            self.update_viewsheds(*args, **kwargs)
-            with perf.Perf('systems.VisibilitySystem.spotted_targets()'):
-                self.spotted_alert(*args, **kwargs)
+        self.invalidate_blocks_vision_changed_viewsheds(*args, **kwargs)
+        self.invalidate_has_moved_viewsheds(*args, **kwargs)
+        self.update_viewsheds(*args, **kwargs)
+        with perf.Perf(f'{self.__module__}.{self.__class__.__name__}.spotted_targets()'):
+            self.spotted_alert(*args, **kwargs)
 
 
 class IndexingSystem(System):
@@ -342,9 +339,8 @@ class IndexingSystem(System):
             self.spatial.update_entity(entity, location)
 
     def run(self, state, *args, **kwargs):
-        with perf.Perf('systems.IndexingSystem.run()'):
-            self.calculate_spatial(*args, **kwargs)
-            self.update_flags(*args, **kwargs)
+        self.calculate_spatial(*args, **kwargs)
+        self.update_flags(*args, **kwargs)
 
 
 class ActionsPerformedSystem(System):

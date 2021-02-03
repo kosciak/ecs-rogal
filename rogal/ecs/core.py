@@ -230,15 +230,26 @@ class SystemsManager:
     def __init__(self):
         self.systems = []
         self.run_state = RunState.PRE_RUN
+        self.next_run_state = None
 
     def register(self, system):
         self.systems.append(system)
 
     def run(self, *args, **kwargs):
-        systems = [system for system in self if system.should_run(self.run_state)]
+        # Run all systems that should run with given run_state
+        systems = []
+        for system in self.systems:
+            if not system.should_run(self.run_state):
+                continue
+            with perf.Perf(f'{system.__module__}.{system.__class__.__name__}.run()'):
+                system.run(self.run_state, *args, **kwargs)
+            systems.append(system)
         # log.debug(f'systems.run({self.run_state.name}): {systems}')
-        for system in systems:
-            system.run(self.run_state, *args, **kwargs)
+
+        # Change run_state AFTER running all systems
+        if self.next_run_state:
+            self.run_state = self.next_run_state
+            self.next_run_state = None
 
     def __iter__(self):
         yield from self.systems
@@ -265,7 +276,7 @@ class ECS:
 
     @run_state.setter
     def run_state(self, run_state):
-        self._systems.run_state = run_state
+        self._systems.next_run_state = run_state
 
     def create(self, *components, entity_id=None):
         """Create Entity with given components."""
@@ -314,8 +325,14 @@ class ECS:
         """Register System."""
         self._systems.register(system)
 
-    def run(self, *args, **kwargs):
+    def run_once(self, *args, **kwargs):
         """Run Systems for given RunState."""
-        with perf.Perf('ecs.Systems.run()'):
+        with perf.Perf(f'{self.__module__}.Systems.run()'):
             self._systems.run(*args, **kwargs)
+
+    def run(self):
+        # Should be named join() as in Thread.join() 
+        # but join() is already used for joining managers as in database query
+        while True:
+            self.run_once()
 

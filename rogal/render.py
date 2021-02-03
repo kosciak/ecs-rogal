@@ -7,6 +7,7 @@ from . import logs
 
 from . import bitmask
 from . import components
+from .ecs import System, RunState
 from .geometry import Rectangular, Position, Size, Rectangle
 from .renderable import RenderOrder, Colors, Tile
 from . import terrain
@@ -29,12 +30,12 @@ BITMASK_TERRAIN_TYPE = terrain.Type.WALL
 BITMASKED_WALLS = bitmask.WALLS_DLINE
 
 
-class Renderer:
+class ConsoleRenderingSystem(System):
 
     FPS = 35
 
     def __init__(self, ecs, spatial, wrapper, panel, tileset):
-        self.ecs = ecs
+        super().__init__(ecs)
         self.spatial = spatial
 
         self.wrapper = wrapper
@@ -46,6 +47,8 @@ class Renderer:
         self.frame = None
         self.fps = self.FPS
 
+        self.player = None
+
     @property
     def fps(self):
         return self._fps
@@ -55,7 +58,21 @@ class Renderer:
         self._fps = fps
         self.frame = 1./self._fps
 
-    def should_run(self):
+    def init_panels(self):
+        renderers = self.ecs.manage(components.PanelRenderer)
+
+        camera, message_log = self.panel.split(bottom=12)
+        #camera = root_panel.create_panel(Position(10,10), CAMERA_SIZE)
+
+        msg_log_panel = message_log.framed('logs')
+        msg_log_renderer = MessageLog(msg_log_panel)
+        renderers.insert(self.ecs.create(), msg_log_renderer)
+
+        cam_panel = camera.framed('mapcam')
+        cam_renderer = Camera(self.ecs, self.spatial, cam_panel, self.tileset)
+        renderers.insert(self.ecs.create(), cam_renderer)
+
+    def should_run(self, state):
         now = time.time()
         if self._last_run and now - self._last_run < self.frame:
             # Do NOT render more often than once a frame
@@ -63,33 +80,53 @@ class Renderer:
         self._last_run = now
         return True
 
-    def render(self, actor):
-        if not actor:
-            return False
-        if not self.should_run():
-            return False
+    def render(self):
+        # Clear panel
         self.panel.clear()
-        camera, message_log = self.panel.split(bottom=12)
-        #camera = root_panel.create_panel(Position(10,10), CAMERA_SIZE)
 
-        render_message_log(message_log.framed('logs'))
-
-        cam = Camera(self.ecs, self.spatial, camera.framed('mapcam'), self.tileset)
-        cam.render(actor=actor)
+        # Render all panels
+        renderers = self.ecs.manage(components.PanelRenderer)
+        for panel, renderer in renderers:
+            renderer.render(actor=self.player)
 
         # Show rendered panel
         self.wrapper.flush(self.panel)
+
+    def run(self, state, *args, **kwargs):
+        if state == RunState.PRE_RUN:
+            self.init_panels()
+
+        # This is ugly... Camera should be initialized with actor
+        acts_now = self.ecs.manage(components.ActsNow)
+        players = self.ecs.manage(components.Player)
+        for actor in players.entities:
+            if actor in acts_now:
+                self.player = actor
+                break
+        if not self.player:
+            return False
+
+        self.render()
         return True
 
 
-class Camera(Rectangular):
+class Renderer:
+
+    def __init__(self, panel):
+        self.panel = panel
+
+    def render(self, *args, **kwargs):
+        return
+
+
+class Camera(Rectangular, Renderer):
 
     def __init__(self, ecs, spatial, panel, tileset,
                  scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
+        super().__init__(panel)
         self.ecs = ecs
         self.spatial = spatial
 
-        self.panel = panel
         self.tileset = tileset
 
         self.position = Position.ZERO
@@ -256,7 +293,7 @@ class Camera(Rectangular):
                 else:
                     self.panel.draw(tile, render_position)
 
-    def render(self, actor=None, location=None, level=None):
+    def render(self, actor=None, location=None, *args, **kwargs):
         position = None
         fov = None
         seen = None
@@ -297,10 +334,16 @@ class Camera(Rectangular):
         self.draw_entities(location.level_id, coverage, revealed, visible)
 
 
-def render_message_log(panel):
-    """Render logging records."""
-    for offset, msg in enumerate(reversed(logs.LOGS_HISTORY), start=1):
-        if offset > panel.height:
-            break
-        panel.print(msg.message, Position(0, panel.height-offset), colors=Colors(fg=msg.fg))
+class MessageLog(Renderer):
+
+    def render(self, *args, **kwargs):
+        """Render logging records."""
+        for offset, msg in enumerate(reversed(logs.LOGS_HISTORY), start=1):
+            if offset > self.panel.height:
+                break
+            self.panel.print(
+                msg.message,
+                Position(0, self.panel.height-offset),
+                colors=Colors(fg=msg.fg),
+            )
 

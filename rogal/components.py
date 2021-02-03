@@ -13,6 +13,20 @@ from .renderable import RenderOrder
 from . import terrain
 
 
+# Rendering
+
+class PanelRenderer(Component):
+    __slots__ = ('renderer', )
+
+    def __init__(self, renderer):
+        self.renderer = renderer
+
+    def render(self, *args, **kwargs):
+        self.renderer.render(*args, **kwargs)
+
+# TODO: HasFocus, OnScreen, maybe associated Input/InputHandler?
+
+
 # Flags
 
 BlocksMovement = IntFlag('BlocksMovement', flags.Flag.BLOCKS_MOVEMENT)

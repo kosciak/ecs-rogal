@@ -19,9 +19,7 @@ from .renderable import Tileset
 from .spatial_index import SpatialIndex
 from . import systems
 
-from .game_loop import GameLoop
-
-from .render import Renderer
+from .render import ConsoleRenderingSystem
 
 from .input_handlers import PlayerActionsHandler
 from .keys import KeyBindings
@@ -82,7 +80,7 @@ def run():
 
     # Pregenerate some levels for stress testing
     # level, starting_position = level_generator.generate()
-    # for depth in range(1, 51):
+    # for depth in range(1, 50):
     #     level, starting_position = level_generator.generate(depth=depth)
 
     # Register systems
@@ -120,7 +118,9 @@ def run():
     with wrapper as wrapper:
         root_panel = wrapper.create_panel()
 
-        renderer = Renderer(ecs, spatial, wrapper, root_panel, tileset)
+        # Register rendering system
+        rendering_system = ConsoleRenderingSystem(ecs, spatial, wrapper, root_panel, tileset)
+        ecs.register(rendering_system)
 
         # Init InputHandler and set to player
         inputs = ecs.manage(components.Input)
@@ -130,6 +130,5 @@ def run():
         )
         inputs.insert(player, input_handler)
 
-        game_loop = GameLoop(ecs, renderer)
-        game_loop.join()
+        ecs.run()
 
