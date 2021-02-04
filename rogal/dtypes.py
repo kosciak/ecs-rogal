@@ -1,6 +1,15 @@
 import numpy as np
 
 
+# Same as tcod.console.Console._DTYPE_RGB
+rgb_console_dt = np.dtype({
+    'names':['ch','fg','bg'],
+    'formats':['<i4',('u1', (3,)),('u1', (3,))],
+    'offsets':[0,4,8],
+    'itemsize':12
+})
+
+
 rgb_dt = np.dtype('3B')
 rgba_dt = np.dtype('4B')
 
