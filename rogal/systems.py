@@ -308,7 +308,7 @@ class VisibilitySystem(System):
         self.invalidate_blocks_vision_changed_viewsheds(*args, **kwargs)
         self.invalidate_has_moved_viewsheds(*args, **kwargs)
         self.update_viewsheds(*args, **kwargs)
-        with perf.Perf(f'{self.__module__}.{self.__class__.__name__}.spotted_targets()'):
+        with perf.Perf(self.spotted_alert):
             self.spotted_alert(*args, **kwargs)
 
 

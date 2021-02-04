@@ -3,6 +3,7 @@ import collections
 from functools import wraps
 import logging
 import time
+import types
 
 from decorator import decorator
 
@@ -26,6 +27,9 @@ class Perf:
     __slots__ = ('name', 'start', )
 
     def __init__(self, name):
+        if isinstance(name, (types.MethodType, types.FunctionType)):
+            # Use fully qualified method/function names
+            name = f'{name.__module__}.{name.__qualname__}()'
         self.name = name
         self.start = time.time()
 
@@ -48,8 +52,9 @@ def perf_stats(name=None):
             perf_stats(name)
         return
     times = Perf._PERF_STATS[name]
-    avg = sum(times) / len(times)
+    total = sum(times)
+    avg = total / len(times)
     med = sorted(times)[len(times)//2]
-    log.debug(f'{name} - calls: {len(times)}, avg: {avg:2.4f}, med: {med:2.4f}, max: {max(times):2.4f}')
+    log.debug(f'{name} - calls: {len(times)}, avg: {avg:2.4f}, med: {med:2.4f}, max: {max(times):2.4f}, total: {total:2.4f}')
 
 atexit.register(perf_stats)

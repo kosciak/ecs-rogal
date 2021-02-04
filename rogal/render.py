@@ -34,13 +34,15 @@ class ConsoleRenderingSystem(System):
 
     FPS = 35
 
-    def __init__(self, ecs, spatial, wrapper, panel, tileset):
+    def __init__(self, ecs, spatial, wrapper, tileset):
         super().__init__(ecs)
         self.spatial = spatial
 
-        self.wrapper = wrapper
-        self.panel = panel
         self.tileset = tileset
+        self.default_colors = Colors(self.tileset.palette.fg, self.tileset.palette.bg)
+
+        self.wrapper = wrapper
+        self._root = None
 
         self._last_run = None
         self._fps = None
@@ -48,6 +50,12 @@ class ConsoleRenderingSystem(System):
         self.fps = self.FPS
 
         self.player = None
+
+    @property
+    def root(self):
+        if self._root is None:
+            self._root = self.wrapper.create_panel()
+        return self._root
 
     @property
     def fps(self):
@@ -61,14 +69,12 @@ class ConsoleRenderingSystem(System):
     def init_panels(self):
         renderers = self.ecs.manage(components.PanelRenderer)
 
-        camera, message_log = self.panel.split(bottom=12)
+        cam_panel, msg_log_panel = self.root.split(bottom=12)
         #camera = root_panel.create_panel(Position(10,10), CAMERA_SIZE)
 
-        msg_log_panel = message_log.framed('logs')
         msg_log_renderer = MessageLog(msg_log_panel)
         renderers.insert(self.ecs.create(), msg_log_renderer)
 
-        cam_panel = camera.framed('mapcam')
         cam_renderer = Camera(self.ecs, self.spatial, cam_panel, self.tileset)
         renderers.insert(self.ecs.create(), cam_renderer)
 
@@ -82,15 +88,16 @@ class ConsoleRenderingSystem(System):
 
     def render(self):
         # Clear panel
-        self.panel.clear()
+        self.root.clear(self.default_colors)
 
         # Render all panels
         renderers = self.ecs.manage(components.PanelRenderer)
         for panel, renderer in renderers:
-            renderer.render(actor=self.player)
+            with perf.Perf(renderer.renderer.render):
+                renderer.render(actor=self.player)
 
         # Show rendered panel
-        self.wrapper.flush(self.panel)
+        self.wrapper.flush(self.root)
 
     def run(self, state, *args, **kwargs):
         if state == RunState.PRE_RUN:
@@ -113,6 +120,7 @@ class ConsoleRenderingSystem(System):
 class Renderer:
 
     def __init__(self, panel):
+        self._panel = panel
         self.panel = panel
 
     def render(self, *args, **kwargs):
@@ -294,6 +302,8 @@ class Camera(Rectangular, Renderer):
                     self.panel.draw(tile, render_position)
 
     def render(self, actor=None, location=None, *args, **kwargs):
+        self.panel = self._panel.framed('mapcam')
+
         position = None
         fov = None
         seen = None
@@ -329,15 +339,19 @@ class Camera(Rectangular, Renderer):
 
         terrain = self.get_covered(level.terrain, coverage)
 
-        self.draw_boundaries(level.size)
-        self.draw_terrain(location.level_id, terrain, coverage, revealed, visible)
-        self.draw_entities(location.level_id, coverage, revealed, visible)
+        with perf.Perf(self.draw_boundaries):
+            self.draw_boundaries(level.size)
+        with perf.Perf(self.draw_terrain):
+            self.draw_terrain(location.level_id, terrain, coverage, revealed, visible)
+        with perf.Perf(self.draw_entities):
+            self.draw_entities(location.level_id, coverage, revealed, visible)
 
 
 class MessageLog(Renderer):
 
     def render(self, *args, **kwargs):
         """Render logging records."""
+        self.panel = self._panel.framed('logs')
         for offset, msg in enumerate(reversed(logs.LOGS_HISTORY), start=1):
             if offset > self.panel.height:
                 break

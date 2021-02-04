@@ -241,7 +241,7 @@ class SystemsManager:
         for system in self.systems:
             if not system.should_run(self.run_state):
                 continue
-            with perf.Perf(f'{system.__module__}.{system.__class__.__name__}.run()'):
+            with perf.Perf(system.run):
                 system.run(self.run_state, *args, **kwargs)
             systems.append(system)
         # log.debug(f'systems.run({self.run_state.name}): {systems}')
@@ -327,7 +327,7 @@ class ECS:
 
     def run_once(self, *args, **kwargs):
         """Run Systems for given RunState."""
-        with perf.Perf(f'{self.__module__}.Systems.run()'):
+        with perf.Perf(self._systems.run):
             self._systems.run(*args, **kwargs)
 
     def run(self):

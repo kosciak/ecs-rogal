@@ -116,10 +116,8 @@ def run():
     )
 
     with wrapper as wrapper:
-        root_panel = wrapper.create_panel()
-
         # Register rendering system
-        rendering_system = ConsoleRenderingSystem(ecs, spatial, wrapper, root_panel, tileset)
+        rendering_system = ConsoleRenderingSystem(ecs, spatial, wrapper, tileset)
         ecs.register(rendering_system)
 
         # Init InputHandler and set to player
