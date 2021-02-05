@@ -44,17 +44,17 @@ class Perf:
     def __exit__(self, *args):
         self.elapsed()
 
+    @classmethod
+    def stats(cls, name=None):
+        if not name:
+            log.debug('Perf stats:')
+            for name in sorted(cls._PERF_STATS.keys()):
+                cls.stats(name)
+            return
+        times = cls._PERF_STATS[name]
+        total = sum(times)
+        avg = total / len(times)
+        med = sorted(times)[len(times)//2]
+        log.debug(f'{name:50s} - calls: {len(times):7d}   avg: {avg:2.4f}   med: {med:2.4f}   max: {max(times):2.4f}   total: {total:2.4f}')
 
-def perf_stats(name=None):
-    if not name:
-        log.debug('Perf stats:')
-        for name in sorted(Perf._PERF_STATS.keys()):
-            perf_stats(name)
-        return
-    times = Perf._PERF_STATS[name]
-    total = sum(times)
-    avg = total / len(times)
-    med = sorted(times)[len(times)//2]
-    log.debug(f'{name} - calls: {len(times)}, avg: {avg:2.4f}, med: {med:2.4f}, max: {max(times):2.4f}, total: {total:2.4f}')
-
-atexit.register(perf_stats)
+atexit.register(Perf.stats)
