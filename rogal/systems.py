@@ -363,7 +363,22 @@ class ActionsPerformedSystem(System):
         self.ecs.run_state = RunState.TICKING
 
 
-class ParticlesSystem(System):
+class AnimationsSystem(System):
+
+    INCLUDE_STATES = {
+        RunState.PERFOM_ACTIONS,
+        RunState.ANIMATIONS,
+    }
+
+    def run(self, state, *args, **kwargs):
+        animations = self.ecs.manage(components.Animation)
+        if animations:
+            self.ecs.run_state = RunState.ANIMATIONS
+        else:
+            self.ecs.run_state = RunState.TICKING
+
+
+class TTLSystem(System):
 
     INCLUDE_STATES = {
         RunState.PERFOM_ACTIONS,
@@ -375,23 +390,18 @@ class ParticlesSystem(System):
         self.spatial = spatial
 
     def run(self, state, *args, **kwargs):
-        particles = self.ecs.manage(components.Particle)
-        if particles:
-            self.ecs.run_state = RunState.ANIMATIONS
-        else:
-            self.ecs.run_state = RunState.TICKING
-            return
         outdated = EntitiesSet()
+        ttls = self.ecs.manage(components.TTL)
         now = time.time()
-        for particle, ttl in particles:
+        for entity, ttl in ttls:
             if ttl < now:
-                outdated.add(particle)
+                outdated.add(entity)
 
         if not outdated:
             return
 
         locations = self.ecs.manage(components.Location)
-        for particle, location in self.ecs.join(outdated, locations):
-            self.spatial.remove_entity(particle, location)
+        for entity, location in self.ecs.join(outdated, locations):
+            self.spatial.remove_entity(entity, location)
         self.ecs.remove(*outdated)
 

@@ -172,7 +172,7 @@ actors:
 particles:
   HIT_PARTICLE:
     Animation: true
-    Particle: .075
+    TTL: .075
     Renderable:
       tile: MELEE_HIT
       render_order: PARTICLES

@@ -99,7 +99,7 @@ class OnOperate(Component):
 
 Animation = Flag('Animation')
 
-class Particle(FloatComponent):
+class TTL(FloatComponent):
     __slots__ = ()
 
     def __new__(cls, value):
@@ -338,8 +338,8 @@ WantsToOperate = EntityReference('WantsToOperate')
 
 
 
-Hidden = Flag('Hidden')
+# Hidden = Flag('Hidden')
 
-CursedItem = Flag('CursedItem')
+# CursedItem = Flag('CursedItem')
 
-UnidentifiedItem = Flag('UnidentifiedItem')
+# UnidentifiedItem = Flag('UnidentifiedItem')

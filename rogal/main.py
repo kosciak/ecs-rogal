@@ -100,7 +100,8 @@ def run():
 
         systems.ActionsPerformedSystem(ecs),
 
-        systems.ParticlesSystem(ecs, spatial),
+        systems.AnimationsSystem(ecs),
+        systems.TTLSystem(ecs, spatial),
     ]:
         ecs.register(system)
 
