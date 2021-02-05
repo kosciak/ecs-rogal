@@ -275,32 +275,38 @@ class Input(Component):
 
 # Action intentions
 
+WantsToRevealLevel = Flag('WantsToRevealLevel')
+
+WantsToRest = Flag('WantsToRest')
+
+
 class WantsToMove(Component):
-    __slots__ = ('direction', )
+    __slots__ = ('vector', )
 
     """Move one step in given Direction."""
 
-    def __init__(self, direction):
-        if isinstance(direction, str):
-            direction = getattr(Direction, direction)
-        self.direction = direction
+    def __init__(self, vector):
+        if isinstance(vector, str):
+            vector = getattr(Direction, vector)
+        self.vector = vector
 
     @property
     def dx(self):
-        return self.direction.dx
+        return self.vector.dx
 
     @property
     def dy(self):
-        return self.direction.dy
+        return self.vector.dy
 
     def serialize(self):
-        return self.direction.name
+        return self.vector.name
 
     def __str__(self):
-        return self.direction.name
+        return self.vector.name
 
     def __repr__(self):
-        return f'<{self.name}={self.direction.name}>'
+        return f'<{self.name}={getattr(self.vector, "name", self.vector)}>'
+
 
 HasMoved = Flag('HasMoved')
 

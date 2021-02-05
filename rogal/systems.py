@@ -210,6 +210,7 @@ class VisibilitySystem(System):
 
     INCLUDE_STATES = {
         RunState.PRE_RUN,
+        RunState.WAITING_FOR_ACTIONS,
         RunState.PERFOM_ACTIONS,
     }
 
@@ -220,6 +221,8 @@ class VisibilitySystem(System):
     # TODO: rename this method!
     def invalidate_blocks_vision_changed_viewsheds(self, *args, **kwargs):
         blocks_vision_changes = self.ecs.manage(components.BlocksVisionChanged)
+        if not blocks_vision_changes:
+            return
         locations = self.ecs.manage(components.Location)
         viewsheds = self.ecs.manage(components.Viewshed)
 
@@ -239,10 +242,25 @@ class VisibilitySystem(System):
     def invalidate_has_moved_viewsheds(self, *args, **kwargs):
         # Invalidate Viewshed after moving
         has_moved = self.ecs.manage(components.HasMoved)
+        if not has_moved:
+            return
         viewsheds = self.ecs.manage(components.Viewshed)
 
-        for viewshed, moved in self.ecs.join(viewsheds, has_moved):
+        for entity, viewshed in self.ecs.join(has_moved.entities, viewsheds):
             viewshed.invalidate()
+
+    def reveal_levels(self, *args, **kwargs):
+        wants_to_reveal = self.ecs.manage(components.WantsToRevealLevel)
+        if not wants_to_reveal:
+            return
+        level_memories = self.ecs.manage(components.LevelMemory)
+        locations = self.ecs.manage(components.Location)
+
+        for entity, memory, location in self.ecs.join(wants_to_reveal.entities, level_memories, locations):
+            memory.update(location.level_id, self.spatial.revealable(location.level_id))
+            msg_log.warning('Level revealed!')
+
+        wants_to_reveal.clear()
 
     def update_viewsheds(self, *args, **kwargs):
         players = self.ecs.manage(components.Player)
@@ -305,6 +323,9 @@ class VisibilitySystem(System):
                     msg_log.info(f'You see: {names}')
 
     def run(self, state, *args, **kwargs):
+        if state == RunState.WAITING_FOR_ACTIONS:
+            self.reveal_levels(*args, **kwargs)
+            return
         self.invalidate_blocks_vision_changed_viewsheds(*args, **kwargs)
         self.invalidate_has_moved_viewsheds(*args, **kwargs)
         self.update_viewsheds(*args, **kwargs)

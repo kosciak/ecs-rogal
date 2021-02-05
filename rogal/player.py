@@ -67,14 +67,7 @@ def try_change_level(ecs, player, direction):
 
 
 def reveal_level(ecs, spatial, player):
-    locations = ecs.manage(components.Location)
-    level_memories = ecs.manage(components.LevelMemory)
-
-    location = locations.get(player)
-    memory = level_memories.get(player)
-    memory.update(location.level_id, spatial.revealable(location.level_id))
-
-    msg_log.warning('Level revealed!')
-
+    wants_to_reveal = ecs.manage(components.WantsToReveal)
+    wants_to_reveal.insert(player)
     return 0
 

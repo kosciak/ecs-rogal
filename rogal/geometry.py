@@ -28,7 +28,25 @@ def manhattan_distance(position, other):
     return abs(position.x-other.x) + abs(position.y-other.y)
 
 
-class Direction(Enum):
+class Vector(collections.namedtuple(
+    'Vector', [
+        'dx',
+        'dy',
+    ])):
+
+    """Vector on 2d plane."""
+
+    __slots__ = ()
+
+    def __bool__(self):
+        # NOTE: Vector(0, 0) is considered False
+        return bool(self.dx or self.dy)
+
+    def __repr__(self):
+        return f'<Vector dx={self.dx}, dy={self.dy}>'
+
+
+class Direction(Vector, Enum):
 
     """Direction on 2D plane."""
 
@@ -40,10 +58,6 @@ class Direction(Enum):
     SW = (-1, 1)
     W = (-1, 0)
     NW = (-1, -1)
-
-    def __init__(self, dx, dy):
-        self.dx = dx
-        self.dy = dy
 
     @property
     def is_diagonal(self):
@@ -80,11 +94,11 @@ class Position(collections.namedtuple(
             return None
         return distance_fn(self, other)
 
-    def move(self, direction):
+    def move(self, vector):
         """Return Position after moving in given Direction."""
-        if not direction:
+        if not vector:
             return self
-        return Position(self.x+direction.dx, self.y+direction.dy)
+        return Position(self.x+vector.dx, self.y+vector.dy)
 
     def __add__(self, other):
         if not other:
