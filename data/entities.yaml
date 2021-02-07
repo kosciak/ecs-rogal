@@ -101,8 +101,8 @@ items:
 actors:
   PLAYER:
     Player: true
-    Input:
-      handler: PLAYER_INPUT
+    Actor:
+      handler: PLAYER
     Name: Player
     Renderable:
       tile: PLAYER
@@ -120,7 +120,7 @@ actors:
 
   MONSTER:
     Monster: true
-    Input:
+    Actor:
       handler: AI
     Name: Monster
     Renderable:
@@ -136,7 +136,7 @@ actors:
 
   BAT:
     Monster: true
-    Input:
+    Actor:
       handler: AI
     Name: Bat
     Renderable:
@@ -152,7 +152,7 @@ actors:
 
   SNAIL:
     Monster: true
-    Input:
+    Actor:
       handler: AI
     Name: Snail
     Renderable:

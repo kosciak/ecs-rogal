@@ -21,7 +21,6 @@ from . import systems
 
 from .render import ConsoleRenderingSystem
 
-from .input_handlers import PlayerActionsHandler
 from .keys import KeyBindings
 
 
@@ -57,23 +56,21 @@ def run():
     seed = SEED or generate_seed()
     rng.seed(seed, dump='rng')
 
-    # Key bindings initialization
-    key_bindings = KeyBindings(DataLoader(KEY_BINDINGS_DATA_FN))
-
     # ECS initialization
     ecs = ECS()
 
+    # Key bindings initialization
+    ecs.resources.key_bindings = KeyBindings(DataLoader(KEY_BINDINGS_DATA_FN))
+
     # Spatial index
-    spatial = SpatialIndex(ecs)
+    ecs.resources.spatial = SpatialIndex(ecs)
 
     # Tileset initialization
-    tileset = Tileset(DataLoader(TILESET_DATA_FN))
+    ecs.resources.tileset = Tileset(DataLoader(TILESET_DATA_FN))
 
     # Entities spawner initialization
-    spawner = EntitiesSpawner(
-        DataLoader(ENTITIES_DATA_FN),
-        ecs, spatial, tileset,
-    )
+    spawner = EntitiesSpawner(ecs, DataLoader(ENTITIES_DATA_FN))
+    ecs.resources.spawner = spawner
 
     # Level generator
     level_generator = LEVEL_GENERATOR_CLS(seed, spawner, LEVEL_SIZE)
@@ -86,22 +83,23 @@ def run():
     # Register systems
     # NOTE: Systems are run in order they were registered
     for system in [
-        systems.LevelsSystem(ecs, spatial, level_generator),
+        systems.LevelsSystem(ecs, level_generator),
 
         systems.ActionsQueueSystem(ecs),
         systems.TakeActionsSystem(ecs),
 
-        systems.MeleeCombatSystem(ecs, spawner),
-        systems.MovementSystem(ecs, spatial),
+        systems.MeleeCombatSystem(ecs),
+        systems.RestingSystem(ecs),
+        systems.MovementSystem(ecs),
         systems.OperateSystem(ecs),
 
-        systems.IndexingSystem(ecs, spatial),
-        systems.VisibilitySystem(ecs, spatial),
+        systems.IndexingSystem(ecs),
+        systems.VisibilitySystem(ecs),
 
         systems.ActionsPerformedSystem(ecs),
 
         systems.AnimationsSystem(ecs),
-        systems.TTLSystem(ecs, spatial),
+        systems.TTLSystem(ecs),
     ]:
         ecs.register(system)
 
@@ -110,24 +108,21 @@ def run():
 
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
-        palette=tileset.palette,
+        palette=ecs.resources.tileset.palette,
         tilesheet=TERMINAL_12x12_CP,
         resizable=False,
         title='Rogal test'
     )
 
     with wrapper as wrapper:
+        ecs.resources.wrapper = wrapper
+
         # Register rendering system
-        rendering_system = ConsoleRenderingSystem(ecs, spatial, wrapper, tileset)
+        rendering_system = ConsoleRenderingSystem(ecs)
         ecs.register(rendering_system)
 
-        # Init InputHandler and set to player
-        inputs = ecs.manage(components.Input)
-        input_handler = PlayerActionsHandler(
-            ecs, spatial, wrapper, key_bindings,
-            wait=1./60,
-        )
-        inputs.insert(player, input_handler)
+        events_handlers_system = systems.EventsHandlersSystem(ecs)
+        ecs.register(events_handlers_system)
 
         ecs.run()
 

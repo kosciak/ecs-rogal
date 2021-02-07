@@ -27,12 +27,12 @@ class LevelsSystem(System):
         RunState.PERFOM_ACTIONS,
     }
 
-    def __init__(self, ecs, spatial, level_generator):
+    def __init__(self, ecs, level_generator):
         super().__init__(ecs)
-        self.spatial = spatial
+        self.spatial = self.ecs.resources.spatial
         self.level_generator = level_generator
 
-    def run(self, state, *args, **kwargs):
+    def run(self):
         wants_to_change_level = self.ecs.manage(components.WantsToChangeLevel)
         levels = self.ecs.manage(components.Level)
         locations = self.ecs.manage(components.Location)
@@ -59,7 +59,7 @@ class ActionsQueueSystem(System):
         RunState.TICKING,
     }
 
-    def update_acts_now(self, *args, **kwargs):
+    def update_acts_now(self):
         acts_now = self.ecs.manage(components.ActsNow)
         waiting_queue = self.ecs.manage(components.WaitsForAction)
 
@@ -73,11 +73,13 @@ class ActionsQueueSystem(System):
                 # No more waiting, time for some action!
                 acts_now.insert(entity)
 
+    def update_run_state(self):
+        acts_now = self.ecs.manage(components.ActsNow)
         if acts_now:
             self.ecs.run_state = RunState.WAITING_FOR_ACTIONS
 
-    def run(self, state, *args, **kwargs):
-        self.update_acts_now(*args, **kwargs)
+    def run(self):
+        self.update_acts_now()
 
 
 class TakeActionsSystem(System):
@@ -86,26 +88,90 @@ class TakeActionsSystem(System):
         RunState.WAITING_FOR_ACTIONS,
     }
 
-    def run(self, state, *args, **kwargs):
+    def update_run_state(self):
+        events_handlers = self.ecs.manage(components.EventsHandler)
+        acts_now = self.ecs.manage(components.ActsNow)
+        if events_handlers:
+            self.ecs.run_state = RunState.WAITING_FOR_INPUT
+        if not acts_now:
+            self.ecs.run_state = RunState.PERFOM_ACTIONS
+
+    def run(self):
         acts_now = self.ecs.manage(components.ActsNow)
         if not acts_now:
-            self.ecs.run_state = RunState.PERFOM_ACTIONS
             return
-        input_handlers = self.ecs.manage(components.Input)
-        waiting_queue = self.ecs.manage(components.WaitsForAction)
+        actions_handlers = self.ecs.manage(components.Actor)
 
-        actions_taken = set()
-        for actor, handler in self.ecs.join(acts_now.entities, input_handlers):
-            action_cost = handler.take_action(actor)
-            if not action_cost:
+        for actor, handler in self.ecs.join(acts_now.entities, actions_handlers):
+            if not handler.take_action(actor):
                 break
 
-            waiting_queue.insert(actor, action_cost)
-            actions_taken.add(actor)
 
-        acts_now.remove(*actions_taken)
-        if not acts_now:
+class EventsHandlersSystem(System):
+
+    WAIT = 1./60
+    REPEAT_RATE = 1./6
+
+    INCLUDE_STATES = {
+        RunState.WAITING_FOR_INPUT,
+    }
+
+    def __init__(self, ecs, repeat_rate=REPEAT_RATE):
+        super().__init__(ecs)
+        self.wrapper = self.ecs.resources.wrapper
+        self.wait = self.WAIT
+        self.repeat_rate = repeat_rate
+        self._prev_times = {}
+
+    def is_valid(self, event):
+        if event.type is None:
+            return False
+
+        now = time.time()
+        prev_time = self._prev_times.get(event.type)
+        # if event.repeat:
+        if getattr(event, 'repeat', False):
+            if prev_time and now - prev_time < self.repeat_rate:
+                return False
+
+        self._prev_times[event.type] = now
+        return True
+
+    def update_run_state(self):
+        events_handlers = self.ecs.manage(components.EventsHandler)
+        acts_now = self.ecs.manage(components.ActsNow)
+        if events_handlers:
+            self.ecs.run_state = RunState.WAITING_FOR_INPUT
+        elif acts_now:
+            self.ecs.run_state = RunState.WAITING_FOR_ACTIONS
+        else:
             self.ecs.run_state = RunState.PERFOM_ACTIONS
+
+    def run(self):
+        acts_now = self.ecs.manage(components.ActsNow)
+        if not acts_now:
+            return
+        events_handlers = self.ecs.manage(components.EventsHandler)
+        if not events_handlers:
+            return
+        for event in self.wrapper.events(self.wait):
+            if event and self.is_valid(event):
+                for entity, handler in list(events_handlers):
+                    handler.handle(event, entity)
+            return
+
+
+class RestingSystem(System):
+
+    def run(self):
+        players = self.ecs.manage(components.Player)
+        wants_to_rest = self.ecs.manage(components.WantsToRest)
+
+        for entity in wants_to_rest.entities:
+            if entity in players:
+                msg_log.info('Resting...')
+
+        wants_to_rest.clear()
 
 
 class MovementSystem(System):
@@ -114,11 +180,11 @@ class MovementSystem(System):
         RunState.PERFOM_ACTIONS,
     }
 
-    def __init__(self, ecs, spatial):
+    def __init__(self, ecs):
         super().__init__(ecs)
-        self.spatial = spatial
+        self.spatial = self.ecs.resources.spatial
 
-    def apply_move(self, *args, **kwargs):
+    def apply_move(self):
         players = self.ecs.manage(components.Player)
         names = self.ecs.manage(components.Name)
         locations = self.ecs.manage(components.Location)
@@ -138,8 +204,8 @@ class MovementSystem(System):
         # Clear processed movement intents
         movement_directions.clear()
 
-    def run(self, state, *args, **kwargs):
-        self.apply_move(*args, **kwargs)
+    def run(self):
+        self.apply_move()
 
 
 class MeleeCombatSystem(System):
@@ -148,11 +214,11 @@ class MeleeCombatSystem(System):
         RunState.PERFOM_ACTIONS,
     }
 
-    def __init__(self, ecs, spawner):
+    def __init__(self, ecs):
         super().__init__(ecs)
-        self.spawner = spawner
+        self.spawner = self.ecs.resources.spawner
 
-    def run(self, state, *args, **kwargs):
+    def run(self):
         players = self.ecs.manage(components.Player)
         names = self.ecs.manage(components.Name)
         melee_targets = self.ecs.manage(components.WantsToMelee)
@@ -175,7 +241,7 @@ class OperateSystem(System):
         RunState.PERFOM_ACTIONS,
     }
 
-    def run(self, state, *args, **kwargs):
+    def run(self):
         players = self.ecs.manage(components.Player)
         names = self.ecs.manage(components.Name)
         operate_targets = self.ecs.manage(components.WantsToOperate)
@@ -210,16 +276,16 @@ class VisibilitySystem(System):
 
     INCLUDE_STATES = {
         RunState.PRE_RUN,
-        RunState.WAITING_FOR_ACTIONS,
+        RunState.WAITING_FOR_INPUT,
         RunState.PERFOM_ACTIONS,
     }
 
-    def __init__(self, ecs, spatial):
+    def __init__(self, ecs):
         super().__init__(ecs)
-        self.spatial = spatial
+        self.spatial = self.ecs.resources.spatial
 
     # TODO: rename this method!
-    def invalidate_blocks_vision_changed_viewsheds(self, *args, **kwargs):
+    def invalidate_blocks_vision_changed_viewsheds(self):
         blocks_vision_changes = self.ecs.manage(components.BlocksVisionChanged)
         if not blocks_vision_changes:
             return
@@ -239,7 +305,7 @@ class VisibilitySystem(System):
             if viewshed.positions & positions_per_level[location.level_id]:
                 viewshed.invalidate()
 
-    def invalidate_has_moved_viewsheds(self, *args, **kwargs):
+    def invalidate_has_moved_viewsheds(self):
         # Invalidate Viewshed after moving
         has_moved = self.ecs.manage(components.HasMoved)
         if not has_moved:
@@ -249,7 +315,7 @@ class VisibilitySystem(System):
         for entity, viewshed in self.ecs.join(has_moved.entities, viewsheds):
             viewshed.invalidate()
 
-    def reveal_levels(self, *args, **kwargs):
+    def reveal_levels(self):
         wants_to_reveal = self.ecs.manage(components.WantsToRevealLevel)
         if not wants_to_reveal:
             return
@@ -262,7 +328,7 @@ class VisibilitySystem(System):
 
         wants_to_reveal.clear()
 
-    def update_viewsheds(self, *args, **kwargs):
+    def update_viewsheds(self):
         players = self.ecs.manage(components.Player)
         locations = self.ecs.manage(components.Location)
         viewsheds = self.ecs.manage(components.Viewshed)
@@ -295,7 +361,7 @@ class VisibilitySystem(System):
             if memory:
                 memory.update(location.level_id, fov)
 
-    def spotted_alert(self, *args, **kwargs):
+    def spotted_alert(self):
         # NOTE: It's SLOOOOOOOOOOOW!!! Use only for player for now, needs rewrite anyway
         players = self.ecs.manage(components.Player)
         locations = self.ecs.manage(components.Location)
@@ -322,15 +388,15 @@ class VisibilitySystem(System):
                     names = ', '.join(spotted_targets)
                     msg_log.info(f'You see: {names}')
 
-    def run(self, state, *args, **kwargs):
-        if state == RunState.WAITING_FOR_ACTIONS:
-            self.reveal_levels(*args, **kwargs)
+    def run(self):
+        if self.ecs.run_state == RunState.WAITING_FOR_INPUT:
+            self.reveal_levels()
             return
-        self.invalidate_blocks_vision_changed_viewsheds(*args, **kwargs)
-        self.invalidate_has_moved_viewsheds(*args, **kwargs)
-        self.update_viewsheds(*args, **kwargs)
+        self.invalidate_blocks_vision_changed_viewsheds()
+        self.invalidate_has_moved_viewsheds()
+        self.update_viewsheds()
         with perf.Perf(self.spotted_alert):
-            self.spotted_alert(*args, **kwargs)
+            self.spotted_alert()
 
 
 class IndexingSystem(System):
@@ -340,15 +406,15 @@ class IndexingSystem(System):
         RunState.PERFOM_ACTIONS,
     }
 
-    def __init__(self, ecs, spatial):
+    def __init__(self, ecs):
         super().__init__(ecs)
-        self.spatial = spatial
+        self.spatial = self.ecs.resources.spatial
 
-    def calculate_spatial(self, *args, **kwargs):
+    def calculate_spatial(self):
         if not self.spatial._entities:
             self.spatial.calculate_entities()
 
-    def update_flags(self, *args, **kwargs):
+    def update_flags(self):
         blocks_vision_changes = self.ecs.manage(components.BlocksVisionChanged)
         blocks_movement_changes = self.ecs.manage(components.BlocksMovementChanged)
         locations = self.ecs.manage(components.Location)
@@ -359,9 +425,9 @@ class IndexingSystem(System):
         for entity, location in self.ecs.join(blocks_movement_changes.entities, locations):
             self.spatial.update_entity(entity, location)
 
-    def run(self, state, *args, **kwargs):
-        self.calculate_spatial(*args, **kwargs)
-        self.update_flags(*args, **kwargs)
+    def run(self):
+        self.calculate_spatial()
+        self.update_flags()
 
 
 class ActionsPerformedSystem(System):
@@ -371,7 +437,10 @@ class ActionsPerformedSystem(System):
         RunState.PERFOM_ACTIONS,
     }
 
-    def run(self, state, *args, **kwargs):
+    def update_run_state(self):
+        self.ecs.run_state = RunState.TICKING
+
+    def run(self):
         has_moved = self.ecs.manage(components.HasMoved)
         has_moved.clear()
 
@@ -381,8 +450,6 @@ class ActionsPerformedSystem(System):
         blocks_movement_changes = self.ecs.manage(components.BlocksMovementChanged)
         blocks_movement_changes.clear()
 
-        self.ecs.run_state = RunState.TICKING
-
 
 class AnimationsSystem(System):
 
@@ -391,7 +458,7 @@ class AnimationsSystem(System):
         RunState.ANIMATIONS,
     }
 
-    def run(self, state, *args, **kwargs):
+    def update_run_state(self):
         animations = self.ecs.manage(components.Animation)
         if animations:
             self.ecs.run_state = RunState.ANIMATIONS
@@ -406,11 +473,11 @@ class TTLSystem(System):
         RunState.ANIMATIONS,
     }
 
-    def __init__(self, ecs, spatial):
+    def __init__(self, ecs):
         super().__init__(ecs)
-        self.spatial = spatial
+        self.spatial = self.ecs.resources.spatial
 
-    def run(self, state, *args, **kwargs):
+    def run(self):
         outdated = EntitiesSet()
         ttls = self.ecs.manage(components.TTL)
         now = time.time()

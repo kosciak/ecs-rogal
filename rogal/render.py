@@ -34,14 +34,14 @@ class ConsoleRenderingSystem(System):
 
     FPS = 35
 
-    def __init__(self, ecs, spatial, wrapper, tileset):
+    def __init__(self, ecs):
         super().__init__(ecs)
-        self.spatial = spatial
+        self.spatial = self.ecs.resources.spatial
 
-        self.tileset = tileset
+        self.tileset = self.ecs.resources.tileset
         self.default_colors = Colors(self.tileset.palette.fg, self.tileset.palette.bg)
 
-        self.wrapper = wrapper
+        self.wrapper = self.ecs.resources.wrapper
         self._root = None
 
         self._last_run = None
@@ -99,8 +99,8 @@ class ConsoleRenderingSystem(System):
         # Show rendered panel
         self.wrapper.flush(self.root)
 
-    def run(self, state, *args, **kwargs):
-        if state == RunState.PRE_RUN:
+    def run(self):
+        if self.ecs.run_state == RunState.PRE_RUN:
             self.init_panels()
 
         # This is ugly... Camera should be initialized with actor

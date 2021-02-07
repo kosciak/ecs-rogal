@@ -218,7 +218,10 @@ class System:
             return False
         return True
 
-    def run(self, state, *args, **kwargs):
+    def update_run_state(self):
+        return
+
+    def run(self):
         return
 
     def __repr__(self):
@@ -235,14 +238,15 @@ class SystemsManager:
     def register(self, system):
         self.systems.append(system)
 
-    def run(self, *args, **kwargs):
+    def run(self):
         # Run all systems that should run with given run_state
         systems = []
         for system in self.systems:
             if not system.should_run(self.run_state):
                 continue
             with perf.Perf(system.run):
-                system.run(self.run_state, *args, **kwargs)
+                system.run()
+                system.update_run_state()
             systems.append(system)
         # log.debug(f'systems.run({self.run_state.name}): {systems}')
 
@@ -255,6 +259,15 @@ class SystemsManager:
         yield from self.systems
 
 
+class ResourcesManager(dict):
+
+    def __getattr__(self, name):
+        return self[name]
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+
 class ECS:
 
     """Entity Component System - data storage and processing.
@@ -263,12 +276,15 @@ class ECS:
     Component - data associated with given object, pure data
     System - implements all logic of interaction between entities and their components
 
+    Resources - resources not associated with any entity
+
     """
 
     def __init__(self):
         self.entities = EntitiesSet()
         self._components = {} # {component_type: ComponentManager(component_type), }
         self._systems = SystemsManager()
+        self.resources = ResourcesManager()
 
     @property
     def run_state(self):

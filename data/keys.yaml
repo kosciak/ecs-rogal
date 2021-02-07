@@ -1,11 +1,15 @@
 # Key bindings data
 
+index:
+  ALPHABETIC: [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, ]
+  NUMERIC: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ]
+
 common:
-  CONFIRM: [RETURN, KP_ENTER, ]
-  CANCEL: [ESCAPE, ]
+  CONFIRM: [SPACE, RETURN, KP_ENTER, ]
+  DISCARD: [ESCAPE, ]
   MORE: [SPACE, ENTER, ]
-  YES: [y, Y, RETURN, KP_ENTER, ]
-  NO: [n, N, ESCAPE, ]
+  'YES': [y, Y, ]
+  'NO': [n, N, ESCAPE, ]
   NEXT: [TAB, ]
   PREV: [SHIFT_TAB, ]
 
@@ -21,7 +25,7 @@ directions:
 
 actions:
   QUIT: ['^q', ESCAPE, ]
-  WAIT: ['.', KP_5, KP_0, CLEAR, ]
+  REST: ['.', KP_5, KP_0, CLEAR, ]
   REVEAL_LEVEL: [r, R, ]
   NEXT_LEVEL: ['Shift-.', ]
   PREV_LEVEL: ['Shift-,', ]

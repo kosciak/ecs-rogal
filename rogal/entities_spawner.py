@@ -18,11 +18,11 @@ class EntitiesSpawner:
 
     _data = None
 
-    def __init__(self, loader, ecs, spatial, tileset):
-        self.loader = loader
+    def __init__(self, ecs, loader):
         self.ecs = ecs
-        self.spatial = spatial
-        self.tileset = tileset
+        self.spatial = self.ecs.resources.spatial
+        self.tileset = self.ecs.resources.tileset
+        self.loader = loader
         self._data = None
         self.entities_per_name = {}
         self.on_init()
@@ -35,9 +35,11 @@ class EntitiesSpawner:
 
     # def parse_<value_name>(self, value): return parsed_value
 
-    def parse_input_handler(self, value):
+    def parse_actor_handler(self, value):
         if value == 'AI':
-            return ai.MonsterAI(self.ecs, self.spatial)
+            return ai.AI(self.ecs)
+        if value == 'PLAYER':
+            return ai.PlayerInput(self.ecs)
 
     def parse_renderable_tile(self, value):
         return self.tileset.get(value)
