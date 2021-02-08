@@ -14,10 +14,10 @@ log = logging.getLogger(__name__)
 
 class TerrainGenerator(Generator):
 
-    def __init__(self, rng, spawner, default_fill, room_wall, room_floor, corridor_floor):
+    def __init__(self, rng, ecs, default_fill, room_wall, room_floor, corridor_floor):
         super().__init__(rng)
-        self.spawner = spawner
-        self.spatial = spawner.spatial # TODO: ???
+        self.spawner = ecs.resources.spawner
+        self.spatial = ecs.resources.spatial
 
         self.default_fill = default_fill
         self.room_wall = room_wall
@@ -53,10 +53,10 @@ class TerrainGenerator(Generator):
 
 class EntitiesSpawningGenerator(Generator):
 
-    def __init__(self, rng, spawner):
+    def __init__(self, rng, ecs):
         super().__init__(rng)
-        self.spawner = spawner
-        self.spatial = spawner.spatial # TODO: ???
+        self.spawner = ecs.resources.spawner
+        self.spatial = ecs.resources.spatial
 
     def spawn_closed_door(self, level_id, position, populated=False):
         level = self.spatial.get_level(level_id)
@@ -140,11 +140,11 @@ class RoomsLevelGenerator(Generator):
     ROOM_FLOOR = 'terrain.STONE_FLOOR'
     CORRIDOR_FLOOR = 'terrain.STONE_FLOOR'
 
-    def __init__(self, seed, spawner, size):
+    def __init__(self, seed, ecs, size):
         super().__init__(seed=seed)
 
-        self.spawner = spawner
-        self.spatial = spawner.spatial # TODO: ???
+        self.spawner = ecs.resources.spawner
+        self.spatial = ecs.resources.spatial
 
         self.size = size # TODO: Should I stay or should I go?
 
@@ -152,12 +152,12 @@ class RoomsLevelGenerator(Generator):
         self.rooms_connector = None
 
         self.terrain_genenrator = TerrainGenerator(
-            self.rng, self.spawner,
+            self.rng, ecs,
             self.DEFAULT_FILL,
             self.ROOM_WALL, self.ROOM_FLOOR,
             self.CORRIDOR_FLOOR,
         )
-        self.entities_generator = EntitiesSpawningGenerator(self.rng, self.spawner)
+        self.entities_generator = EntitiesSpawningGenerator(self.rng, ecs)
 
     def init_level(self, level_id=None, size=None):
         # Generate UUID using rng, so it will be same UUID using same rng
@@ -203,8 +203,8 @@ class RandomDungeonLevelGenerator(RoomsLevelGenerator):
 
     """LevelGenerator creating random rooms connected with straight corridors."""
 
-    def __init__(self, seed, spawner, size):
-        super().__init__(seed, spawner, size)
+    def __init__(self, seed, ecs, size):
+        super().__init__(seed, ecs, size)
 
         self.rooms_generator = RandomlyPlacedRoomsGenerator(self.rng)
         self.rooms_connector = RandomToNearestRoomsConnector(self.rng)
@@ -217,18 +217,18 @@ class RogueGridLevelGenerator(RoomsLevelGenerator):
     ROOM_FLOOR = 'terrain.STONE_FLOOR'
     CORRIDOR_FLOOR = 'terrain.ROCK_FLOOR'
 
-    def __init__(self, seed, spawner, size):
-        super().__init__(seed, spawner, size)
+    def __init__(self, seed, ecs, size):
+        super().__init__(seed, ecs, size)
 
         self.rooms_generator = GridRoomsGenerator(self.rng)
         self.rooms_connector = FollowToNearestRoomsConnector(self.rng)
-        self.entities_generator = DoorsEverywhereEntitiesSpawningGenerator(self.rng, self.spawner)
+        self.entities_generator = DoorsEverywhereEntitiesSpawningGenerator(self.rng, ecs)
 
 
 class BSPLevelGenerator(RoomsLevelGenerator):
 
-    def __init__(self, seed, spawner, size):
-        super().__init__(seed, spawner, size)
+    def __init__(self, seed, ecs, size):
+        super().__init__(seed, ecs, size)
 
         self.rooms_generator = BSPRoomsGenerator(self.rng)
         self.rooms_connector = BSPRoomsConnector(self.rng)

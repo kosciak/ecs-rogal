@@ -69,11 +69,10 @@ def run():
     ecs.resources.tileset = Tileset(DataLoader(TILESET_DATA_FN))
 
     # Entities spawner initialization
-    spawner = EntitiesSpawner(ecs, DataLoader(ENTITIES_DATA_FN))
-    ecs.resources.spawner = spawner
+    ecs.resources.spawner = EntitiesSpawner(ecs, DataLoader(ENTITIES_DATA_FN))
 
     # Level generator
-    level_generator = LEVEL_GENERATOR_CLS(seed, spawner, LEVEL_SIZE)
+    level_generator = LEVEL_GENERATOR_CLS(seed, ecs, LEVEL_SIZE)
 
     # Pregenerate some levels for stress testing
     # level, starting_position = level_generator.generate()
@@ -105,7 +104,7 @@ def run():
         ecs.register(system)
 
     # Create player
-    player = spawner.create('actors.PLAYER')
+    player = ecs.resources.spawner.create('actors.PLAYER')
 
     wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
