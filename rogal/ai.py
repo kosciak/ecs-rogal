@@ -2,7 +2,7 @@ import logging
 
 from . import components
 from .events import EventsHandler
-from .event_handlers import DirectionHandler, ActionsHandler, ChangeLevelHandler, QuitHandler
+from .event_handlers import DirectionHandler, ActionsHandler, ChangeLevelHandler
 from .event_handlers import YesNoHandler
 from .rng import rng
 
@@ -32,6 +32,8 @@ class TakeActionHandler:
         acts_now.remove(actor)
 
     def insert_action(self, actor, action, *args, action_cost=ACTION_COST, **kwargs):
+        if action is None or action is False:
+            return
         # TODO: Some generic get_action_cost(actor, action)
         manager = self.ecs.manage(action)
         manager.insert(actor, *args, **kwargs)
@@ -53,11 +55,11 @@ class PlayerInput(TakeActionHandler):
     @property
     def default_events_handler(self):
         if self._deafault_events_handler is None:
-            events_handler = EventsHandler()
-            events_handler.add(DirectionHandler(self.ecs), self.try_direction)
-            events_handler.add(ChangeLevelHandler(self.ecs), self.try_change_level)
-            events_handler.add(ActionsHandler(self.ecs), self.try_action)
-            events_handler.add(QuitHandler(self.ecs), self.quit)
+            events_handler = EventsHandler(
+                (DirectionHandler(self.ecs), self.try_direction),
+                (ChangeLevelHandler(self.ecs), self.try_change_level),
+                (ActionsHandler(self.ecs), self.try_action),
+            )
             self._deafault_events_handler = events_handler
         return self._deafault_events_handler
 
@@ -99,6 +101,7 @@ class PlayerInput(TakeActionHandler):
         wants_to_change_level = self.ecs.manage(components.WantsToChangeLevel)
 
         location = locations.get(actor)
+        # Fallback to current level
         level_id = location.level_id
 
         level_ids = []
@@ -119,28 +122,28 @@ class PlayerInput(TakeActionHandler):
             prev_index = max(0, current_index-1)
             level_id = level_ids[prev_index]
 
-        # Re-enter current level
         self.insert_action(actor, components.WantsToChangeLevel, level_id)
+
+    def try_confirm_insert_action(self, actor, action):
+        """Try insert action or fallback to default handlers."""
+        # TODO: Not sure if this is the right way...
+        if action is False:
+            msg_log.info('Action aborted')
+            self.set_events_handlers(actor)
+        self.insert_action(actor, action)
 
     def try_action(self, actor, action):
         if action is components.WantsToRevealLevel:
             manager = self.ecs.manage(action)
             manager.insert(actor)
+        elif action is components.WantsToQuit:
+            msg_log.warning('Quit? Yes / No')
+            events_handler = EventsHandler(
+                (YesNoHandler(self.ecs, yes=components.WantsToQuit()), self.try_confirm_insert_action),
+            )
+            self.set_events_handlers(actor, events_handler)
         else:
             self.insert_action(actor, action)
-
-    def quit(self, actor, should_quit):
-        if should_quit < 0:
-            msg_log.warning('Quit? Yes / No')
-            events_handler = EventsHandler()
-            events_handler.add(YesNoHandler(self.ecs), self.quit)
-            self.set_events_handlers(actor, events_handler)
-        elif should_quit is True:
-            log.warning('Quitting...')
-            raise SystemExit()
-        else:
-            log.warning('Abort quit')
-            self.set_events_handlers(actor)
 
     def take_action(self, actor):
         self.set_events_handlers(actor)

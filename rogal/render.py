@@ -75,7 +75,7 @@ class ConsoleRenderingSystem(System):
         msg_log_renderer = MessageLog(msg_log_panel)
         renderers.insert(self.ecs.create(), msg_log_renderer)
 
-        cam_renderer = Camera(self.ecs, self.spatial, cam_panel, self.tileset)
+        cam_renderer = Camera(self.ecs, cam_panel)
         renderers.insert(self.ecs.create(), cam_renderer)
 
     def should_run(self, state):
@@ -103,7 +103,8 @@ class ConsoleRenderingSystem(System):
         if self.ecs.run_state == RunState.PRE_RUN:
             self.init_panels()
 
-        # This is ugly... Camera should be initialized with actor
+        # This is ugly... Maybe Camera should be initialized with actor?
+        # OR store current player in ecs.resources.current_player?
         acts_now = self.ecs.manage(components.ActsNow)
         players = self.ecs.manage(components.Player)
         for actor in players.entities:
@@ -129,13 +130,13 @@ class Renderer:
 
 class Camera(Rectangular, Renderer):
 
-    def __init__(self, ecs, spatial, panel, tileset,
+    def __init__(self, ecs, panel,
                  scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
         super().__init__(panel)
         self.ecs = ecs
-        self.spatial = spatial
+        self.spatial = self.ecs.resources.spatial
 
-        self.tileset = tileset
+        self.tileset = self.ecs.resources.tileset
 
         self.position = Position.ZERO
 
@@ -146,7 +147,7 @@ class Camera(Rectangular, Renderer):
     def size(self):
         return self.panel.size
 
-    def set_center(self, level, position=None):
+    def calc_position(self, level, position=None):
         """Select what camera should be centered on."""
         if not position or not self.scrollable:
             # Use center of given level
@@ -326,7 +327,7 @@ class Camera(Rectangular, Renderer):
         else:
             seen = self.spatial.revealable(location.level_id)
 
-        self.set_center(level, position)
+        self.calc_position(level, position)
 
         coverage = self.get_coverage(level)
         if not coverage:

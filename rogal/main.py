@@ -88,6 +88,7 @@ def run():
         systems.ActionsQueueSystem(ecs),
         systems.TakeActionsSystem(ecs),
 
+        systems.QuitSystem(ecs),
         systems.MeleeCombatSystem(ecs),
         systems.RestingSystem(ecs),
         systems.MovementSystem(ecs),

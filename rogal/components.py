@@ -286,6 +286,8 @@ class EventsHandler(Component):
 
 # Action intentions
 
+WantsToQuit = Flag('WantsToQuit')
+
 WantsToRevealLevel = Flag('WantsToRevealLevel')
 
 WantsToRest = Flag('WantsToRest')

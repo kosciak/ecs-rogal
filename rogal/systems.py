@@ -140,7 +140,7 @@ class EventsHandlersSystem(System):
     def update_run_state(self):
         events_handlers = self.ecs.manage(components.EventsHandler)
         acts_now = self.ecs.manage(components.ActsNow)
-        if events_handlers:
+        if acts_now and events_handlers:
             self.ecs.run_state = RunState.WAITING_FOR_INPUT
         elif acts_now:
             self.ecs.run_state = RunState.WAITING_FOR_ACTIONS
@@ -154,6 +154,11 @@ class EventsHandlersSystem(System):
         events_handlers = self.ecs.manage(components.EventsHandler)
         if not events_handlers:
             return
+
+        # Get valid events and pass them to all entities with EventsHandlers
+        # NOTE: It is NOT checked if entity has ActsNow flag, as EventsHandler can be attached
+        #       to any entity, not only to actors (for example to GUI elements)
+        #       BUT there must be some ActsNow actor for system to be running!
         for event in self.wrapper.events(self.wait):
             if event and self.is_valid(event):
                 for entity, handler in list(events_handlers):
@@ -161,7 +166,26 @@ class EventsHandlersSystem(System):
             return
 
 
+class QuitSystem(System):
+
+    INCLUDE_STATES = {
+        RunState.WAITING_FOR_ACTIONS,
+        RunState.WAITING_FOR_INPUT,
+        RunState.PERFOM_ACTIONS,
+    }
+
+    def run(self):
+        wants_to_quit = self.ecs.manage(components.WantsToQuit)
+        if wants_to_quit:
+            log.warning('Quitting...')
+            raise SystemExit()
+
+
 class RestingSystem(System):
+
+    INCLUDE_STATES = {
+        RunState.PERFOM_ACTIONS,
+    }
 
     def run(self):
         players = self.ecs.manage(components.Player)

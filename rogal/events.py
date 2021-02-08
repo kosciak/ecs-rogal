@@ -63,8 +63,10 @@ class EventHandler:
 
 class EventsHandler:
 
-    def __init__(self):
+    def __init__(self, *handler_callback):
         self.event_handlers = []
+        for handler, callback in handler_callback:
+            self.add(handler, callback)
 
     def add(self, handler, callback):
         self.event_handlers.append([handler, callback])

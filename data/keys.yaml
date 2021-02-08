@@ -9,7 +9,7 @@ common:
   DISCARD: [ESCAPE, ]
   MORE: [SPACE, ENTER, ]
   'YES': [y, Y, ]
-  'NO': [n, N, ESCAPE, ]
+  'NO': [n, N, ]
   NEXT: [TAB, ]
   PREV: [SHIFT_TAB, ]
 
