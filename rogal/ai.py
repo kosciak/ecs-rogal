@@ -16,6 +16,42 @@ msg_log = logging.getLogger('rogal.messages')
 ACTION_COST = 60
 
 
+# TODO: Move to separate module! gui?
+class YesNoPrompt:
+
+    def __init__(self, ecs, txt, entity, callback, *args, **kwargs):
+        self.ecs = ecs
+        self.events_handlers = self.ecs.manage(components.EventsHandler)
+        self.txt = txt
+        self.entity = entity
+        self.prev_events_handler = self.events_handlers.get(self.entity)
+        self.window = None
+        self.callback = callback
+        self.args = args
+        self.kwargs = kwargs
+
+    def show(self):
+        # Show prompt window and set events_handler
+        msg_log.warning(self.txt)
+        events_handler = EventsHandler(
+            (YesNoHandler(self.ecs), self.on_event),
+        )
+        self.window = self.ecs.create() # TODO: Request creation of an window!
+        self.events_handlers.insert(self.window, events_handler)
+        # Remove previous events_handler from entity
+        self.events_handlers.remove(self.entity)
+
+    def on_event(self, entity, value):
+        # Restore previous events_handler for entity
+        self.events_handlers.insert(self.entity, component=self.prev_events_handler)
+        # Close prompt window
+        self.ecs.remove(self.window)
+        if value is True:
+            self.callback(self.entity, *self.args, **self.kwargs)
+        if value is False:
+            msg_log.info('Aborting')
+
+
 class TakeActionHandler:
 
     def __init__(self, ecs):
@@ -124,26 +160,15 @@ class PlayerInput(TakeActionHandler):
 
         self.insert_action(actor, components.WantsToChangeLevel, level_id)
 
-    def try_confirm_insert_action(self, actor, action):
-        """Try insert action or fallback to default handlers."""
-        # TODO: Not sure if this is the right way...
-        if action is False:
-            msg_log.info('Action aborted')
-            self.set_events_handlers(actor)
-        self.insert_action(actor, action)
-
     def try_action(self, actor, action):
         if action is components.WantsToRevealLevel:
             manager = self.ecs.manage(action)
-            manager.insert(actor)
-        elif action is components.WantsToQuit:
-            msg_log.warning('Quit? Yes / No')
-            events_handler = EventsHandler(
-                (YesNoHandler(self.ecs, yes=components.WantsToQuit()), self.try_confirm_insert_action),
-            )
-            self.set_events_handlers(actor, events_handler)
-        else:
-            self.insert_action(actor, action)
+            return manager.insert(actor)
+
+        if action is components.WantsToQuit:
+            return YesNoPrompt(self.ecs, 'Quit? Yes / No', actor, self.insert_action, action).show()
+
+        return self.insert_action(actor, action)
 
     def take_action(self, actor):
         self.set_events_handlers(actor)

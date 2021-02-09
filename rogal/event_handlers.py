@@ -53,22 +53,13 @@ class YesNoHandler(EventHandler):
 
     """Return True for YES, or False for NO or DISCARD."""
 
-    def __init__(self, ecs, yes=None, no=None):
-        super().__init__(ecs)
-        self.yes = True
-        if yes is not None:
-            self.yes = yes
-        self.no = False
-        if no is not None:
-            self.no = False
-
     def on_key_press(self, event):
         if event.key in self.key_bindings.common.YES:
-            return self.yes
+            return True
         if event.key in self.key_bindings.common.NO:
-            return self.no
+            return False
         if event.key in self.key_bindings.common.DISCARD:
-            return self.no
+            return False
 
 
 class ConfirmHandler(EventHandler):

@@ -1,5 +1,4 @@
 import logging
-import uuid
 
 from ..geometry import Size
 from ..utils import perf
