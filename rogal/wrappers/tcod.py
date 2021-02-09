@@ -2,7 +2,7 @@ import functools
 
 import tcod
 
-from ..keys import Key
+from ..events.keys import Key
 from ..ui import DEFAULT_CH, Alignment, RootPanel
 
 from .core import IOWrapper

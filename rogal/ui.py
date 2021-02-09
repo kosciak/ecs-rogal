@@ -30,7 +30,7 @@ class AbstractTilesGrid(WithSizeMixin):
 
     def empty_tile(self, colors):
         fg = (colors and colors.fg) or DEFAULT_FG
-        bg = (colors and colors.bg) or DEFAULT_bG
+        bg = (colors and colors.bg) or DEFAULT_BG
         return Tile.create(DEFAULT_CH, fg=fg, bg=bg)
 
     def clear(self, colors=None, *args, **kwargs):

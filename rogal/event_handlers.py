@@ -31,13 +31,13 @@ class ActionsHandler(EventHandler):
     def on_key_press(self, event):
         # TODO: Maybe use some bindings: component dict instead of hardcoding?
         if event.key in self.key_bindings.actions.QUIT:
-            return components.WantsToQuit()
+            return components.WantsToQuit
 
         if event.key in self.key_bindings.actions.REST:
-            return components.WantsToRest()
+            return components.WantsToRest
 
         if event.key in self.key_bindings.actions.REVEAL_LEVEL:
-            return components.WantsToRevealLevel()
+            return components.WantsToRevealLevel
 
 
 class ChangeLevelHandler(EventHandler):

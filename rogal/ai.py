@@ -41,11 +41,14 @@ class YesNoPrompt:
         # Remove previous events_handler from entity
         self.events_handlers.remove(self.entity)
 
-    def on_event(self, entity, value):
-        # Restore previous events_handler for entity
-        self.events_handlers.insert(self.entity, component=self.prev_events_handler)
+    def close(self):
         # Close prompt window
         self.ecs.remove(self.window)
+        # Restore previous events_handler for entity
+        self.events_handlers.insert(self.entity, component=self.prev_events_handler)
+
+    def on_event(self, entity, value):
+        self.close()
         if value is True:
             self.callback(self.entity, *self.args, **self.kwargs)
         if value is False:

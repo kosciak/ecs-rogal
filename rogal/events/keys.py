@@ -1,8 +1,6 @@
 import collections
 import string
 
-from .geometry import Direction
-
 
 ASCII_CHARS = set()
 for chars in [

@@ -15,13 +15,12 @@ from . import components
 from .data_loaders import DataLoader
 from .ecs import ECS
 from .entities_spawner import EntitiesSpawner
+from .events.keys import KeyBindings
 from .renderable import Tileset
 from .spatial_index import SpatialIndex
 from . import systems
 
 from .render import ConsoleRenderingSystem
-
-from .keys import KeyBindings
 
 
 log = logging.getLogger(__name__)
