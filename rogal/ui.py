@@ -1,5 +1,9 @@
 import collections
 
+import numpy as np
+
+from . import dtypes
+
 from .geometry import Position, Size, WithSizeMixin, Rectangular, Rectangle
 from .colors import RGB, Color
 from .renderable import Tile, Colors
@@ -22,20 +26,49 @@ class Alignment:
     CENTER = 2  # tcod.CENTER
 
 
-class AbstractTilesGrid(WithSizeMixin):
+class Console:
+
+    def __init__(self, size):
+        self.tiles_rgb = np.zeros(size, dtype=dtypes.rgb_console_dt, order="C")
+        self.ch[...] = DEFAULT_CH
+        self.fg[...] = DEFAULT_FG
+        self.bg[...] = DEFAULT_BG
+
+    @property
+    def width(self):
+        return self.tiles_rgb.shape[1]
+
+    @property
+    def height(self):
+        return self.tiles_rgb.shape[0]
+
+    @property
+    def ch(self):
+        return self.tiles_rgb['ch']
+
+    @property
+    def fg(self):
+        return self.tiles_rgb['fg']
+
+    @property
+    def bg(self):
+        return self.tiles_rgb['bg']
+
+
+class TilesGrid(WithSizeMixin):
 
     """Representation of rectangular Tiles based drawing area."""
 
     __slots__ = ()
 
-    def empty_tile(self, colors):
+    def _empty_tile(self, colors):
         fg = (colors and colors.fg) or DEFAULT_FG
         bg = (colors and colors.bg) or DEFAULT_BG
         return Tile.create(DEFAULT_CH, fg=fg, bg=bg)
 
     def clear(self, colors=None, *args, **kwargs):
         """Clear whole area with default values."""
-        tile = self.empty_tile(colors)
+        tile = self._empty_tile(colors)
         return self.fill(tile)
 
     def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
@@ -77,7 +110,7 @@ class AbstractTilesGrid(WithSizeMixin):
     # TODO: blit_from, blit_to
 
 
-class Panel(Rectangular, AbstractTilesGrid):
+class Panel(Rectangular, TilesGrid):
 
     """Representation of rectangular part of Tiles based drawing area.
 
@@ -120,6 +153,7 @@ class Panel(Rectangular, AbstractTilesGrid):
 
     def framed(self, title=None):
         """Draw generic frame (with optional title) and return panel inside the frame."""
+        # TODO: !!!
         self.root._draw_frame(self.position.x, self.position.y, self.width, self.height,
                               title=title, clear=False)
         return self.create_panel(Position(1,1), Size(self.width-2, self.height-2))
@@ -248,7 +282,7 @@ class RootPanel(SplittablePanel):
         self.palette = palette
         self.clear()
 
-    def empty_tile(self, colors):
+    def _empty_tile(self, colors):
         fg = self.rgb(colors and colors.fg) or self.palette.fg
         bg = self.rgb(colors and colors.bg) or self.palette.bg
         return Tile.create(DEFAULT_CH, fg=fg, bg=bg)
@@ -267,6 +301,81 @@ class RootPanel(SplittablePanel):
             else:
                 return color[:3]
         return self.palette.get(color).rgb
+
+    def clear(self, colors=None, *args, **kwargs):
+        fg = self.rgb(colors and colors.fg) or self.palette.fg.rgb
+        bg = self.rgb(colors and colors.bg) or self.palette.bg.rgb
+        self.console.tiles_rgb[...] = (DEFAULT_CH, fg, bg)
+
+    def _draw(self, ch, colors, position, size=None, *args, **kwargs):
+        fg = self.rgb(colors.fg)
+        bg = self.rgb(colors.bg)
+        # NOTE: console is in order="C", so we need to do some transpositions
+        j, i = position
+        if size:
+            height, width = size
+            if ch is not None:
+                self.console.ch[i:i+width, j:j+height] = ch
+            if fg:
+                self.console.fg[i:i+width, j:j+height] = fg
+            if bg:
+                self.console.bg[i:i+width, j:j+height] = bg
+        else:
+            if ch is not None:
+                self.console.ch[i, j] = ch
+            if fg:
+                self.console.fg[i, j] = fg
+            if bg:
+                self.console.bg[i, j] = bg
+
+    def _print_line(self, text, position, colors=None, alignment=None, *args, **kwargs):
+        chars = [ord(ch) for ch in text]
+        fg = self.rgb(colors and colors.fg)
+        bg = self.rgb(colors and colors.bg)
+        alignment = alignment or Alignment.LEFT
+        # NOTE: console is in order="C", so we need to do some transpositions
+        j, i = position
+        if alignment == Alignment.LEFT:
+            max_len = self.console.width - j
+            chars = chars[:max_len]
+        elif alignment == Alignment.RIGHT:
+            max_len = j+1
+            chars = chars[len(chars)-max_len:]
+            j = max(0, j-len(chars))
+        elif alignment == Alignment.CENTER:
+            max_len = self.console.width
+            if len(chars) > max_len:
+                chars = chars[len(chars)//2-(max_len//2):len(chars)//2+max_len//2+1]
+            j = max(0, j-(len(chars)//2))
+        self.console.ch[i, j:j+len(chars)] = chars
+        if fg:
+            self.console.fg[i, j:j+len(chars)] = fg
+        if bg:
+            self.console.bg[i, j:j+len(chars)] = bg
+
+    def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
+        for line in text.splitlines():
+            self._print_line(line, position, colors=colors, alignment=alignment, *args, **kwargs)
+
+    def draw(self, tile, position, size=None, *args, **kwargs):
+        self._draw(tile.ch, tile.colors, position, size=size, *args, **kwargs)
+
+    def paint(self, colors, position, size=None, *args, **kwargs):
+        self._draw(None, colors, position, size=size, *args, **kwargs)
+
+    def mask(self, tile, mask, position=None):
+        position = position or Position.ZERO
+        fg = self.rgb(tile.fg)
+        bg = self.rgb(tile.bg)
+        # NOTE: console is in order="C", so we need to do some transpositions
+        j, i = position
+        mask = mask.transpose()
+        width, height = mask.shape
+        self.console.ch[i:i+width, j:j+height][mask] = tile.ch
+        if fg:
+            self.console.fg[i:i+width, j:j+height][mask] = fg
+        if bg:
+            self.console.bg[i:i+width, j:j+height][mask] = bg
 
 
 # TODO: Support for bg_blend, learn how it works in tcod

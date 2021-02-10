@@ -1,6 +1,4 @@
-import numpy as np
-
-from .. import dtypes
+from ..ui import Console, RootPanel
 
 
 class IOWrapper:
@@ -24,10 +22,11 @@ class IOWrapper:
     def create_console(self, size=None):
         if not size:
             return None
-        return np.zeros(size, dtype=dtypes.rgb_console_dt)
+        return Console(size)
 
     def create_panel(self, size=None):
-        return None
+        console = self.create_console(size)
+        return RootPanel(console, self.palette)
 
     def flush(self, console):
         return
@@ -50,20 +49,9 @@ class IOWrapper:
 
 class MockWrapper(IOWrapper):
 
-    def create_console(self, size=None):
-        import tcod
-        size = size or self.console_size
-        # NOTE: Use order="C" to match context.new_console behaviour
-        return tcod.console.Console(*size, order="C")
-
-    def create_panel(self, size=None):
-        from .tcod import TcodRootPanel
-        console = self.create_console(size)
-        return TcodRootPanel(console, self.palette)
-
     def flush(self, console):
-        if not isinstance(console, tcod.console.Console):
+        if isinstance(console, RootPanel):
             console = console.console
         from . import ansi
-        ansi.show_tcod_console(console)
+        ansi.show_console(console)
 

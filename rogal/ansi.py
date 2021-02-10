@@ -165,7 +165,7 @@ def show_color(color):
     print(f'{bg_rgb(*color.rgb)} {color.rgb} {reset()}')
 
 
-def show_tcod_console(console):
+def show_console(console):
     lines = []
     for row in console.tiles_rgb:
         row_txt = []

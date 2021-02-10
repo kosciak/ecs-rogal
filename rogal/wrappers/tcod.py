@@ -106,42 +106,11 @@ class TcodRootPanel(RootPanel):
         bg = self.rgb(tile.bg)
         if size:
             return self._draw_rect(
-                position.x, position.y, size.width, size.height, tile.ch,
-                fg=fg, bg=bg, *args, **kwargs)
+                position.x, position.y, size.width, size.height,
+                ch=tile.ch, fg=fg, bg=bg, *args, **kwargs)
         else:
             return self._print(
                 position.x, position.y, tile.char, fg=fg, bg=bg, *args, **kwargs)
-
-    def paint(self, colors, position, size=None, *args, **kwargs):
-        fg = self.rgb(colors.fg)
-        bg = self.rgb(colors.bg)
-        # NOTE: console is in order="C", so we need to do some transpositions
-        j, i = position
-        if size:
-            height, width = size
-            if fg:
-                self.console.fg[i:i+width, j:j+height] = fg
-            if bg:
-                self.console.bg[i:i+width, j:j+height] = bg
-        else:
-            if fg:
-                self.console.fg[i,j] = fg
-            if bg:
-                self.console.bg[i,j] = bg
-
-    def mask(self, tile, mask, position=None):
-        position = position or Position.ZERO
-        fg = self.rgb(tile.fg)
-        bg = self.rgb(tile.bg)
-        # NOTE: console is in order="C", so we need to do some transpositions
-        j, i = position
-        mask = mask.transpose()
-        width, height = mask.shape
-        self.console.ch[i:i+width, j:j+height][mask] = tile.ch
-        if fg:
-            self.console.fg[i:i+width, j:j+height][mask] = fg
-        if bg:
-            self.console.bg[i:i+width, j:j+height][mask] = bg
 
     def image(self, image, position, *args, **kwargs):
         return self._draw_semigraphics(
@@ -297,12 +266,12 @@ class TcodWrapper(IOWrapper):
         self._context = None
 
     @property
-    def initialized(self):
+    def is_initialized(self):
         return self._context is not None
 
     @property
     def context(self):
-        if not self.initialized:
+        if not self.is_initialized:
             context = tcod.context.new(
                 columns=self.console_size.width,
                 rows=self.console_size.height,
@@ -312,15 +281,6 @@ class TcodWrapper(IOWrapper):
             )
             self._context = context
         return self._context
-
-    @property
-    def palette(self):
-        return self._palette
-
-    @palette.setter
-    def palette(self, palette):
-        # TODO: Some event on palette change forcing everything to redraw?
-        self._palette = palette
 
     def load_tilesheet(self, tilesheet):
         return tcod.tileset.load_tilesheet(
@@ -333,7 +293,7 @@ class TcodWrapper(IOWrapper):
     @tilesheet.setter
     def tilesheet(self, tilesheet):
         self._tilesheet = tilesheet
-        if self.initialized:
+        if self.is_initialized:
             tilesheet = self.load_tilesheet(self._tilesheet)
             self.context.change_tilesheet(tilesheet)
 
@@ -348,9 +308,9 @@ class TcodWrapper(IOWrapper):
         return TcodRootPanel(console, self.palette)
 
     def flush(self, console):
-        if not isinstance(console, tcod.console.Console):
+        if isinstance(console, RootPanel):
             console = console.console
-        if self.initialized:
+        if self.is_initialized:
             # TODO: Check options and resizing behaviour
             self.context.present(console)
 
@@ -368,7 +328,7 @@ class TcodWrapper(IOWrapper):
             yield event
 
     def close(self):
-        if self.initialized:
+        if self.is_initialized:
             self.context.close()
             self._context = None
 
