@@ -61,7 +61,7 @@ class SpatialIndex:
 
     def calculate_terrain_flags(self, level_id):
         """Calculated flags based on level's terrain tiles."""
-        log.debug(f'SpatialIndex.calculate_terrain_flags({level_id})')
+        log.debug(f'SpatialIndex.calculate_terrain_flags(level_id={level_id.short_id!r})')
         blocks_vision = self.ecs.manage(components.BlocksVision)
         blocks_movement = self.ecs.manage(components.BlocksMovement)
 
@@ -100,7 +100,7 @@ class SpatialIndex:
 
     def calculate_entities_flags(self, level_id):
         """Calculate entities flags for given Level."""
-        log.debug(f'SpatialIndex.calculate_entities_flags({level_id})')
+        log.debug(f'SpatialIndex.calculate_entities_flags(level_id={level_id.short_id!r})')
         blocks_vision = self.ecs.manage(components.BlocksVision)
         blocks_movement = self.ecs.manage(components.BlocksMovement)
 

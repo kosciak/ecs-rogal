@@ -1,6 +1,7 @@
 import logging
 
 from ..geometry import Rectangular, Position, Size
+from ..geometry import split_horizontal, split_vertical
 from ..tree import BinaryTree
 
 from .core import Generator
@@ -20,40 +21,14 @@ class BSPTree(Rectangular, BinaryTree):
         self.position = position
         self.size = size
 
-    def split_vertical(self, width):
-        if width < 1:
-            width = int(self.width * width)
-        left = BSPTree(
-            self.position,
-            Size(width, self.height)
-        )
-        right = BSPTree(
-            Position(left.x2, self.y),
-            Size(self.width-left.width, self.height)
-        )
-        return left, right
-
-    def split_horizontal(self, height):
-        if height < 1:
-            height = int(self.height * height)
-        left = BSPTree(
-            self.position,
-            Size(self.width, height)
-        )
-        right = BSPTree(
-            Position(self.x, left.y2),
-            Size(self.width, self.height-left.height)
-        )
-        return left, right
-
     def split(self, width=None, height=None):
         if width:
-            left, right = self.split_vertical(width)
+            left, right = split_vertical(self, width)
         elif height:
-            left, right = self.split_horizontal(height)
-        self.left = left
-        self.right = right
-        return left, right
+            left, right = split_horizontal(self, height)
+        self.left = BSPTree(left.position, left.size)
+        self.right = BSPTree(right.position, right.size)
+        return self.left, self.right
 
 
 class BSPGenerator(Generator):

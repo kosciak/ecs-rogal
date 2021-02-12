@@ -5,6 +5,7 @@ import numpy as np
 from . import dtypes
 
 from .geometry import Position, Size, WithSizeMixin, Rectangular, Rectangle
+from .geometry import split_vertical, split_horizontal
 from .colors import RGB, Color
 from .renderable import Tile, Colors
 
@@ -208,41 +209,23 @@ class Container(Panel):
 class HorizontalContainer(Container):
 
     def split(self, top=None, bottom=None):
-        height = top or bottom
-        if height and height < 1:
-            height = int(self.height * height)
-        if top:
-            height = self.height - height
-        top = self.create_panel(
-            Position.ZERO,
-            Size(self.width, height),
-        )
-        bottom = self.create_panel(
-            Position(0, top.height),
-            Size(self.width, self.height-top.height),
-        )
-        self.panels = [top, bottom]
-        return top, bottom
+        top, bottom = split_horizontal(self, top=top, bottom=bottom)
+        self.panels = [
+            self.root.create_panel(top.position, top.size),
+            self.root.create_panel(bottom.position, bottom.size),
+        ]
+        return self.panels
 
 
 class VerticalContainer(Container):
 
     def split(self, left=None, right=None):
-        width = left or right
-        if width and width < 1:
-            width = int(self.width * width)
-        if left:
-            width = self.width - width
-        left = self.create_panel(
-            Position.ZERO,
-            Size(width, self.height),
-        )
-        right = self.create_panel(
-            Position(left.width, 0),
-            Size(self.width-left.width, self.height),
-        )
-        self.panels = [left, right]
-        return left, right
+        left, right = split_vertical(self, left=left, right=right)
+        self.panels = [
+            self.root.create_panel(left.position, left.size),
+            self.root.create_panel(right.position, right.size),
+        ]
+        return self.panels
 
 
 class SplittablePanel(Panel):

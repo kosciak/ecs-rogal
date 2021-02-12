@@ -257,3 +257,44 @@ class Rectangle(Rectangular, collections.namedtuple(
 
     __slots__ = ()
 
+
+def split_vertical(rectangular, right=None, left=None):
+    width = left or right
+    if width < 1:
+        width = int(rectangular.width * width)
+    if left:
+        width = rectangular.width - width
+    left = Rectangle(
+        rectangular.position,
+        Size(width, rectangular.height)
+    )
+    right = Rectangle(
+        Position(left.x2, rectangular.y),
+        Size(rectangular.width-left.width, rectangular.height)
+    )
+    return left, right
+
+
+def split_horizontal(rectangular, bottom=None, top=None):
+    height = top or bottom
+    if height < 1:
+        height = int(rectangular.height * height)
+    if top:
+        height = rectangular.height - height
+    top = Rectangle(
+        rectangular.position,
+        Size(rectangular.width, height)
+    )
+    bottom = Rectangle(
+        Position(rectangular.x, top.y2),
+        Size(rectangular.width, rectangular.height-top.height)
+    )
+    return top, bottom
+
+
+def split(rectangular, left=None, right=None, top=None, bottom=None):
+    if left or right:
+        return split_vertical(rectangular, left=left, right=right)
+    if top or bottom:
+        return split_horizontal(rectangular, top=top, bottom=bottom)
+
