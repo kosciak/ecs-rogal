@@ -1,4 +1,4 @@
-from ..ui import Console, RootPanel
+from ..console import Console, RootPanel
 
 
 class IOWrapper:

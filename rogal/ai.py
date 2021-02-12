@@ -2,8 +2,8 @@ import logging
 
 from . import components
 from .events import EventsHandler
-from .event_handlers import DirectionHandler, ActionsHandler, ChangeLevelHandler
-from .event_handlers import YesNoHandler
+from .event_handlers import DirectionKeyPress, ActionsKeyPress, ChangeLevelKeyPress
+from .event_handlers import YesNoKeyPress
 from .rng import rng
 
 from .utils import perf
@@ -34,7 +34,7 @@ class YesNoPrompt:
         # Show prompt window and set events_handler
         msg_log.warning(self.txt)
         events_handler = EventsHandler(
-            (YesNoHandler(self.ecs), self.on_event),
+            (YesNoKeyPress(self.ecs), self.on_event),
         )
         self.window = self.ecs.create() # TODO: Request creation of an window!
         self.events_handlers.insert(self.window, events_handler)
@@ -95,9 +95,9 @@ class PlayerInput(TakeActionHandler):
     def default_events_handler(self):
         if self._deafault_events_handler is None:
             events_handler = EventsHandler(
-                (DirectionHandler(self.ecs), self.try_direction),
-                (ChangeLevelHandler(self.ecs), self.try_change_level),
-                (ActionsHandler(self.ecs), self.try_action),
+                (DirectionKeyPress(self.ecs), self.try_direction),
+                (ChangeLevelKeyPress(self.ecs), self.try_change_level),
+                (ActionsKeyPress(self.ecs), self.try_action),
             )
             self._deafault_events_handler = events_handler
         return self._deafault_events_handler

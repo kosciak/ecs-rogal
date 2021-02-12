@@ -16,7 +16,7 @@ Each Handler should just return simple value, no fancy logic here.
 """
 
 
-class DirectionHandler(EventHandler):
+class DirectionKeyPress(EventHandler):
 
     """Return Direction value."""
 
@@ -26,7 +26,7 @@ class DirectionHandler(EventHandler):
                 return direction
 
 
-class ActionsHandler(EventHandler):
+class ActionsKeyPress(EventHandler):
 
     def on_key_press(self, event):
         # TODO: Maybe use some bindings: component dict instead of hardcoding?
@@ -40,7 +40,7 @@ class ActionsHandler(EventHandler):
             return components.WantsToRevealLevel
 
 
-class ChangeLevelHandler(EventHandler):
+class ChangeLevelKeyPress(EventHandler):
 
     def on_key_press(self, event):
         if event.key in self.key_bindings.actions.NEXT_LEVEL:
@@ -49,7 +49,7 @@ class ChangeLevelHandler(EventHandler):
             return -1
 
 
-class YesNoHandler(EventHandler):
+class YesNoKeyPress(EventHandler):
 
     """Return True for YES, or False for NO or DISCARD."""
 
@@ -62,7 +62,7 @@ class YesNoHandler(EventHandler):
             return False
 
 
-class ConfirmHandler(EventHandler):
+class ConfirmKeyPress(EventHandler):
 
     """Return True for CONFIRM, or False for DISCARD."""
 
@@ -73,7 +73,7 @@ class ConfirmHandler(EventHandler):
             return False
 
 
-class AlphabeticIndexHandler(EventHandler):
+class AlphabeticIndexKeyPress(EventHandler):
 
     """Return 0-25 index when selecting using ascii letters."""
 
@@ -82,7 +82,7 @@ class AlphabeticIndexHandler(EventHandler):
             return string.ascii_lowercase.index(event.key)
 
 
-class NumericIndexHandler(EventHandler):
+class NumericIndexKeyPress(EventHandler):
 
     """Return 0-9 index when selecting using digits.
 
