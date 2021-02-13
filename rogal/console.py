@@ -6,7 +6,7 @@ from . import dtypes
 
 from .geometry import Position, Size, WithSizeMixin, Rectangular, split_rect
 from .colors import RGB, Color
-from .renderable import Tile, Colors
+from .tiles import Tile, Colors
 
 
 """Basic UI elements / building blocks, working as abstraction layer for tcod.Console.
@@ -333,13 +333,13 @@ class RootPanel(Panel):
 
 FrameDecorations = collections.namedtuple(
     'FrameDecorations', [
-        'top', 'bottom', 'side',
+        'top', 'bottom', 'left', 'right',
         'top_left', 'top_right',
         'bottom_left', 'bottom_right',
     ])
 
 
-DECORATIONS_ASCII = FrameDecorations(*"=-|..''")
+DECORATIONS_ASCII = FrameDecorations(*"=-||..''")
 
 
 class Frame(Container):

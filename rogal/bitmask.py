@@ -2,7 +2,7 @@ import enum
 
 import numpy as np
 
-from .glyphs import Glyph
+from .tiles import Symbol
 
 
 """
@@ -107,41 +107,41 @@ class Diagonal(enum.IntFlag):
 
 
 WALLS_LINE = {
-    Cardinal.NONE   : Glyph.RADIO_UNSET,
-    Cardinal.N      : Glyph.VLINE,    # N
-    Cardinal.S      : Glyph.VLINE,    #   S
-    Cardinal.NS     : Glyph.VLINE,    # N+S
-    Cardinal.W      : Glyph.HLINE,    #     W
-    Cardinal.NW     : Glyph.SE,       # N  +W
-    Cardinal.SW     : Glyph.NE,       # S  +W
-    Cardinal.NSW    : Glyph.TEEW,     # N+S+W
-    Cardinal.E      : Glyph.HLINE,    #       E
-    Cardinal.NE     : Glyph.SW,       # N    +E
-    Cardinal.SE     : Glyph.NW,       #   S  +E
-    Cardinal.NSE    : Glyph.TEEE,     # N+S  +E
-    Cardinal.WE     : Glyph.HLINE,    #     W+E
-    Cardinal.WEN    : Glyph.TEEN,     # N  +W+E
-    Cardinal.WES    : Glyph.TEES,     #   S+W+E
-    Cardinal.NSWE   : Glyph.CROSS,    # N+S+W+E
+    Cardinal.NONE   : Symbol.RADIO_UNSET,
+    Cardinal.N      : Symbol.VLINE,    # N
+    Cardinal.S      : Symbol.VLINE,    #   S
+    Cardinal.NS     : Symbol.VLINE,    # N+S
+    Cardinal.W      : Symbol.HLINE,    #     W
+    Cardinal.NW     : Symbol.SE,       # N  +W
+    Cardinal.SW     : Symbol.NE,       # S  +W
+    Cardinal.NSW    : Symbol.TEEW,     # N+S+W
+    Cardinal.E      : Symbol.HLINE,    #       E
+    Cardinal.NE     : Symbol.SW,       # N    +E
+    Cardinal.SE     : Symbol.NW,       #   S  +E
+    Cardinal.NSE    : Symbol.TEEE,     # N+S  +E
+    Cardinal.WE     : Symbol.HLINE,    #     W+E
+    Cardinal.WEN    : Symbol.TEEN,     # N  +W+E
+    Cardinal.WES    : Symbol.TEES,     #   S+W+E
+    Cardinal.NSWE   : Symbol.CROSS,    # N+S+W+E
 }
 
 WALLS_DLINE = {
-    Cardinal.NONE   : Glyph.BULLET_SQUARE,
-    Cardinal.N      : Glyph.DVLINE,    # N
-    Cardinal.S      : Glyph.DVLINE,    #   S
-    Cardinal.NS     : Glyph.DVLINE,    # N+S
-    Cardinal.W      : Glyph.DHLINE,    #     W
-    Cardinal.NW     : Glyph.DSE,       # N  +W
-    Cardinal.SW     : Glyph.DNE,       # S  +W
-    Cardinal.NSW    : Glyph.DTEEW,     # N+S+W
-    Cardinal.E      : Glyph.DHLINE,    #       E
-    Cardinal.NE     : Glyph.DSW,       # N    +E
-    Cardinal.SE     : Glyph.DNW,       #   S  +E
-    Cardinal.NSE    : Glyph.DTEEE,     # N+S  +E
-    Cardinal.WE     : Glyph.DHLINE,    #     W+E
-    Cardinal.WEN    : Glyph.DTEEN,     # N  +W+E
-    Cardinal.WES    : Glyph.DTEES,     #   S+W+E
-    Cardinal.NSWE   : Glyph.DCROSS,    # N+S+W+E
+    Cardinal.NONE   : Symbol.BULLET_SQUARE,
+    Cardinal.N      : Symbol.DVLINE,    # N
+    Cardinal.S      : Symbol.DVLINE,    #   S
+    Cardinal.NS     : Symbol.DVLINE,    # N+S
+    Cardinal.W      : Symbol.DHLINE,    #     W
+    Cardinal.NW     : Symbol.DSE,       # N  +W
+    Cardinal.SW     : Symbol.DNE,       # S  +W
+    Cardinal.NSW    : Symbol.DTEEW,     # N+S+W
+    Cardinal.E      : Symbol.DHLINE,    #       E
+    Cardinal.NE     : Symbol.DSW,       # N    +E
+    Cardinal.SE     : Symbol.DNW,       #   S  +E
+    Cardinal.NSE    : Symbol.DTEEE,     # N+S  +E
+    Cardinal.WE     : Symbol.DHLINE,    #     W+E
+    Cardinal.WEN    : Symbol.DTEEN,     # N  +W+E
+    Cardinal.WES    : Symbol.DTEES,     #   S+W+E
+    Cardinal.NSWE   : Symbol.DCROSS,    # N+S+W+E
 }
 
 

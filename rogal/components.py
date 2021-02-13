@@ -9,7 +9,7 @@ from .ecs.components import component_type
 from .ecs import EntitiesSet
 from . import flags
 from .geometry import Direction, Position, Size, Rectangular, WithPositionMixin
-from .renderable import RenderOrder
+from .tiles import RenderOrder
 from . import terrain
 
 

@@ -1,5 +1,6 @@
+from .core import Glyph
 
-class Glyph:
+class Symbol:
     # Single line walls:
     HLINE = 9472            # ─
     VLINE = 9474            # │
@@ -151,11 +152,13 @@ class Glyph:
     POW1 = 8730             # √
     POW3 = 8319             # ⁿ
 
-
-def get(name):
-    if not isinstance(name, str):
-        return name
-    return getattr(Glyph, name, name)
+    @classmethod
+    def get(cls, name):
+        if not isinstance(name, str):
+            return name
+        code_point = getattr(cls, name, name)
+        if code_point:
+            return Glyph(code_point)
 
 
 def show_charmap(charmap, columns=16):

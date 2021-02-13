@@ -9,7 +9,7 @@ from . import bitmask
 from . import components
 from .ecs import System, RunState
 from .geometry import Rectangular, Position, Size, Rectangle
-from .renderable import RenderOrder, Colors, Tile
+from .tiles import RenderOrder, Colors, Tile
 from . import terrain
 
 from .utils import perf

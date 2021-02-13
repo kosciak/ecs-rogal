@@ -2,9 +2,9 @@ import functools
 import logging
 import uuid
 
-from .geometry import Position, Size
-from .tilesheets import TERMINAL_12x12_CP
+from .geometry import Size
 
+from .tilesheets import TERMINAL_12x12_CP
 from .wrappers import TcodWrapper
 
 from .rng import rng, generate_seed
@@ -16,7 +16,7 @@ from .data_loaders import DataLoader
 from .ecs import ECS
 from .entities_spawner import EntitiesSpawner
 from .events.keys import KeyBindings
-from .renderable import Tileset
+from .tiles.tilesets import Tileset
 from .spatial_index import SpatialIndex
 from . import systems
 
