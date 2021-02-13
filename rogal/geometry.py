@@ -202,16 +202,14 @@ class Rectangular(WithPositionMixin, WithSizeMixin):
         """Return center Position."""
         return Position(self.x+self.width//2, self.y+self.height//2)
 
-    def __iter__(self):
-        """Iterate Positions inside this Rectangle."""
-        for y in range(self.y, self.y2):
-            for x in range(self.x, self.x2):
-                yield Position(x, y)
-
     @property
     def positions(self):
         """Return set of Positions inside this Rectangle."""
-        return set(iter(self))
+        positions = set()
+        for y in range(self.y, self.y2):
+            for x in range(self.x, self.x2):
+                positions.add(Position(x, y))
+        return positions
 
     def is_inside(self, position):
         """Return True if given Position is inside this Rectangle."""
@@ -226,7 +224,7 @@ class Rectangular(WithPositionMixin, WithSizeMixin):
     def intersection(self, other):
         """Return Rectangle that is an intersection with other Rectangle.
 
-        Returns None if the geometries don't intersect. 
+        Returns None if the geometries don't intersect.
 
         """
         if not other:
@@ -258,11 +256,11 @@ class Rectangle(Rectangular, collections.namedtuple(
     __slots__ = ()
 
 
-def split_vertical(rectangular, right=None, left=None):
+def split_vertical(rectangular, left=None, right=None):
     width = left or right
     if width < 1:
         width = int(rectangular.width * width)
-    if left:
+    if right:
         width = rectangular.width - width
     left = Rectangle(
         rectangular.position,
@@ -275,11 +273,11 @@ def split_vertical(rectangular, right=None, left=None):
     return left, right
 
 
-def split_horizontal(rectangular, bottom=None, top=None):
+def split_horizontal(rectangular, top=None, bottom=None):
     height = top or bottom
     if height < 1:
         height = int(rectangular.height * height)
-    if top:
+    if bottom:
         height = rectangular.height - height
     top = Rectangle(
         rectangular.position,
@@ -292,7 +290,7 @@ def split_horizontal(rectangular, bottom=None, top=None):
     return top, bottom
 
 
-def split(rectangular, left=None, right=None, top=None, bottom=None):
+def split_rect(rectangular, left=None, right=None, top=None, bottom=None):
     if left or right:
         return split_vertical(rectangular, left=left, right=right)
     if top or bottom:

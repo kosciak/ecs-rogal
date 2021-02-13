@@ -4,8 +4,7 @@ import numpy as np
 
 from . import dtypes
 
-from .geometry import Position, Size, WithSizeMixin, Rectangular, Rectangle
-from .geometry import split_vertical, split_horizontal
+from .geometry import Position, Size, WithSizeMixin, Rectangular, split_rect
 from .colors import RGB, Color
 from .renderable import Tile, Colors
 
@@ -152,6 +151,12 @@ class Panel(Rectangular, TilesGrid):
     def create_panel(self, position, size):
         return self.root.create_panel(self.offset(position), size)
 
+    def split(self, left=None, right=None, top=None, bottom=None):
+        """Split Panel vertically or horizontally."""
+        geometries = split_rect(self, left, right, top, bottom)
+        panels = [self.root.create_panel(*geometry) for geometry in geometries]
+        return panels
+
     def framed(self, title=None):
         """Draw generic frame (with optional title) and return panel inside the frame."""
         # TODO: !!!
@@ -206,58 +211,7 @@ class Container(Panel):
         self.panels = []
 
 
-class HorizontalContainer(Container):
-
-    def split(self, top=None, bottom=None):
-        top, bottom = split_horizontal(self, top=top, bottom=bottom)
-        self.panels = [
-            self.root.create_panel(top.position, top.size),
-            self.root.create_panel(bottom.position, bottom.size),
-        ]
-        return self.panels
-
-
-class VerticalContainer(Container):
-
-    def split(self, left=None, right=None):
-        left, right = split_vertical(self, left=left, right=right)
-        self.panels = [
-            self.root.create_panel(left.position, left.size),
-            self.root.create_panel(right.position, right.size),
-        ]
-        return self.panels
-
-
-class SplittablePanel(Panel):
-
-    def split_vertical(self, left=None, right=None):
-        width = left or right
-        container = VerticalContainer(
-            self.root,
-            self.position,
-            self.size,
-        )
-        return container.split(left=right and width, right=left and width)
-
-    def split_horizontal(self, top=None, bottom=None):
-        height = top or bottom
-        container = HorizontalContainer(
-            self.root,
-            self.position,
-            self.size,
-        )
-        return container.split(top=bottom and height, bottom=top and height)
-
-    def split(self, left=None, right=None, top=None, bottom=None):
-        """Split Panel vertically or horizontally by providing width of new Panel
-           placed to the right / left / top / bottom."""
-        if left or right:
-            return self.split_vertical(left=left, right=right)
-        if top or bottom:
-            return self.split_horizontal(top=top, bottom=bottom)
-
-
-class RootPanel(SplittablePanel):
+class RootPanel(Panel):
 
     def __init__(self, console, palette):
         super().__init__(self, Position.ZERO, Size(console.width, console.height))
@@ -271,7 +225,7 @@ class RootPanel(SplittablePanel):
         return Tile.create(DEFAULT_CH, fg=fg, bg=bg)
 
     def create_panel(self, position, size):
-        return SplittablePanel(self, position, size)
+        return Panel(self, position, size)
 
     def rgb(self, color):
         if not color:
