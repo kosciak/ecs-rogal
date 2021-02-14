@@ -73,11 +73,6 @@ class ActionsQueueSystem(System):
                 # No more waiting, time for some action!
                 acts_now.insert(entity)
 
-    def update_run_state(self):
-        acts_now = self.ecs.manage(components.ActsNow)
-        if acts_now:
-            self.ecs.run_state = RunState.WAITING_FOR_ACTIONS
-
     def run(self):
         self.update_acts_now()
 
@@ -87,14 +82,6 @@ class TakeActionsSystem(System):
     INCLUDE_STATES = {
         RunState.WAITING_FOR_ACTIONS,
     }
-
-    def update_run_state(self):
-        events_handlers = self.ecs.manage(components.EventsHandler)
-        acts_now = self.ecs.manage(components.ActsNow)
-        if events_handlers:
-            self.ecs.run_state = RunState.WAITING_FOR_INPUT
-        if not acts_now:
-            self.ecs.run_state = RunState.PERFOM_ACTIONS
 
     def run(self):
         acts_now = self.ecs.manage(components.ActsNow)
@@ -136,16 +123,6 @@ class EventsHandlersSystem(System):
 
         self._prev_times[event.type] = now
         return True
-
-    def update_run_state(self):
-        events_handlers = self.ecs.manage(components.EventsHandler)
-        acts_now = self.ecs.manage(components.ActsNow)
-        if acts_now and events_handlers:
-            self.ecs.run_state = RunState.WAITING_FOR_INPUT
-        elif acts_now:
-            self.ecs.run_state = RunState.WAITING_FOR_ACTIONS
-        else:
-            self.ecs.run_state = RunState.PERFOM_ACTIONS
 
     def run(self):
         acts_now = self.ecs.manage(components.ActsNow)
@@ -461,9 +438,6 @@ class ActionsPerformedSystem(System):
         RunState.PERFOM_ACTIONS,
     }
 
-    def update_run_state(self):
-        self.ecs.run_state = RunState.TICKING
-
     def run(self):
         has_moved = self.ecs.manage(components.HasMoved)
         has_moved.clear()
@@ -481,13 +455,6 @@ class AnimationsSystem(System):
         RunState.PERFOM_ACTIONS,
         RunState.ANIMATIONS,
     }
-
-    def update_run_state(self):
-        animations = self.ecs.manage(components.Animation)
-        if animations:
-            self.ecs.run_state = RunState.ANIMATIONS
-        else:
-            self.ecs.run_state = RunState.TICKING
 
 
 class TTLSystem(System):
@@ -516,4 +483,35 @@ class TTLSystem(System):
         for entity, location in self.ecs.join(outdated, locations):
             self.spatial.remove_entity(entity, location)
         self.ecs.remove(*outdated)
+
+
+class RunStateSystem(System):
+
+    def run(self):
+        animations = self.ecs.manage(components.Animation)
+        if animations:
+            self.ecs.run_state = RunState.ANIMATIONS
+            return
+
+        if self.ecs.run_state == RunState.PRE_RUN:
+            self.ecs.run_state = RunState.TICKING
+            return
+
+        if self.ecs.run_state == RunState.PERFOM_ACTIONS:
+            self.ecs.run_state = RunState.TICKING
+            return
+
+        acts_now = self.ecs.manage(components.ActsNow)
+        if self.ecs.run_state == RunState.TICKING:
+            if acts_now:
+                self.ecs.run_state = RunState.WAITING_FOR_ACTIONS
+            return
+
+        events_handlers = self.ecs.manage(components.EventsHandler)
+        if acts_now and events_handlers:
+            self.ecs.run_state = RunState.WAITING_FOR_INPUT
+        elif acts_now:
+            self.ecs.run_state = RunState.WAITING_FOR_ACTIONS
+        else:
+            self.ecs.run_state = RunState.PERFOM_ACTIONS
 

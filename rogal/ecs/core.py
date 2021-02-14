@@ -218,9 +218,6 @@ class System:
             return False
         return True
 
-    def update_run_state(self):
-        return
-
     def run(self):
         return
 
@@ -246,7 +243,6 @@ class SystemsManager:
                 continue
             with perf.Perf(system.run):
                 system.run()
-                system.update_run_state()
             systems.append(system)
         # log.debug(f'systems.run({self.run_state.name}): {systems}')
 

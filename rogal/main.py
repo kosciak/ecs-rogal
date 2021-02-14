@@ -99,6 +99,8 @@ def run():
 
         systems.AnimationsSystem(ecs),
         systems.TTLSystem(ecs),
+
+        systems.RunStateSystem(ecs),
     ]:
         ecs.register(system)
 
