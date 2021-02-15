@@ -157,6 +157,13 @@ class KeyBindings:
             bindings[category] = Bindings.parse(bindings_data)
         return bindings
 
+    def get(self, key_binding):
+        if not isinstance(key_binding, str):
+            return key_binding
+        category, sep, name = key_binding.partition('.')
+        bindings = self.bindings[category]
+        return bindings[name]
+
     def __getattr__(self, name):
         return self.bindings[name]
 

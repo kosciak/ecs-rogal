@@ -1,9 +1,9 @@
 import logging
 import string
 
-from . import components
-from .events import EventHandler
-from .geometry import Direction
+from ..geometry import Direction
+
+from .core import EventHandler
 
 
 log = logging.getLogger(__name__)
@@ -16,6 +16,18 @@ Each Handler should just return simple value, no fancy logic here.
 """
 
 
+class OnKeyPress(EventHandler):
+
+    def __init__(self, ecs, key_binding, value):
+        super().__init__(ecs)
+        self.key_binding = self.key_bindings.get(key_binding)
+        self.value = value
+
+    def on_key_press(self, event):
+        if event.key in self.key_binding:
+            return self.value
+
+
 class DirectionKeyPress(EventHandler):
 
     """Return Direction value."""
@@ -24,20 +36,6 @@ class DirectionKeyPress(EventHandler):
         for direction in Direction:
             if event.key in self.key_bindings.directions[direction.name]:
                 return direction
-
-
-class ActionsKeyPress(EventHandler):
-
-    def on_key_press(self, event):
-        # TODO: Maybe use some bindings: component dict instead of hardcoding?
-        if event.key in self.key_bindings.actions.QUIT:
-            return components.WantsToQuit
-
-        if event.key in self.key_bindings.actions.REST:
-            return components.WantsToRest
-
-        if event.key in self.key_bindings.actions.REVEAL_LEVEL:
-            return components.WantsToRevealLevel
 
 
 class ChangeLevelKeyPress(EventHandler):
@@ -80,6 +78,15 @@ class AlphabeticIndexKeyPress(EventHandler):
     def on_key_press(self, event):
         if event.key in self.key_bindings.index.ALPHABETIC:
             return string.ascii_lowercase.index(event.key)
+
+
+class AlphabeticUpperIndexKeyPress(EventHandler):
+
+    """Return 0-25 index when selecting using ascii letters."""
+
+    def on_key_press(self, event):
+        if event.key in self.key_bindings.index.ALPHABETIC_UPPER:
+            return string.ascii_uppercase.index(event.key)
 
 
 class NumericIndexKeyPress(EventHandler):
