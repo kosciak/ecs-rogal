@@ -51,7 +51,7 @@ class Color(Enum):
     GREEN=2,
     YELLOW=3,
     BLUE=4,
-    MAGENTA=5, 
+    MAGENTA=5,
     CYAN=6,
     WHITE=7,
 
@@ -101,14 +101,14 @@ def bg_bold(color):
 
 def fg_256(color):
     return sgr(SGR_Attribute.SET_FG.value, ColorsMode.COLORS_256.value, color)
- 
+
 def bg_256(color):
     return sgr(SGR_Attribute.SET_BG.value, ColorsMode.COLORS_256.value, color)
 
-def fg_rgb(r,g,b):
+def fg_rgb(r, g, b):
     return sgr(SGR_Attribute.SET_FG.value, ColorsMode.COLORS_RGB.value, r, g, b)
- 
-def bg_rgb(r,g,b):
+
+def bg_rgb(r, g, b):
     return sgr(SGR_Attribute.SET_BG.value, ColorsMode.COLORS_RGB.value, r, g, b)
 
 
