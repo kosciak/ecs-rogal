@@ -2,11 +2,10 @@ import collections
 
 import numpy as np
 
-from . import dtypes
-
-from .geometry import Position, Size, WithSizeMixin, Rectangular, split_rect
-from .colors import RGB, Color
-from .tiles import Tile, Colors
+from .. import dtypes
+from ..geometry import Position, Size, WithSizeMixin, Rectangular, split_rect
+from ..colors import RGB, Color
+from ..tiles import Tile, Colors
 
 
 """Basic UI elements / building blocks, working as abstraction layer for tcod.Console.
@@ -122,8 +121,6 @@ class Panel(Rectangular, TilesGrid):
     __slots__ = ('position', 'size', 'root', )
 
     def __init__(self, root, offset, size):
-        # NOTE: position is relative to parent
-        #       offset is relative to root
         self.position = offset
         self.size = size
         self.root = root
@@ -157,13 +154,6 @@ class Panel(Rectangular, TilesGrid):
         panels = [self.root.create_panel(*geometry) for geometry in geometries]
         return panels
 
-    def framed(self, title=None):
-        """Draw generic frame (with optional title) and return panel inside the frame."""
-        # TODO: !!!
-        self.root._draw_frame(self.position.x, self.position.y, self.width, self.height,
-                              title=title, clear=False)
-        return self.create_panel(Position(1,1), Size(self.width-2, self.height-2))
-
     def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
         """Print text on given position using colors."""
         return self.root.print(text, self.offset(position), colors=colors, alignment=alignment, *args, **kwargs)
@@ -174,6 +164,8 @@ class Panel(Rectangular, TilesGrid):
         If size provided draw rectangle filled with this Tile.
 
         """
+        if not tile:
+            return
         return self.root.draw(tile, self.offset(position), size=size, *args, **kwargs)
 
     def paint(self, colors, position, size=None, *args, **kwargs):
@@ -202,13 +194,6 @@ class Panel(Rectangular, TilesGrid):
 
     def __repr__(self):
         return f'<{self.__class__.__name__} x={self.x}, y={self.y}, width={self.width}, height={self.height}>'
-
-
-class Container(Panel):
-
-    def __init__(self, root, offset, size):
-        super().__init__(root, offset, size)
-        self.panels = []
 
 
 class RootPanel(Panel):
@@ -318,59 +303,4 @@ class RootPanel(Panel):
 # TODO: Support for bg_blend, learn how it works in tcod
 
 # TODO: ansi-like color control codes - "%c%c%c%cFoo%c" % (tcod.COLCTRL_FORE_RGB, *tcod.white, tcod.COLCTRL_STOP)
-
-# TODO: frames overlapping, and fixing overlapped/overdrawn characters to merge borders/decorations
-
-# TODO: Keep track of Z-order of Windows?
-
-# TODO: Scrollable Panels?
-# TODO: Window/Dialog?
-# TODO: event handlers?
-
-
-# TODO: frame() should produce FramedPanel with Frame and Panel inside
-# TODO: Rework FramedWindow class - now it's a mess
-
-FrameDecorations = collections.namedtuple(
-    'FrameDecorations', [
-        'top', 'bottom', 'left', 'right',
-        'top_left', 'top_right',
-        'bottom_left', 'bottom_right',
-    ])
-
-
-DECORATIONS_ASCII = FrameDecorations(*"=-||..''")
-
-
-class Frame(Container):
-    # TODO: Custom window decorations?
-    # TODO: Setting title, adding buttons(?) on top/bottom border, scrollbars?
-    #       For example setting things like: 
-    #       .- Title ------[X]-.
-    #       |                  |
-    #       '-----------(more)-'
-
-    def draw_decorations(self, decorations=None, *args, **kwargs):
-        if not decorations:
-            self.draw_frame(0, 0, width=self.width, height=self.height, *args, **kwargs)
-        else:
-            self.draw_rect(1, 0, width=self.width-2, height=1, ch=ord(decorations.top))
-            self.draw_rect(1, self.height-1, width=self.width-2, height=1, ch=ord(decorations.bottom))
-            self.draw_rect(0, 1, width=1, height=self.height-2, ch=ord(decorations.side))
-            self.draw_rect(self.width-1, 1, width=1, height=self.height-2, ch=ord(decorations.side))
-            self.put_char(0, 0, ord(decorations.top_left))
-            self.put_char(self.width-1, 0, ord(decorations.top_right))
-            self.put_char(0, self.height-1, ord(decorations.bottom_left))
-            self.put_char(self.width-1, self.height-1, ord(decorations.bottom_right))
-
-
-class FramedWindow:
-    # TODO: For now it's just proof of concept
-    # NOTE: splitting window.panel leaves original panel reference!
-
-    def __init__(self, parent, x, y, width, height, decorations):
-        self.frame = Frame(parent, Position(x, y), Size(width, height))
-        self.frame.draw_decorations(decorations)
-        self.panel = SplittablePanel(self.frame, Position(1, 1), Size(width-2, height-2))
-        self.frame.panels.append(self.panel)
 

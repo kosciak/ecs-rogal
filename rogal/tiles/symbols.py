@@ -2,6 +2,9 @@ from .core import Glyph
 
 
 class Symbol:
+    NONE = Glyph(0)
+    EMPTY = Glyph(0)
+
     # Single line walls:
     HLINE = Glyph(9472)            # ─
     VLINE = Glyph(9474)            # │

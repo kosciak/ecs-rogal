@@ -12,6 +12,9 @@ from .geometry import Rectangular, Position, Size, Rectangle
 from .tiles import RenderOrder, Colors, Tile
 from . import terrain
 
+from .console import Alignment
+from .console.ui import Frame, FrameDecorations, Title, TitleDecorations
+
 from .utils import perf
 
 
@@ -303,7 +306,12 @@ class Camera(Rectangular, Renderer):
                     self.panel.draw(tile, render_position)
 
     def render(self, actor=None, location=None, *args, **kwargs):
-        self.panel = self._panel.framed('mapcam')
+        # TODO: !!!
+        frame = Frame(self._panel, FrameDecorations.DSLINE)
+        frame.render()
+        title = Title(frame, 'mapcam', TitleDecorations.DSLINE, alignment=Alignment.LEFT)
+        title.render()
+        self.panel = frame.inner
 
         position = None
         fov = None
@@ -352,7 +360,13 @@ class MessageLog(Renderer):
 
     def render(self, *args, **kwargs):
         """Render logging records."""
-        self.panel = self._panel.framed('logs')
+        # TODO: !!!
+        frame = Frame(self._panel, FrameDecorations.DSLINE)
+        frame.render()
+        title = Title(frame, 'logs', TitleDecorations.DSLINE, alignment=Alignment.CENTER)
+        title.render()
+        self.panel = frame.inner
+
         for offset, msg in enumerate(reversed(logs.LOGS_HISTORY), start=1):
             if offset > self.panel.height:
                 break

@@ -20,7 +20,7 @@ from .tiles.tilesets import Tileset
 from .spatial_index import SpatialIndex
 from . import systems
 
-from .render import ConsoleRenderingSystem
+from . import render
 
 
 log = logging.getLogger(__name__)
@@ -73,10 +73,22 @@ def run():
     # Level generator
     level_generator = LEVEL_GENERATOR_CLS(seed, ecs, LEVEL_SIZE)
 
+    # Create player
+    player = ecs.resources.spawner.create('actors.PLAYER')
+
     # Pregenerate some levels for stress testing
     # level, starting_position = level_generator.generate()
     # for depth in range(1, 50):
     #     level, starting_position = level_generator.generate(depth=depth)
+
+    # Initialize Wrapper
+    ecs.resources.wrapper = TcodWrapper(
+        console_size=CONSOLE_SIZE,
+        palette=ecs.resources.tileset.palette,
+        tilesheet=TERMINAL_12x12_CP,
+        resizable=False,
+        title='Rogal test'
+    )
 
     # Register systems
     # NOTE: Systems are run in order they were registered
@@ -85,6 +97,8 @@ def run():
 
         systems.ActionsQueueSystem(ecs),
         systems.TakeActionsSystem(ecs),
+
+        systems.EventsHandlersSystem(ecs),
 
         systems.QuitSystem(ecs),
         systems.MeleeCombatSystem(ecs),
@@ -101,29 +115,11 @@ def run():
         systems.TTLSystem(ecs),
 
         systems.RunStateSystem(ecs),
+
+        render.ConsoleRenderingSystem(ecs),
     ]:
         ecs.register(system)
 
-    # Create player
-    player = ecs.resources.spawner.create('actors.PLAYER')
-
-    wrapper = TcodWrapper(
-        console_size=CONSOLE_SIZE,
-        palette=ecs.resources.tileset.palette,
-        tilesheet=TERMINAL_12x12_CP,
-        resizable=False,
-        title='Rogal test'
-    )
-
-    with wrapper as wrapper:
-        ecs.resources.wrapper = wrapper
-
-        # Register rendering system
-        rendering_system = ConsoleRenderingSystem(ecs)
-        ecs.register(rendering_system)
-
-        events_handlers_system = systems.EventsHandlersSystem(ecs)
-        ecs.register(events_handlers_system)
-
+    with ecs.resources.wrapper:
         ecs.run()
 

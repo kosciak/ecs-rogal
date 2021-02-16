@@ -32,5 +32,5 @@ tiles:
   SNAIL:          ['s', MAGENTA]
 
   # Particles
-  MELEE_HIT:      [0, null, BRIGHT_RED]
+  MELEE_HIT:      [NONE, null, BRIGHT_RED]
 

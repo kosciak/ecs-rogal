@@ -26,6 +26,8 @@ class Glyph(int):
     def __new__(cls, code_point):
         if isinstance(code_point, Glyph):
             return code_point
+        if isinstance(code_point, Tile):
+            return code_point.glyph
         if isinstance(code_point, str):
             code_point = ord(code_point)
         instance = cls.__INSTANCES.get(code_point)
@@ -61,11 +63,11 @@ class HasColorsMixin:
 
     @property
     def fg(self):
-        return self.colors.fg
+        return self.colors and self.colors.fg
 
     @property
     def bg(self):
-        return self.colors.bg
+        return self.colors and self.colors.bg
 
 
 class Tile(HasColorsMixin, collections.namedtuple(
@@ -83,6 +85,8 @@ class Tile(HasColorsMixin, collections.namedtuple(
         return self.glyph
 
     @staticmethod
-    def create(ch, fg, bg=None):
+    def create(ch, fg=None, bg=None):
+        if ch is None:
+            return None
         return Tile(Glyph(ch), Colors(fg, bg))
 
