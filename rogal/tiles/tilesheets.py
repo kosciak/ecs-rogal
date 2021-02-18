@@ -1,7 +1,7 @@
 import collections
 import os.path
 
-import tcod
+from . import charsets
 
 
 ASSETS_DIR = 'assets'
@@ -24,13 +24,13 @@ DEJAVU_10x10_TC = Tilesheet(
     os.path.join(FONTS_DIR, "dejavu10x10_gs_tc.png"),
     32,
     8,
-    tcod.tileset.CHARMAP_TCOD,
+    charsets.TCOD,
 )
 
 TERMINAL_12x12_CP = Tilesheet(
     os.path.join(FONTS_DIR, "terminal12x12_gs_ro.png"),
     16,
     16,
-    tcod.tileset.CHARMAP_CP437,
+    charsets.CP437,
 )
 

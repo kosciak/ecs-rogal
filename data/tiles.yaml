@@ -1,5 +1,7 @@
 # Renderable tiles data
 
+tilesheet: TERMINAL_12x12_CP
+
 palette: rogal.colors.x11.TANGO_DARK
 
 revealed:

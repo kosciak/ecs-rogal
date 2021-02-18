@@ -3,6 +3,7 @@ import importlib
 
 from .core import Tile
 from .symbols import Symbol
+from . import tilesheets
 
 
 class ReplaceForeground:
@@ -26,16 +27,17 @@ class Tileset:
 
     def __init__(self, loader):
         self.loader = loader
+        self._tilesheet = None
         self._palette = None
         self._revealed_fn = None
         self._tiles = {}
 
     @property
-    def tiles(self):
-        if not self._tiles:
-            data = self.loader.load()
+    def tilesheet(self):
+        if self._tilesheet is None:
+            data = self.load_data(self.fn)
             self.parse_data(data)
-        return self._tiles
+        return self._tilesheet
 
     @property
     def palette(self):
@@ -45,11 +47,23 @@ class Tileset:
         return self._palette
 
     @property
+    def tiles(self):
+        if not self._tiles:
+            data = self.loader.load()
+            self.parse_data(data)
+        return self._tiles
+
+    @property
     def revealed_fn(self):
         if self._revealed_fn is None:
             data = self.load_data(self.fn)
             self.parse_data(data)
         return self._revealed_fn
+
+    def parse_tilesheet(self, data):
+        name = data['tilesheet']
+        tilesheet = getattr(tilesheets, name)
+        return tilesheet
 
     def parse_palette(self, data):
         name = data['palette']
@@ -81,6 +95,7 @@ class Tileset:
         return tiles
 
     def parse_data(self, data):
+        self._tilesheet = self.parse_tilesheet(data)
         self._palette = self.parse_palette(data)
         self._revealed_fn = self.parse_revealed_fn(data)
         self._tiles = self.parse_tiles(data)

@@ -4,7 +4,6 @@ import uuid
 
 from .geometry import Size
 
-from .tilesheets import TERMINAL_12x12_CP
 from .wrappers import TcodWrapper
 
 from .rng import rng, generate_seed
@@ -85,7 +84,7 @@ def run():
     ecs.resources.wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
         palette=ecs.resources.tileset.palette,
-        tilesheet=TERMINAL_12x12_CP,
+        tilesheet=ecs.resources.tileset.tilesheet,
         resizable=False,
         title='Rogal test'
     )
