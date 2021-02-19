@@ -1,3 +1,4 @@
+from enum import IntFlag
 import collections
 
 import numpy as np
@@ -19,10 +20,29 @@ DEFAULT_FG = RGB(255, 255, 255).rgb
 DEFAULT_BG = RGB(0, 0, 0).rgb
 
 
-class Alignment:
+class Align(IntFlag):
+    # Horizontal alignment
     LEFT = 0    # tcod.LEFT
     RIGHT = 1   # tcod.RIGHT
     CENTER = 2  # tcod.CENTER
+
+    # Vertical alignment
+    TOP = 4
+    BOTTOM = 8
+    MIDDLE = CENTER
+
+    # Horizontal + Vertical combinations
+    TOP_LEFT = LEFT | TOP
+    TOP_CENTER = CENTER | TOP
+    TOP_RIGHT = RIGHT | TOP
+
+    MIDDLE_LEFT = LEFT | MIDDLE
+    CENTERED = CENTER | MIDDLE
+    MIDDLE_RIGHT = RIGHT | MIDDLE
+
+    BOTTOM_LEFT = LEFT | BOTTOM
+    BOTTOM_CENTER = CENTER | BOTTOM
+    BOTTOM_RIGHT = RIGHT | BOTTOM
 
 
 class Console:
@@ -70,7 +90,7 @@ class TilesGrid(WithSizeMixin):
         tile = self._empty_tile(colors)
         return self.fill(tile)
 
-    def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
+    def print(self, text, position, colors=None, align=None, *args, **kwargs):
         """Print text on given Position.
 
         Use Colors if provided, otherwise don't change alredy defined fg and bg.
@@ -154,9 +174,9 @@ class Panel(Rectangular, TilesGrid):
         panels = [self.root.create_panel(*geometry) for geometry in geometries]
         return panels
 
-    def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
+    def print(self, text, position, colors=None, align=None, *args, **kwargs):
         """Print text on given position using colors."""
-        return self.root.print(text, self.offset(position), colors=colors, alignment=alignment, *args, **kwargs)
+        return self.root.print(text, self.offset(position), colors=colors, align=align, *args, **kwargs)
 
     def draw(self, tile, position, size=None, *args, **kwargs):
         """Draw Tile on given position.
@@ -250,34 +270,34 @@ class RootPanel(Panel):
             if bg:
                 self.console.bg[i, j] = bg
 
-    def _print_line(self, text, position, colors=None, alignment=None, *args, **kwargs):
+    def _print_line(self, text, position, colors=None, align=None, *args, **kwargs):
         chars = [ord(ch) for ch in text]
         fg = self.rgb(colors and colors.fg)
         bg = self.rgb(colors and colors.bg)
-        alignment = alignment or Alignment.LEFT
+        align = align or Align.LEFT
         # NOTE: console is in order="C", so we need to do some transpositions
         j, i = position
-        if alignment == Alignment.LEFT:
-            max_len = self.console.width - j
-            chars = chars[:max_len]
-        elif alignment == Alignment.RIGHT:
+        if align & Align.RIGHT:
             max_len = j+1
             chars = chars[len(chars)-max_len:]
             j = max(0, j-len(chars))
-        elif alignment == Alignment.CENTER:
+        elif align & Align.CENTER:
             max_len = self.console.width
             if len(chars) > max_len:
                 chars = chars[len(chars)//2-(max_len//2):len(chars)//2+max_len//2+1]
             j = max(0, j-(len(chars)//2))
+        else:
+            max_len = self.console.width - j
+            chars = chars[:max_len]
         self.console.ch[i, j:j+len(chars)] = chars
         if fg:
             self.console.fg[i, j:j+len(chars)] = fg
         if bg:
             self.console.bg[i, j:j+len(chars)] = bg
 
-    def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
+    def print(self, text, position, colors=None, align=None, *args, **kwargs):
         for line in text.splitlines():
-            self._print_line(line, position, colors=colors, alignment=alignment, *args, **kwargs)
+            self._print_line(line, position, colors=colors, align=align, *args, **kwargs)
 
     def draw(self, tile, position, size=None, *args, **kwargs):
         self._draw(tile.ch, tile.colors, position, size=size, *args, **kwargs)

@@ -15,6 +15,11 @@ from . import terrain
 
 # Rendering
 
+CreateWindow = String('CreateWindow')
+
+DestroyWindow = Flag('DestroyWindow')
+
+
 class PanelRenderer(Component):
     __slots__ = ('renderer', )
 

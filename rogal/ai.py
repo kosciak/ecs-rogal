@@ -21,6 +21,8 @@ class YesNoPrompt:
     def __init__(self, ecs, txt, entity, callback, *args, **kwargs):
         self.ecs = ecs
         self.events_handlers = self.ecs.manage(components.EventsHandler)
+        self.create_windows = self.ecs.manage(components.CreateWindow)
+        self.destroy_windows = self.ecs.manage(components.DestroyWindow)
         self.txt = txt
         self.entity = entity
         self.prev_events_handler = self.events_handlers.get(self.entity)
@@ -36,13 +38,16 @@ class YesNoPrompt:
             (handlers.YesNoKeyPress(self.ecs), self.on_event),
         )
         self.window = self.ecs.create() # TODO: Request creation of an window!
+        self.create_windows.insert(self.window, 'QUIT_YES_NO_PROMPT')
         self.events_handlers.insert(self.window, events_handler)
+
         # Remove previous events_handler from entity
         self.events_handlers.remove(self.entity)
 
     def close(self):
         # Close prompt window
-        self.ecs.remove(self.window)
+        self.destroy_windows.insert(self.window)
+
         # Restore previous events_handler for entity
         self.events_handlers.insert(self.entity, component=self.prev_events_handler)
 
@@ -51,7 +56,7 @@ class YesNoPrompt:
         if value is True:
             self.callback(self.entity, *self.args, **self.kwargs)
         if value is False:
-            msg_log.info('Aborting')
+            log.debug('Quit aborted...')
 
 
 class TakeActionHandler:

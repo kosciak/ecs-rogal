@@ -2,7 +2,7 @@ import functools
 
 import tcod
 
-from ..console import DEFAULT_CH, Alignment, RootPanel
+from ..console import DEFAULT_CH, Align, RootPanel
 from ..events.keys import Key
 
 from .core import IOWrapper
@@ -93,13 +93,13 @@ class TcodRootPanel(RootPanel):
         bg = self.rgb(colors and colors.bg) or self.palette.bg.rgb
         return self._clear(fg=fg, bg=bg, *args, **kwargs)
 
-    def print(self, text, position, colors=None, alignment=None, *args, **kwargs):
+    def print(self, text, position, colors=None, align=None, *args, **kwargs):
         # NOTE: Do NOT change already set colors!
         fg = self.rgb(colors and colors.fg)
         bg = self.rgb(colors and colors.bg)
-        alignment = alignment or Alignment.LEFT
+        align = align or Align.LEFT
         return self._print(
-            position.x, position.y, text, fg=fg, bg=bg, alignment=alignment, *args, **kwargs)
+            position.x, position.y, text, fg=fg, bg=bg, alignment=align, *args, **kwargs)
 
     def draw(self, tile, position, size=None, *args, **kwargs):
         fg = self.rgb(tile.fg)

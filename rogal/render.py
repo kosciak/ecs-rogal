@@ -12,8 +12,8 @@ from .geometry import Rectangular, Position, Size, Rectangle
 from .tiles import RenderOrder, Colors, Tile
 from . import terrain
 
-from .console import Alignment
-from .console.ui import Frame, FrameDecorations, Title, TitleDecorations
+from .console import Align
+from .console import ui
 
 from .utils import perf
 
@@ -24,6 +24,9 @@ log = logging.getLogger(__name__)
 """Rendering components."""
 
 
+CAMERA_SIZE = Size(15, 15)
+CAMERA_SIZE = Size(26, 26)
+
 SCROLLABLE_CAMERA = True
 SCROLLABLE_CAMERA = False
 
@@ -33,13 +36,59 @@ BITMASK_TERRAIN_TYPE = terrain.Type.WALL
 BITMASKED_WALLS = bitmask.WALLS_DLINE
 
 
+class ConsoleWindowsSystem(System):
+
+    def __init__(self, ecs):
+        super().__init__(ecs)
+
+        self.wrapper = self.ecs.resources.wrapper
+        self._root = None
+
+    @property
+    def root(self):
+        if self.ecs.resources.root_panel is None:
+            self.ecs.resources.root_panel = self.wrapper.create_panel()
+        self._root = self.ecs.resources.root_panel
+        return self._root
+
+    def init_windows(self):
+        renderers = self.ecs.manage(components.PanelRenderer)
+
+        cam_panel, msg_log_panel = self.root.split(bottom=12)
+        # cam_panel = self.root.create_panel(Position(10,10), CAMERA_SIZE)
+
+        msg_log_renderer = MessageLog(msg_log_panel)
+        renderers.insert(self.ecs.create(), msg_log_renderer)
+
+        cam_renderer = Camera(self.ecs, cam_panel)
+        renderers.insert(self.ecs.create(), cam_renderer)
+
+    def create_windows(self):
+        to_create = self.ecs.manage(components.CreateWindow)
+        renderers = self.ecs.manage(components.PanelRenderer)
+
+        for window, renderer_name in to_create:
+            if renderer_name == 'QUIT_YES_NO_PROMPT':
+                renderer = YesNoPrompt(self.ecs, self.root, title='Quit?', msg='Are you sure you want to quit?')
+                renderers.insert(window, renderer)
+
+    def destroy_windows(self):
+        to_destroy = self.ecs.manage(components.DestroyWindow)
+        self.ecs.remove(*to_destroy.entities)
+
+    def run(self):
+        if self.ecs.run_state == RunState.PRE_RUN:
+            self.init_windows()
+        self.destroy_windows()
+        self.create_windows()
+
+
 class ConsoleRenderingSystem(System):
 
     FPS = 35
 
     def __init__(self, ecs):
         super().__init__(ecs)
-        self.spatial = self.ecs.resources.spatial
 
         self.tileset = self.ecs.resources.tileset
         self.default_colors = Colors(self.tileset.palette.fg, self.tileset.palette.bg)
@@ -56,8 +105,9 @@ class ConsoleRenderingSystem(System):
 
     @property
     def root(self):
-        if self._root is None:
-            self._root = self.wrapper.create_panel()
+        if self.ecs.resources.root_panel is None:
+            self.ecs.resources.root_panel = self.wrapper.create_panel()
+        self._root = self.ecs.resources.root_panel
         return self._root
 
     @property
@@ -68,18 +118,6 @@ class ConsoleRenderingSystem(System):
     def fps(self, fps):
         self._fps = fps
         self.frame = 1./self._fps
-
-    def init_panels(self):
-        renderers = self.ecs.manage(components.PanelRenderer)
-
-        cam_panel, msg_log_panel = self.root.split(bottom=12)
-        #camera = root_panel.create_panel(Position(10,10), CAMERA_SIZE)
-
-        msg_log_renderer = MessageLog(msg_log_panel)
-        renderers.insert(self.ecs.create(), msg_log_renderer)
-
-        cam_renderer = Camera(self.ecs, cam_panel)
-        renderers.insert(self.ecs.create(), cam_renderer)
 
     def should_run(self, state):
         now = time.time()
@@ -103,9 +141,6 @@ class ConsoleRenderingSystem(System):
         self.wrapper.flush(self.root)
 
     def run(self):
-        if self.ecs.run_state == RunState.PRE_RUN:
-            self.init_panels()
-
         # This is ugly... Maybe Camera should be initialized with actor?
         # OR store current player in ecs.resources.current_player?
         acts_now = self.ecs.manage(components.ActsNow)
@@ -306,12 +341,8 @@ class Camera(Rectangular, Renderer):
                     self.panel.draw(tile, render_position)
 
     def render(self, actor=None, location=None, *args, **kwargs):
-        # TODO: !!!
-        frame = Frame(self._panel, FrameDecorations.DSLINE)
-        frame.render()
-        title = Title(frame, 'mapcam', TitleDecorations.DSLINE, alignment=Alignment.LEFT)
-        title.render()
-        self.panel = frame.inner
+        self.panel = ui.Window(self._panel, title='mapcam')
+        self.panel.render()
 
         position = None
         fov = None
@@ -360,12 +391,8 @@ class MessageLog(Renderer):
 
     def render(self, *args, **kwargs):
         """Render logging records."""
-        # TODO: !!!
-        frame = Frame(self._panel, FrameDecorations.DSLINE)
-        frame.render()
-        title = Title(frame, 'logs', TitleDecorations.DSLINE, alignment=Alignment.CENTER)
-        title.render()
-        self.panel = frame.inner
+        self.panel = ui.Window(self._panel, title='logs')
+        self.panel.render()
 
         for offset, msg in enumerate(reversed(logs.LOGS_HISTORY), start=1):
             if offset > self.panel.height:
@@ -375,4 +402,21 @@ class MessageLog(Renderer):
                 Position(0, self.panel.height-offset),
                 colors=Colors(fg=msg.fg),
             )
+
+
+class YesNoPrompt(Renderer):
+
+    def __init__(self, ecs, panel, title, msg):
+        super().__init__(panel)
+        self.ecs = ecs
+        tileset = self.ecs.resources.tileset
+        self.default_colors = Colors(tileset.palette.fg, tileset.palette.bg)
+
+        self.title = title
+        self.msg = msg
+
+    def render(self, *args, **kwargs):
+        prompt = ui.YesNoPrompt(self.panel.root, title=self.title, msg=self.msg)
+        prompt.frame.clear(self.default_colors)
+        prompt.render()
 

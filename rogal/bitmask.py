@@ -227,17 +227,32 @@ def bitmask_walls(walls, revealed=None):
     cardinals = get_cardinals(shape, padded)
 
     # Tees to corners NOTE: Breaks crosses, need to fix them later!
-    bitmask ^= (is_set(bitmask, Cardinal.NSW) & is_set(cardinals, Cardinal.NE) & is_set(diagonals, Diagonal.NW)) << 0
-    bitmask ^= (is_set(bitmask, Cardinal.NSW) & is_set(cardinals, Cardinal.SE) & is_set(diagonals, Diagonal.SW)) << 1
+    bitmask_nsw = is_set(bitmask, Cardinal.NSW)
+    bitmask_nse = is_set(bitmask, Cardinal.NSE)
+    bitmask_wen = is_set(bitmask, Cardinal.WEN)
+    bitmask_wes = is_set(bitmask, Cardinal.WES)
 
-    bitmask ^= (is_set(bitmask, Cardinal.NSE) & is_set(cardinals, Cardinal.NW) & is_set(diagonals, Diagonal.NE)) << 0
-    bitmask ^= (is_set(bitmask, Cardinal.NSE) & is_set(cardinals, Cardinal.SW) & is_set(diagonals, Diagonal.SE)) << 1
+    cardinals_ne = is_set(cardinals, Cardinal.NE)
+    cardinals_nw = is_set(cardinals, Cardinal.NW)
+    cardinals_se = is_set(cardinals, Cardinal.SE)
+    cardinals_sw = is_set(cardinals, Cardinal.SW)
 
-    bitmask ^= (is_set(bitmask, Cardinal.WEN) & is_set(cardinals, Cardinal.SE) & is_set(diagonals, Diagonal.NE)) << 3
-    bitmask ^= (is_set(bitmask, Cardinal.WEN) & is_set(cardinals, Cardinal.SW) & is_set(diagonals, Diagonal.NW)) << 2
+    diagonals_ne = is_set(diagonals, Diagonal.NE)
+    diagonals_nw = is_set(diagonals, Diagonal.NW)
+    diagonals_se = is_set(diagonals, Diagonal.SE)
+    diagonals_sw = is_set(diagonals, Diagonal.SW)
 
-    bitmask ^= (is_set(bitmask, Cardinal.WES) & is_set(cardinals, Cardinal.NE) & is_set(diagonals, Diagonal.SE)) << 3
-    bitmask ^= (is_set(bitmask, Cardinal.WES) & is_set(cardinals, Cardinal.NW) & is_set(diagonals, Diagonal.SW)) << 2
+    bitmask ^= (bitmask_nsw & cardinals_ne & diagonals_nw) << 0
+    bitmask ^= (bitmask_nsw & cardinals_se & diagonals_sw) << 1
+
+    bitmask ^= (bitmask_nse & cardinals_nw & diagonals_ne) << 0
+    bitmask ^= (bitmask_nse & cardinals_sw & diagonals_se) << 1
+
+    bitmask ^= (bitmask_wen & cardinals_se & diagonals_ne) << 3
+    bitmask ^= (bitmask_wen & cardinals_sw & diagonals_nw) << 2
+
+    bitmask ^= (bitmask_wes & cardinals_ne & diagonals_se) << 3
+    bitmask ^= (bitmask_wes & cardinals_nw & diagonals_sw) << 2
 
     # Fix crosses!
     bitmask[crosses] = Cardinal.NSWE

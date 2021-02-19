@@ -1,1 +1,1 @@
-from .core import DEFAULT_CH, Alignment, Console, RootPanel
+from .core import DEFAULT_CH, Align, Console, RootPanel

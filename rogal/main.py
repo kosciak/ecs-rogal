@@ -33,8 +33,6 @@ KEY_BINDINGS_DATA_FN = 'keys.yaml'
 CONSOLE_SIZE = Size(80, 48)
 #CONSOLE_SIZE = Size(80, 60)
 
-CAMERA_SIZE = Size(15, 15)
-
 LEVEL_SIZE = Size(21,21)
 LEVEL_SIZE = Size(CONSOLE_SIZE.width-2, CONSOLE_SIZE.height-14)
 
@@ -88,6 +86,7 @@ def run():
         resizable=False,
         title='Rogal test'
     )
+    ecs.resources.root_panel = None
 
     # Register systems
     # NOTE: Systems are run in order they were registered
@@ -115,6 +114,7 @@ def run():
 
         systems.RunStateSystem(ecs),
 
+        render.ConsoleWindowsSystem(ecs),
         render.ConsoleRenderingSystem(ecs),
     ]:
         ecs.register(system)
