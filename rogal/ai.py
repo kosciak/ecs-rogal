@@ -1,7 +1,6 @@
 import logging
 
 from . import components
-from .events import EventsHandler
 from .events import handlers
 from .rng import rng
 
@@ -34,7 +33,7 @@ class YesNoPrompt:
     def show(self):
         # Show prompt window and set events_handler
         msg_log.warning(self.txt)
-        events_handler = EventsHandler(
+        events_handler = handlers.EventsHandler(
             (handlers.YesNoKeyPress(self.ecs), self.on_event),
         )
         self.window = self.ecs.create() # TODO: Request creation of an window!
@@ -98,7 +97,7 @@ class PlayerInput(TakeActionHandler):
     @property
     def default_events_handler(self):
         if self._deafault_events_handler is None:
-            events_handler = EventsHandler(
+            events_handler = handlers.EventsHandler(
                 (handlers.DirectionKeyPress(self.ecs), self.try_direction),
                 (handlers.ChangeLevelKeyPress(self.ecs), self.try_change_level),
             )
