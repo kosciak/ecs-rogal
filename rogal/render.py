@@ -32,9 +32,6 @@ SCROLLABLE_CAMERA = False
 
 SHOW_BOUNDARIES = True
 
-BITMASK_TERRAIN_TYPE = terrain.Type.WALL
-BITMASKED_WALLS = bitmask.WALLS_DLINE
-
 
 class ConsoleWindowsSystem(System):
 
@@ -135,21 +132,13 @@ class ConsoleRenderingSystem(System):
         renderers = self.ecs.manage(components.PanelRenderer)
         for panel, renderer in renderers:
             with perf.Perf(renderer.renderer.render):
-                renderer.render(actor=self.player)
+                renderer.render()
 
         # Show rendered panel
         self.wrapper.flush(self.root)
 
     def run(self):
-        # This is ugly... Maybe Camera should be initialized with actor?
-        # OR store current player in ecs.resources.current_player?
-        acts_now = self.ecs.manage(components.ActsNow)
-        players = self.ecs.manage(components.Player)
-        for actor in players.entities:
-            if actor in acts_now:
-                self.player = actor
-                break
-        if not self.player:
+        if not self.ecs.resources.current_player:
             return False
 
         self.render()
@@ -180,6 +169,9 @@ class Camera(Rectangular, Renderer):
 
         self.scrollable = scrollable
         self.show_boundaries = show_boundaries
+
+        self.walls_terrain_type = terrain.Type.WALL
+        self.bitmasked_walls = self.tileset.bitmasks['WALLS_DLINE']
 
     @property
     def size(self):
@@ -271,7 +263,7 @@ class Camera(Rectangular, Renderer):
         renderable,
     ):
         for bitmask_value in np.unique(walls_mask):
-            ch = BITMASKED_WALLS[bitmask_value]
+            ch = self.bitmasked_walls[bitmask_value]
             mask = terrain_mask & (walls_mask == bitmask_value)
             self.draw_terrain_tile(
                 mask, visible, revealed, mask_offset,
@@ -282,7 +274,7 @@ class Camera(Rectangular, Renderer):
         """Draw TERRAIN tiles."""
 
         # Bitshift masking for terrain.Type.WALL terrain
-        walls_mask = self.walls_bitmask(level_id, coverage, revealed, BITMASK_TERRAIN_TYPE)
+        walls_mask = self.walls_bitmask(level_id, coverage, revealed, self.walls_terrain_type)
 
         # Offset for drawing a terrain tile with a mask
         # It's mirrored camera.position but only with x,y values > 0
@@ -300,7 +292,7 @@ class Camera(Rectangular, Renderer):
             if not renderable:
                 continue
 
-            if terrain_id >> 4 == BITMASK_TERRAIN_TYPE:
+            if terrain_id >> 4 == self.walls_terrain_type:
                 self.draw_bitmasked_terrain_tile(
                     walls_mask,
                     terrain_mask, visible, revealed_not_visible, mask_offset,
@@ -347,6 +339,7 @@ class Camera(Rectangular, Renderer):
         position = None
         fov = None
         seen = None
+        actor = actor or self.ecs.resources.current_player
         if actor:
             locations = self.ecs.manage(components.Location)
             viewsheds = self.ecs.manage(components.Viewshed)

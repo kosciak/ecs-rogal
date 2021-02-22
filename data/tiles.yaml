@@ -36,3 +36,110 @@ tiles:
   # Particles
   MELEE_HIT:      [NONE, null, BRIGHT_RED]
 
+
+bitmasks:
+  WALLS_LINE:
+    - RADIO_UNSET
+    - VLINE      # N
+    - VLINE      #   S
+    - VLINE      # N+S
+    - HLINE      #     W
+    - SE         # N  +W
+    - NE         # S  +W
+    - TEEW       # N+S+W
+    - HLINE      #       E
+    - SW         # N    +E
+    - NW         #   S  +E
+    - TEEE       # N+S  +E
+    - HLINE      #     W+E
+    - TEEN       # N  +W+E
+    - TEES       #   S+W+E
+    - CROSS      # N+S+W+E
+
+  WALLS_DLINE:
+    - BULLET_SQUARE
+    - DVLINE     # N
+    - DVLINE     #   S
+    - DVLINE     # N+S
+    - DHLINE     #     W
+    - DSE        # N  +W
+    - DNE        # S  +W
+    - DTEEW      # N+S+W
+    - DHLINE     #       E
+    - DSW        # N    +E
+    - DNW        #   S  +E
+    - DTEEE      # N+S  +E
+    - DHLINE     #     W+E
+    - DTEEN      # N  +W+E
+    - DTEES      #   S+W+E
+    - DCROSS     # N+S+W+E
+
+
+decorations:
+  NONE: []
+
+  BLOCK1: [BLOCK1, BLOCK1, BLOCK1, BLOCK1]
+  BLOCK2: [BLOCK2, BLOCK2, BLOCK2, BLOCK2]
+  BLOCK3: [BLOCK3, BLOCK3, BLOCK3, BLOCK3]
+  BLOCK4: [BLOCK4, BLOCK4, BLOCK4, BLOCK4]
+
+  HALFBLOCK: [HALFBLOCK_W, HALFBLOCK_E, HALFBLOCK_S, HALFBLOCK_N]
+
+  SUBP_INNER: [
+      HALFBLOCK_E, HALFBLOCK_W, HALFBLOCK_S, HALFBLOCK_N,
+      SUBP_SE, SUBP_SW, SUBP_NE, SUBP_NW,
+  ]
+
+  SUBP_OUTER: [
+      HALFBLOCK_W, HALFBLOCK_E, HALFBLOCK_N, HALFBLOCK_S,
+      # NOTE: Corners would need inverted colors!
+      SUBP_SE, SUBP_SW, SUBP_NE, SUBP_NW,
+  ]
+
+  LINE: [
+      VLINE, VLINE, HLINE, HLINE,
+      NW, NE, SW, SE,
+  ]
+
+  DLINE: [
+      DVLINE, DVLINE, DHLINE, DHLINE,
+      DNW, DNE, DSW, DSE,
+  ]
+
+  DSLINE: [
+      VLINE, VLINE, DHLINE, HLINE,
+      DSNW, DSNE, SW, SE,
+  ]
+
+  ASCII: ['|', '|', '=', '-', '.', '.', '`', "'"]
+
+
+decorations_minimal:
+  NONE: []
+
+  SPACE: [' ', ' ']
+
+  PIPE: ['|', '|']
+  SLASH: ['/', '/']
+  BACKSLASH: ['\\', '\\']
+
+  BRACKETS_ROUND: ['(', ')']
+  BRACKETS_SQUARE: ['[', ']']
+  BRACKETS_ANGLE: ['<', '>']
+  BRACKETS_CURLY: ['<', '>']
+
+  BLOCK1: [BLOCK1, BLOCK1]
+  BLOCK2: [BLOCK2, BLOCK2]
+  BLOCK3: [BLOCK3, BLOCK3]
+  BLOCK4: [BLOCK4, BLOCK4]
+
+  HALFBLOCK: [HALFBLOCK_W, HALFBLOCK_E]
+
+  SUBP_OUTER: [SUBP_NW, SUBP_NE]
+  SUBP_INNER: [SUBP_SW, SUBP_SE]
+
+  LINE: [TEEW, TEEE]
+  DLINE: [DTEEW, DTEEE]
+  DSLINE: [DSTEEW, DSTEEE]
+
+

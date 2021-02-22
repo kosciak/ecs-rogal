@@ -182,6 +182,7 @@ class PlayerInput(TakeActionHandler):
         return self.insert_action(actor, action)
 
     def take_action(self, actor):
+        self.ecs.resources.current_player = actor
         self.set_events_handlers(actor)
 
 

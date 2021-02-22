@@ -106,45 +106,6 @@ class Diagonal(enum.IntFlag):
     NSWE = N | S
 
 
-WALLS_LINE = {
-    Cardinal.NONE   : Symbol.RADIO_UNSET,
-    Cardinal.N      : Symbol.VLINE,    # N
-    Cardinal.S      : Symbol.VLINE,    #   S
-    Cardinal.NS     : Symbol.VLINE,    # N+S
-    Cardinal.W      : Symbol.HLINE,    #     W
-    Cardinal.NW     : Symbol.SE,       # N  +W
-    Cardinal.SW     : Symbol.NE,       # S  +W
-    Cardinal.NSW    : Symbol.TEEW,     # N+S+W
-    Cardinal.E      : Symbol.HLINE,    #       E
-    Cardinal.NE     : Symbol.SW,       # N    +E
-    Cardinal.SE     : Symbol.NW,       #   S  +E
-    Cardinal.NSE    : Symbol.TEEE,     # N+S  +E
-    Cardinal.WE     : Symbol.HLINE,    #     W+E
-    Cardinal.WEN    : Symbol.TEEN,     # N  +W+E
-    Cardinal.WES    : Symbol.TEES,     #   S+W+E
-    Cardinal.NSWE   : Symbol.CROSS,    # N+S+W+E
-}
-
-WALLS_DLINE = {
-    Cardinal.NONE   : Symbol.BULLET_SQUARE,
-    Cardinal.N      : Symbol.DVLINE,    # N
-    Cardinal.S      : Symbol.DVLINE,    #   S
-    Cardinal.NS     : Symbol.DVLINE,    # N+S
-    Cardinal.W      : Symbol.DHLINE,    #     W
-    Cardinal.NW     : Symbol.DSE,       # N  +W
-    Cardinal.SW     : Symbol.DNE,       # S  +W
-    Cardinal.NSW    : Symbol.DTEEW,     # N+S+W
-    Cardinal.E      : Symbol.DHLINE,    #       E
-    Cardinal.NE     : Symbol.DSW,       # N    +E
-    Cardinal.SE     : Symbol.DNW,       #   S  +E
-    Cardinal.NSE    : Symbol.DTEEE,     # N+S  +E
-    Cardinal.WE     : Symbol.DHLINE,    #     W+E
-    Cardinal.WEN    : Symbol.DTEEN,     # N  +W+E
-    Cardinal.WES    : Symbol.DTEES,     #   S+W+E
-    Cardinal.NSWE   : Symbol.DCROSS,    # N+S+W+E
-}
-
-
 def is_set(check, bits):
     """Return True if all bits are set."""
     return check & bits == bits
