@@ -45,6 +45,26 @@ class Align(IntFlag):
     BOTTOM_RIGHT = RIGHT | BOTTOM
 
 
+class Padding(collections.namedtuple(
+    'Padding', [
+        'top', 'right', 'bottom', 'left',
+    ])):
+
+    __slots__ = ()
+
+    def __new__(cls, top=None, right=None, bottom=None, left=None):
+        top = top or 0
+        if right is None:
+            right = top
+        if bottom is None:
+            bottom = top
+        if left is None:
+            left = right
+        return super().__new__(cls, top, right, bottom, left)
+
+Padding.ZERO = Padding(0, 0, 0, 0)
+
+
 class Console:
 
     def __init__(self, size):
@@ -176,6 +196,7 @@ class Panel(Rectangular, TilesGrid):
 
     def print(self, text, position, colors=None, align=None, *args, **kwargs):
         """Print text on given position using colors."""
+        align = (align or Align.LEFT) & (Align.LEFT|Align.RIGHT|Align.CENTER)
         return self.root.print(text, self.offset(position), colors=colors, align=align, *args, **kwargs)
 
     def draw(self, tile, position, size=None, *args, **kwargs):

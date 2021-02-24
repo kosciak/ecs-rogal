@@ -33,7 +33,6 @@ class Tileset:
         self._tiles = {}
         self._bitmasks = {}
         self._decorations = {}
-        self._decorations_minimal = {}
 
     @property
     def tilesheet(self):
@@ -69,13 +68,6 @@ class Tileset:
             data = self.loader.load()
             self.parse_data(data)
         return self._decorations
-
-    @property
-    def decorations_minimal(self):
-        if not self._decorations_minimal:
-            data = self.loader.load()
-            self.parse_data(data)
-        return self._decorations_minimal
 
     @property
     def revealed_fn(self):
@@ -131,7 +123,6 @@ class Tileset:
         self._tiles = self.parse_tiles(data)
         self._bitmasks = self.parse_symbols(data, 'bitmasks')
         self._decorations = self.parse_symbols(data, 'decorations')
-        self._decorations_minimal = self.parse_symbols(data, 'decorations_minimal')
 
     def get(self, name):
         return self.tiles.get(name)

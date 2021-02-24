@@ -54,24 +54,30 @@ class ConsoleWindowsSystem(System):
         cam_panel, msg_log_panel = self.root.split(bottom=12)
         # cam_panel = self.root.create_panel(Position(10,10), CAMERA_SIZE)
 
-        msg_log_renderer = MessageLog(msg_log_panel)
+        msg_log_window = ui.Window(msg_log_panel, title='logs')
+        msg_log_renderer = MessageLog(msg_log_window)
         renderers.insert(self.ecs.create(), msg_log_renderer)
 
-        cam_renderer = Camera(self.ecs, cam_panel)
+        cam_window = ui.Window(cam_panel, title='mapcam')
+        cam_renderer = Camera(self.ecs, cam_window)
         renderers.insert(self.ecs.create(), cam_renderer)
 
     def create_windows(self):
         to_create = self.ecs.manage(components.CreateWindow)
         renderers = self.ecs.manage(components.PanelRenderer)
 
-        for window, renderer_name in to_create:
+        for entity, renderer_name in to_create:
             if renderer_name == 'QUIT_YES_NO_PROMPT':
-                renderer = YesNoPrompt(self.ecs, self.root, title='Quit?', msg='Are you sure you want to quit?')
-                renderers.insert(window, renderer)
+                window = ui.YesNoPrompt(self.root, title='Quit?', msg='Are you sure you want to quit?')
+                renderer = YesNoPrompt(self.ecs, window)
+                renderers.insert(entity, renderer)
+
+        to_create.clear()
 
     def destroy_windows(self):
         to_destroy = self.ecs.manage(components.DestroyWindow)
         self.ecs.remove(*to_destroy.entities)
+        to_destroy.clear()
 
     def run(self):
         if self.ecs.run_state == RunState.PRE_RUN:
@@ -147,12 +153,16 @@ class ConsoleRenderingSystem(System):
 
 class Renderer:
 
-    def __init__(self, panel):
-        self._panel = panel
-        self.panel = panel
+    def __init__(self, window):
+        self.window = window
+        self.panel = window.content_panel
 
-    def render(self, *args, **kwargs):
+    def render_content(self):
         return
+
+    def render(self):
+        self.window.render()
+        self.render_content()
 
 
 class Camera(Rectangular, Renderer):
@@ -332,10 +342,7 @@ class Camera(Rectangular, Renderer):
                 else:
                     self.panel.draw(tile, render_position)
 
-    def render(self, actor=None, location=None, *args, **kwargs):
-        self.panel = ui.Window(self._panel, title='mapcam')
-        self.panel.render()
-
+    def render_content(self, actor=None, location=None):
         position = None
         fov = None
         seen = None
@@ -382,11 +389,8 @@ class Camera(Rectangular, Renderer):
 
 class MessageLog(Renderer):
 
-    def render(self, *args, **kwargs):
+    def render_content(self):
         """Render logging records."""
-        self.panel = ui.Window(self._panel, title='logs')
-        self.panel.render()
-
         for offset, msg in enumerate(reversed(logs.LOGS_HISTORY), start=1):
             if offset > self.panel.height:
                 break
@@ -399,17 +403,13 @@ class MessageLog(Renderer):
 
 class YesNoPrompt(Renderer):
 
-    def __init__(self, ecs, panel, title, msg):
+    def __init__(self, ecs, panel):
         super().__init__(panel)
         self.ecs = ecs
         tileset = self.ecs.resources.tileset
         self.default_colors = Colors(tileset.palette.fg, tileset.palette.bg)
 
-        self.title = title
-        self.msg = msg
-
-    def render(self, *args, **kwargs):
-        prompt = ui.YesNoPrompt(self.panel.root, title=self.title, msg=self.msg)
-        prompt.frame.clear(self.default_colors)
-        prompt.render()
+    def render(self):
+        self.window.clear(self.default_colors)
+        super().render()
 
