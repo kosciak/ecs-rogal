@@ -10,6 +10,8 @@ from . import components
 from .ecs import System, EntitiesSet
 from .ecs.run_state import RunState
 
+from .events import EventType
+
 from .utils import perf
 
 
@@ -97,6 +99,7 @@ class TakeActionsSystem(System):
 class EventsHandlersSystem(System):
 
     WAIT = 1./60
+    REPEAT_EVENT_TYPES = {EventType.KEY_PRESS, EventType.KEY_UP}
     REPEAT_RATE = 1./6
 
     INCLUDE_STATES = {
@@ -116,8 +119,7 @@ class EventsHandlersSystem(System):
 
         now = time.time()
         prev_time = self._prev_times.get(event.type)
-        # if event.repeat:
-        if getattr(event, 'repeat', False):
+        if event.type in self.REPEAT_EVENT_TYPES and event.repeat:
             if prev_time and now - prev_time < self.repeat_rate:
                 return False
 
@@ -137,6 +139,7 @@ class EventsHandlersSystem(System):
         #       to any entity, not only to actors (for example to GUI elements)
         #       BUT there must be some ActsNow actor for system to be running!
         for event in self.wrapper.events(self.wait):
+            # log.debug(f'Event: {event}')
             if event and self.is_valid(event):
                 for entity, handler in list(events_handlers):
                     handler.handle(event, entity)

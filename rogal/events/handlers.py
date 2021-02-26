@@ -22,7 +22,7 @@ class EventHandler:
 
     def handle(self, event):
         value = None
-        fn_name = f'on_{getattr(event.type, "name", event.type)}'
+        fn_name = f'on_{event.type}'
         fn = getattr(self, fn_name, None)
         if fn:
             value = fn(event, *args, **kwargs)
@@ -31,16 +31,8 @@ class EventHandler:
     def on_key_press(self, event):
         return
 
-    def on_keydown(self, event):
-        # TODO: For backward compatibility
-        return self.on_key_press(event)
-
     def on_key_up(self, event):
         return
-
-    def on_keyup(self, event):
-        # TODO: For backward compatibility
-        return self.on_key_up(event)
 
     def on_quit(self, event):
         log.warning('Quitting...')
@@ -59,7 +51,7 @@ class EventsHandler:
 
     def handle(self, event, entity):
         value = None
-        fn_name = f'on_{getattr(event.type, "name", event.type).lower()}'
+        fn_name = f'on_{event.type}'
         for handler, callback in self.event_handlers:
             fn = getattr(handler, fn_name, None)
             if fn:
