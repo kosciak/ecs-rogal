@@ -309,6 +309,7 @@ class MouseButton:
     SDL_BUTTON_X1 = 4
     SDL_BUTTON_X2 = 5
 
+class MouseButtonMask:
     # See: https://wiki.libsdl.org/SDL_MouseMotionEvent
     SDL_BUTTON_LMASK = 1
     SDL_BUTTON_MMASK = 2

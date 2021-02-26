@@ -1,6 +1,6 @@
 import functools
 
-from .sdl_const import EventType, Keycode, Keymod, MouseButton, MouseWheelDirection
+from .sdl_const import EventType, Keycode, Keymod, MouseButton, MouseButtonMask, MouseWheelDirection
 
 from .. import events
 from ..events.keys import Key, Button
@@ -113,8 +113,18 @@ def parse_keyboard_event(sdl_event):
 
 def parse_mouse_motion_event(sdl_event):
     motion = sdl_event.motion
-    # TODO: parse buttons masks!
-    buttons = ()
+    state = motion.state
+    buttons = []
+    if state & MouseButtonMask.SDL_BUTTON_LMASK:
+        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[MouseButton.SDL_BUTTON_LEFT])
+    if state & MouseButtonMask.SDL_BUTTON_MMASK:
+        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[MouseButton.SDL_BUTTON_MIDDLE])
+    if state & MouseButtonMask.SDL_BUTTON_RMASK:
+        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[MouseButton.SDL_BUTTON_RIGHT])
+    if state & MouseButtonMask.SDL_BUTTON_X1MASK:
+        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[MouseButton.SDL_BUTTON_X1])
+    if state & MouseButtonMask.SDL_BUTTON_X2MASK:
+        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[MouseButton.SDL_BUTTON_X2])
     return events.MouseMotion(sdl_event, motion.x, motion.y, motion.xrel, motion.yrel, buttons)
 
 
@@ -155,6 +165,7 @@ SDL_EVENT_PARSERS = {
     EventType.SDL_MOUSEBUTTONUP: parse_mouse_button_event,
     EventType.SDL_MOUSEWHEEL: parse_mouse_wheel_event,
 
+    # TODO: Seems SDL_InitSubSystem(SDL_INIT_JOYSTICK) must be called
     # Joystick events
 
     # Controller events
