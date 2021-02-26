@@ -1,16 +1,27 @@
 import functools
 
 import tcod
+from tcod.loader import ffi, lib
 
 from ..console import DEFAULT_CH, Align, RootPanel
-from ..events.keys import Key
+from ..events import EventType
 
 from .core import IOWrapper
 from . import sdl
 
 
-# Monkey patch KeyboardEvent by adding key property for event details translation
-tcod.event.KeyboardEvent.key = property(lambda self: sdl.get_key(self.sym, self.mod))
+def get_events():
+    sdl_event = ffi.new("SDL_Event*")
+    while lib.SDL_PollEvent(sdl_event):
+        yield sdl.parse_sdl_event(sdl_event)
+
+
+def wait_for_events(timeout=None):
+    if timeout is not None:
+        lib.SDL_WaitEventTimeout(ffi.NULL, int(timeout * 1000))
+    else:
+        lib.SDL_WaitEvent(ffi.NULL)
+    return get_events()
 
 
 class TcodRootPanel(RootPanel):
@@ -244,20 +255,32 @@ class TcodWrapper(IOWrapper):
             # TODO: Check options and resizing behaviour
             self.context.present(console)
 
+    def update_event(self, event):
+        if event.type == EventType.MOUSE_MOTION or \
+           event.type == EventType.MOUSE_BUTTON_PRESS or\
+           event.type == EventType.MOUSE_BUTTON_UP:
+            x, y = self.context.pixel_to_tile(*event.pixel_position)
+            event.set_tile(x, y)
+        if event.type == EventType.MOUSE_MOTION:
+            prev_position = event.pixel_position.moved_from(event.pixel_motion)
+            prev_x, prev_y = self.context.pixel_to_tile(*prev_position)
+            dx = event.position.x - prev_x
+            dy = event.position.y - prev_y
+            event.set_tile_motion(dx, dy)
+        return event
+
     def events(self, wait=None):
         # TODO: wrappers.sdl and create rogal.events.core directly from sld events?
         if wait is False:
-            event_gen = tcod.event.get()
+            events_gen = get_events()
         else:
             # NOTE: wait==None will wait forever
             if wait is True:
                 wait = None
-            event_gen = tcod.event.wait(wait)
-        for tcod_event in event_gen:
+            events_gen = wait_for_events(wait)
+        for event in events_gen:
             # Intercept WINDOW RESIZE and update self.console_size?
-            event = sdl.parse_sdl_event(tcod_event.sdl_event)
-            # TODO: update Mouse* position and motion with context!
-            # self.context.convert_event(event)
+            event = self.update_event(event)
             yield event
 
     def close(self):

@@ -45,6 +45,8 @@ class Vector(collections.namedtuple(
     def __repr__(self):
         return f'<Vector dx={self.dx}, dy={self.dy}>'
 
+Vector.ZERO = Vector(0, 0)
+
 
 class Direction(Vector, Enum):
 
@@ -94,8 +96,14 @@ class Position(collections.namedtuple(
             return None
         return distance_fn(self, other)
 
+    def moved_from(self, vector):
+        """Return Position from where it was moved by given Vector."""
+        if not vector:
+            return self
+        return Position(self.x-vector.dx, self.y-vector.dy)
+
     def move(self, vector):
-        """Return Position after moving in given Direction."""
+        """Return Position after moving by given Vector."""
         if not vector:
             return self
         return Position(self.x+vector.dx, self.y+vector.dy)

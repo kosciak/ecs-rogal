@@ -87,28 +87,41 @@ class KeyUp(KeyboardEvent):
 
 
 class MouseMotion(Event):
-    __slots__ = ('position', 'motion', 'buttons', )
+    __slots__ = ('position', 'motion', 'pixel_position', 'pixel_motion', 'buttons', )
 
+    type = EventType.MOUSE_MOTION
 
     def __init__(self, source, x, y, dx, dy, buttons):
         super().__init__(source)
-        self.position = Position(x, y)
-        self.motion = Vector(dx, dy)
+        self.pixel_position = Position(x, y)
+        self.pixel_motion = Vector(dx, dy)
+        self.position = Position.ZERO
+        self.motion = Vector.ZERO
         self.buttons = buttons
+
+    def set_tile(self, x, y):
+        self.position = Position(x, y)
+
+    def set_tile_motion(self, dx, dy):
+        self.motion = Vector(dx, dy)
 
     def __repr__(self):
         return f'<{self.__class__.__name__} position={self.position}, motion={self.motion}, buttons={self.buttons}>'
 
 
 class MouseButtonEvent(Event):
-    __slots__ = ('position', 'button', 'clicks', )
+    __slots__ = ('position', 'pixel_position', 'button', 'clicks', )
 
 
     def __init__(self, source, x, y, button, clicks=1):
         super().__init__(source)
-        self.position = Position(x, y)
+        self.pixel_position = Position(x, y)
+        self.position = Position.ZERO
         self.button = button
         self.clicks = clicks
+
+    def set_tile(self, x, y):
+        self.position = Position(x, y)
 
     def __repr__(self):
         return f'<{self.__class__.__name__} position={self.position}, button={self.button}, clicks={self.clicks}>'
