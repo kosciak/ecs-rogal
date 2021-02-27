@@ -6,7 +6,16 @@ from ..tiles import Tile
 from .core import Align, Padding
 
 
-"""Console UI basic widgets toolkit."""
+"""Console UI basic widgets and renderers toolkit."""
+
+'''
+TODO:
+How it should work:
+- create window with all the widgets
+- call layout and create renderers entities
+- render called by system, need Z-order to sort what to render first!
+
+'''
 
 
 def get_x(panel_width, width, align, padding=Padding.ZERO):
@@ -55,17 +64,68 @@ def get_align_position(panel, size, align, padding=Padding.ZERO):
     )
 
 
+class Renderer(WithSizeMixin):
+
+    def __init__(self, panel):
+        # TODO: Z-order
+        self.panel = panel
+        self.size = self.panel.size
+
+    def clear(self, colors):
+        self.panel.clear(colors)
+
+    def render(self):
+        raise NotImplementedError()
+
+
 class Widget(WithSizeMixin):
 
     __slots__ = ('align', 'padding', )
 
-    def __init__(self, align, padding=Padding.ZERO):
+    def __init__(self, align, padding=Padding.ZERO, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.align = align
         self.padding = padding
         # NOTE: subclasses MUST provide size!
 
-    def render(self, panel):
-        return
+    def layout(self, panel):
+        """Yield Renderer instances."""
+        yield from ()
+
+
+class Container:
+
+    def __init__(self, widgets=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widgets = list(widgets or [])
+
+    def append(self, widget):
+        self.widgets.append(widget)
+
+    def __len__(self):
+        return len(self.widgets)
+
+    def __iter__(self):
+        yield from self.widgets
+
+
+
+class DecorationsRenderer(Renderer):
+
+    def __init__(self, panel, decorations):
+        super().__init__(panel)
+        self.decorations = decorations
+
+    def render(self):
+        self.panel.draw(self.decorations.top, Position(1, 0), Size(self.width-2, 1))
+        self.panel.draw(self.decorations.bottom, Position(1, self.height-1), Size(self.width-2, 1))
+        self.panel.draw(self.decorations.left, Position(0, 1), Size(1, self.height-2))
+        self.panel.draw(self.decorations.right, Position(self.width-1, 1), Size(1, self.height-2))
+
+        self.panel.draw(self.decorations.top_left, Position(0, 0))
+        self.panel.draw(self.decorations.top_right, Position(self.width-1, 0))
+        self.panel.draw(self.decorations.bottom_left, Position(0, self.height-1))
+        self.panel.draw(self.decorations.bottom_right, Position(self.width-1, self.height-1))
 
 
 class Decorations(WithSizeMixin):
@@ -126,25 +186,34 @@ class Decorations(WithSizeMixin):
             colors=colors,
         )
 
-    def render(self, panel):
-        panel.draw(self.top, Position(1, 0), Size(panel.width-2, 1))
-        panel.draw(self.bottom, Position(1, panel.height-1), Size(panel.width-2, 1))
-        panel.draw(self.left, Position(0, 1), Size(1, panel.height-2))
-        panel.draw(self.right, Position(panel.width-1, 1), Size(1, panel.height-2))
-
-        panel.draw(self.top_left, Position(0, 0))
-        panel.draw(self.top_right, Position(panel.width-1, 0))
-        panel.draw(self.bottom_left, Position(0, panel.height-1))
-        panel.draw(self.bottom_right, Position(panel.width-1, panel.height-1))
-
     def inner_panel(self, panel):
         return panel.create_panel(
             self.inner_offset,
             Size(panel.width-self.width, panel.height-self.height)
         )
 
+    def layout(self, panel):
+        yield DecorationsRenderer(panel, self)
+
     def __nonzero__(self):
         return any(self.top, self.bottom, self.left, self.right)
+
+
+class TextRenderer(Renderer):
+
+    def __init__(self, panel, text):
+        super().__init__(panel)
+        self.text = text
+
+        lines = self.text.txt.splitlines()
+        self.size = Size(
+            max(len(line) for line in lines),
+            len(lines)
+        )
+
+    def render(self):
+        position = get_align_position(self.panel, self.size, self.text.align)
+        self.panel.print(self.text.txt, position, colors=self.text.colors, align=self.text.align)
 
 
 class Text(Widget):
@@ -164,41 +233,38 @@ class Text(Widget):
             len(lines)
         )
 
-    def render(self, panel):
-        position = get_align_position(panel, self._size, self.align, self.padding)
-        panel.print(self.txt, position, colors=self.colors, align=self.align)
+    def layout(self, panel):
+        panel = panel.create_panel(Position.ZERO, Size(panel.width, self.height))
+        yield TextRenderer(panel, self)
 
 
 class Decorated(Widget):
 
-    def __init__(self, widget, decorations, *, align, padding=Padding.ZERO):
+    def __init__(self, content, decorations, *, align, padding=Padding.ZERO):
         super().__init__(align, padding)
-        self.widget = widget
+        self.content = content
         self.decorations = decorations
 
         self.size = Size(
-            self.widget.width + self.decorations.width,
-            self.widget.height + self.decorations.height
+            self.content.width + self.decorations.width,
+            self.content.height + self.decorations.height
         )
 
-    def render(self, panel):
+    def layout(self, panel):
         position = get_position(panel, self.size, self.align, self.padding)
         panel = panel.create_panel(position, self.size)
-        self.decorations.render(panel)
+        yield from self.decorations.layout(panel)
         panel = self.decorations.inner_panel(panel)
-        # TODO: panel.clear() ?
-        self.widget.render(panel)
+        yield from self.content.layout(panel)
 
 
-class Row(WithSizeMixin, collections.UserList):
+class Row(Container, Widget):
 
     def __init__(self, widgets=None, *, align, padding=Padding.ZERO):
-        super().__init__(widgets)
+        super().__init__(widgets=widgets, align=align, padding=padding)
         # align=LEFT    |AA BB CC      |
         # align=RIGHT   |      AA BB CC|
         # align=CENTER  |   AA BB CC   |
-        self.align = align
-        self.padding = padding
 
     @property
     def size(self):
@@ -210,13 +276,30 @@ class Row(WithSizeMixin, collections.UserList):
             max([widget.height for widget in self])
         )
 
-    def render(self, panel):
+    def layout(self, panel):
         position = get_position(panel, self.size, self.align, self.padding)
         for widget in self:
             # TODO: widget.padding?
-            p = panel.create_panel(position, widget.size)
-            widget.render(p)
+            subpanel = panel.create_panel(position, widget.size)
+            yield from widget.layout(subpanel)
             position += Position(widget.width, 0)
+
+
+class Split(Container):
+
+    def __init__(self, widget=None, *, left=None, right=None, top=None, bottom=None):
+        super().__init__(widgets)
+        self.left = left
+        self.right = right
+        self.top = top
+        self.bottom = bottom
+
+    def layout(self, panel):
+        panels = panel.split(self.left, self.right, self.top, self.bottom)
+        for i, widget in enumerate(self.widgets):
+            yield from widget.layout(panels[i])
+            if i >= 2:
+                break
 
 
 # TODO: ???

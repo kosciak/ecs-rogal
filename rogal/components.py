@@ -24,10 +24,14 @@ class PanelRenderer(Component):
     __slots__ = ('renderer', )
 
     def __init__(self, renderer):
+        # TODO: Z-order?
         self.renderer = renderer
 
-    def render(self, *args, **kwargs):
-        self.renderer.render(*args, **kwargs)
+    def clear(self, colors):
+        self.renderer.clear(colors)
+
+    def render(self):
+        self.renderer.render()
 
 # TODO: HasFocus, OnScreen, maybe associated Input/InputHandler?
 

@@ -108,7 +108,7 @@ class Window(Panel):
         if title:
             self.frame.append(
                 Decorated(
-                    Text(title, align=Align.CENTER),
+                    Text(title, align=title_align),
                     title_decorations,
                     align=title_align, padding=Padding(0, 1)
                 )
@@ -121,6 +121,14 @@ class Window(Panel):
         if self.decorations:
             panel = self.decorations.inner_panel(self)
         return panel or self
+
+    def layout(self, panel):
+        yield from self.decorations.layout(panel)
+        for widget in self.frame:
+            yield from widget.layout(panel)
+        panel = self.content_panel
+        for widget in self.content:
+            yield from widget.layout(panel)
 
     def render_frame(self):
         if self.decorations:
@@ -158,4 +166,10 @@ class YesNoPrompt(Window):
             )
 
         self.content = [msg, buttons, ]
+
+    def layout(self, panel):
+        size = Size(40, 8)
+        position = get_position(panel.root, size, align=Align.TOP_CENTER, padding=Padding(12, 0))
+        panel = panel.create_panel(position, size)
+        yield from super().layout(panel)
 
