@@ -1,6 +1,6 @@
 import functools
 
-from .core import Component, Entity
+from .core import Component, Entity, EntitiesSet
 
 
 """Common Component types."""
@@ -113,5 +113,6 @@ Bool = component_type(IntComponent)
 Float = component_type(IntComponent)
 String = component_type(Component, str)
 EntityReference = component_type(Component, Entity)
+EntitiesRefs = component_type(Component, EntitiesSet)
 Counter = component_type(CounterComponent)
 

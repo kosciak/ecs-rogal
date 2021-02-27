@@ -96,13 +96,12 @@ class HorizontalDecorations(Decorations, Enum):
     DSLINE = (Symbol.DSTEEW, Symbol.DSTEEE)
 
 
-class Window(Panel):
+class Window:
 
-    def __init__(self, panel,
+    def __init__(self,
                  frame_decorations=FullDecorations.DSLINE,
                  title=None, title_align=Align.TOP_CENTER,
                  title_decorations=HorizontalDecorations.DSLINE):
-        super().__init__(panel.root, panel.position, panel.size)
         self.decorations = frame_decorations
         self.frame = []
         if title:
@@ -115,43 +114,19 @@ class Window(Panel):
             )
         self.content = []
 
-    @property
-    def content_panel(self):
-        panel = None
-        if self.decorations:
-            panel = self.decorations.inner_panel(self)
-        return panel or self
-
     def layout(self, panel):
         yield from self.decorations.layout(panel)
         for widget in self.frame:
             yield from widget.layout(panel)
-        panel = self.content_panel
+        panel = self.decorations.inner_panel(panel)
         for widget in self.content:
             yield from widget.layout(panel)
-
-    def render_frame(self):
-        if self.decorations:
-            self.decorations.render(self)
-        for element in self.frame:
-            element.render(self)
-
-    def render_content(self):
-        panel = self.content_panel
-        for element in self.content:
-            element.render(panel)
-
-    def render(self):
-        self.render_frame()
-        self.render_content()
 
 
 class YesNoPrompt(Window):
 
-    def __init__(self, panel, title, msg):
-        size = Size(40, 8)
-        position = get_position(panel.root, size, align=Align.TOP_CENTER, padding=Padding(12, 0))
-        super().__init__(panel.root.create_panel(position, size), title=title)
+    def __init__(self, title, msg):
+        super().__init__(title=title)
 
         msg = Text(f'\n{msg}', align=Align.TOP_CENTER)
 

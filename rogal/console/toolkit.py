@@ -66,13 +66,28 @@ def get_align_position(panel, size, align, padding=Padding.ZERO):
 
 class Renderer(WithSizeMixin):
 
-    def __init__(self, panel):
-        # TODO: Z-order
+    def __init__(self, panel=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # TODO: Z-order ??
+        self._panel = None
+        self.size = None
         self.panel = panel
-        self.size = self.panel.size
+
+    @property
+    def panel(self):
+        return self._panel
+
+    @panel.setter
+    def panel(self, panel):
+        self._panel = panel
+        self.size = self._panel and self._panel.size
 
     def clear(self, colors):
         self.panel.clear(colors)
+
+    def layout(self, panel):
+        self.panel = panel
+        yield self
 
     def render(self):
         raise NotImplementedError()
@@ -199,43 +214,30 @@ class Decorations(WithSizeMixin):
         return any(self.top, self.bottom, self.left, self.right)
 
 
-class TextRenderer(Renderer):
-
-    def __init__(self, panel, text):
-        super().__init__(panel)
-        self.text = text
-
-        lines = self.text.txt.splitlines()
-        self.size = Size(
-            max(len(line) for line in lines),
-            len(lines)
-        )
-
-    def render(self):
-        position = get_align_position(self.panel, self.size, self.text.align)
-        self.panel.print(self.text.txt, position, colors=self.text.colors, align=self.text.align)
-
-
-class Text(Widget):
+class Text(Widget, Renderer):
 
     def __init__(self, txt, width=None, colors=None, *, align=Align.TOP_LEFT, padding=Padding.ZERO):
-        super().__init__(align, padding)
+        super().__init__(align=align, padding=padding)
         self.txt = txt
         self.colors = colors
 
         lines = self.txt.splitlines()
-        self._size = Size(
+        self.txt_size = Size(
             max(len(line) for line in lines),
             len(lines)
         )
         self.size = Size(
-            max(width or 0, self._size.width),
+            max(width or 0, self.txt_size.width),
             len(lines)
         )
 
     def layout(self, panel):
-        panel = panel.create_panel(Position.ZERO, Size(panel.width, self.height))
-        yield TextRenderer(panel, self)
+        self.panel = panel.create_panel(Position.ZERO, Size(panel.width, self.height))
+        yield self
+
+    def render(self):
+        position = get_align_position(self.panel, self.txt_size, self.align)
+        self.panel.print(self.txt, position, colors=self.colors, align=self.align)
 
 
 class Decorated(Widget):

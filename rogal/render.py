@@ -50,40 +50,48 @@ class ConsoleWindowsSystem(System):
         return self._root
 
     def init_windows(self):
-        renderers = self.ecs.manage(components.PanelRenderer)
-
-        cam_panel, msg_log_panel = self.root.split(bottom=12)
-        # cam_panel = self.root.create_panel(Position(10,10), CAMERA_SIZE)
-
-        window = ui.Window(msg_log_panel, title='logs')
-        for renderer in window.layout(msg_log_panel):
-            renderers.insert(self.ecs.create(), renderer)
-        renderer = MessageLog(window.content_panel)
-        renderers.insert(self.ecs.create(), renderer)
-
-        window = ui.Window(cam_panel, title='mapcam')
-        for renderer in window.layout(cam_panel):
-            renderers.insert(self.ecs.create(), renderer)
-        renderer = Camera(self.ecs, window.content_panel)
-        renderers.insert(self.ecs.create(), renderer)
+        to_create = self.ecs.manage(components.CreateWindow)
+        to_create.insert(self.ecs.create(), 'IN_GAME')
 
     def create_windows(self):
         to_create = self.ecs.manage(components.CreateWindow)
-        renderers = self.ecs.manage(components.PanelRenderer)
+        window_renderers = self.ecs.manage(components.WindowRenderers)
+        panel_renderers = self.ecs.manage(components.PanelRenderer)
 
-        for entity, renderer_name in to_create:
-            if renderer_name == 'QUIT_YES_NO_PROMPT':
-                window = ui.YesNoPrompt(self.root, title='Quit?', msg='Are you sure you want to quit?')
-                for renderer in window.layout(self.root):
-                    renderers.insert(self.ecs.create(), renderer)
-                # renderer = YesNoPrompt(self.ecs, window)
-                # renderers.insert(entity, renderer)
+        layouts = []
+        for window, name in to_create:
+            if name == 'QUIT_YES_NO_PROMPT':
+                layout = ui.YesNoPrompt(title='Quit?', msg='Are you sure you want to quit?')
+                layouts.append([window, layout, self.root])
+
+            if name == 'IN_GAME':
+                cam_panel, msg_log_panel = self.root.split(bottom=12)
+                # cam_panel = self.root.create_panel(Position(10,10), CAMERA_SIZE)
+                layout = ui.Window(title='logs')
+                widget = MessageLog()
+                layout.content.append(widget)
+                layouts.append([window, layout, msg_log_panel])
+
+                layout = ui.Window(title='mapcam')
+                widget = Camera(self.ecs)
+                layout.content.append(widget)
+                layouts.append([window, layout, cam_panel])
+
+        for window, layout, panel in layouts:
+            renderers = window_renderers.insert(window)
+            for renderer in layout.layout(panel):
+                renderer_id = self.ecs.create()
+                renderers.add(renderer_id)
+                panel_renderers.insert(renderer_id, renderer)
 
         to_create.clear()
 
     def destroy_windows(self):
         to_destroy = self.ecs.manage(components.DestroyWindow)
-        # TODO: Now it only destroys window, but NOT all PanelRenderers that were created durign layout!
+        window_renderers = self.ecs.manage(components.WindowRenderers)
+
+        for window, renderers in self.ecs.join(to_destroy.entities, window_renderers):
+            self.ecs.remove(*renderers)
         self.ecs.remove(*to_destroy.entities)
         to_destroy.clear()
 
@@ -162,9 +170,9 @@ class ConsoleRenderingSystem(System):
 
 class Camera(Rectangular, toolkit.Renderer):
 
-    def __init__(self, ecs, panel,
+    def __init__(self, ecs,
                  scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
-        super().__init__(panel)
+        super().__init__()
         self.ecs = ecs
         self.spatial = self.ecs.resources.spatial
 

@@ -4,7 +4,7 @@ import time
 import numpy as np
 
 from .ecs import Component
-from .ecs.components import Flag, IntFlag, Int, Counter, FloatComponent, String, EntityReference
+from .ecs.components import Flag, IntFlag, Int, Counter, FloatComponent, String, EntityReference, EntitiesRefs
 from .ecs.components import component_type
 from .ecs import EntitiesSet
 from . import flags
@@ -16,6 +16,8 @@ from . import terrain
 # Rendering
 
 CreateWindow = String('CreateWindow')
+
+WindowRenderers = EntitiesRefs('WindowRenderers')
 
 DestroyWindow = Flag('DestroyWindow')
 
