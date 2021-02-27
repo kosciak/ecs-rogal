@@ -50,13 +50,11 @@ class ConsoleWindowsSystem(System):
         return self._root
 
     def init_windows(self):
-        to_create = self.ecs.manage(components.CreateWindow)
-        to_create.insert(self.ecs.create(), 'IN_GAME')
+        self.ecs.create(components.CreateWindow('IN_GAME'))
 
     def create_windows(self):
         to_create = self.ecs.manage(components.CreateWindow)
         window_renderers = self.ecs.manage(components.WindowRenderers)
-        panel_renderers = self.ecs.manage(components.PanelRenderer)
 
         layouts = []
         for window, name in to_create:
@@ -80,9 +78,10 @@ class ConsoleWindowsSystem(System):
         for window, layout, panel in layouts:
             renderers = window_renderers.insert(window)
             for renderer in layout.layout(panel):
-                renderer_id = self.ecs.create()
-                renderers.add(renderer_id)
-                panel_renderers.insert(renderer_id, renderer)
+                renderer = self.ecs.create(
+                    components.PanelRenderer(renderer),
+                )
+                renderers.add(renderer)
 
         to_create.clear()
 
@@ -92,8 +91,8 @@ class ConsoleWindowsSystem(System):
 
         for window, renderers in self.ecs.join(to_destroy.entities, window_renderers):
             self.ecs.remove(*renderers)
+
         self.ecs.remove(*to_destroy.entities)
-        to_destroy.clear()
 
     def run(self):
         if self.ecs.run_state == RunState.PRE_RUN:
