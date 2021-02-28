@@ -111,6 +111,12 @@ def parse_keyboard_event(sdl_event):
     return event_cls(sdl_event, key, repeat)
 
 
+def parse_text_input_event(sdl_event):
+    # text = ffi.string(sdl_event.text.text, 32).decode("utf8")
+    text = '???'
+    return events.TextInput(sdl_event, text)
+
+
 def parse_mouse_motion_event(sdl_event):
     motion = sdl_event.motion
     state = motion.state
@@ -157,7 +163,7 @@ SDL_EVENT_PARSERS = {
     # Keyboard events
     EventType.SDL_KEYDOWN: parse_keyboard_event,
     EventType.SDL_KEYUP: parse_keyboard_event,
-    # EventType.SDL_TEXTINPUT = 771
+    EventType.SDL_TEXTINPUT: parse_text_input_event,
 
     # Mouse events
     EventType.SDL_MOUSEMOTION: parse_mouse_motion_event,

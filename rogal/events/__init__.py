@@ -3,6 +3,6 @@ from .core import (
     UnknownEvent,
     Quit,
     WindowEvent,
-    KeyboardEvent, KeyPress, KeyUp,
+    KeyboardEvent, KeyPress, KeyUp, TextInput,
     MouseMotion, MouseButtonEvent, MouseButtonPress, MouseButtonUp, MouseWheel,
 )

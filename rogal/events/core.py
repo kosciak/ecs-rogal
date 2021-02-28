@@ -16,6 +16,7 @@ class EventType:
 
     KEY_PRESS = 'key_press'
     KEY_UP = 'key_up'
+    TEXT_INPUT = 'text_input'
 
     MOUSE_MOTION = 'mouse_motion'
     MOUSE_BUTTON_PRESS = 'mouse_button_press'
@@ -84,6 +85,19 @@ class KeyUp(KeyboardEvent):
     __slots__ = ()
 
     type = EventType.KEY_UP
+
+
+class TextInput(Event):
+    __slots__ = ('text', )
+
+    type = EventType.TEXT_INPUT
+
+    def __init__(self, source, text):
+        super().__init__(source)
+        self.text = text
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__} text={self.text}>'
 
 
 class MouseMotion(Event):
