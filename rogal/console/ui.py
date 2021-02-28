@@ -1,10 +1,11 @@
 from enum import Enum
 
-from ..geometry import Position, Size, WithSizeMixin
+from ..geometry import Position, Size
 from ..tiles import Symbol, Tile
 
 from .core import Align, Padding, Panel
-from .toolkit import Decorations, Text, Decorated, Row, get_position
+from .toolkit import get_position
+from .toolkit import Decorations, Text, Decorated, Container, Row
 
 
 # TODO: frames overlapping, and fixing overlapped/overdrawn characters to merge borders/decorations
@@ -96,55 +97,58 @@ class HorizontalDecorations(Decorations, Enum):
     DSLINE = (Symbol.DSTEEW, Symbol.DSTEEE)
 
 
-class Window:
+class Window(Container):
 
     def __init__(self,
                  frame_decorations=FullDecorations.DSLINE,
                  title=None, title_align=Align.TOP_CENTER,
                  title_decorations=HorizontalDecorations.DSLINE):
-        self.decorations = frame_decorations
-        self.frame = []
+        super().__init__()
+        self.frame = Container()
+        self.content = Container()
+
+        self.widgets.extend([
+            Decorated(
+                decorations=frame_decorations,
+                align=Align.TOP_LEFT,
+                decorated=self.content,
+            ),
+            self.frame,
+        ])
         if title:
             self.frame.append(
                 Decorated(
-                    Text(title, align=title_align),
-                    title_decorations,
-                    align=title_align, padding=Padding(0, 1)
+                    decorations=title_decorations,
+                    align=title_align, padding=Padding(0, 1),
+                    decorated=Text(title, align=title_align),
                 )
             )
-        self.content = []
-
-    def layout(self, panel):
-        yield from self.decorations.layout(panel)
-        for widget in self.frame:
-            yield from widget.layout(panel)
-        panel = self.decorations.inner_panel(panel)
-        for widget in self.content:
-            yield from widget.layout(panel)
 
 
 class YesNoPrompt(Window):
 
     def __init__(self, title, msg):
         super().__init__(title=title)
+        self.align = Align.TOP_CENTER
+        self.padding = Padding(12, 0)
+        self.size = Size(40, 8)
 
-        msg = Text(f'\n{msg}', align=Align.TOP_CENTER)
+        msg = Text(msg, align=Align.TOP_CENTER, padding=Padding(1, 0))
 
         buttons = Row(align=Align.BOTTOM_CENTER)
         for button_msg in ['Yes', 'No']:
             buttons.append(
                 Decorated(
-                    Text(button_msg, align=Align.CENTER, width=8),
-                    FullDecorations.LINE,
+                    decorations=FullDecorations.LINE,
                     align=Align.TOP_LEFT,
+                    decorated=Text(button_msg, align=Align.CENTER, width=8),
                 )
             )
 
-        self.content = [msg, buttons, ]
+        self.content.extend([msg, buttons, ])
 
     def layout(self, panel):
-        size = Size(40, 8)
-        position = get_position(panel.root, size, align=Align.TOP_CENTER, padding=Padding(12, 0))
-        panel = panel.create_panel(position, size)
+        position = get_position(panel.root, self.size, self.align, self.padding)
+        panel = panel.create_panel(position, self.size)
         yield from super().layout(panel)
 
