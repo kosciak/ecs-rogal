@@ -51,6 +51,7 @@ def get_y(panel_height, height, align, padding=Padding.ZERO):
 
 
 def get_position(panel, size, align, padding=Padding.ZERO):
+    """Return Position (top-left) where widget would be placed."""
     return Position(
         get_x(panel.width, size.width, align, padding),
         get_y(panel.height, size.height, align, padding)
@@ -58,6 +59,7 @@ def get_position(panel, size, align, padding=Padding.ZERO):
 
 
 def get_align_position(panel, size, align, padding=Padding.ZERO):
+    """Return Position (of alignment point) where widget would be placed."""
     return Position(
         get_align_x(panel.width, size.width, align, padding),
         get_y(panel.height, size.height, align, padding)
@@ -95,6 +97,8 @@ class Renderer(WithSizeMixin):
 
 class Widget(WithSizeMixin):
 
+    """Layout widget with it's own size, alignment and padding."""
+
     __slots__ = ('align', 'padding', )
 
     def __init__(self, align, padding=Padding.ZERO, *args, **kwargs):
@@ -108,21 +112,33 @@ class Widget(WithSizeMixin):
         yield from ()
 
 
-class Container:
+class Text(Widget, Renderer):
 
-    def __init__(self, widgets=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.widgets = list(widgets or [])
+    """Text widget and renderer."""
 
-    def append(self, widget):
-        self.widgets.append(widget)
+    def __init__(self, txt, width=None, colors=None, *, align=Align.TOP_LEFT, padding=Padding.ZERO):
+        super().__init__(align=align, padding=padding)
+        self.txt = txt
+        self.colors = colors
 
-    def __len__(self):
-        return len(self.widgets)
+        lines = self.txt.splitlines()
+        self.txt_size = Size(
+            max(len(line) for line in lines),
+            len(lines)
+        )
+        self.size = Size(
+            max(width or 0, self.txt_size.width),
+            len(lines)
+        )
 
-    def __iter__(self):
-        yield from self.widgets
+    def layout(self, panel):
+        height = self.height + self.padding.top + self.padding.bottom
+        self.panel = panel.create_panel(Position.ZERO, Size(panel.width, height))
+        yield self
 
+    def render(self):
+        position = get_align_position(self.panel, self.txt_size, self.align, self.padding)
+        self.panel.print(self.txt, position, colors=self.colors, align=self.align)
 
 
 class DecorationsRenderer(Renderer):
@@ -144,6 +160,8 @@ class DecorationsRenderer(Renderer):
 
 
 class Decorations(WithSizeMixin):
+
+    """Frame decorations."""
 
     __slots__ = (
         'top', 'bottom', 'left', 'right',
@@ -208,65 +226,80 @@ class Decorations(WithSizeMixin):
         )
 
     def layout(self, panel):
+        # Always use all available space
         yield DecorationsRenderer(panel, self)
 
     def __nonzero__(self):
         return any(self.top, self.bottom, self.left, self.right)
 
 
-class Text(Widget, Renderer):
-
-    def __init__(self, txt, width=None, colors=None, *, align=Align.TOP_LEFT, padding=Padding.ZERO):
-        super().__init__(align=align, padding=padding)
-        self.txt = txt
-        self.colors = colors
-
-        lines = self.txt.splitlines()
-        self.txt_size = Size(
-            max(len(line) for line in lines),
-            len(lines)
-        )
-        self.size = Size(
-            max(width or 0, self.txt_size.width),
-            len(lines)
-        )
-
-    def layout(self, panel):
-        self.panel = panel.create_panel(Position.ZERO, Size(panel.width, self.height))
-        yield self
-
-    def render(self):
-        position = get_align_position(self.panel, self.txt_size, self.align)
-        self.panel.print(self.txt, position, colors=self.colors, align=self.align)
-
-
 class Decorated(Widget):
 
-    def __init__(self, content, decorations, *, align, padding=Padding.ZERO):
-        super().__init__(align, padding)
-        self.content = content
-        self.decorations = decorations
+    """Decorations with element rendered inside of them."""
 
-        self.size = Size(
-            self.content.width + self.decorations.width,
-            self.content.height + self.decorations.height
+    def __init__(self, decorations, decorated, *, align, padding=Padding.ZERO):
+        super().__init__(align, padding)
+        self.decorations = decorations
+        self.decorated = decorated
+
+        size = getattr(self.decorated, 'size', None)
+        self.size = size and Size(
+            self.decorated.width + self.decorations.width,
+            self.decorated.height + self.decorations.height
         )
 
     def layout(self, panel):
-        position = get_position(panel, self.size, self.align, self.padding)
-        panel = panel.create_panel(position, self.size)
+        size = self.size or panel.size
+        position = get_position(panel, size, self.align, self.padding)
+        panel = panel.create_panel(position, size)
         yield from self.decorations.layout(panel)
         panel = self.decorations.inner_panel(panel)
-        yield from self.content.layout(panel)
+        yield from self.decorated.layout(panel)
+
+
+class Container:
+
+    """Free form container.
+
+    Widgets are rendered in FIFO order and each widget use whole panel.
+
+    """
+
+    def __init__(self, widgets=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widgets = list(widgets or [])
+
+    def append(self, widget):
+        self.widgets.append(widget)
+
+    def extend(self, widgets):
+        self.widgets.extend(widgets)
+
+    def layout(self, panel):
+        for widget in self.widgets:
+            yield from widget.layout(panel)
+
+    def __len__(self):
+        return len(self.widgets)
+
+    def __iter__(self):
+        yield from self.widgets
 
 
 class Row(Container, Widget):
 
+    """Parallel container.
+
+    Widgets are rendererd in FIFO order from left to right.
+
+    align=LEFT    |AA BB CC      |
+    align=RIGHT   |      AA BB CC|
+    align=CENTER  |   AA BB CC   |
+
+    """
+
     def __init__(self, widgets=None, *, align, padding=Padding.ZERO):
         super().__init__(widgets=widgets, align=align, padding=padding)
-        # align=LEFT    |AA BB CC      |
-        # align=RIGHT   |      AA BB CC|
-        # align=CENTER  |   AA BB CC   |
 
     @property
     def size(self):
@@ -287,7 +320,20 @@ class Row(Container, Widget):
             position += Position(widget.width, 0)
 
 
+# TODO: ???
+# class JustifiedRow:
+#     # |AA    BB    CC|
+#     pass
+
+
+# TODO: layout(self, panel): - change size of remaining panel to what is left
+# class List(Container):
+#     pass
+
+
 class Split(Container):
+
+    """Container that renders widgets on each side of splitted panel."""
 
     def __init__(self, widget=None, *, left=None, right=None, top=None, bottom=None):
         super().__init__(widgets)
@@ -299,13 +345,8 @@ class Split(Container):
     def layout(self, panel):
         panels = panel.split(self.left, self.right, self.top, self.bottom)
         for i, widget in enumerate(self.widgets):
-            yield from widget.layout(panels[i])
+            if widget:
+                yield from widget.layout(panels[i])
             if i >= 2:
                 break
-
-
-# TODO: ???
-# class JustifiedRow:
-#     # |AA    BB    CC|
-#     pass
 
