@@ -57,12 +57,12 @@ class ConsoleWindowsSystem(System):
         window_renderers = self.ecs.manage(components.WindowRenderers)
 
         layouts = []
-        for window, name in to_create:
-            if name == 'QUIT_YES_NO_PROMPT':
-                layout = ui.YesNoPrompt(title='Quit?', msg='Are you sure you want to quit?')
+        for window, create in to_create:
+            if create.window_type == 'YES_NO_PROMPT':
+                layout = ui.YesNoPrompt(**create.context)
                 layouts.append([window, layout, self.root])
 
-            if name == 'IN_GAME':
+            if create.window_type == 'IN_GAME':
                 cam_panel, msg_log_panel = self.root.split(bottom=12)
                 # cam_panel = self.root.create_panel(Position(10,10), CAMERA_SIZE)
                 layout = ui.Window(title='logs')

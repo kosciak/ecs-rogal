@@ -13,10 +13,6 @@ from .toolkit import Decorations, Text, Decorated, Container, Row
 # TODO: Keep track of Z-order of Windows?
 
 # TODO: Scrollable Panels?
-# TODO: Window/Dialog?
-
-# TODO: frame() should produce FramedPanel with Frame and Panel inside
-# TODO: Rework FramedWindow class - now it's a mess
 
 
 # TODO: Use ecs.resources...something...decorations.*

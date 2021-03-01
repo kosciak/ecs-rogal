@@ -36,8 +36,12 @@ class YesNoPrompt:
         events_handler = handlers.EventsHandler(
             (handlers.YesNoKeyPress(self.ecs), self.on_event),
         )
-        self.window = self.ecs.create() # TODO: Request creation of an window!
-        self.create_windows.insert(self.window, 'QUIT_YES_NO_PROMPT')
+        self.window = self.ecs.create()
+        self.create_windows.insert(
+            self.window,
+            window_type='YES_NO_PROMPT',
+            context=dict(title='Quit?', msg='Are you sure you want to quit?'),
+        )
         self.events_handlers.insert(self.window, events_handler)
 
         # Remove previous events_handler from entity

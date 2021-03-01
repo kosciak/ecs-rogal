@@ -15,11 +15,18 @@ from . import terrain
 
 # Rendering
 
-CreateWindow = String('CreateWindow')
+class CreateWindow(Component):
+    __slots__ = ('window_type', 'context', )
 
-WindowRenderers = EntitiesRefs('WindowRenderers')
+    def __init__(self, window_type, context=None):
+        self.window_type = window_type
+        self.context = context or {}
+
 
 DestroyWindow = Flag('DestroyWindow')
+
+
+WindowRenderers = EntitiesRefs('WindowRenderers')
 
 
 class PanelRenderer(Component):
