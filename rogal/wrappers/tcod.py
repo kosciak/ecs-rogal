@@ -1,4 +1,5 @@
 import functools
+import logging
 
 import tcod
 from tcod.loader import ffi, lib
@@ -8,6 +9,9 @@ from ..events import EventType
 
 from .core import IOWrapper
 from . import sdl
+
+
+log = logging.getLogger(__name__)
 
 
 def get_events():
@@ -198,6 +202,7 @@ class TcodWrapper(IOWrapper):
         tilesheet,
         resizable=False,
         title=None,
+        enable_joystick=False,
     ):
         self.console_size = console_size
         self._palette = palette
@@ -205,6 +210,7 @@ class TcodWrapper(IOWrapper):
         self.resizable = resizable
         self.title=title
         self._context = None
+        self.enable_joystick = enable_joystick
 
     @property
     def is_initialized(self):
@@ -221,6 +227,8 @@ class TcodWrapper(IOWrapper):
                 sdl_window_flags=self.resizable and tcod.context.SDL_WINDOW_RESIZABLE
             )
             self._context = context
+            if self.enable_joystick:
+                self.init_joystick()
         return self._context
 
     def load_tilesheet(self, tilesheet):
@@ -254,6 +262,28 @@ class TcodWrapper(IOWrapper):
         if self.is_initialized:
             # TODO: Check options and resizing behaviour
             self.context.present(console)
+
+    def init_joystick(self):
+        # See: https://wiki.libsdl.org/SDL_JoystickOpen
+        log.debug('Initializing joystick...')
+        tcod.lib.SDL_InitSubSystem(tcod.lib.SDL_INIT_JOYSTICK)
+        joysticks_num = tcod.lib.SDL_NumJoysticks()
+        log.debug(f'Found {joysticks_num} joysticks')
+        if not joysticks_num:
+            return
+        joystick_id = 0
+        log.debug(f'Opening joystick: {joystick_id}')
+        joystick = tcod.lib.SDL_JoystickOpen(joystick_id)
+        if not joystick:
+            log.error(f'Failed to open joystick: {joystick_id}')
+            return
+        name = tcod.lib.SDL_JoystickNameForIndex(joystick_id)
+        name = tcod.ffi.string(name).decode('utf-8')
+        axes_num = tcod.lib.SDL_JoystickNumAxes(joystick)
+        buttons_num = tcod.lib.SDL_JoystickNumButtons(joystick)
+        balls_num = tcod.lib.SDL_JoystickNumBalls(joystick)
+        hats_num = tcod.lib.SDL_JoystickNumHats(joystick)
+        log.info(f'Joystick: {joystick_id} - name: {name}, axes: {axes_num}, buttons: {buttons_num}, balls: {balls_num}, hats: {hats_num}')
 
     def update_event(self, event):
         if event.type == EventType.MOUSE_MOTION or \

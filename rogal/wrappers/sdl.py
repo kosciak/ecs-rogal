@@ -1,5 +1,7 @@
 import functools
 
+from cffi import FFI
+
 from .sdl_const import EventType, Keycode, Keymod, MouseButton, MouseButtonMask, MouseWheelDirection
 
 from .. import events
@@ -7,6 +9,9 @@ from ..events.keys import Key, Button
 
 
 """Use SDL data directly instead of tcod wrappers."""
+
+
+ffi = FFI()
 
 
 SDL_KEYCODE_TO_KEY = {
@@ -112,8 +117,7 @@ def parse_keyboard_event(sdl_event):
 
 
 def parse_text_input_event(sdl_event):
-    # text = ffi.string(sdl_event.text.text, 32).decode("utf8")
-    text = '???'
+    text = ffi.string(sdl_event.text.text, 32).decode("utf8")
     return events.TextInput(sdl_event, text)
 
 
@@ -154,6 +158,26 @@ def parse_mouse_wheel_event(sdl_event):
     return events.MouseWheel(sdl_event, dx, dy)
 
 
+def parse_joy_axis_motion_event(sdl_event):
+    axis = sdl_event.jaxis
+    return events.JoyAxisMotion(sdl_event, axis.axis, axis.value)
+
+
+def parse_joy_hat_motion_event(sdl_event):
+    hat = sdl_event.jhat
+    return events.JoyHatMotion(sdl_event, hat.hat, hat.value)
+
+
+def parse_joy_button_event(sdl_event):
+    if sdl_event.type == EventType.SDL_JOYBUTTONDOWN:
+        event_cls = events.JoyButtonPress
+    elif sdl_event.type == EventType.SDL_JOYBUTTONUP:
+        event_cls = events.JoyButtonUp
+    btn = sdl_event.jbutton
+    button = btn.button
+    return event_cls(sdl_event, button)
+
+
 SDL_EVENT_PARSERS = {
     EventType.SDL_QUIT: parse_quit_event,
 
@@ -171,8 +195,12 @@ SDL_EVENT_PARSERS = {
     EventType.SDL_MOUSEBUTTONUP: parse_mouse_button_event,
     EventType.SDL_MOUSEWHEEL: parse_mouse_wheel_event,
 
-    # TODO: Seems SDL_InitSubSystem(SDL_INIT_JOYSTICK) must be called
     # Joystick events
+    EventType.SDL_JOYAXISMOTION: parse_joy_axis_motion_event,
+    # EventType.SDL_JOYBALLMOTION = 1537
+    EventType.SDL_JOYHATMOTION: parse_joy_hat_motion_event,
+    EventType.SDL_JOYBUTTONDOWN: parse_joy_button_event,
+    EventType.SDL_JOYBUTTONUP: parse_joy_button_event,
 
     # Controller events
     # EventType.SDL_CONTROLLERAXISMOTION = 1616
