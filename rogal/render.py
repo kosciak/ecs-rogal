@@ -1,5 +1,4 @@
 import logging
-import time
 
 import numpy as np
 
@@ -7,14 +6,11 @@ from . import logs
 
 from . import bitmask
 from . import components
-from .ecs import System, RunState
 from .geometry import Rectangular, Position, Size, Rectangle
 from .tiles import RenderOrder, Colors, Tile
 from . import terrain
 
-from .console import Align
 from .console import toolkit
-from .console import ui
 
 from .utils import perf
 
@@ -32,139 +28,6 @@ SCROLLABLE_CAMERA = True
 SCROLLABLE_CAMERA = False
 
 SHOW_BOUNDARIES = True
-
-
-class ConsoleWindowsSystem(System):
-
-    def __init__(self, ecs):
-        super().__init__(ecs)
-
-        self.wrapper = self.ecs.resources.wrapper
-        self._root = None
-
-    @property
-    def root(self):
-        if self.ecs.resources.root_panel is None:
-            self.ecs.resources.root_panel = self.wrapper.create_panel()
-        self._root = self.ecs.resources.root_panel
-        return self._root
-
-    def init_windows(self):
-        self.ecs.create(components.CreateWindow('IN_GAME'))
-
-    def create_windows(self):
-        to_create = self.ecs.manage(components.CreateWindow)
-        window_renderers = self.ecs.manage(components.WindowRenderers)
-
-        layouts = []
-        for window, create in to_create:
-            if create.window_type == 'YES_NO_PROMPT':
-                layout = ui.YesNoPrompt(**create.context)
-                layouts.append([window, layout, self.root])
-
-            if create.window_type == 'IN_GAME':
-                cam_panel, msg_log_panel = self.root.split(bottom=12)
-                # cam_panel = self.root.create_panel(Position(10,10), CAMERA_SIZE)
-                layout = ui.Window(title='logs')
-                widget = MessageLog()
-                layout.content.append(widget)
-                layouts.append([window, layout, msg_log_panel])
-
-                layout = ui.Window(title='mapcam')
-                widget = Camera(self.ecs)
-                layout.content.append(widget)
-                layouts.append([window, layout, cam_panel])
-
-        for window, layout, panel in layouts:
-            renderers = window_renderers.insert(window)
-            for renderer in layout.layout(panel):
-                renderer = self.ecs.create(
-                    components.PanelRenderer(renderer),
-                )
-                renderers.add(renderer)
-
-        to_create.clear()
-
-    def destroy_windows(self):
-        to_destroy = self.ecs.manage(components.DestroyWindow)
-        window_renderers = self.ecs.manage(components.WindowRenderers)
-
-        for window, renderers in self.ecs.join(to_destroy.entities, window_renderers):
-            self.ecs.remove(*renderers)
-
-        self.ecs.remove(*to_destroy.entities)
-
-    def run(self):
-        if self.ecs.run_state == RunState.PRE_RUN:
-            self.init_windows()
-        self.destroy_windows()
-        self.create_windows()
-
-
-class ConsoleRenderingSystem(System):
-
-    FPS = 35
-
-    def __init__(self, ecs):
-        super().__init__(ecs)
-
-        self.tileset = self.ecs.resources.tileset
-        self.default_colors = Colors(self.tileset.palette.fg, self.tileset.palette.bg)
-
-        self.wrapper = self.ecs.resources.wrapper
-        self._root = None
-
-        self._last_run = None
-        self._fps = None
-        self.frame = None
-        self.fps = self.FPS
-
-        self.player = None
-
-    @property
-    def root(self):
-        if self.ecs.resources.root_panel is None:
-            self.ecs.resources.root_panel = self.wrapper.create_panel()
-        self._root = self.ecs.resources.root_panel
-        return self._root
-
-    @property
-    def fps(self):
-        return self._fps
-
-    @fps.setter
-    def fps(self, fps):
-        self._fps = fps
-        self.frame = 1./self._fps
-
-    def should_run(self, state):
-        now = time.time()
-        if self._last_run and now - self._last_run < self.frame:
-            # Do NOT render more often than once a frame
-            return False
-        self._last_run = now
-        return True
-
-    def render(self):
-        # Clear panel
-        self.root.clear(self.default_colors)
-
-        # Render all panels
-        renderers = self.ecs.manage(components.PanelRenderer)
-        for panel, renderer in renderers:
-            with perf.Perf(renderer.renderer.render):
-                renderer.clear(self.default_colors)
-                renderer.render()
-
-        # Show rendered panel
-        self.wrapper.flush(self.root)
-
-    def run(self):
-        if not self.ecs.resources.current_player:
-            return False
-
-        self.render()
-        return True
 
 
 class Camera(Rectangular, toolkit.Renderer):

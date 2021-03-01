@@ -45,6 +45,7 @@ SEED = None
 # SEED = uuid.UUID("63a630e9-6548-4291-a62a-fb29e1331a09") # Can't connect!
 # SEED = uuid.UUID("9996ca9c-a64b-4963-a42b-4566036aa067") # Lower part bitmasking...
 # SEED = uuid.UUID("40e5d1ea-0c1b-43c6-acd5-b561798a3a49")
+# SEED = uuid.UUID("6779231d-89c3-43be-93b2-41f9212f2848")
 
 
 def run():
@@ -91,31 +92,33 @@ def run():
     # Register systems
     # NOTE: Systems are run in order they were registered
     for system in [
-        systems.LevelsSystem(ecs, level_generator),
+        systems.levels.LevelsSystem(ecs, level_generator),
 
-        systems.ActionsQueueSystem(ecs),
-        systems.TakeActionsSystem(ecs),
+        systems.actions.ActionsQueueSystem(ecs),
+        systems.actions.TakeActionsSystem(ecs),
 
-        systems.EventsHandlersSystem(ecs),
+        systems.user_input.EventsHandlersSystem(ecs),
 
-        systems.QuitSystem(ecs),
-        systems.MeleeCombatSystem(ecs),
-        systems.RestingSystem(ecs),
-        systems.MovementSystem(ecs),
-        systems.OperateSystem(ecs),
+        systems.commands.QuitSystem(ecs),
 
-        systems.IndexingSystem(ecs),
-        systems.VisibilitySystem(ecs),
+        systems.actions.MeleeCombatSystem(ecs),
+        systems.actions.RestingSystem(ecs),
+        systems.actions.MovementSystem(ecs),
+        systems.actions.OperateSystem(ecs),
 
-        systems.ActionsPerformedSystem(ecs),
+        systems.spatial.IndexingSystem(ecs),
 
-        systems.AnimationsSystem(ecs),
-        systems.TTLSystem(ecs),
+        systems.awerness.VisibilitySystem(ecs),
 
-        systems.RunStateSystem(ecs),
+        systems.actions.ActionsPerformedSystem(ecs),
 
-        render.ConsoleWindowsSystem(ecs),
-        render.ConsoleRenderingSystem(ecs),
+        systems.real_time.TTLSystem(ecs),
+
+        systems.run_state.UpdateStateSystem(ecs),
+
+        systems.gui.CreateWindowsSystem(ecs),
+        systems.gui.DestroyWindowsSystem(ecs),
+        systems.console.RenderingSystem(ecs),
     ]:
         ecs.register(system)
 
