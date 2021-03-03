@@ -3,9 +3,12 @@ from enum import Enum
 from ..geometry import Position, Size
 from ..tiles import Symbol, Tile
 
+from .. import render
+
 from .core import Align, Padding, Panel
 from .toolkit import get_position
-from .toolkit import Decorations, Text, Decorated, Container, Row
+from .toolkit import Decorations, Text, Decorated, Container, Row, Split
+
 
 
 # TODO: frames overlapping, and fixing overlapped/overdrawn characters to merge borders/decorations
@@ -147,4 +150,21 @@ class YesNoPrompt(Window):
         position = get_position(panel.root, self.size, self.align, self.padding)
         panel = panel.create_panel(position, self.size)
         yield from super().layout(panel)
+
+
+class InGame:
+
+    def __init__(self, ecs):
+        self.split = Split(bottom=12)
+
+        camera = Window(title='mapcam')
+        camera.content.append(render.Camera(ecs))
+
+        msg_log = Window(title='logs')
+        msg_log.content.append(render.MessageLog())
+
+        self.split.extend([camera, msg_log])
+
+    def layout(self, panel):
+        yield from self.split.layout(panel)
 

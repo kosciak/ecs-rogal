@@ -335,7 +335,7 @@ class Split(Container):
 
     """Container that renders widgets on each side of splitted panel."""
 
-    def __init__(self, widget=None, *, left=None, right=None, top=None, bottom=None):
+    def __init__(self, widgets=None, *, left=None, right=None, top=None, bottom=None):
         super().__init__(widgets)
         self.left = left
         self.right = right

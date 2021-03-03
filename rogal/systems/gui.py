@@ -45,18 +45,10 @@ class CreateWindowsSystem(System):
                 layouts.append([window, layout, self.root])
 
             if create.window_type == 'IN_GAME':
-                cam_panel, msg_log_panel = self.root.split(bottom=12)
-                # cam_panel = self.root.create_panel(Position(10,10), CAMERA_SIZE)
-                layout = ui.Window(title='logs')
-                widget = render.MessageLog()
-                layout.content.append(widget)
-                layouts.append([window, layout, msg_log_panel])
+                layout = ui.InGame(self.ecs)
+                layouts.append([window, layout, self.root])
 
-                layout = ui.Window(title='mapcam')
-                widget = render.Camera(self.ecs)
-                layout.content.append(widget)
-                layouts.append([window, layout, cam_panel])
-
+        # TODO: This should be done by UIManager!
         for window, layout, panel in layouts:
             renderers = window_renderers.insert(window)
             for renderer in layout.layout(panel):
