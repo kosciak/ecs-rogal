@@ -324,3 +324,19 @@ class MouseButtonMask:
     SDL_BUTTON_X1MASK = 8
     SDL_BUTTON_X2MASK = 16
 
+
+class SystemCursor:
+    # See: https://wiki.libsdl.org/SDL_CreateSystemCursor
+    SDL_SYSTEM_CURSOR_ARROW = 0 # arrow
+    SDL_SYSTEM_CURSOR_IBEAM = 1 # i-beam
+    SDL_SYSTEM_CURSOR_WAIT = 2 # wait
+    SDL_SYSTEM_CURSOR_CROSSHAIR = 3 # crosshair
+    SDL_SYSTEM_CURSOR_WAITARROW = 4 # small wait cursor (or wait if not available)
+    SDL_SYSTEM_CURSOR_SIZENWSE = 5 # double arrow pointing northwest and southeast
+    SDL_SYSTEM_CURSOR_SIZENESW = 6 # double arrow pointing northeast and southwest
+    SDL_SYSTEM_CURSOR_SIZEWE = 7 # double arrow pointing west and east
+    SDL_SYSTEM_CURSOR_SIZENS = 8 # double arrow pointing north and south
+    SDL_SYSTEM_CURSOR_SIZEALL = 9 # four pointed arrow pointing north, south, east, and west
+    SDL_SYSTEM_CURSOR_NO = 10 # slashed circle or crossbones
+    SDL_SYSTEM_CURSOR_HAND = 11 # hand
+

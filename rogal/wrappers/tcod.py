@@ -285,6 +285,11 @@ class TcodWrapper(IOWrapper):
         hats_num = tcod.lib.SDL_JoystickNumHats(joystick)
         log.info(f'Joystick: {joystick_id} - name: {name}, axes: {axes_num}, buttons: {buttons_num}, balls: {balls_num}, hats: {hats_num}')
 
+    def set_system_cursor(self, cursor_id=0):
+        # See: https://wiki.libsdl.org/SDL_CreateSystemCursor
+        cursor = tcod.lib.SDL_CreateSystemCursor(cursor_id)
+        tcod.lib.SDL_SetCursor(cursor)
+
     def update_event(self, event):
         if event.type == EventType.MOUSE_MOTION or \
            event.type == EventType.MOUSE_BUTTON_PRESS or\
