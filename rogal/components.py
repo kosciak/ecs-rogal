@@ -25,8 +25,7 @@ class CreateWindow(Component):
 
 DestroyWindow = Flag('DestroyWindow')
 
-
-WindowRenderers = EntitiesRefs('WindowRenderers')
+ParentWindow = EntityReference('ParentWindow')
 
 
 class PanelRenderer(Component):

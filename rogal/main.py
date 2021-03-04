@@ -11,6 +11,7 @@ from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerat
 from .procgen.dungeons import StaticLevel
 
 from . import components
+from .console import ui
 from .data_loaders import DataLoader
 from .ecs import ECS
 from .entities_spawner import EntitiesSpawner
@@ -89,6 +90,9 @@ def run():
     )
     ecs.resources.root_panel = None
 
+    # Console UI manager
+    ecs.resources.ui_manager = ui.UIManager(ecs)
+
     # Register systems
     # NOTE: Systems are run in order they were registered
     for system in [
@@ -116,8 +120,8 @@ def run():
 
         systems.run_state.UpdateStateSystem(ecs),
 
-        systems.gui.CreateWindowsSystem(ecs),
         systems.gui.DestroyWindowsSystem(ecs),
+        systems.gui.CreateWindowsSystem(ecs),
         systems.console.RenderingSystem(ecs),
     ]:
         ecs.register(system)

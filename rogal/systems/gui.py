@@ -19,43 +19,18 @@ class CreateWindowsSystem(System):
     def __init__(self, ecs):
         super().__init__(ecs)
 
-        self.wrapper = self.ecs.resources.wrapper
-        self._root = None
-
-    @property
-    def root(self):
-        if self.ecs.resources.root_panel is None:
-            self.ecs.resources.root_panel = self.wrapper.create_panel()
-        self._root = self.ecs.resources.root_panel
-        return self._root
+        self.ui_manager = self.ecs.resources.ui_manager
 
     def init_windows(self):
         self.ecs.create(components.CreateWindow('IN_GAME'))
 
     def create_windows(self):
         to_create = self.ecs.manage(components.CreateWindow)
-        window_renderers = self.ecs.manage(components.WindowRenderers)
+        if not to_create:
+            return
 
-        # TODO: some kind of console.UIManager should be called!
-        #       Window system should not be aware of underlying wrapper / rendering
-        layouts = []
         for window, create in to_create:
-            if create.window_type == 'YES_NO_PROMPT':
-                layout = ui.YesNoPrompt(**create.context)
-                layouts.append([window, layout, self.root])
-
-            if create.window_type == 'IN_GAME':
-                layout = ui.InGame(self.ecs)
-                layouts.append([window, layout, self.root])
-
-        # TODO: This should be done by UIManager!
-        for window, layout, panel in layouts:
-            renderers = window_renderers.insert(window)
-            for renderer in layout.layout(panel):
-                renderer = self.ecs.create(
-                    components.PanelRenderer(renderer),
-                )
-                renderers.add(renderer)
+            self.ui_manager.create_window(window, create.window_type, create.context)
 
         to_create.clear()
 
@@ -69,10 +44,15 @@ class DestroyWindowsSystem(System):
 
     def run(self):
         to_destroy = self.ecs.manage(components.DestroyWindow)
-        window_renderers = self.ecs.manage(components.WindowRenderers)
+        if not to_destroy:
+            return
 
-        for window, renderers in self.ecs.join(to_destroy.entities, window_renderers):
-            self.ecs.remove(*renderers)
+        for_removal = set(to_destroy.entities)
 
-        self.ecs.remove(*to_destroy.entities)
+        parent_windows = self.ecs.manage(components.ParentWindow)
+        for entity, parent in parent_windows:
+            if parent in to_destroy:
+                for_removal.add(entity)
+
+        self.ecs.remove(*for_removal)
 

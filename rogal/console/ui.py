@@ -1,107 +1,88 @@
 from enum import Enum
 
-from ..geometry import Position, Size
-from ..tiles import Symbol, Tile
+from .. import components
+
+from ..geometry import Size
+from ..tiles import Colors
 
 from .. import render
 
 from .core import Align, Padding, Panel
 from .toolkit import get_position
-from .toolkit import Decorations, Text, Decorated, Container, Row, Split
+from .toolkit import Decorations, Decorated, Text, Container, Row, Split
 
 
 
 # TODO: frames overlapping, and fixing overlapped/overdrawn characters to merge borders/decorations
-
 # TODO: Keep track of Z-order of Windows?
-
 # TODO: Scrollable Panels?
 
 
-# TODO: Use ecs.resources...something...decorations.*
-class FullDecorations(Decorations, Enum):
-    NONE = ()
+class UIManager:
 
-    BLOCK1 = (Symbol.BLOCK1, Symbol.BLOCK1, Symbol.BLOCK1, Symbol.BLOCK1)
-    BLOCK2 = (Symbol.BLOCK2, Symbol.BLOCK2, Symbol.BLOCK2, Symbol.BLOCK2)
-    BLOCK3 = (Symbol.BLOCK3, Symbol.BLOCK3, Symbol.BLOCK3, Symbol.BLOCK3)
-    BLOCK4 = (Symbol.BLOCK4, Symbol.BLOCK4, Symbol.BLOCK4, Symbol.BLOCK4)
+    def __init__(self, ecs):
+        self.ecs = ecs
 
-    HALFBLOCK = (
-        Symbol.HALFBLOCK_W, Symbol.HALFBLOCK_E,
-        Symbol.HALFBLOCK_S, Symbol.HALFBLOCK_N,
-    )
+        self.wrapper = self.ecs.resources.wrapper
+        self._root = None
 
-    SUBP_INNER = (
-        Symbol.HALFBLOCK_E, Symbol.HALFBLOCK_W,
-        Symbol.HALFBLOCK_S, Symbol.HALFBLOCK_N,
-        Symbol.SUBP_SE, Symbol.SUBP_SW, Symbol.SUBP_NE, Symbol.SUBP_NW,
-    )
+        self.tileset = self.ecs.resources.tileset
+        self.default_colors = Colors(self.tileset.palette.fg, self.tileset.palette.bg)
 
-    SUBP_OUTER = (
-        Symbol.HALFBLOCK_W, Symbol.HALFBLOCK_E,
-        Symbol.HALFBLOCK_N, Symbol.HALFBLOCK_S,
-        # NOTE: Corners would need inverted colors!
-        Symbol.SUBP_SE, Symbol.SUBP_SW, Symbol.SUBP_NE, Symbol.SUBP_NW,
-    )
+        self.window_decorations = Decorations(
+            *self.tileset.decorations['DSLINE'],
+            colors=self.default_colors
+        )
 
-    LINE = (
-        Symbol.VLINE, Symbol.VLINE,
-        Symbol.HLINE, Symbol.HLINE,
-        Symbol.NW, Symbol.NE, Symbol.SW, Symbol.SE,
-    )
+        self.title_decorations = Decorations(
+            *self.tileset.decorations['MINIMAL_DSLINE'],
+            colors=self.default_colors
+        )
+        self.title_align = Align.TOP_CENTER
 
-    DLINE = (
-        Symbol.DVLINE, Symbol.DVLINE,
-        Symbol.DHLINE, Symbol.DHLINE,
-        Symbol.DNW, Symbol.DNE, Symbol.DSW, Symbol.DSE,
-    )
+        self.button_decorations = Decorations(
+            *self.tileset.decorations['LINE'],
+            colors=self.default_colors
+        )
+        self.buttons_align = Align.BOTTOM_CENTER
 
-    DSLINE = (
-        Symbol.VLINE, Symbol.VLINE,
-        Symbol.DHLINE, Symbol.HLINE,
-        Symbol.DSNW, Symbol.DSNE, Symbol.SW, Symbol.SE,
-    )
+    @property
+    def root(self):
+        if self.ecs.resources.root_panel is None:
+            self.ecs.resources.root_panel = self.wrapper.create_panel()
+        self._root = self.ecs.resources.root_panel
+        return self._root
 
-    ASCII = tuple("||=-..`'")
+    def create_window(self, window, window_type, context):
+        if window_type == 'YES_NO_PROMPT':
+            layout = YesNoPrompt(
+                frame_decorations=self.window_decorations,
+                title_decorations=self.title_decorations,
+                title_align=self.title_align,
+                button_decorations=self.button_decorations,
+                buttons_align=self.buttons_align,
+                **context
+            )
+        if window_type == 'IN_GAME':
+            layout = InGame(
+                self.ecs,
+                frame_decorations=self.window_decorations,
+                title_decorations=self.title_decorations,
+                title_align=self.title_align,
+            )
 
-
-class HorizontalDecorations(Decorations, Enum):
-    NONE = ()
-
-    SPACE = (' ', ' ')
-
-    PIPE = ('|', '|')
-    SLASH = ('/', '/')
-    BACKSLASH = ('\\', '\\')
-
-    BRACKETS = ('(', ')')
-    BRACKETS_ROUND = BRACKETS
-    BRACKETS_SQUARE = ('[', ']')
-    BRACKETS_ANGLE = ('<', '>')
-    BRACKETS_CURLY = ('<', '>')
-
-    BLOCK1 = (Symbol.BLOCK1, Symbol.BLOCK1)
-    BLOCK2 = (Symbol.BLOCK2, Symbol.BLOCK2)
-    BLOCK3 = (Symbol.BLOCK3, Symbol.BLOCK3)
-    BLOCK4 = (Symbol.BLOCK4, Symbol.BLOCK4)
-
-    HALFBLOCK = (Symbol.HALFBLOCK_W, Symbol.HALFBLOCK_E)
-
-    SUBP_OUTER = (Symbol.SUBP_NW, Symbol.SUBP_NE)
-    SUBP_INNER = (Symbol.SUBP_SW, Symbol.SUBP_SE)
-
-    LINE = (Symbol.TEEW, Symbol.TEEE)
-    DLINE = (Symbol.DTEEW, Symbol.DTEEE)
-    DSLINE = (Symbol.DSTEEW, Symbol.DSTEEE)
+        for renderer in layout.layout(self.root):
+            renderer = self.ecs.create(
+                components.PanelRenderer(renderer),
+                components.ParentWindow(window)
+            )
 
 
 class Window(Container):
 
     def __init__(self,
-                 frame_decorations=FullDecorations.DSLINE,
-                 title=None, title_align=Align.TOP_CENTER,
-                 title_decorations=HorizontalDecorations.DSLINE):
+                 frame_decorations,
+                 title=None, title_decorations=None, title_align=Align.TOP_LEFT):
         super().__init__()
         self.frame = Container()
         self.content = Container()
@@ -126,19 +107,27 @@ class Window(Container):
 
 class YesNoPrompt(Window):
 
-    def __init__(self, title, msg):
-        super().__init__(title=title)
+    def __init__(self, title, msg,
+                 frame_decorations,
+                 title_decorations, title_align,
+                 button_decorations, buttons_align):
+        super().__init__(
+            frame_decorations=frame_decorations,
+            title=title,
+            title_decorations=title_decorations,
+            title_align=title_align,
+        )
         self.align = Align.TOP_CENTER
         self.padding = Padding(12, 0)
         self.size = Size(40, 8)
 
         msg = Text(msg, align=Align.TOP_CENTER, padding=Padding(1, 0))
 
-        buttons = Row(align=Align.BOTTOM_CENTER)
+        buttons = Row(align=buttons_align)
         for button_msg in ['Yes', 'No']:
             buttons.append(
                 Decorated(
-                    decorations=FullDecorations.LINE,
+                    decorations=button_decorations,
                     align=Align.TOP_LEFT,
                     decorated=Text(button_msg, align=Align.CENTER, width=8),
                 )
@@ -154,13 +143,25 @@ class YesNoPrompt(Window):
 
 class InGame:
 
-    def __init__(self, ecs):
+    def __init__(self, ecs,
+                 frame_decorations,
+                 title_decorations, title_align):
         self.split = Split(bottom=12)
 
-        camera = Window(title='mapcam')
+        camera = Window(
+            frame_decorations=frame_decorations,
+            title='mapcam',
+            title_decorations=title_decorations,
+            title_align=title_align,
+        )
         camera.content.append(render.Camera(ecs))
 
-        msg_log = Window(title='logs')
+        msg_log = Window(
+            frame_decorations=frame_decorations,
+            title='logs',
+            title_decorations=title_decorations,
+            title_align=title_align,
+        )
         msg_log.content.append(render.MessageLog())
 
         self.split.extend([camera, msg_log])
