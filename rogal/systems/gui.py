@@ -30,7 +30,7 @@ class CreateWindowsSystem(System):
             return
 
         for window, create in to_create:
-            self.ui_manager.create_window(window, create.window_type, create.context)
+            self.ui_manager.create(window, create.window_type, create.context)
 
         to_create.clear()
 

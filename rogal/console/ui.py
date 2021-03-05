@@ -9,7 +9,7 @@ from .. import render
 
 from .core import Align, Padding, Panel
 from .toolkit import get_position
-from .toolkit import Decorations, Decorated, Text, Container, Row, Split
+from .toolkit import Widget, Decorations, Decorated, Text, Container, Row, Split
 
 
 
@@ -53,9 +53,12 @@ class UIManager:
         self._root = self.ecs.resources.root_panel
         return self._root
 
-    def create_window(self, window, window_type, context):
+    def create(self, window, window_type, context):
         if window_type == 'YES_NO_PROMPT':
             layout = YesNoPrompt(
+                align=Align.TOP_CENTER,
+                padding=Padding(12, 0),
+                size=Size(40, 8),
                 frame_decorations=self.window_decorations,
                 title_decorations=self.title_decorations,
                 title_align=self.title_align,
@@ -82,8 +85,9 @@ class Window(Container):
 
     def __init__(self,
                  frame_decorations,
-                 title=None, title_decorations=None, title_align=Align.TOP_LEFT):
-        super().__init__()
+                 title=None, title_decorations=None, title_align=Align.TOP_LEFT,
+                 *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.frame = Container()
         self.content = Container()
 
@@ -105,21 +109,45 @@ class Window(Container):
             )
 
 
-class YesNoPrompt(Window):
+class ModalWindow(Window, Widget):
 
-    def __init__(self, title, msg,
+    def __init__(self,
+                 align, padding, size,
                  frame_decorations,
-                 title_decorations, title_align,
-                 button_decorations, buttons_align):
+                 title=None, title_decorations=None, title_align=Align.TOP_LEFT):
         super().__init__(
+            align=align,
+            padding=padding,
             frame_decorations=frame_decorations,
             title=title,
             title_decorations=title_decorations,
             title_align=title_align,
         )
-        self.align = Align.TOP_CENTER
-        self.padding = Padding(12, 0)
-        self.size = Size(40, 8)
+        self.size = size
+
+    def layout(self, panel):
+        position = get_position(panel.root, self.size, self.align, self.padding)
+        panel = panel.create_panel(position, self.size)
+        yield from super().layout(panel)
+
+
+class YesNoPrompt(ModalWindow):
+
+    def __init__(self,
+                 align, padding, size,
+                 title, msg,
+                 frame_decorations,
+                 title_decorations, title_align,
+                 button_decorations, buttons_align):
+        super().__init__(
+            align=align,
+            padding=padding,
+            size=size,
+            frame_decorations=frame_decorations,
+            title=title,
+            title_decorations=title_decorations,
+            title_align=title_align,
+        )
 
         msg = Text(msg, align=Align.TOP_CENTER, padding=Padding(1, 0))
 
@@ -134,11 +162,6 @@ class YesNoPrompt(Window):
             )
 
         self.content.extend([msg, buttons, ])
-
-    def layout(self, panel):
-        position = get_position(panel.root, self.size, self.align, self.padding)
-        panel = panel.create_panel(position, self.size)
-        yield from super().layout(panel)
 
 
 class InGame:
