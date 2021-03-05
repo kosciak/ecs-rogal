@@ -290,15 +290,30 @@ class Actor(Component):
         return self.handler.take_action(entity)
 
 
-class EventsHandler(Component):
-    __slots__ = ('handler', )
+class EventHandlersComponent(Component):
+    __slots__ = ('handlers', )
 
-    def __init__(self, handler):
-        self.handler = handler
+    def __init__(self, handlers=None):
+        self.handlers = dict(handlers or {})
 
-    def handle(self, entity, event):
-        return self.handler.handle(entity, event)
+    def __iter__(self):
+        yield from self.handlers.items()
 
+    def bind(self, handler, callback):
+        self.handlers[handler] = callback
+
+EventHandlers = component_type(EventHandlersComponent)
+
+
+OnQuit = EventHandlers('OnQuit')
+
+OnKeyPress = EventHandlers('OnKeyPress')
+
+OnMouseOver = EventHandlers('OnMouseOver')
+
+OnMouseClick = EventHandlers('OnMouseClick')
+
+IgnoreEvents = Flag('IgnoreEvents')
 
 
 # Action intentions

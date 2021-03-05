@@ -17,14 +17,10 @@ ACTION_COST = 60
 # TODO: Move to separate module! gui?
 class YesNoPrompt:
 
-    def __init__(self, ecs, txt, entity, callback, *args, **kwargs):
+    def __init__(self, ecs, entity, callback, *args, **kwargs):
         self.ecs = ecs
-        self.events_handlers = self.ecs.manage(components.EventsHandler)
-        self.create_windows = self.ecs.manage(components.CreateWindow)
-        self.destroy_windows = self.ecs.manage(components.DestroyWindow)
-        self.txt = txt
+        self.ignore_events = self.ecs.manage(components.IgnoreEvents)
         self.entity = entity
-        self.prev_events_handler = self.events_handlers.get(self.entity)
         self.window = None
         self.callback = callback
         self.args = args
@@ -32,27 +28,26 @@ class YesNoPrompt:
 
     def show(self):
         # Show prompt window and set events_handler
-        msg_log.warning(self.txt)
-        events_handler = handlers.EventsHandler(
-            (handlers.YesNoKeyPress(self.ecs), self.on_event),
+        msg_log.warning('Quit? Yes / No')
+        self.window = self.ecs.create(
+            components.CreateWindow(
+                window_type='YES_NO_PROMPT',
+                context=dict(title='Quit?', msg='Are you sure you want to quit?'),
+            ),
+            components.OnKeyPress({
+                handlers.YesNoKeyPress(self.ecs): self.on_event,
+            })
         )
-        self.window = self.ecs.create()
-        self.create_windows.insert(
-            self.window,
-            window_type='YES_NO_PROMPT',
-            context=dict(title='Quit?', msg='Are you sure you want to quit?'),
-        )
-        self.events_handlers.insert(self.window, events_handler)
 
-        # Remove previous events_handler from entity
-        self.events_handlers.remove(self.entity)
+        # Ignore event_handlers from entity
+        self.ignore_events.insert(self.entity)
 
     def close(self):
         # Close prompt window
-        self.destroy_windows.insert(self.window)
+        self.ecs.manage(components.DestroyWindow).insert(self.window)
 
-        # Restore previous events_handler for entity
-        self.events_handlers.insert(self.entity, component=self.prev_events_handler)
+        # Restore previous event_handlers for entity
+        self.ignore_events.remove(self.entity)
 
     def on_event(self, entity, value):
         self.close()
@@ -98,31 +93,32 @@ class PlayerInput(TakeActionHandler):
         super().__init__(ecs)
         self._deafault_events_handler = None
 
-    @property
-    def default_events_handler(self):
-        if self._deafault_events_handler is None:
-            events_handler = handlers.EventsHandler(
-                (handlers.DirectionKeyPress(self.ecs), self.try_direction),
-                (handlers.ChangeLevelKeyPress(self.ecs), self.try_change_level),
-            )
-            for key_binding, action, callback in [
-                ['actions.QUIT', components.WantsToQuit, self.try_action],
-                ['actions.REST', components.WantsToRest, self.try_action],
-                ['actions.REVEAL_LEVEL', components.WantsToRevealLevel, self.try_action],
-            ]:
-                events_handler.add(handlers.OnKeyPress(self.ecs, key_binding, action), callback)
-            self._deafault_events_handler = events_handler
-        return self._deafault_events_handler
+    def set_event_handlers(self, actor):
+        on_key_press = self.ecs.manage(components.OnKeyPress).insert(actor)
 
-    def set_events_handlers(self, actor, events_handler=None):
-        events_handler = events_handler or self.default_events_handler
-        events_handlers = self.ecs.manage(components.EventsHandler)
-        events_handlers.insert(actor, events_handler)
+        for handler_cls, callback in [
+            [handlers.DirectionKeyPress, self.try_direction],
+            [handlers.ChangeLevelKeyPress, self.try_change_level],
+        ]:
+            on_key_press.bind(handler_cls(self.ecs), callback)
+
+        for key_binding, action, callback in [
+            ['actions.QUIT', components.WantsToQuit, self.try_action],
+            ['actions.REST', components.WantsToRest, self.try_action],
+            ['actions.REVEAL_LEVEL', components.WantsToRevealLevel, self.try_action],
+        ]:
+            on_key_press.bind(handlers.OnKeyPress(self.ecs, key_binding, action), callback)
+
+    def remove_event_handlers(self, actor):
+        self.ecs.manage(components.OnKeyPress).remove(actor)
 
     def action_taken(self, actor):
         super().action_taken(actor)
-        events_handlers = self.ecs.manage(components.EventsHandler)
-        events_handlers.remove(actor)
+        self.remove_event_handlers(actor)
+
+    def take_action(self, actor):
+        self.ecs.resources.current_player = actor
+        self.set_event_handlers(actor)
 
     def try_direction(self, actor, direction):
         locations = self.ecs.manage(components.Location)
@@ -181,13 +177,9 @@ class PlayerInput(TakeActionHandler):
             return manager.insert(actor)
 
         if action is components.WantsToQuit:
-            return YesNoPrompt(self.ecs, 'Quit? Yes / No', actor, self.insert_action, action).show()
+            return YesNoPrompt(self.ecs, actor, self.insert_action, action).show()
 
         return self.insert_action(actor, action)
-
-    def take_action(self, actor):
-        self.ecs.resources.current_player = actor
-        self.set_events_handlers(actor)
 
 
 class AI(TakeActionHandler):

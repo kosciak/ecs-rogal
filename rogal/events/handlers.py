@@ -39,27 +39,6 @@ class EventHandler:
         raise SystemExit()
 
 
-class EventsHandler:
-
-    def __init__(self, *handler_callback):
-        self.event_handlers = []
-        for handler, callback in handler_callback:
-            self.add(handler, callback)
-
-    def add(self, handler, callback):
-        self.event_handlers.append([handler, callback])
-
-    def handle(self, event, entity):
-        value = None
-        fn_name = f'on_{event.type}'
-        for handler, callback in self.event_handlers:
-            fn = getattr(handler, fn_name, None)
-            if fn:
-                value = fn(event)
-            if value is not None:
-                return callback(entity, value)
-
-
 class OnKeyPress(EventHandler):
 
     def __init__(self, ecs, key_binding, value):

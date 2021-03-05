@@ -16,7 +16,6 @@ log = logging.getLogger(__name__)
 class EventsHandlersSystem(System):
 
     WAIT = 1./60
-    REPEAT_EVENT_TYPES = {EventType.KEY_PRESS, EventType.KEY_UP}
     REPEAT_RATE = 1./6
 
     INCLUDE_STATES = {
@@ -30,35 +29,50 @@ class EventsHandlersSystem(System):
         self.repeat_rate = repeat_rate
         self._prev_times = {}
 
-    def is_valid(self, event):
-        if event.type is None:
-            return False
-
+    def is_valid_repeat(self, event):
         now = time.time()
         prev_time = self._prev_times.get(event.type)
-        if event.type in self.REPEAT_EVENT_TYPES and event.repeat:
-            if prev_time and now - prev_time < self.repeat_rate:
-                return False
-
+        if prev_time and now - prev_time < self.repeat_rate:
+            return False
         self._prev_times[event.type] = now
         return True
+
+    def on_key_press(self, event):
+        if event.repeat and not self.is_valid_repeat(event):
+            return
+
+        ignore_events = self.ecs.manage(components.IgnoreEvents)
+
+        on_key_press = self.ecs.manage(components.OnKeyPress)
+        for entity, handlers in on_key_press:
+            if entity in ignore_events:
+                continue
+
+            value = None
+            for handler, callback in handlers:
+                value = handler.on_key_press(event)
+                if value is not None:
+                    print(entity, value, callback)
+                    return callback(entity, value)
+
+    def on_quit(self, event):
+        log.warning('Quitting...')
+        raise SystemExit()
 
     def run(self):
         acts_now = self.ecs.manage(components.ActsNow)
         if not acts_now:
             return
-        events_handlers = self.ecs.manage(components.EventsHandler)
-        if not events_handlers:
-            return
 
-        # Get valid events and pass them to all entities with EventsHandlers
-        # NOTE: It is NOT checked if entity has ActsNow flag, as EventsHandler can be attached
+        # Get valid events and pass them to all entities with appopriate EventHandlers
+        # NOTE: It is NOT checked if entity has ActsNow flag, as EventHandlers can be attached
         #       to any entity, not only to actors (for example to GUI elements)
         #       BUT there must be some ActsNow actor for system to be running!
         for event in self.wrapper.events(self.wait):
             log.debug(f'Event: {event}')
-            if event and self.is_valid(event):
-                for entity, handler in list(events_handlers):
-                    handler.handle(event, entity)
+            if event.type == EventType.QUIT:
+                self.on_quit(event)
+            if event.type == EventType.KEY_PRESS:
+                self.on_key_press(event)
             return
 
