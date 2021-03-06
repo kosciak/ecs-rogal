@@ -1,5 +1,3 @@
-from enum import Enum
-
 from .. import components
 
 from ..geometry import Size
@@ -7,15 +5,70 @@ from ..tiles import Colors
 
 from .. import render
 
-from .core import Align, Padding, Panel
-from .toolkit import get_position
-from .toolkit import Widget, Decorations, Decorated, Text, Container, Row, Split
-
+from .core import Align, Padding
+from . import toolkit
 
 
 # TODO: frames overlapping, and fixing overlapped/overdrawn characters to merge borders/decorations
 # TODO: Keep track of Z-order of Windows?
 # TODO: Scrollable Panels?
+
+
+class WindowTitle(toolkit.Decorated):
+
+    def __init__(self, decorations, text, align=Align.TOP_LEFT):
+        text = toolkit.Text(text, align=align)
+        super().__init__(decorations, text, align=align, padding=Padding(0, 1))
+
+
+class Button(toolkit.Decorated):
+
+    def __init__(self, decorations, width, text, align=Align.TOP_LEFT):
+        text = toolkit.Text(text, align=Align.CENTER, width=width)
+        super().__init__(decorations, text, align=align)
+
+
+class Window(toolkit.Container):
+
+    def __init__(self, decorations, title=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.frame = toolkit.Container()
+        self.content = toolkit.Container()
+
+        self.widgets.extend([
+            toolkit.Decorated(
+                decorations=decorations,
+                align=Align.TOP_LEFT,
+                decorated=self.content,
+            ),
+            self.frame,
+        ])
+        if title:
+            self.frame.append(title)
+
+    def append(self, widget):
+        self.content.append(widget)
+
+    def extend(self, widgets):
+        self.content.extend(widgets)
+
+
+class ModalWindow(Window, toolkit.Widget):
+
+    def __init__(self, align, padding, size, decorations, title=None, *args, **kwargs):
+        super().__init__(
+            align=align,
+            padding=padding,
+            decorations=decorations,
+            title=title,
+            *args, **kwargs,
+        )
+        self.size = size
+
+    def layout(self, panel):
+        position = toolkit.get_position(panel.root, self.size, self.align, self.padding)
+        panel = panel.create_panel(position, self.size)
+        yield from super().layout(panel)
 
 
 class UIManager:
@@ -29,21 +82,22 @@ class UIManager:
         self.tileset = self.ecs.resources.tileset
         self.default_colors = Colors(self.tileset.palette.fg, self.tileset.palette.bg)
 
-        self.window_decorations = Decorations(
+        self.window_decorations = toolkit.Decorations(
             *self.tileset.decorations['DSLINE'],
             colors=self.default_colors
         )
 
-        self.title_decorations = Decorations(
+        self.title_decorations = toolkit.Decorations(
             *self.tileset.decorations['MINIMAL_DSLINE'],
             colors=self.default_colors
         )
         self.title_align = Align.TOP_CENTER
 
-        self.button_decorations = Decorations(
+        self.button_decorations = toolkit.Decorations(
             *self.tileset.decorations['LINE'],
             colors=self.default_colors
         )
+        self.button_width = 8
         self.buttons_align = Align.BOTTOM_CENTER
 
     @property
@@ -53,142 +107,77 @@ class UIManager:
         self._root = self.ecs.resources.root_panel
         return self._root
 
+    def create_title(self, title):
+        if title is None:
+            return
+        title = WindowTitle(
+            decorations=self.title_decorations,
+            text=title,
+            align=self.title_align,
+        )
+        return title
+
+    def create_window(self, title=None):
+        window = Window(
+            decorations=self.window_decorations,
+            title=self.create_title(title),
+        )
+        return window
+
+    def create_modal_window(self, align, padding, size, title=None):
+        window = ModalWindow(
+            align=align, padding=padding, size=size,
+            decorations=self.window_decorations,
+            title=self.create_title(title),
+        )
+        return window
+
+    def create_button(self, text, value):
+        button = Button(
+            decorations=self.button_decorations,
+            width=self.button_width,
+            text=text,
+        )
+        return button
+
+    def create_buttons_row(self, buttons):
+        buttons_row = toolkit.Row(align=self.buttons_align)
+        for text, value in buttons:
+            buttons_row.append(self.create_button(text, value))
+        return buttons_row
+
     def create(self, window, window_type, context):
+        # TODO: Move layout definitions to data/ui.yaml ?
         if window_type == 'YES_NO_PROMPT':
-            layout = YesNoPrompt(
+            layout = self.create_modal_window(
                 align=Align.TOP_CENTER,
                 padding=Padding(12, 0),
                 size=Size(40, 8),
-                frame_decorations=self.window_decorations,
-                title_decorations=self.title_decorations,
-                title_align=self.title_align,
-                button_decorations=self.button_decorations,
-                buttons_align=self.buttons_align,
-                **context
+                title=context.get('title'),
             )
+
+            msg = toolkit.Text(context.get('msg'), align=Align.TOP_CENTER, padding=Padding(1, 0))
+            buttons = self.create_buttons_row([
+                ['Yes', True],
+                ['No',  False],
+            ])
+
+            layout.extend([msg, buttons])
+
         if window_type == 'IN_GAME':
-            layout = InGame(
-                self.ecs,
-                frame_decorations=self.window_decorations,
-                title_decorations=self.title_decorations,
-                title_align=self.title_align,
-            )
+            layout = toolkit.Split(bottom=12)
+
+            camera = self.create_window(title='mapcam')
+            camera.content.append(render.Camera(self.ecs))
+
+            msg_log = self.create_window(title='logs')
+            msg_log.content.append(render.MessageLog())
+
+            layout.extend([camera, msg_log])
 
         for renderer in layout.layout(self.root):
             renderer = self.ecs.create(
                 components.PanelRenderer(renderer),
                 components.ParentWindow(window)
             )
-
-
-class Window(Container):
-
-    def __init__(self,
-                 frame_decorations,
-                 title=None, title_decorations=None, title_align=Align.TOP_LEFT,
-                 *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.frame = Container()
-        self.content = Container()
-
-        self.widgets.extend([
-            Decorated(
-                decorations=frame_decorations,
-                align=Align.TOP_LEFT,
-                decorated=self.content,
-            ),
-            self.frame,
-        ])
-        if title:
-            self.frame.append(
-                Decorated(
-                    decorations=title_decorations,
-                    align=title_align, padding=Padding(0, 1),
-                    decorated=Text(title, align=title_align),
-                )
-            )
-
-
-class ModalWindow(Window, Widget):
-
-    def __init__(self,
-                 align, padding, size,
-                 frame_decorations,
-                 title=None, title_decorations=None, title_align=Align.TOP_LEFT):
-        super().__init__(
-            align=align,
-            padding=padding,
-            frame_decorations=frame_decorations,
-            title=title,
-            title_decorations=title_decorations,
-            title_align=title_align,
-        )
-        self.size = size
-
-    def layout(self, panel):
-        position = get_position(panel.root, self.size, self.align, self.padding)
-        panel = panel.create_panel(position, self.size)
-        yield from super().layout(panel)
-
-
-class YesNoPrompt(ModalWindow):
-
-    def __init__(self,
-                 align, padding, size,
-                 title, msg,
-                 frame_decorations,
-                 title_decorations, title_align,
-                 button_decorations, buttons_align):
-        super().__init__(
-            align=align,
-            padding=padding,
-            size=size,
-            frame_decorations=frame_decorations,
-            title=title,
-            title_decorations=title_decorations,
-            title_align=title_align,
-        )
-
-        msg = Text(msg, align=Align.TOP_CENTER, padding=Padding(1, 0))
-
-        buttons = Row(align=buttons_align)
-        for button_msg in ['Yes', 'No']:
-            buttons.append(
-                Decorated(
-                    decorations=button_decorations,
-                    align=Align.TOP_LEFT,
-                    decorated=Text(button_msg, align=Align.CENTER, width=8),
-                )
-            )
-
-        self.content.extend([msg, buttons, ])
-
-
-class InGame:
-
-    def __init__(self, ecs,
-                 frame_decorations,
-                 title_decorations, title_align):
-        self.split = Split(bottom=12)
-
-        camera = Window(
-            frame_decorations=frame_decorations,
-            title='mapcam',
-            title_decorations=title_decorations,
-            title_align=title_align,
-        )
-        camera.content.append(render.Camera(ecs))
-
-        msg_log = Window(
-            frame_decorations=frame_decorations,
-            title='logs',
-            title_decorations=title_decorations,
-            title_align=title_align,
-        )
-        msg_log.content.append(render.MessageLog())
-
-        self.split.extend([camera, msg_log])
-
-    def layout(self, panel):
-        yield from self.split.layout(panel)
 
