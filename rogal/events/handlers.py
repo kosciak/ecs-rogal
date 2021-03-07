@@ -21,22 +21,7 @@ class EventHandler:
         self.key_bindings = self.ecs.resources.key_bindings
 
     def handle(self, event):
-        value = None
-        fn_name = f'on_{event.type}'
-        fn = getattr(self, fn_name, None)
-        if fn:
-            value = fn(event, *args, **kwargs)
-        return value
-
-    def on_key_press(self, event):
-        return
-
-    def on_key_up(self, event):
-        return
-
-    def on_quit(self, event):
-        log.warning('Quitting...')
-        raise SystemExit()
+        raise NotImplementedError()
 
 
 class OnKeyPress(EventHandler):
@@ -46,7 +31,7 @@ class OnKeyPress(EventHandler):
         self.key_binding = self.key_bindings.get(key_binding)
         self.value = value
 
-    def on_key_press(self, event):
+    def handle(self, event):
         if event.key in self.key_binding:
             return self.value
 
@@ -55,7 +40,7 @@ class DirectionKeyPress(EventHandler):
 
     """Return Direction value."""
 
-    def on_key_press(self, event):
+    def handle(self, event):
         for direction in Direction:
             if event.key in self.key_bindings.directions[direction.name]:
                 return direction
@@ -63,7 +48,7 @@ class DirectionKeyPress(EventHandler):
 
 class ChangeLevelKeyPress(EventHandler):
 
-    def on_key_press(self, event):
+    def handle(self, event):
         if event.key in self.key_bindings.actions.NEXT_LEVEL:
             return 1
         if event.key in self.key_bindings.actions.PREV_LEVEL:
@@ -74,7 +59,7 @@ class YesNoKeyPress(EventHandler):
 
     """Return True for YES, or False for NO or DISCARD."""
 
-    def on_key_press(self, event):
+    def handle(self, event):
         if event.key in self.key_bindings.common.YES:
             return True
         if event.key in self.key_bindings.common.NO:
@@ -87,7 +72,7 @@ class ConfirmKeyPress(EventHandler):
 
     """Return True for CONFIRM, or False for DISCARD."""
 
-    def on_key_press(self, event):
+    def handle(self, event):
         if event.key in self.key_bindings.common.CONFIRM:
             return True
         if event.key in self.key_bindings.common.DISCARD:
@@ -98,7 +83,7 @@ class AlphabeticIndexKeyPress(EventHandler):
 
     """Return 0-25 index when selecting using ascii letters."""
 
-    def on_key_press(self, event):
+    def handle(self, event):
         if event.key in self.key_bindings.index.ALPHABETIC:
             return string.ascii_lowercase.index(event.key)
 
@@ -107,7 +92,7 @@ class AlphabeticUpperIndexKeyPress(EventHandler):
 
     """Return 0-25 index when selecting using ascii letters."""
 
-    def on_key_press(self, event):
+    def handle(self, event):
         if event.key in self.key_bindings.index.ALPHABETIC_UPPER:
             return string.ascii_uppercase.index(event.key)
 
@@ -120,7 +105,7 @@ class NumericIndexKeyPress(EventHandler):
 
     """
 
-    def on_key_press(self, event):
+    def handle(self, event):
         if event.key in self.key_bindings.index.NUMERIC:
             index = string.digits(event.key)
             index -= 1

@@ -161,6 +161,8 @@ class MouseButtonUp(MouseButtonEvent):
 class MouseWheel(Event):
     __slots__ = ('scroll', )
 
+    type = EventType.MOUSE_WHEEL
+
     def __init__(self, source, dx, dy):
         super().__init__(source)
         self.scroll = Vector(dx, dy)

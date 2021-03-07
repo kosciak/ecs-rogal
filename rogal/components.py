@@ -174,7 +174,6 @@ class Renderable(Component):
         return data
 
 
-
 class Viewshed(Component):
     __slots__ = ('view_range', 'fov', '_positions', 'entities', 'needs_update', )
     params = ('view_range', )
@@ -253,7 +252,6 @@ HitPoints = Pool('HitPoints')
 
 class AttributeComponent(Component):
     __slots__ = ('base', 'modifier')
-    params = ('base', 'modifier')
 
     def __init__(self, base, modifier=None):
         self.base = base
@@ -290,6 +288,8 @@ class Actor(Component):
         return self.handler.take_action(entity)
 
 
+# Events and user input
+
 class EventHandlersComponent(Component):
     __slots__ = ('handlers', )
 
@@ -302,17 +302,32 @@ class EventHandlersComponent(Component):
     def bind(self, handler, callback):
         self.handlers[handler] = callback
 
+
+class MouseEventHandlersComponent(EventHandlersComponent):
+    __slots__ = ('rectangle', )
+
+    def __init__(self, rectangle, handlers=None):
+        super().__init__(handlers)
+
+    def is_valid(self, position):
+        return position in rectangle
+
+
 EventHandlers = component_type(EventHandlersComponent)
+MouseEventHandlers = component_type(MouseEventHandlersComponent)
 
 
 OnQuit = EventHandlers('OnQuit')
 
 OnKeyPress = EventHandlers('OnKeyPress')
 
-OnMouseOver = EventHandlers('OnMouseOver')
+OnMouseOver = MouseEventHandlers('OnMouseOver')
 
-OnMouseClick = EventHandlers('OnMouseClick')
+OnMouseClick = MouseEventHandlers('OnMouseClick')
 
+OnMouseWheel = EventHandlers('OnMouseWheel')
+
+# TODO: Use something like HasFocus instead?
 IgnoreEvents = Flag('IgnoreEvents')
 
 

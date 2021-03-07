@@ -29,6 +29,14 @@ class EventsHandlersSystem(System):
         self.repeat_rate = repeat_rate
         self._prev_times = {}
 
+    def handle_event(self, event, entity, handlers):
+        value = None
+        for handler, callback in handlers:
+            value = handler.handle(event)
+            if value is not None:
+                # TODO: return? or just call?
+                return callback(entity, value)
+
     def is_valid_repeat(self, event):
         now = time.time()
         prev_time = self._prev_times.get(event.type)
@@ -41,19 +49,46 @@ class EventsHandlersSystem(System):
         if event.repeat and not self.is_valid_repeat(event):
             return
 
-        ignore_events = self.ecs.manage(components.IgnoreEvents)
+        event_handlers = self.ecs.manage(components.OnKeyPress)
+        if not event_handlers:
+            return
 
-        on_key_press = self.ecs.manage(components.OnKeyPress)
-        for entity, handlers in on_key_press:
+        ignore_events = self.ecs.manage(components.IgnoreEvents)
+        for entity, handlers in event_handlers:
             if entity in ignore_events:
                 continue
+            return self.handle_event(event, entity, handlers)
 
-            value = None
-            for handler, callback in handlers:
-                value = handler.on_key_press(event)
-                if value is not None:
-                    print(entity, value, callback)
-                    return callback(entity, value)
+    def on_mouse_event(self, event, event_handlers):
+        if not event_handlers:
+            return
+
+        ignore_events = self.ecs.manage(components.IgnoreEvents)
+        for entity, handlers in event_handlers:
+            if entity in ignore_events:
+                continue
+            if not event.position in handlers.rectangle:
+                continue
+            return self.handle_event(event, entity, handlers)
+
+    def on_mouse_press(self, event):
+        event_handlers = self.ecs.manage(components.OnMouseClick)
+        self.on_mouse_event(event, event_handlers)
+
+    def on_mouse_motion(self, event):
+        event_handlers = self.ecs.manage(components.OnMouseOver)
+        self.on_mouse_event(event, event_handlers)
+
+    def on_mouse_wheel(self, event):
+        event_handlers = self.ecs.manage(components.OnMouseWheel)
+        if not event_handlers:
+            return
+
+        ignore_events = self.ecs.manage(components.IgnoreEvents)
+        for entity, handlers in event_handlers:
+            if entity in ignore_events:
+                continue
+            return self.handle_event(event, entity, handlers)
 
     def on_quit(self, event):
         log.warning('Quitting...')
@@ -74,5 +109,11 @@ class EventsHandlersSystem(System):
                 self.on_quit(event)
             if event.type == EventType.KEY_PRESS:
                 self.on_key_press(event)
+            if event.type == EventType.MOUSE_BUTTON_PRESS:
+                self.on_mouse_press(event)
+            if event.type == EventType.MOUSE_MOTION:
+                self.on_mouse_motion(event)
+            if event.type == EventType.MOUSE_WHEEL:
+                self.on_mouse_wheel(event)
             return
 
