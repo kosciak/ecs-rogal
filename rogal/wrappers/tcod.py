@@ -14,18 +14,7 @@ from . import sdl
 log = logging.getLogger(__name__)
 
 
-def get_events():
-    sdl_event = ffi.new("SDL_Event*")
-    while lib.SDL_PollEvent(sdl_event):
-        yield sdl.parse_sdl_event(sdl_event)
-
-
-def wait_for_events(timeout=None):
-    if timeout is not None:
-        lib.SDL_WaitEventTimeout(ffi.NULL, int(timeout * 1000))
-    else:
-        lib.SDL_WaitEvent(ffi.NULL)
-    return get_events()
+sdl2 = sdl.SDL2Wrapper(ffi, lib)
 
 
 class TcodRootPanel(RootPanel):
@@ -193,7 +182,6 @@ class TcodRootPanel(RootPanel):
         ansi.show_tcod_console(self.console)
 
 
-
 class TcodWrapper(IOWrapper):
 
     def __init__(self,
@@ -266,29 +254,28 @@ class TcodWrapper(IOWrapper):
     def init_joystick(self):
         # See: https://wiki.libsdl.org/SDL_JoystickOpen
         log.debug('Initializing joystick...')
-        tcod.lib.SDL_InitSubSystem(tcod.lib.SDL_INIT_JOYSTICK)
-        joysticks_num = tcod.lib.SDL_NumJoysticks()
+        sdl2.SDL_InitSubSystem(sdl.SubSystem.SDL_INIT_JOYSTICK)
+        joysticks_num = sdl2.SDL_NumJoysticks()
         log.debug(f'Found {joysticks_num} joysticks')
         if not joysticks_num:
             return
         joystick_id = 0
         log.debug(f'Opening joystick: {joystick_id}')
-        joystick = tcod.lib.SDL_JoystickOpen(joystick_id)
+        joystick = sdl2.SDL_JoystickOpen(joystick_id)
         if not joystick:
             log.error(f'Failed to open joystick: {joystick_id}')
             return
-        name = tcod.lib.SDL_JoystickNameForIndex(joystick_id)
-        name = tcod.ffi.string(name).decode('utf-8')
-        axes_num = tcod.lib.SDL_JoystickNumAxes(joystick)
-        buttons_num = tcod.lib.SDL_JoystickNumButtons(joystick)
-        balls_num = tcod.lib.SDL_JoystickNumBalls(joystick)
-        hats_num = tcod.lib.SDL_JoystickNumHats(joystick)
+        name = sdl2.SDL_JoystickNameForIndex(joystick_id)
+        axes_num = sdl2.SDL_JoystickNumAxes(joystick)
+        buttons_num = sdl2.SDL_JoystickNumButtons(joystick)
+        balls_num = sdl2.SDL_JoystickNumBalls(joystick)
+        hats_num = sdl2.SDL_JoystickNumHats(joystick)
         log.info(f'Joystick: {joystick_id} - name: {name}, axes: {axes_num}, buttons: {buttons_num}, balls: {balls_num}, hats: {hats_num}')
 
-    def set_system_cursor(self, cursor_id=0):
+    def set_system_cursor(self, cursor_id=sdl.SystemCursor.SDL_SYSTEM_CURSOR_ARROW):
         # See: https://wiki.libsdl.org/SDL_CreateSystemCursor
-        cursor = tcod.lib.SDL_CreateSystemCursor(cursor_id)
-        tcod.lib.SDL_SetCursor(cursor)
+        cursor = sdl2.SDL_CreateSystemCursor(cursor_id)
+        sdl2.SDL_SetCursor(cursor)
 
     def update_event(self, event):
         if event.type == EventType.MOUSE_MOTION or \
@@ -307,12 +294,12 @@ class TcodWrapper(IOWrapper):
     def events(self, wait=None):
         # TODO: wrappers.sdl and create rogal.events.core directly from sld events?
         if wait is False:
-            events_gen = get_events()
+            events_gen = sdl2.get_events()
         else:
             # NOTE: wait==None will wait forever
             if wait is True:
                 wait = None
-            events_gen = wait_for_events(wait)
+            events_gen = sdl2.wait_for_events(wait)
         for event in events_gen:
             # Intercept WINDOW RESIZE and update self.console_size?
             event = self.update_event(event)

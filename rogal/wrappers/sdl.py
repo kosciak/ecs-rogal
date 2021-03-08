@@ -2,7 +2,11 @@ import functools
 
 from cffi import FFI
 
-from .sdl_const import EventType, Keycode, Keymod, MouseButton, MouseButtonMask, MouseWheelDirection
+from .sdl_const import (
+    SubSystem,
+    EventType, Keycode, Keymod, MouseButton, MouseButtonMask, MouseWheelDirection,
+    SystemCursor,
+)
 
 from .. import events
 from ..events.keys import Key, Button
@@ -215,4 +219,81 @@ def parse_sdl_event(sdl_event):
         return parse_fn(sdl_event)
     else:
         return events.UnknownEvent(sdl_event)
+
+
+class SDL2Wrapper:
+
+    def __init__(self, ffi, lib):
+        self.ffi = ffi
+        self.lib = lib
+
+    def _parse_string(self, txt):
+        txt = self.ffi.string(txt).decode('utf-8')
+        return txt
+
+    def SDL_GetError(self):
+        # See: https://wiki.libsdl.org/SDL_GetError
+        txt = self.lib.SDL_GetError()
+        return self._parse_string(txt)
+
+
+    # https://wiki.libsdl.org/CategoryClipboard
+    def SDL_GetClipboardText(self):
+        # See: https://wiki.libsdl.org/SDL_GetClipboardText
+        txt = self.lib.SDL_GetClipboardText()
+        return self._parse_string(txt)
+
+    # def SDL_HasClipboardText()
+
+
+    # https://wiki.libsdl.org/CategoryJoystick
+
+    # def SDL_JoystickOpen(joystick_id)
+
+    # def SDL_JoystickNumAxes(joystick)
+    # def SDL_JoystickNumButtons(joystick)
+    # def SDL_JoystickNumBalls(joystick)
+    # def SDL_JoystickNumHats(joystick)
+
+    def SDL_JoystickName(self, joystick):
+        # See: https://wiki.libsdl.org/SDL_JoystickName
+        txt = self.lib.SDL_JoystickName(joystick)
+        return self._parse_string(txt)
+
+    def SDL_JoystickNameForIndex(self, joystick_id):
+        # See: https://wiki.libsdl.org/SDL_JoystickNameForIndex
+        txt = self.lib.SDL_JoystickNameForIndex(joystick_id)
+        return self._parse_string(txt)
+
+
+    # https://wiki.libsdl.org/CategoryEvents
+
+    def SDL_WaitEvent(self, sdl_event):
+        # See: https://wiki.libsdl.org/SDL_WaitEvent
+        if sdl_event is None:
+            sdl_event = self.ffi.NULL
+        return self.lib.SDL_WaitEvent(sdl_event)
+
+    def SDL_WaitEventTimeout(self, sdl_event, timeout):
+        # See: https://wiki.libsdl.org/SDL_WaitEventTimeout
+        if sdl_event is None:
+            sdl_event = self.ffi.NULL
+        timeout = int(timeout*1000)
+        return self.lib.SDL_WaitEventTimeout(sdl_event, timeout)
+
+    def __getattr__(self, name):
+        return getattr(self.lib, name)
+
+
+    def get_events(self):
+        sdl_event = self.ffi.new("SDL_Event*")
+        while self.lib.SDL_PollEvent(sdl_event):
+            yield parse_sdl_event(sdl_event)
+
+    def wait_for_events(self, timeout=None):
+        if timeout is not None:
+            self.SDL_WaitEventTimeout(None, timeout)
+        else:
+            self.SDL_WaitEvent(None)
+        return self.get_events()
 

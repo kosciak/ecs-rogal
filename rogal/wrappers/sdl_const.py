@@ -1,3 +1,14 @@
+class SubSystem:
+    SDL_INIT_TIMER = 1
+    SDL_INIT_AUDIO = 16
+    SDL_INIT_VIDEO = 32
+    SDL_INIT_JOYSTICK = 512
+    SDL_INIT_HAPTIC = 4096
+    SDL_INIT_GAMECONTROLLER = 8192
+    SDL_INIT_EVENTS = 16384
+    SDL_INIT_EVERYTHING = 6201
+
+
 class EventType:
     """SDL EventType.
 
