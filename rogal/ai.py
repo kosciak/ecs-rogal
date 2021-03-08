@@ -32,11 +32,12 @@ class YesNoPrompt:
         self.window = self.ecs.create(
             components.CreateWindow(
                 window_type='YES_NO_PROMPT',
-                context=dict(title='Quit?', msg='Are you sure you want to quit?'),
+                context=dict(
+                    title='Quit?',
+                    msg='Are you sure you want to quit?',
+                    callback=self.on_event,
+                ),
             ),
-            components.OnKeyPress({
-                handlers.YesNoKeyPress(self.ecs): self.on_event,
-            })
         )
 
         # Ignore event_handlers from entity

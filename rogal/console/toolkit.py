@@ -15,6 +15,9 @@ How it should work:
 - call layout and create renderers entities
 - render called by system, need Z-order to sort what to render first!
 
+TODO:
+- progress bars (paint background only and print tiles)
+
 '''
 
 
@@ -131,9 +134,15 @@ class Text(Widget, Renderer):
             len(lines)
         )
 
-    def layout(self, panel):
+    def get_layout_panel(self, panel):
         height = self.height + self.padding.top + self.padding.bottom
-        self.panel = panel.create_panel(Position.ZERO, Size(panel.width, height))
+        panel = panel.create_panel(Position.ZERO, Size(panel.width, height))
+        # position = get_position(panel, self.size, self.align)
+        # panel = panel.create_panel(position, self.size)
+        return panel
+
+    def layout(self, panel):
+        self.panel = self.get_layout_panel(panel)
         yield self
 
     def render(self):
@@ -248,10 +257,14 @@ class Decorated(Widget):
             self.decorated.height + self.decorations.height
         )
 
-    def layout(self, panel):
+    def get_layout_panel(self, panel):
         size = self.size or panel.size
         position = get_position(panel, size, self.align, self.padding)
         panel = panel.create_panel(position, size)
+        return panel
+
+    def layout(self, panel):
+        panel = self.get_layout_panel(panel)
         yield from self.decorations.layout(panel)
         panel = self.decorations.inner_panel(panel)
         yield from self.decorated.layout(panel)

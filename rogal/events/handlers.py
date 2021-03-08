@@ -3,6 +3,8 @@ import string
 
 from ..geometry import Direction
 
+from .keys import Button
+
 
 log = logging.getLogger(__name__)
 
@@ -18,13 +20,19 @@ class EventHandler:
 
     def __init__(self, ecs):
         self.ecs = ecs
-        self.key_bindings = self.ecs.resources.key_bindings
 
     def handle(self, event):
         raise NotImplementedError()
 
 
-class OnKeyPress(EventHandler):
+class KeyPressHandler(EventHandler):
+
+    def __init__(self, ecs):
+        super().__init__(ecs)
+        self.key_bindings = self.ecs.resources.key_bindings
+
+
+class OnKeyPress(KeyPressHandler):
 
     def __init__(self, ecs, key_binding, value):
         super().__init__(ecs)
@@ -36,7 +44,7 @@ class OnKeyPress(EventHandler):
             return self.value
 
 
-class DirectionKeyPress(EventHandler):
+class DirectionKeyPress(KeyPressHandler):
 
     """Return Direction value."""
 
@@ -46,7 +54,7 @@ class DirectionKeyPress(EventHandler):
                 return direction
 
 
-class ChangeLevelKeyPress(EventHandler):
+class ChangeLevelKeyPress(KeyPressHandler):
 
     def handle(self, event):
         if event.key in self.key_bindings.actions.NEXT_LEVEL:
@@ -55,7 +63,7 @@ class ChangeLevelKeyPress(EventHandler):
             return -1
 
 
-class YesNoKeyPress(EventHandler):
+class YesNoKeyPress(KeyPressHandler):
 
     """Return True for YES, or False for NO or DISCARD."""
 
@@ -68,7 +76,7 @@ class YesNoKeyPress(EventHandler):
             return False
 
 
-class ConfirmKeyPress(EventHandler):
+class ConfirmKeyPress(KeyPressHandler):
 
     """Return True for CONFIRM, or False for DISCARD."""
 
@@ -79,7 +87,7 @@ class ConfirmKeyPress(EventHandler):
             return False
 
 
-class AlphabeticIndexKeyPress(EventHandler):
+class AlphabeticIndexKeyPress(KeyPressHandler):
 
     """Return 0-25 index when selecting using ascii letters."""
 
@@ -88,7 +96,7 @@ class AlphabeticIndexKeyPress(EventHandler):
             return string.ascii_lowercase.index(event.key)
 
 
-class AlphabeticUpperIndexKeyPress(EventHandler):
+class AlphabeticUpperIndexKeyPress(KeyPressHandler):
 
     """Return 0-25 index when selecting using ascii letters."""
 
@@ -97,7 +105,7 @@ class AlphabeticUpperIndexKeyPress(EventHandler):
             return string.ascii_uppercase.index(event.key)
 
 
-class NumericIndexKeyPress(EventHandler):
+class NumericIndexKeyPress(KeyPressHandler):
 
     """Return 0-9 index when selecting using digits.
 
@@ -112,4 +120,33 @@ class NumericIndexKeyPress(EventHandler):
             if index < 0:
                 index = 9
             return index
+
+
+class MouseButtonPress(EventHandler):
+
+    BUTTONS = {}
+
+    def __init__(self, ecs, value):
+        super().__init__(ecs)
+        self.value = value
+
+    def handle(self, event):
+        if event.button in self.BUTTONS:
+            return self.value
+
+
+class MouseLeftButtonPress(MouseButtonPress):
+    BUTTONS = {Button.MOUSE_LEFT, }
+
+class MouseRightButtonPress(MouseButtonPress):
+    BUTTONS = {Button.MOUSE_RIGHT, }
+
+class MouseMiddleButtonPress(MouseButtonPress):
+    BUTTONS = {Button.MOUSE_MIDDLE, }
+
+class MouseX1ButtonPress(MouseButtonPress):
+    BUTTONS = {Button.MOUSE_X1, }
+
+class MouseX2ButtonPress(MouseButtonPress):
+    BUTTONS = {Button.MOUSE_X2, }
 

@@ -309,7 +309,7 @@ class ECS:
             self._components[component_type] = component_manager
         return component_manager
 
-    def get(self, entity):
+    def get_components(self, entity):
         """Return list of all components for given Entity."""
         components = []
         for component_manager in self._components.values():

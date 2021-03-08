@@ -308,9 +308,10 @@ class MouseEventHandlersComponent(EventHandlersComponent):
 
     def __init__(self, rectangle, handlers=None):
         super().__init__(handlers)
+        self.rectangle = rectangle
 
     def is_valid(self, position):
-        return position in rectangle
+        return position in self.rectangle
 
 
 EventHandlers = component_type(EventHandlersComponent)

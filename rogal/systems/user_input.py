@@ -67,7 +67,7 @@ class EventsHandlersSystem(System):
         for entity, handlers in event_handlers:
             if entity in ignore_events:
                 continue
-            if not event.position in handlers.rectangle:
+            if not handlers.is_valid(event.position):
                 continue
             return self.handle_event(event, entity, handlers)
 

@@ -34,6 +34,7 @@ class UpdateStateSystem(System):
 
         on_key_press = self.ecs.manage(components.OnKeyPress)
         # TODO: Check other EventHandlers components
+        # TODO: OR! set WaitingForInput to some entity
         if acts_now and on_key_press:
             self.ecs.run_state = RunState.WAITING_FOR_INPUT
         elif acts_now:
