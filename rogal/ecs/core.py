@@ -295,6 +295,8 @@ class ECS:
         entity = Entity(entity_id)
         self.entities.add(entity)
         for component in components:
+            if component is None:
+                continue
             component_manager = self.manage(component)
             component_manager.insert(entity, component=component)
         return entity

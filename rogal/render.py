@@ -1,4 +1,5 @@
 import logging
+from operator import itemgetter
 
 import numpy as np
 
@@ -40,6 +41,8 @@ class Camera(Rectangular, toolkit.Renderer):
 
         self.tileset = self.ecs.resources.tileset
 
+        self.panel = None
+
         self.position = Position.ZERO
 
         self.scrollable = scrollable
@@ -47,6 +50,10 @@ class Camera(Rectangular, toolkit.Renderer):
 
         self.walls_terrain_type = terrain.Type.WALL
         self.bitmasked_walls = self.tileset.bitmasks['WALLS_DLINE']
+
+    @property
+    def size(self):
+        return self.panel.size
 
     def calc_position(self, level, position=None):
         """Select what camera should be centered on."""
@@ -181,7 +188,10 @@ class Camera(Rectangular, toolkit.Renderer):
         locations = self.ecs.manage(components.Location)
 
         entities = self.spatial.entities(level_id)
-        for renderable, entity, location in sorted(self.ecs.join(renderables, entities, locations)):
+        for renderable, entity, location in sorted(
+            self.ecs.join(renderables, entities, locations),
+            key=itemgetter(0)
+        ):
             if not location.position in coverage:
                 # Not inside area covered by camera, skip!
                 continue
@@ -203,7 +213,9 @@ class Camera(Rectangular, toolkit.Renderer):
                 else:
                     self.panel.draw(tile, render_position)
 
-    def render(self, actor=None, location=None):
+    def render(self, panel, actor=None, location=None):
+        self.panel = panel
+
         position = None
         fov = None
         seen = None
@@ -250,14 +262,14 @@ class Camera(Rectangular, toolkit.Renderer):
 
 class MessageLog(toolkit.Renderer):
 
-    def render(self):
+    def render(self, panel):
         """Render logging records."""
         for offset, msg in enumerate(reversed(logs.LOGS_HISTORY), start=1):
-            if offset > self.panel.height:
+            if offset > panel.height:
                 break
-            self.panel.print(
+            panel.print(
                 msg.message,
-                Position(0, self.panel.height-offset),
+                Position(0, panel.height-offset),
                 colors=Colors(fg=msg.fg),
             )
 

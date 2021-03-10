@@ -1,4 +1,5 @@
 import logging
+from operator import itemgetter
 import time
 
 from .. import components
@@ -60,11 +61,16 @@ class RenderingSystem(System):
         self.root.clear(self.default_colors)
 
         # Render all panels
+        z_order = self.ecs.manage(components.ZOrder)
+        panels = self.ecs.manage(components.ConsolePanel)
         renderers = self.ecs.manage(components.PanelRenderer)
-        for panel, renderer in renderers:
+        for z, panel, renderer in sorted(
+            self.ecs.join(z_order, panels, renderers),
+            key=itemgetter(0)
+        ):
             with perf.Perf(renderer.renderer.render):
-                renderer.clear(self.default_colors)
-                renderer.render()
+                renderer.clear(panel, self.default_colors)
+                renderer.render(panel)
 
         # Show rendered panel
         self.wrapper.flush(self.root)

@@ -35,6 +35,7 @@ class EventsHandlersSystem(System):
             value = handler.handle(event)
             if value is not None:
                 # TODO: return? or just call?
+                # TODO: Consider removing entity from the call
                 return callback(entity, value)
 
     def is_valid_repeat(self, event):
@@ -63,21 +64,22 @@ class EventsHandlersSystem(System):
         if not event_handlers:
             return
 
+        panels = self.ecs.manage(components.ConsolePanel)
         ignore_events = self.ecs.manage(components.IgnoreEvents)
-        for entity, handlers in event_handlers:
+        for entity, panel, handlers in self.ecs.join(event_handlers.entities, panels, event_handlers):
             if entity in ignore_events:
                 continue
-            if not handlers.is_valid(event.position):
+            if not event.position in panel:
                 continue
             return self.handle_event(event, entity, handlers)
 
     def on_mouse_press(self, event):
         event_handlers = self.ecs.manage(components.OnMouseClick)
-        self.on_mouse_event(event, event_handlers)
+        return self.on_mouse_event(event, event_handlers)
 
     def on_mouse_motion(self, event):
         event_handlers = self.ecs.manage(components.OnMouseOver)
-        self.on_mouse_event(event, event_handlers)
+        return self.on_mouse_event(event, event_handlers)
 
     def on_mouse_wheel(self, event):
         event_handlers = self.ecs.manage(components.OnMouseWheel)

@@ -71,30 +71,13 @@ def get_align_position(panel, size, align, padding=Padding.ZERO):
 
 class Renderer(WithSizeMixin):
 
-    def __init__(self, panel=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # TODO: Z-order ??
-        self._panel = None
-        self.size = None
-        self.panel = panel
+    def layout(self, manager, parent, panel, z_order):
+        return manager.insert(parent, panel=panel, renderer=self, z_order=z_order)
 
-    @property
-    def panel(self):
-        return self._panel
+    def clear(self, panel, colors):
+        panel.clear(colors)
 
-    @panel.setter
-    def panel(self, panel):
-        self._panel = panel
-        self.size = self._panel and self._panel.size
-
-    def clear(self, colors):
-        self.panel.clear(colors)
-
-    def layout(self, panel):
-        self.panel = panel
-        yield self
-
-    def render(self):
+    def render(self, panel):
         raise NotImplementedError()
 
 
@@ -110,9 +93,39 @@ class Widget(WithSizeMixin):
         self.padding = padding
         # NOTE: subclasses MUST provide size!
 
-    def layout(self, panel):
-        """Yield Renderer instances."""
-        yield from ()
+    def layout(self, manager, parent, panel, z_order):
+        return parent
+
+
+class Container:
+
+    """Free form container.
+
+    Widgets are rendered in FIFO order and each widget use whole panel.
+
+    """
+
+    def __init__(self, widgets=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widgets = list(widgets or [])
+
+    def append(self, widget):
+        self.widgets.append(widget)
+
+    def extend(self, widgets):
+        self.widgets.extend(widgets)
+
+    def layout(self, manager, parent, panel, z_order):
+        for widget in self.widgets:
+            z_order += 1
+            widget.layout(manager, parent, panel, z_order)
+        return parent
+
+    def __len__(self):
+        return len(self.widgets)
+
+    def __iter__(self):
+        yield from self.widgets
 
 
 class Text(Widget, Renderer):
@@ -141,34 +154,15 @@ class Text(Widget, Renderer):
         # panel = panel.create_panel(position, self.size)
         return panel
 
-    def layout(self, panel):
-        self.panel = self.get_layout_panel(panel)
-        yield self
+    def layout(self, manager, parent, panel, z_order):
+        return manager.insert(parent, panel=self.get_layout_panel(panel), renderer=self, z_order=z_order)
 
-    def render(self):
-        position = get_align_position(self.panel, self.txt_size, self.align, self.padding)
-        self.panel.print(self.txt, position, colors=self.colors, align=self.align)
-
-
-class DecorationsRenderer(Renderer):
-
-    def __init__(self, panel, decorations):
-        super().__init__(panel)
-        self.decorations = decorations
-
-    def render(self):
-        self.panel.draw(self.decorations.top, Position(1, 0), Size(self.width-2, 1))
-        self.panel.draw(self.decorations.bottom, Position(1, self.height-1), Size(self.width-2, 1))
-        self.panel.draw(self.decorations.left, Position(0, 1), Size(1, self.height-2))
-        self.panel.draw(self.decorations.right, Position(self.width-1, 1), Size(1, self.height-2))
-
-        self.panel.draw(self.decorations.top_left, Position(0, 0))
-        self.panel.draw(self.decorations.top_right, Position(self.width-1, 0))
-        self.panel.draw(self.decorations.bottom_left, Position(0, self.height-1))
-        self.panel.draw(self.decorations.bottom_right, Position(self.width-1, self.height-1))
+    def render(self, panel):
+        position = get_align_position(panel, self.txt_size, self.align, self.padding)
+        panel.print(self.txt, position, colors=self.colors, align=self.align)
 
 
-class Decorations(WithSizeMixin):
+class Decorations(Renderer):
 
     """Frame decorations."""
 
@@ -234,9 +228,20 @@ class Decorations(WithSizeMixin):
             Size(panel.width-self.width, panel.height-self.height)
         )
 
-    def layout(self, panel):
+    def layout(self, manager, parent, panel, z_order):
         # Always use all available space
-        yield DecorationsRenderer(panel, self)
+        return manager.insert(parent, panel=panel, renderer=self, z_order=z_order)
+
+    def render(self, panel):
+        panel.draw(self.top, Position(1, 0), Size(panel.width-2, 1))
+        panel.draw(self.bottom, Position(1, panel.height-1), Size(panel.width-2, 1))
+        panel.draw(self.left, Position(0, 1), Size(1, panel.height-2))
+        panel.draw(self.right, Position(panel.width-1, 1), Size(1, panel.height-2))
+
+        panel.draw(self.top_left, Position(0, 0))
+        panel.draw(self.top_right, Position(panel.width-1, 0))
+        panel.draw(self.bottom_left, Position(0, panel.height-1))
+        panel.draw(self.bottom_right, Position(panel.width-1, panel.height-1))
 
     def __nonzero__(self):
         return any(self.top, self.bottom, self.left, self.right)
@@ -263,40 +268,14 @@ class Decorated(Widget):
         panel = panel.create_panel(position, size)
         return panel
 
-    def layout(self, panel):
+    def layout(self, manager, parent, panel, z_order):
         panel = self.get_layout_panel(panel)
-        yield from self.decorations.layout(panel)
+        entity = manager.insert(parent, panel=panel, z_order=z_order)
+        self.decorations.layout(manager, entity, panel, z_order)
         panel = self.decorations.inner_panel(panel)
-        yield from self.decorated.layout(panel)
-
-
-class Container:
-
-    """Free form container.
-
-    Widgets are rendered in FIFO order and each widget use whole panel.
-
-    """
-
-    def __init__(self, widgets=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.widgets = list(widgets or [])
-
-    def append(self, widget):
-        self.widgets.append(widget)
-
-    def extend(self, widgets):
-        self.widgets.extend(widgets)
-
-    def layout(self, panel):
-        for widget in self.widgets:
-            yield from widget.layout(panel)
-
-    def __len__(self):
-        return len(self.widgets)
-
-    def __iter__(self):
-        yield from self.widgets
+        z_order += 1
+        self.decorated.layout(manager, entity, panel, z_order)
+        return entity
 
 
 class Row(Container, Widget):
@@ -324,13 +303,14 @@ class Row(Container, Widget):
             max([widget.height for widget in self])
         )
 
-    def layout(self, panel):
+    def layout(self, manager, parent, panel, z_order):
         position = get_position(panel, self.size, self.align, self.padding)
         for widget in self:
             # TODO: widget.padding?
             subpanel = panel.create_panel(position, widget.size)
-            yield from widget.layout(subpanel)
+            widget.layout(manager, parent, subpanel, z_order)
             position += Position(widget.width, 0)
+        return parent
 
 
 # TODO: ???
@@ -355,11 +335,12 @@ class Split(Container):
         self.top = top
         self.bottom = bottom
 
-    def layout(self, panel):
+    def layout(self, manager, parent, panel, z_order):
         panels = panel.split(self.left, self.right, self.top, self.bottom)
         for i, widget in enumerate(self.widgets):
             if widget:
-                yield from widget.layout(panels[i])
+                widget.layout(manager, parent, panels[i], z_order)
             if i >= 2:
                 break
+        return parent
 

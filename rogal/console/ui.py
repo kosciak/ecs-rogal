@@ -18,6 +18,11 @@ from . import toolkit
 # TODO: Cursor (blinking)
 
 
+class ZOrder:
+    BASE = 1
+    MODAL = 100
+
+
 class WindowTitle(toolkit.Decorated):
 
     def __init__(self, decorations, text, align=Align.TOP_LEFT):
@@ -27,15 +32,18 @@ class WindowTitle(toolkit.Decorated):
 
 class Button(toolkit.Decorated):
 
-    def __init__(self, decorations, width, text, value, align=Align.TOP_LEFT):
+    def __init__(self, decorations, width, text, on_mouse_click, align=Align.TOP_LEFT):
         text = toolkit.Text(text, align=Align.CENTER, width=width)
         super().__init__(decorations, text, align=align)
-        self.value = value
-        self.panel = None
+        self.on_mouse_click = on_mouse_click
 
-    def layout(self, panel):
-        self.panel = self.get_layout_panel(panel)
-        yield from super().layout(panel)
+    def layout(self, manager, parent, panel, z_order):
+        entity = super().layout(manager, parent, panel, z_order)
+        manager.bind(
+            entity,
+            on_mouse_click=self.on_mouse_click,
+        )
+        return entity
 
 
 class Window(toolkit.Container):
@@ -75,10 +83,10 @@ class ModalWindow(Window, toolkit.Widget):
         )
         self.size = size
 
-    def layout(self, panel):
+    def layout(self, manager, parent, panel, z_order):
         position = toolkit.get_position(panel.root, self.size, self.align, self.padding)
         panel = panel.create_panel(position, self.size)
-        yield from super().layout(panel)
+        return super().layout(manager, parent, panel, z_order)
 
 
 class UIManager:
@@ -142,26 +150,47 @@ class UIManager:
         )
         return window
 
-    def create_button(self, text, value):
+    def create_button(self, text, callback, value):
         button = Button(
             decorations=self.button_decorations,
             width=self.button_width,
             text=text,
-            value=value,
+            on_mouse_click={
+                handlers.MouseLeftButtonPress(self.ecs, value): callback,
+            },
         )
         return button
 
-    def create_buttons_row(self, buttons):
+    def create_buttons_row(self, callback, buttons):
         buttons_row = toolkit.Row(align=self.buttons_align)
         for text, value in buttons:
-            buttons_row.append(self.create_button(text, value))
+            buttons_row.append(self.create_button(text, callback, value))
         return buttons_row
 
-    def layout(self, window, layout):
-        for renderer in layout.layout(self.root):
-            renderer = self.ecs.create(
-                components.PanelRenderer(renderer),
-                components.ParentWindow(window)
+    def insert(self, parent, *,
+               panel=None,
+               renderer=None,
+               z_order=None,
+              ):
+        return self.ecs.create(
+            components.ParentWindow(parent),
+            panel and components.ConsolePanel(panel),
+            renderer and components.PanelRenderer(renderer),
+            z_order and components.ZOrder(z_order),
+        )
+
+    def bind(self, entity, on_key_press=None, on_mouse_click=None, on_mouse_over=None):
+        if on_key_press:
+            self.ecs.manage(components.OnKeyPress).insert(
+                entity, on_key_press,
+            )
+        if on_mouse_click:
+            self.ecs.manage(components.OnMouseClick).insert(
+                entity, on_mouse_click,
+            )
+        if on_mouse_over:
+            self.ecs.manage(components.OnMouseOver).insert(
+                entity, on_mouse_over,
             )
 
     def create(self, window, window_type, context):
@@ -180,6 +209,7 @@ class UIManager:
 
             msg = toolkit.Text(msg, align=Align.TOP_CENTER, padding=Padding(1, 0))
             buttons = self.create_buttons_row(
+                callback=callback,
                 buttons=[
                     ['Yes', True],
                     ['No',  False],
@@ -188,19 +218,13 @@ class UIManager:
 
             layout.extend([msg, buttons])
 
-            self.layout(window, layout)
-
-            on_key_press = self.ecs.manage(components.OnKeyPress).insert(window)
-            on_key_press.bind(handlers.YesNoKeyPress(self.ecs), callback)
-
-            for button in buttons:
-                self.ecs.create(
-                    components.OnMouseClick(
-                        button.panel,
-                        {handlers.MouseLeftButtonPress(self.ecs, button.value): callback},
-                    ),
-                    components.ParentWindow(window),
-                )
+            entity = layout.layout(self, window, self.root, ZOrder.MODAL)
+            self.bind(
+                entity,
+                on_key_press={
+                    handlers.YesNoKeyPress(self.ecs): callback,
+                },
+            )
 
         if window_type == 'IN_GAME':
             layout = toolkit.Split(bottom=12)
@@ -213,5 +237,5 @@ class UIManager:
 
             layout.extend([camera, msg_log])
 
-            self.layout(window, layout)
+            layout.layout(self, window, self.root, ZOrder.BASE)
 

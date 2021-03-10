@@ -28,6 +28,19 @@ DestroyWindow = Flag('DestroyWindow')
 ParentWindow = EntityReference('ParentWindow')
 
 
+ZOrder = Int('ZOrder')
+
+
+class ConsolePanel(Component):
+    __slots__ = ('panel', )
+
+    def __init__(self, panel):
+        self.panel = panel
+
+    def __contains__(self, position):
+        return position in self.panel
+
+
 class PanelRenderer(Component):
     __slots__ = ('renderer', )
 
@@ -35,11 +48,11 @@ class PanelRenderer(Component):
         # TODO: Z-order?
         self.renderer = renderer
 
-    def clear(self, colors):
-        self.renderer.clear(colors)
+    def clear(self, panel, colors):
+        self.renderer.clear(panel.panel, colors)
 
-    def render(self):
-        self.renderer.render()
+    def render(self, panel):
+        self.renderer.render(panel.panel)
 
 # TODO: HasFocus, OnScreen, maybe associated Input/InputHandler?
 
@@ -303,32 +316,20 @@ class EventHandlersComponent(Component):
         self.handlers[handler] = callback
 
 
-class MouseEventHandlersComponent(EventHandlersComponent):
-    __slots__ = ('rectangle', )
-
-    def __init__(self, rectangle, handlers=None):
-        super().__init__(handlers)
-        self.rectangle = rectangle
-
-    def is_valid(self, position):
-        return position in self.rectangle
-
-
 EventHandlers = component_type(EventHandlersComponent)
-MouseEventHandlers = component_type(MouseEventHandlersComponent)
 
 
 OnQuit = EventHandlers('OnQuit')
 
 OnKeyPress = EventHandlers('OnKeyPress')
 
-OnMouseOver = MouseEventHandlers('OnMouseOver')
+OnMouseOver = EventHandlers('OnMouseOver')
 
-OnMouseClick = MouseEventHandlers('OnMouseClick')
+OnMouseClick = EventHandlers('OnMouseClick')
 
 OnMouseWheel = EventHandlers('OnMouseWheel')
 
-# TODO: Use something like HasFocus instead?
+# TODO: Use something like HasFocus(priority) instead?
 IgnoreEvents = Flag('IgnoreEvents')
 
 

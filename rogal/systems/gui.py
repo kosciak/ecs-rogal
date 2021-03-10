@@ -4,10 +4,6 @@ from .. import components
 from ..ecs import System
 from ..ecs.run_state import RunState
 
-from ..console import ui
-
-from .. import render
-
 from ..utils import perf
 
 
@@ -42,17 +38,22 @@ class CreateWindowsSystem(System):
 
 class DestroyWindowsSystem(System):
 
+    def get_children(self, parents):
+        parent_windows = self.ecs.manage(components.ParentWindow)
+        children = set()
+        for entity, parent in parent_windows:
+            if parent in parents:
+                children.add(entity)
+        return children
+
     def run(self):
         to_destroy = self.ecs.manage(components.DestroyWindow)
         if not to_destroy:
             return
 
-        for_removal = set(to_destroy.entities)
-
-        parent_windows = self.ecs.manage(components.ParentWindow)
-        for entity, parent in parent_windows:
-            if parent in to_destroy:
-                for_removal.add(entity)
-
-        self.ecs.remove(*for_removal)
+        parents = set(to_destroy.entities)
+        while parents:
+            children = self.get_children(parents)
+            self.ecs.remove(*parents)
+            parents = children
 
