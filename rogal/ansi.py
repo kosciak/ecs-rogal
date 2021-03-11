@@ -1,7 +1,11 @@
 from enum import Enum
 
 
-"""Rudimentary ANSI support."""
+"""Rudimentary ANSI support.
+
+See: https://en.wikipedia.org/wiki/ANSI_escape_code
+
+"""
 
 
 class EscapeSequence(Enum):
@@ -28,14 +32,20 @@ class SGR_Attribute(Enum):
     RESET = 0
     BOLD = 1
     DIM = 2
+    ITALIC = 3
     UNDERLINED = 4
+    SLOW_BLINK = 5
+    RAPID_BLINK = 6
     INVERT = 7
+    HIDE = 8
+    STRIKE = 9
     FG_BASE = 30
     SET_FG = 38
     DEFAULT_FG = 39
     BG_BASE = 40
     SET_BG = 48
     DEFAULT_BG = 49
+    OVERLINED = 53
     FG_BRIGHT_BASE = 90
     BG_BRIGHT_BASE = 100
 
@@ -74,11 +84,29 @@ def bold():
 def dim():
     return sgr(SGR_Attribute.DIM.value)
 
+def italic():
+    return sgr(SGR_Attribute.ITALIC.value)
+
 def underlined():
     return sgr(SGR_Attribute.UNDERLINED.value)
 
+def slow_blink():
+    return sgr(SGR_Attribute.SLOW_BLINK.value)
+
+def rapid_blink():
+    return sgr(SGR_Attribute.RAPID_BLINK.value)
+
 def inverted():
     return sgr(SGR_Attribute.INVERT.value)
+
+def hide():
+    return sgr(SGR_Attribute.HIDE.value)
+
+def strike():
+    return sgr(SGR_Attribute.STRIKE.value)
+
+def overlined():
+    return sgr(SGR_Attribute.OVERLINED.value)
 
 
 def fg(color):
