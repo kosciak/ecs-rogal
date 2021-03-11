@@ -112,7 +112,9 @@ def run():
 
         systems.spatial.IndexingSystem(ecs),
 
+        systems.awerness.InvalidateViewshedsSystem(ecs),
         systems.awerness.VisibilitySystem(ecs),
+        systems.awerness.RevealLevelSystem(ecs),
 
         systems.actions.ActionsPerformedSystem(ecs),
 

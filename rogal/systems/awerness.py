@@ -14,20 +14,13 @@ log = logging.getLogger(__name__)
 msg_log = logging.getLogger('rogal.messages')
 
 
-class VisibilitySystem(System):
+class InvalidateViewshedsSystem(System):
 
     INCLUDE_STATES = {
-        RunState.PRE_RUN,
-        RunState.WAITING_FOR_INPUT,
         RunState.PERFOM_ACTIONS,
     }
 
-    def __init__(self, ecs):
-        super().__init__(ecs)
-        self.spatial = self.ecs.resources.spatial
-
-    # TODO: rename this method!
-    def invalidate_blocks_vision_changed_viewsheds(self):
+    def on_blocks_vision_changed(self):
         blocks_vision_changes = self.ecs.manage(components.BlocksVisionChanged)
         if not blocks_vision_changes:
             return
@@ -47,7 +40,7 @@ class VisibilitySystem(System):
             if viewshed.positions & positions_per_level[location.level_id]:
                 viewshed.invalidate()
 
-    def invalidate_has_moved_viewsheds(self):
+    def on_has_moved(self):
         # Invalidate Viewshed after moving
         has_moved = self.ecs.manage(components.HasMoved)
         if not has_moved:
@@ -57,7 +50,23 @@ class VisibilitySystem(System):
         for entity, viewshed in self.ecs.join(has_moved.entities, viewsheds):
             viewshed.invalidate()
 
-    def reveal_levels(self):
+    def run(self):
+        self.on_blocks_vision_changed()
+        self.on_has_moved()
+
+
+class RevealLevelSystem(System):
+
+    INCLUDE_STATES = {
+        RunState.WAITING_FOR_INPUT,
+        # RunState.PERFOM_ACTIONS,
+    }
+
+    def __init__(self, ecs):
+        super().__init__(ecs)
+        self.spatial = self.ecs.resources.spatial
+
+    def run(self):
         wants_to_reveal = self.ecs.manage(components.WantsToRevealLevel)
         if not wants_to_reveal:
             return
@@ -69,6 +78,18 @@ class VisibilitySystem(System):
             msg_log.warning('Level revealed!')
 
         wants_to_reveal.clear()
+
+
+class VisibilitySystem(System):
+
+    INCLUDE_STATES = {
+        RunState.PRE_RUN,
+        RunState.PERFOM_ACTIONS,
+    }
+
+    def __init__(self, ecs):
+        super().__init__(ecs)
+        self.spatial = self.ecs.resources.spatial
 
     def update_viewsheds(self):
         players = self.ecs.manage(components.Player)
@@ -131,11 +152,6 @@ class VisibilitySystem(System):
                     msg_log.info(f'You see: {names}')
 
     def run(self):
-        if self.ecs.run_state == RunState.WAITING_FOR_INPUT:
-            self.reveal_levels()
-            return
-        self.invalidate_blocks_vision_changed_viewsheds()
-        self.invalidate_has_moved_viewsheds()
         self.update_viewsheds()
         with perf.Perf(self.spotted_alert):
             self.spotted_alert()
