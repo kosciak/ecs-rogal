@@ -1,4 +1,5 @@
 import collections
+import time
 
 from ..geometry import Position, Size, WithSizeMixin
 from ..tiles import Tile
@@ -69,7 +70,7 @@ def get_align_position(panel, size, align, padding=Padding.ZERO):
     )
 
 
-class Renderer(WithSizeMixin):
+class Renderer:
 
     def layout(self, manager, parent, panel, z_order):
         return manager.insert(parent, panel=panel, renderer=self, z_order=z_order)
@@ -81,9 +82,29 @@ class Renderer(WithSizeMixin):
         raise NotImplementedError()
 
 
+class Blinking(Renderer):
+
+    BLINK_RATE = 1200
+
+    def __init__(self, renderer, rate=BLINK_RATE):
+        self.renderer = renderer
+        self.rate = rate // 2
+
+    def render(self, panel):
+        # TODO: blinking MUST be synchronized (during a frame) between ALL renderers!
+        #       Maybe should be done on System level? NOT calling render if Blinking component present?
+        if int((time.time()*1000) / self.rate) % 2 == 0:
+            return
+        return self.renderer.render(panel)
+
+
 class Widget(WithSizeMixin):
 
-    """Layout widget with it's own size, alignment and padding."""
+    """Layout widget with it's own size, alignment and padding.
+
+    NOTE: Subclasses MUST provide size attribute!
+
+    """
 
     __slots__ = ('align', 'padding', )
 
@@ -91,7 +112,18 @@ class Widget(WithSizeMixin):
         super().__init__(*args, **kwargs)
         self.align = align
         self.padding = padding
-        # NOTE: subclasses MUST provide size!
+
+    @property
+    def padded_width(self):
+        return self.width + self.padding.left + self.padding.right
+
+    @property
+    def padded_height(self):
+        return self.height + self.padding.top + self.padding.bottom
+
+    @property
+    def padded_size(self):
+        return Size(self.padded_width, self.padded_height)
 
     def layout(self, manager, parent, panel, z_order):
         return parent
@@ -101,7 +133,8 @@ class Container:
 
     """Free form container.
 
-    Widgets are rendered in FIFO order and each widget use whole panel.
+    Widgets are rendered in FIFO order and each widget use whole panel. 
+    Will overdraw previous ones if they overlap.
 
     """
 
@@ -148,8 +181,7 @@ class Text(Widget, Renderer):
         )
 
     def get_layout_panel(self, panel):
-        height = self.height + self.padding.top + self.padding.bottom
-        panel = panel.create_panel(Position.ZERO, Size(panel.width, height))
+        panel = panel.create_panel(Position.ZERO, Size(panel.width, self.padded_height))
         # position = get_position(panel, self.size, self.align)
         # panel = panel.create_panel(position, self.size)
         return panel
@@ -162,7 +194,7 @@ class Text(Widget, Renderer):
         panel.print(self.txt, position, colors=self.colors, align=self.align)
 
 
-class Decorations(Renderer):
+class Decorations(WithSizeMixin, Renderer):
 
     """Frame decorations."""
 
@@ -258,8 +290,8 @@ class Decorated(Widget):
 
         size = getattr(self.decorated, 'size', None)
         self.size = size and Size(
-            self.decorated.width + self.decorations.width,
-            self.decorated.height + self.decorations.height
+            self.decorated.padded_width + self.decorations.width,
+            self.decorated.padded_height + self.decorations.height
         )
 
     def get_layout_panel(self, panel):
@@ -280,7 +312,7 @@ class Decorated(Widget):
 
 class Row(Container, Widget):
 
-    """Parallel container.
+    """Horizontal container.
 
     Widgets are rendererd in FIFO order from left to right.
 
@@ -295,21 +327,19 @@ class Row(Container, Widget):
 
     @property
     def size(self):
-        if not self:
+        if not self.widgets:
             return None
         return Size(
-            # TODO: widget.padding?
-            sum([widget.width for widget in self]),
-            max([widget.height for widget in self])
+            sum([widget.padded_width for widget in self]),
+            max([widget.padded_height for widget in self])
         )
 
     def layout(self, manager, parent, panel, z_order):
         position = get_position(panel, self.size, self.align, self.padding)
         for widget in self:
-            # TODO: widget.padding?
-            subpanel = panel.create_panel(position, widget.size)
+            subpanel = panel.create_panel(position, widget.padded_size)
             widget.layout(manager, parent, subpanel, z_order)
-            position += Position(widget.width, 0)
+            position += Position(widget.padded_width, 0)
         return parent
 
 
@@ -319,9 +349,34 @@ class Row(Container, Widget):
 #     pass
 
 
-# TODO: layout(self, panel): - change size of remaining panel to what is left
-# class List(Container):
-#     pass
+class List(Container, Widget):
+
+    """Vertical container.
+
+    Widgets are rendererd in FIFO order from top to bottom.
+
+    """
+
+    def __init__(self, widgets=None, *, align, padding=Padding.ZERO):
+        super().__init__(widgets=widgets, align=align, padding=padding)
+
+    @property
+    def size(self):
+        if not self.widgets:
+            return None
+        return Size(
+            max([widget.padded_width for widget in self]),
+            sum([widget.padded_height for widget in self])
+        )
+
+    def layout(self, manager, parent, panel, z_order):
+        position = get_position(panel, self.size, self.align, self.padding)
+        for widget in self:
+            subpanel = panel.create_panel(position, widget.padded_size)
+            widget.layout(manager, parent, subpanel, z_order)
+            position += Position(0, widget.padded_height)
+        return parent
+
 
 
 class Split(Container):
