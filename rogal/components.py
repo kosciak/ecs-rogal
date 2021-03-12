@@ -13,7 +13,7 @@ from .tiles import RenderOrder
 from . import terrain
 
 
-# Rendering
+# GUI, Windows, Rendering
 
 class CreateWindow(Component):
     __slots__ = ('window_type', 'context', )
@@ -26,6 +26,21 @@ class CreateWindow(Component):
 DestroyWindow = Flag('DestroyWindow')
 
 ParentWindow = EntityReference('ParentWindow')
+
+
+class WindowWidgets(Component):
+    __slots__ = ('widgets_layout', 'needs_update', )
+
+    def __init__(self, widgets_layout, needs_update=True):
+        self.widgets_layout = widgets_layout
+        self.needs_update = needs_update
+
+    def invalidate(self):
+        self.needs_update = True
+
+    def layout(self, ui_manager, window, panel):
+        self.widgets_layout.layout(ui_manager, window, panel)
+        self.needs_update = False
 
 
 ZOrder = Int('ZOrder')
@@ -55,6 +70,38 @@ class PanelRenderer(Component):
         self.renderer.render(panel.panel)
 
 # TODO: HasFocus, OnScreen, maybe associated Input/InputHandler?
+
+
+# Events and user input
+
+class EventHandlersComponent(Component):
+    __slots__ = ('handlers', )
+
+    def __init__(self, handlers=None):
+        self.handlers = dict(handlers or {})
+
+    def __iter__(self):
+        yield from self.handlers.items()
+
+    def bind(self, handler, callback):
+        self.handlers[handler] = callback
+
+
+EventHandlers = component_type(EventHandlersComponent)
+
+
+OnQuit = EventHandlers('OnQuit')
+
+OnKeyPress = EventHandlers('OnKeyPress')
+
+OnMouseOver = EventHandlers('OnMouseOver')
+
+OnMouseClick = EventHandlers('OnMouseClick')
+
+OnMouseWheel = EventHandlers('OnMouseWheel')
+
+# TODO: Use something like HasFocus(priority) instead?
+IgnoreEvents = Flag('IgnoreEvents')
 
 
 # Flags
@@ -299,38 +346,6 @@ class Actor(Component):
 
     def take_action(self, entity):
         return self.handler.take_action(entity)
-
-
-# Events and user input
-
-class EventHandlersComponent(Component):
-    __slots__ = ('handlers', )
-
-    def __init__(self, handlers=None):
-        self.handlers = dict(handlers or {})
-
-    def __iter__(self):
-        yield from self.handlers.items()
-
-    def bind(self, handler, callback):
-        self.handlers[handler] = callback
-
-
-EventHandlers = component_type(EventHandlersComponent)
-
-
-OnQuit = EventHandlers('OnQuit')
-
-OnKeyPress = EventHandlers('OnKeyPress')
-
-OnMouseOver = EventHandlers('OnMouseOver')
-
-OnMouseClick = EventHandlers('OnMouseClick')
-
-OnMouseWheel = EventHandlers('OnMouseWheel')
-
-# TODO: Use something like HasFocus(priority) instead?
-IgnoreEvents = Flag('IgnoreEvents')
 
 
 # Action intentions

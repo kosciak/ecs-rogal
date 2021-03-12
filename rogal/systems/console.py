@@ -14,7 +14,34 @@ from ..utils import perf
 log = logging.getLogger(__name__)
 
 
-class RenderingSystem(System):
+class ConsoleSystem(System):
+
+    def __init__(self, ecs):
+        super().__init__(ecs)
+
+        self.wrapper = self.ecs.resources.wrapper
+        self._root = None
+
+    @property
+    def root(self):
+        if self.ecs.resources.root_panel is None:
+            self.ecs.resources.root_panel = self.wrapper.create_panel()
+        self._root = self.ecs.resources.root_panel
+        return self._root
+
+
+class LayoutSytem(ConsoleSystem):
+
+    def run(self):
+        ui_manager = self.ecs.resources.ui_manager
+        window_wigdets = self.ecs.manage(components.WindowWidgets)
+        for window, widgets in window_wigdets:
+            if not widgets.needs_update:
+                continue
+            widgets.layout(ui_manager, window, self.root)
+
+
+class RenderingSystem(ConsoleSystem):
 
     FPS = 35
 
@@ -24,20 +51,10 @@ class RenderingSystem(System):
         self.tileset = self.ecs.resources.tileset
         self.default_colors = Colors(self.tileset.palette.fg, self.tileset.palette.bg)
 
-        self.wrapper = self.ecs.resources.wrapper
-        self._root = None
-
         self._last_run = None
         self._fps = None
         self.frame = None
         self.fps = self.FPS
-
-    @property
-    def root(self):
-        if self.ecs.resources.root_panel is None:
-            self.ecs.resources.root_panel = self.wrapper.create_panel()
-        self._root = self.ecs.resources.root_panel
-        return self._root
 
     @property
     def fps(self):

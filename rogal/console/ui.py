@@ -12,15 +12,9 @@ from . import toolkit
 
 
 # TODO: frames overlapping, and fixing overlapped/overdrawn characters to merge borders/decorations
-# TODO: Keep track of Z-order of Windows?
 # TODO: Scrollable Panels?
 # TODO: TextInput
 # TODO: Cursor (blinking)
-
-
-class ZOrder:
-    BASE = 1
-    MODAL = 100
 
 
 class WindowTitle(toolkit.Decorated):
@@ -37,7 +31,7 @@ class Button(toolkit.Decorated):
         super().__init__(decorations, text, align=align)
         self.on_mouse_click = on_mouse_click
 
-    def layout(self, manager, parent, panel, z_order):
+    def layout(self, manager, parent, panel, z_order=toolkit.ZOrder.BASE):
         entity = super().layout(manager, parent, panel, z_order)
         manager.bind(
             entity,
@@ -48,10 +42,11 @@ class Button(toolkit.Decorated):
 
 class Window(toolkit.Container):
 
-    def __init__(self, decorations, title=None, *args, **kwargs):
+    def __init__(self, decorations, title=None, on_key_press=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.frame = toolkit.Container()
         self.content = toolkit.Container()
+        self.on_key_press = on_key_press
 
         self.widgets.extend([
             toolkit.Decorated(
@@ -70,32 +65,38 @@ class Window(toolkit.Container):
     def extend(self, widgets):
         self.content.extend(widgets)
 
+    def layout(self, manager, parent, panel, z_order=toolkit.ZOrder.BASE):
+        entity = super().layout(manager, parent, panel, z_order)
+        manager.bind(
+            entity,
+            on_key_press=self.on_key_press,
+        )
+        return entity
+
 
 class ModalWindow(Window, toolkit.Widget):
 
-    def __init__(self, align, padding, size, decorations, title=None, *args, **kwargs):
+    def __init__(self, align, padding, size, decorations, title=None, on_key_press=None, *args, **kwargs):
         super().__init__(
             align=align,
             padding=padding,
             decorations=decorations,
             title=title,
+            on_key_press=on_key_press,
             *args, **kwargs,
         )
         self.size = size
 
-    def layout(self, manager, parent, panel, z_order):
+    def layout(self, manager, parent, panel, z_order=toolkit.ZOrder.MODAL):
         position = toolkit.get_position(panel.root, self.size, self.align, self.padding)
         panel = panel.create_panel(position, self.size)
         return super().layout(manager, parent, panel, z_order)
 
 
-class UIManager:
+class WidgetsLayoutManager:
 
     def __init__(self, ecs):
         self.ecs = ecs
-
-        self.wrapper = self.ecs.resources.wrapper
-        self._root = None
 
         self.tileset = self.ecs.resources.tileset
         self.default_colors = Colors(self.tileset.palette.fg, self.tileset.palette.bg)
@@ -118,13 +119,6 @@ class UIManager:
         self.button_width = 8
         self.buttons_align = Align.BOTTOM_CENTER
 
-    @property
-    def root(self):
-        if self.ecs.resources.root_panel is None:
-            self.ecs.resources.root_panel = self.wrapper.create_panel()
-        self._root = self.ecs.resources.root_panel
-        return self._root
-
     def create_title(self, title):
         if title is None:
             return
@@ -135,18 +129,20 @@ class UIManager:
         )
         return title
 
-    def create_window(self, title=None):
+    def create_window(self, title=None, on_key_press=None):
         window = Window(
             decorations=self.window_decorations,
             title=self.create_title(title),
+            on_key_press=on_key_press,
         )
         return window
 
-    def create_modal_window(self, align, padding, size, title=None):
+    def create_modal_window(self, align, padding, size, title=None, on_key_press=None):
         window = ModalWindow(
             align=align, padding=padding, size=size,
             decorations=self.window_decorations,
             title=self.create_title(title),
+            on_key_press=on_key_press,
         )
         return window
 
@@ -167,17 +163,66 @@ class UIManager:
             buttons_row.append(self.create_button(text, callback, value))
         return buttons_row
 
-    def insert(self, parent, *,
+    def create(self, window, window_type, context):
+        # TODO: Move layout definitions to data/ui.yaml ?
+        if window_type == 'YES_NO_PROMPT':
+            title = context['title']
+            msg = context['msg']
+            callback = context['callback']
+
+            widgets_layout = self.create_modal_window(
+                align=Align.TOP_CENTER,
+                padding=Padding(12, 0),
+                size=Size(40, 8),
+                title=title,
+                on_key_press={
+                    handlers.YesNoKeyPress(self.ecs): callback,
+                },
+            )
+
+            msg = toolkit.Text(msg, align=Align.TOP_CENTER, padding=Padding(1, 0))
+            buttons = self.create_buttons_row(
+                callback=callback,
+                buttons=[
+                    ['Yes', True],
+                    ['No',  False],
+                ],
+            )
+
+            widgets_layout.extend([msg, buttons])
+
+        if window_type == 'IN_GAME':
+            widgets_layout = toolkit.Split(bottom=12)
+
+            camera = self.create_window(title='mapcam')
+            camera.content.append(render.Camera(self.ecs))
+
+            msg_log = self.create_window(title='logs')
+            msg_log.content.append(render.MessageLog())
+
+            widgets_layout.extend([camera, msg_log])
+
+        return widgets_layout
+
+
+class UIManager:
+
+    def __init__(self, ecs):
+        self.ecs = ecs
+        self.layout_manager = WidgetsLayoutManager(self.ecs)
+
+    def create(self, parent, *,
                panel=None,
                renderer=None,
                z_order=None,
               ):
-        return self.ecs.create(
+        entity = self.ecs.create(
             components.ParentWindow(parent),
             panel and components.ConsolePanel(panel),
             renderer and components.PanelRenderer(renderer),
             z_order and components.ZOrder(z_order),
         )
+        return entity
 
     def bind(self, entity, on_key_press=None, on_mouse_click=None, on_mouse_over=None):
         if on_key_press:
@@ -193,49 +238,9 @@ class UIManager:
                 entity, on_mouse_over,
             )
 
-    def create(self, window, window_type, context):
-        # TODO: Move layout definitions to data/ui.yaml ?
-        if window_type == 'YES_NO_PROMPT':
-            title = context['title']
-            msg = context['msg']
-            callback = context['callback']
-
-            layout = self.create_modal_window(
-                align=Align.TOP_CENTER,
-                padding=Padding(12, 0),
-                size=Size(40, 8),
-                title=title,
-            )
-
-            msg = toolkit.Text(msg, align=Align.TOP_CENTER, padding=Padding(1, 0))
-            buttons = self.create_buttons_row(
-                callback=callback,
-                buttons=[
-                    ['Yes', True],
-                    ['No',  False],
-                ],
-            )
-
-            layout.extend([msg, buttons])
-
-            entity = layout.layout(self, window, self.root, ZOrder.MODAL)
-            self.bind(
-                entity,
-                on_key_press={
-                    handlers.YesNoKeyPress(self.ecs): callback,
-                },
-            )
-
-        if window_type == 'IN_GAME':
-            layout = toolkit.Split(bottom=12)
-
-            camera = self.create_window(title='mapcam')
-            camera.content.append(render.Camera(self.ecs))
-
-            msg_log = self.create_window(title='logs')
-            msg_log.content.append(render.MessageLog())
-
-            layout.extend([camera, msg_log])
-
-            layout.layout(self, window, self.root, ZOrder.BASE)
+    def create_widgets_layout(self, window, window_type, context):
+        widgets_layout = self.layout_manager.create(
+            window, window_type, context,
+        )
+        return widgets_layout
 

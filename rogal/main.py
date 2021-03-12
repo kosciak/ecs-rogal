@@ -124,6 +124,7 @@ def run():
 
         systems.gui.DestroyWindowsSystem(ecs),
         systems.gui.CreateWindowsSystem(ecs),
+        systems.console.LayoutSytem(ecs),
         systems.console.RenderingSystem(ecs),
     ]:
         ecs.register(system)

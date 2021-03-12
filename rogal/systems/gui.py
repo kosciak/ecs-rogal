@@ -12,11 +12,6 @@ log = logging.getLogger(__name__)
 
 class CreateWindowsSystem(System):
 
-    def __init__(self, ecs):
-        super().__init__(ecs)
-
-        self.ui_manager = self.ecs.resources.ui_manager
-
     def init_windows(self):
         self.ecs.create(components.CreateWindow('IN_GAME'))
 
@@ -25,8 +20,13 @@ class CreateWindowsSystem(System):
         if not to_create:
             return
 
+        ui_manager = self.ecs.resources.ui_manager
+        window_wigdets = self.ecs.manage(components.WindowWidgets)
         for window, create in to_create:
-            self.ui_manager.create(window, create.window_type, create.context)
+            widgets_layout = ui_manager.create_widgets_layout(
+                window, create.window_type, create.context,
+            )
+            window_wigdets.insert(window, widgets_layout)
 
         to_create.clear()
 
