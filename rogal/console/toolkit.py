@@ -131,7 +131,7 @@ class Widget(WithSizeMixin):
         return Size(self.padded_width, self.padded_height)
 
     def layout(self, manager, parent, panel, z_order=None):
-        return parent
+        raise NotImplementedError()
 
 
 class Container:
@@ -154,10 +154,11 @@ class Container:
         self.widgets.extend(widgets)
 
     def layout(self, manager, parent, panel, z_order=None):
+        entity = manager.create(parent, panel=panel, z_order=z_order)
         for widget in self.widgets:
             z_order += 1
-            widget.layout(manager, parent, panel, z_order)
-        return parent
+            widget.layout(manager, entity, panel, z_order)
+        return entity
 
     def __len__(self):
         return len(self.widgets)
@@ -340,12 +341,13 @@ class Row(Container, Widget):
         )
 
     def layout(self, manager, parent, panel, z_order=None):
+        entity = manager.create(parent, panel=panel, z_order=z_order)
         position = get_position(panel, self.size, self.align, self.padding)
         for widget in self:
             subpanel = panel.create_panel(position, widget.padded_size)
-            widget.layout(manager, parent, subpanel, z_order)
+            widget.layout(manager, entity, subpanel, z_order)
             position += Position(widget.padded_width, 0)
-        return parent
+        return entity
 
 
 # TODO: ???
@@ -375,12 +377,13 @@ class List(Container, Widget):
         )
 
     def layout(self, manager, parent, panel, z_order=None):
+        entity = manager.create(parent, panel=panel, z_order=z_order)
         position = get_position(panel, self.size, self.align, self.padding)
         for widget in self:
             subpanel = panel.create_panel(position, widget.padded_size)
-            widget.layout(manager, parent, subpanel, z_order)
+            widget.layout(manager, entity, subpanel, z_order)
             position += Position(0, widget.padded_height)
-        return parent
+        return entity
 
 
 
@@ -396,11 +399,12 @@ class Split(Container):
         self.bottom = bottom
 
     def layout(self, manager, parent, panel, z_order=None):
+        entity = manager.create(parent, panel=panel, z_order=z_order)
         panels = panel.split(self.left, self.right, self.top, self.bottom)
         for i, widget in enumerate(self.widgets):
             if widget:
-                widget.layout(manager, parent, panels[i], z_order)
+                widget.layout(manager, entity, panels[i], z_order)
             if i >= 2:
                 break
-        return parent
+        return entity
 

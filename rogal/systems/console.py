@@ -32,11 +32,21 @@ class ConsoleSystem(System):
 
 class LayoutSytem(ConsoleSystem):
 
+    def get_widgets_to_update(self):
+        widgets = self.ecs.manage(components.UIWidget)
+        to_update = [
+            (window, widget) for window, widget in widgets
+            if widget.needs_update
+        ]
+        return to_update
+
     def run(self):
+        widgets = self.get_widgets_to_update()
+        if not widgets:
+            return
         ui_manager = self.ecs.resources.ui_manager
-        wigdets = self.ecs.manage(components.UIWidget)
         panels = self.ecs.manage(components.ConsolePanel)
-        for window, widget in wigdets:
+        for window, widget in widgets:
             if not widget.needs_update:
                 continue
             panel = panels.get(window) or self.root

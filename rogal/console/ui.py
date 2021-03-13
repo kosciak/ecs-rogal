@@ -39,6 +39,7 @@ class Button(toolkit.Decorated):
 
     def layout(self, manager, parent, panel, z_order=None):
         entity = super().layout(manager, parent, panel, z_order)
+        manager.insert(entity, widget=self)
         manager.bind(
             entity,
             on_mouse_click=self.on_mouse_click,
@@ -77,6 +78,7 @@ class Window(toolkit.Container):
     def layout(self, manager, parent, panel, z_order=None):
         z_order = z_order or toolkit.ZOrder.BASE
         entity = super().layout(manager, parent, panel, z_order)
+        manager.insert(entity, widget=self)
         manager.bind(
             entity,
             on_key_press=self.on_key_press,
@@ -232,10 +234,15 @@ class UIManager:
         self.widgets_builder = WidgetsBuilder(self.ecs)
 
     def insert(self, entity, *,
+               widget=None,
                panel=None,
                z_order=None,
                renderer=None,
               ):
+        if widget:
+            self.ecs.manage(components.UIWidget).insert(
+                entity, widget, needs_update=False,
+            )
         if panel:
             self.ecs.manage(components.ConsolePanel).insert(
                 entity, panel, z_order or toolkit.ZOrder.BASE,
