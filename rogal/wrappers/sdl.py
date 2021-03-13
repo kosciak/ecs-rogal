@@ -3,13 +3,16 @@ import functools
 from cffi import FFI
 
 from .sdl_const import (
-    SubSystem,
-    EventType, Keycode, Keymod, MouseButton, MouseButtonMask, MouseWheelDirection,
-    SystemCursor,
+    SDL_SubSystem,
+    SDL_EventType,
+    SDL_WindowEventID,
+    SDL_Keycode, SDL_Keymod,
+    SDL_MouseButton, SDL_MouseButtonMask, SDL_MouseWheelDirection,
+    SDL_SystemCursor,
 )
 
 from .. import events
-from ..events.keys import Key, Button
+from ..events.keys import Key, MouseButton
 
 
 """Use SDL data directly instead of tcod wrappers."""
@@ -19,69 +22,69 @@ ffi = FFI()
 
 
 SDL_KEYCODE_TO_KEY = {
-    Keycode.SDLK_ESCAPE: Key.ESCAPE,
+    SDL_Keycode.SDLK_ESCAPE: Key.ESCAPE,
 
-    Keycode.SDLK_F1: Key.F1,
-    Keycode.SDLK_F2: Key.F2,
-    Keycode.SDLK_F3: Key.F3,
-    Keycode.SDLK_F4: Key.F4,
-    Keycode.SDLK_F5: Key.F5,
-    Keycode.SDLK_F6: Key.F6,
-    Keycode.SDLK_F7: Key.F7,
-    Keycode.SDLK_F8: Key.F8,
-    Keycode.SDLK_F9: Key.F9,
-    Keycode.SDLK_F10: Key.F10,
-    Keycode.SDLK_F11: Key.F11,
-    Keycode.SDLK_F12: Key.F12,
+    SDL_Keycode.SDLK_F1: Key.F1,
+    SDL_Keycode.SDLK_F2: Key.F2,
+    SDL_Keycode.SDLK_F3: Key.F3,
+    SDL_Keycode.SDLK_F4: Key.F4,
+    SDL_Keycode.SDLK_F5: Key.F5,
+    SDL_Keycode.SDLK_F6: Key.F6,
+    SDL_Keycode.SDLK_F7: Key.F7,
+    SDL_Keycode.SDLK_F8: Key.F8,
+    SDL_Keycode.SDLK_F9: Key.F9,
+    SDL_Keycode.SDLK_F10: Key.F10,
+    SDL_Keycode.SDLK_F11: Key.F11,
+    SDL_Keycode.SDLK_F12: Key.F12,
 
-    Keycode.SDLK_BACKSPACE: Key.BACKSPACE,
+    SDL_Keycode.SDLK_BACKSPACE: Key.BACKSPACE,
 
-    Keycode.SDLK_TAB: Key.TAB,
+    SDL_Keycode.SDLK_TAB: Key.TAB,
 
-    Keycode.SDLK_RETURN: Key.RETURN,
+    SDL_Keycode.SDLK_RETURN: Key.RETURN,
 
-    Keycode.SDLK_SPACE: Key.SPACE,
+    SDL_Keycode.SDLK_SPACE: Key.SPACE,
 
-    Keycode.SDLK_UP: Key.UP,
-    Keycode.SDLK_DOWN: Key.DOWN,
-    Keycode.SDLK_LEFT: Key.LEFT,
-    Keycode.SDLK_RIGHT: Key.RIGHT,
+    SDL_Keycode.SDLK_UP: Key.UP,
+    SDL_Keycode.SDLK_DOWN: Key.DOWN,
+    SDL_Keycode.SDLK_LEFT: Key.LEFT,
+    SDL_Keycode.SDLK_RIGHT: Key.RIGHT,
 
-    Keycode.SDLK_INSERT: Key.INSERT,
-    Keycode.SDLK_DELETE: Key.DELETE,
-    Keycode.SDLK_HOME: Key.HOME,
-    Keycode.SDLK_END: Key.END,
-    Keycode.SDLK_PAGEUP: Key.PAGE_UP,
-    Keycode.SDLK_PAGEDOWN: Key.PAGE_DOWN,
+    SDL_Keycode.SDLK_INSERT: Key.INSERT,
+    SDL_Keycode.SDLK_DELETE: Key.DELETE,
+    SDL_Keycode.SDLK_HOME: Key.HOME,
+    SDL_Keycode.SDLK_END: Key.END,
+    SDL_Keycode.SDLK_PAGEUP: Key.PAGE_UP,
+    SDL_Keycode.SDLK_PAGEDOWN: Key.PAGE_DOWN,
 
-    Keycode.SDLK_KP_0: Key.KP_0,
-    Keycode.SDLK_KP_1: Key.KP_1,
-    Keycode.SDLK_KP_2: Key.KP_2,
-    Keycode.SDLK_KP_3: Key.KP_3,
-    Keycode.SDLK_KP_4: Key.KP_4,
-    Keycode.SDLK_KP_5: Key.KP_5,
-    Keycode.SDLK_KP_6: Key.KP_6,
-    Keycode.SDLK_KP_7: Key.KP_7,
-    Keycode.SDLK_KP_8: Key.KP_8,
-    Keycode.SDLK_KP_9: Key.KP_9,
+    SDL_Keycode.SDLK_KP_0: Key.KP_0,
+    SDL_Keycode.SDLK_KP_1: Key.KP_1,
+    SDL_Keycode.SDLK_KP_2: Key.KP_2,
+    SDL_Keycode.SDLK_KP_3: Key.KP_3,
+    SDL_Keycode.SDLK_KP_4: Key.KP_4,
+    SDL_Keycode.SDLK_KP_5: Key.KP_5,
+    SDL_Keycode.SDLK_KP_6: Key.KP_6,
+    SDL_Keycode.SDLK_KP_7: Key.KP_7,
+    SDL_Keycode.SDLK_KP_8: Key.KP_8,
+    SDL_Keycode.SDLK_KP_9: Key.KP_9,
 
-    Keycode.SDLK_KP_DIVIDE: Key.KP_DIVIDE,
-    Keycode.SDLK_KP_MULTIPLY: Key.KP_MULTIPLY,
-    Keycode.SDLK_KP_MINUS: Key.KP_MINUS,
-    Keycode.SDLK_KP_PLUS: Key.KP_PLUS,
-    Keycode.SDLK_KP_ENTER: Key.KP_ENTER,
-    Keycode.SDLK_KP_PERIOD: Key.KP_PERIOD,
-    Keycode.SDLK_KP_COMMA: Key.KP_COMMA,
-    Keycode.SDLK_KP_CLEAR: Key.CLEAR,
+    SDL_Keycode.SDLK_KP_DIVIDE: Key.KP_DIVIDE,
+    SDL_Keycode.SDLK_KP_MULTIPLY: Key.KP_MULTIPLY,
+    SDL_Keycode.SDLK_KP_MINUS: Key.KP_MINUS,
+    SDL_Keycode.SDLK_KP_PLUS: Key.KP_PLUS,
+    SDL_Keycode.SDLK_KP_ENTER: Key.KP_ENTER,
+    SDL_Keycode.SDLK_KP_PERIOD: Key.KP_PERIOD,
+    SDL_Keycode.SDLK_KP_COMMA: Key.KP_COMMA,
+    SDL_Keycode.SDLK_KP_CLEAR: Key.CLEAR,
 }
 
 
 SDL_MOUSE_BUTTON_TO_BUTTON = {
-    MouseButton.SDL_BUTTON_LEFT: Button.MOUSE_LEFT,
-    MouseButton.SDL_BUTTON_MIDDLE: Button.MOUSE_MIDDLE,
-    MouseButton.SDL_BUTTON_RIGHT: Button.MOUSE_RIGHT,
-    MouseButton.SDL_BUTTON_X1: Button.MOUSE_X1,
-    MouseButton.SDL_BUTTON_X2: Button.MOUSE_X2,
+    SDL_MouseButton.SDL_BUTTON_LEFT: MouseButton.LEFT,
+    SDL_MouseButton.SDL_BUTTON_MIDDLE: MouseButton.MIDDLE,
+    SDL_MouseButton.SDL_BUTTON_RIGHT: MouseButton.RIGHT,
+    SDL_MouseButton.SDL_BUTTON_X1: MouseButton.X1,
+    SDL_MouseButton.SDL_BUTTON_X2: MouseButton.X2,
 }
 
 
@@ -93,9 +96,9 @@ def get_key(sym, mod):
         key = SDL_KEYCODE_TO_KEY.get(sym, str(sym))
     return Key.with_modifiers(
         key,
-        ctrl=mod & Keymod.KMOD_CTRL,
-        alt=mod & Keymod.KMOD_ALT,
-        shift=mod & Keymod.KMOD_SHIFT,
+        ctrl=mod & SDL_Keymod.KMOD_CTRL,
+        alt=mod & SDL_Keymod.KMOD_ALT,
+        shift=mod & SDL_Keymod.KMOD_SHIFT,
     )
 
 
@@ -110,9 +113,9 @@ def parse_window_event(sdl_event):
 
 
 def parse_keyboard_event(sdl_event):
-    if sdl_event.type == EventType.SDL_KEYDOWN:
+    if sdl_event.type == SDL_EventType.SDL_KEYDOWN:
         event_cls = events.KeyPress
-    elif sdl_event.type == EventType.SDL_KEYUP:
+    elif sdl_event.type == SDL_EventType.SDL_KEYUP:
         event_cls = events.KeyUp
     repeat = bool(sdl_event.key.repeat)
     keysym = sdl_event.key.keysym
@@ -129,23 +132,23 @@ def parse_mouse_motion_event(sdl_event):
     motion = sdl_event.motion
     state = motion.state
     buttons = []
-    if state & MouseButtonMask.SDL_BUTTON_LMASK:
-        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[MouseButton.SDL_BUTTON_LEFT])
-    if state & MouseButtonMask.SDL_BUTTON_MMASK:
-        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[MouseButton.SDL_BUTTON_MIDDLE])
-    if state & MouseButtonMask.SDL_BUTTON_RMASK:
-        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[MouseButton.SDL_BUTTON_RIGHT])
-    if state & MouseButtonMask.SDL_BUTTON_X1MASK:
-        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[MouseButton.SDL_BUTTON_X1])
-    if state & MouseButtonMask.SDL_BUTTON_X2MASK:
-        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[MouseButton.SDL_BUTTON_X2])
+    if state & SDL_MouseButtonMask.SDL_BUTTON_LMASK:
+        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[SDL_MouseButton.SDL_BUTTON_LEFT])
+    if state & SDL_MouseButtonMask.SDL_BUTTON_MMASK:
+        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[SDL_MouseButton.SDL_BUTTON_MIDDLE])
+    if state & SDL_MouseButtonMask.SDL_BUTTON_RMASK:
+        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[SDL_MouseButton.SDL_BUTTON_RIGHT])
+    if state & SDL_MouseButtonMask.SDL_BUTTON_X1MASK:
+        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[SDL_MouseButton.SDL_BUTTON_X1])
+    if state & SDL_MouseButtonMask.SDL_BUTTON_X2MASK:
+        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[SDL_MouseButton.SDL_BUTTON_X2])
     return events.MouseMotion(sdl_event, motion.x, motion.y, motion.xrel, motion.yrel, buttons)
 
 
 def parse_mouse_button_event(sdl_event):
-    if sdl_event.type == EventType.SDL_MOUSEBUTTONDOWN:
+    if sdl_event.type == SDL_EventType.SDL_MOUSEBUTTONDOWN:
         event_cls = events.MouseButtonPress
-    elif sdl_event.type == EventType.SDL_MOUSEBUTTONUP:
+    elif sdl_event.type == SDL_EventType.SDL_MOUSEBUTTONUP:
         event_cls = events.MouseButtonUp
     btn = sdl_event.button
     button = SDL_MOUSE_BUTTON_TO_BUTTON.get(btn.button)
@@ -156,7 +159,7 @@ def parse_mouse_wheel_event(sdl_event):
     wheel = sdl_event.wheel
     dx = wheel.x
     dy = wheel.y
-    if wheel.direction == MouseWheelDirection.SDL_MOUSEWHEEL_FLIPPED:
+    if wheel.direction == SDL_MouseWheelDirection.SDL_MOUSEWHEEL_FLIPPED:
         dx *= -1
         dy *= -1
     return events.MouseWheel(sdl_event, dx, dy)
@@ -173,9 +176,9 @@ def parse_joy_hat_motion_event(sdl_event):
 
 
 def parse_joy_button_event(sdl_event):
-    if sdl_event.type == EventType.SDL_JOYBUTTONDOWN:
+    if sdl_event.type == SDL_EventType.SDL_JOYBUTTONDOWN:
         event_cls = events.JoyButtonPress
-    elif sdl_event.type == EventType.SDL_JOYBUTTONUP:
+    elif sdl_event.type == SDL_EventType.SDL_JOYBUTTONUP:
         event_cls = events.JoyButtonUp
     btn = sdl_event.jbutton
     button = btn.button
@@ -183,33 +186,33 @@ def parse_joy_button_event(sdl_event):
 
 
 SDL_EVENT_PARSERS = {
-    EventType.SDL_QUIT: parse_quit_event,
+    SDL_EventType.SDL_QUIT: parse_quit_event,
 
     # Window events
-    EventType.SDL_WINDOWEVENT: parse_window_event,
+    SDL_EventType.SDL_WINDOWEVENT: parse_window_event,
 
     # Keyboard events
-    EventType.SDL_KEYDOWN: parse_keyboard_event,
-    EventType.SDL_KEYUP: parse_keyboard_event,
-    EventType.SDL_TEXTINPUT: parse_text_input_event,
+    SDL_EventType.SDL_KEYDOWN: parse_keyboard_event,
+    SDL_EventType.SDL_KEYUP: parse_keyboard_event,
+    SDL_EventType.SDL_TEXTINPUT: parse_text_input_event,
 
     # Mouse events
-    EventType.SDL_MOUSEMOTION: parse_mouse_motion_event,
-    EventType.SDL_MOUSEBUTTONDOWN: parse_mouse_button_event,
-    EventType.SDL_MOUSEBUTTONUP: parse_mouse_button_event,
-    EventType.SDL_MOUSEWHEEL: parse_mouse_wheel_event,
+    SDL_EventType.SDL_MOUSEMOTION: parse_mouse_motion_event,
+    SDL_EventType.SDL_MOUSEBUTTONDOWN: parse_mouse_button_event,
+    SDL_EventType.SDL_MOUSEBUTTONUP: parse_mouse_button_event,
+    SDL_EventType.SDL_MOUSEWHEEL: parse_mouse_wheel_event,
 
     # Joystick events
-    EventType.SDL_JOYAXISMOTION: parse_joy_axis_motion_event,
-    # EventType.SDL_JOYBALLMOTION = 1537
-    EventType.SDL_JOYHATMOTION: parse_joy_hat_motion_event,
-    EventType.SDL_JOYBUTTONDOWN: parse_joy_button_event,
-    EventType.SDL_JOYBUTTONUP: parse_joy_button_event,
+    SDL_EventType.SDL_JOYAXISMOTION: parse_joy_axis_motion_event,
+    # SDL_EventType.SDL_JOYBALLMOTION = 1537
+    SDL_EventType.SDL_JOYHATMOTION: parse_joy_hat_motion_event,
+    SDL_EventType.SDL_JOYBUTTONDOWN: parse_joy_button_event,
+    SDL_EventType.SDL_JOYBUTTONUP: parse_joy_button_event,
 
     # Controller events
-    # EventType.SDL_CONTROLLERAXISMOTION = 1616
-    # EventType.SDL_CONTROLLERBUTTONDOWN = 1617
-    # EventType.SDL_CONTROLLERBUTTONUP = 1618
+    # SDL_EventType.SDL_CONTROLLERAXISMOTION = 1616
+    # SDL_EventType.SDL_CONTROLLERBUTTONDOWN = 1617
+    # SDL_EventType.SDL_CONTROLLERBUTTONUP = 1618
 }
 
 

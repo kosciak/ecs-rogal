@@ -254,7 +254,7 @@ class TcodWrapper(IOWrapper):
     def init_joystick(self):
         # See: https://wiki.libsdl.org/SDL_JoystickOpen
         log.debug('Initializing joystick...')
-        sdl2.SDL_InitSubSystem(sdl.SubSystem.SDL_INIT_JOYSTICK)
+        sdl2.SDL_InitSubSystem(sdl.SDL_SubSystem.SDL_INIT_JOYSTICK)
         joysticks_num = sdl2.SDL_NumJoysticks()
         log.debug(f'Found {joysticks_num} joysticks')
         if not joysticks_num:
@@ -272,7 +272,7 @@ class TcodWrapper(IOWrapper):
         hats_num = sdl2.SDL_JoystickNumHats(joystick)
         log.info(f'Joystick: {joystick_id} - name: {name}, axes: {axes_num}, buttons: {buttons_num}, balls: {balls_num}, hats: {hats_num}')
 
-    def set_system_cursor(self, cursor_id=sdl.SystemCursor.SDL_SYSTEM_CURSOR_ARROW):
+    def set_system_cursor(self, cursor_id=sdl.SDL_SystemCursor.SDL_SYSTEM_CURSOR_ARROW):
         # See: https://wiki.libsdl.org/SDL_CreateSystemCursor
         cursor = sdl2.SDL_CreateSystemCursor(cursor_id)
         sdl2.SDL_SetCursor(cursor)

@@ -1,4 +1,4 @@
-class SubSystem:
+class SDL_SubSystem:
     SDL_INIT_TIMER = 1
     SDL_INIT_AUDIO = 16
     SDL_INIT_VIDEO = 32
@@ -9,7 +9,7 @@ class SubSystem:
     SDL_INIT_EVERYTHING = 6201
 
 
-class EventType:
+class SDL_EventType:
     """SDL EventType.
 
     See: https://wiki.libsdl.org/SDL_EventType
@@ -44,7 +44,28 @@ class EventType:
     SDL_CONTROLLERBUTTONUP = 1618
 
 
-class Keycode:
+class SDL_WindowEventID:
+    # See: https://wiki.libsdl.org/SDL_WindowEvent
+    # See: https://wiki.libsdl.org/SDL_WindowEventID
+    SDL_WINDOWEVENT_SHOWN = 1
+    SDL_WINDOWEVENT_HIDDEN = 2
+    SDL_WINDOWEVENT_EXPOSED = 3
+    SDL_WINDOWEVENT_MOVED = 4
+    SDL_WINDOWEVENT_RESIZED = 5
+    SDL_WINDOWEVENT_SIZE_CHANGED = 6
+    SDL_WINDOWEVENT_MINIMIZED = 7
+    SDL_WINDOWEVENT_MAXIMIZED = 8
+    SDL_WINDOWEVENT_RESTORED = 9
+    SDL_WINDOWEVENT_ENTER = 10
+    SDL_WINDOWEVENT_LEAVE = 11
+    SDL_WINDOWEVENT_FOCUS_GAINED = 12
+    SDL_WINDOWEVENT_FOCUS_LOST = 13
+    SDL_WINDOWEVENT_CLOSE = 14
+    SDL_WINDOWEVENT_TAKE_FOCUS = 15
+    SDL_WINDOWEVENT_HIT_TEST = 16
+
+
+class SDL_Keycode:
     """Virtual key representation.
 
     See: https://wiki.libsdl.org/SDL_Keycode
@@ -289,7 +310,7 @@ class Keycode:
     SDLK_SLEEP = 1073742106
 
 
-class Keymod:
+class SDL_Keymod:
     """Key modifier masks.
 
     See: https://wiki.libsdl.org/SDL_Keymod
@@ -314,12 +335,12 @@ class Keymod:
     KMOD_RESERVED = 32768
 
 
-class MouseWheelDirection:
+class SDL_MouseWheelDirection:
     SDL_MOUSEWHEEL_NORMAL = 0
     SDL_MOUSEWHEEL_FLIPPED = 1
 
 
-class MouseButton:
+class SDL_MouseButton:
     # See: https://wiki.libsdl.org/SDL_MouseButtonEvent
     SDL_BUTTON_LEFT = 1
     SDL_BUTTON_MIDDLE = 2
@@ -327,7 +348,7 @@ class MouseButton:
     SDL_BUTTON_X1 = 4
     SDL_BUTTON_X2 = 5
 
-class MouseButtonMask:
+class SDL_MouseButtonMask:
     # See: https://wiki.libsdl.org/SDL_MouseMotionEvent
     SDL_BUTTON_LMASK = 1
     SDL_BUTTON_MMASK = 2
@@ -336,7 +357,7 @@ class MouseButtonMask:
     SDL_BUTTON_X2MASK = 16
 
 
-class SystemCursor:
+class SDL_SystemCursor:
     # See: https://wiki.libsdl.org/SDL_CreateSystemCursor
     SDL_SYSTEM_CURSOR_ARROW = 0 # arrow
     SDL_SYSTEM_CURSOR_IBEAM = 1 # i-beam

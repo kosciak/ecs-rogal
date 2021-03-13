@@ -122,12 +122,12 @@ class Key:
         return key
 
 
-class Button:
-    MOUSE_LEFT = 'LMB'
-    MOUSE_MIDDLE = 'MMB'
-    MOUSE_RIGHT = 'RMB'
-    MOUSE_X1 = 'X1MB'
-    MOUSE_X2 = 'X2MB'
+class MouseButton:
+    LEFT = 'LMB'
+    MIDDLE = 'MMB'
+    RIGHT = 'RMB'
+    X1 = 'X1MB'
+    X2 = 'X2MB'
 
 
 class Bindings(collections.defaultdict):

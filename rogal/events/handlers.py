@@ -3,7 +3,7 @@ import string
 
 from ..geometry import Direction
 
-from .keys import Button
+from .keys import MouseButton
 
 
 log = logging.getLogger(__name__)
@@ -136,17 +136,17 @@ class MouseButtonPress(EventHandler):
 
 
 class MouseLeftButtonPress(MouseButtonPress):
-    BUTTONS = {Button.MOUSE_LEFT, }
+    BUTTONS = {MouseButton.LEFT, }
 
 class MouseRightButtonPress(MouseButtonPress):
-    BUTTONS = {Button.MOUSE_RIGHT, }
+    BUTTONS = {MouseButton.RIGHT, }
 
 class MouseMiddleButtonPress(MouseButtonPress):
-    BUTTONS = {Button.MOUSE_MIDDLE, }
+    BUTTONS = {MouseButton.MIDDLE, }
 
 class MouseX1ButtonPress(MouseButtonPress):
-    BUTTONS = {Button.MOUSE_X1, }
+    BUTTONS = {MouseButton.X1, }
 
 class MouseX2ButtonPress(MouseButtonPress):
-    BUTTONS = {Button.MOUSE_X2, }
+    BUTTONS = {MouseButton.X2, }
 
