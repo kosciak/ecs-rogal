@@ -125,6 +125,14 @@ class MouseMotion(Event):
     def set_tile_motion(self, dx, dy):
         self.motion = Vector(dx, dy)
 
+    @property
+    def prev_position(self):
+        return self.position.moved_from(self.motion)
+
+    @property
+    def prev_pixel_position(self):
+        return self.pixel_position.moved_from(self.motion)
+
     def __repr__(self):
         return f'<{self.__class__.__name__} position={self.position}, motion={self.motion}, buttons={self.buttons}>'
 

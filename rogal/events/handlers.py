@@ -150,3 +150,21 @@ class MouseX1ButtonPress(MouseButtonPress):
 class MouseX2ButtonPress(MouseButtonPress):
     BUTTONS = {MouseButton.X2, }
 
+
+class MouseOver(EventHandler):
+
+    def handle(self, event):
+        return event.position
+
+
+class MouseIn(EventHandler):
+
+    def handle(self, event):
+        return True
+
+
+class MouseOut(EventHandler):
+
+    def handle(self, event):
+        return True
+

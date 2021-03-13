@@ -94,7 +94,11 @@ OnQuit = EventHandlers('OnQuit')
 
 OnKeyPress = EventHandlers('OnKeyPress')
 
+OnMouseIn = EventHandlers('OnMouseIn')
+
 OnMouseOver = EventHandlers('OnMouseOver')
+
+OnMouseOut = EventHandlers('OnMouseOut')
 
 OnMouseClick = EventHandlers('OnMouseClick')
 

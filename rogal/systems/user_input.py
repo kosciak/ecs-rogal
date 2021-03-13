@@ -29,6 +29,30 @@ class EventsHandlersSystem(System):
         self.repeat_rate = repeat_rate
         self._prev_times = {}
 
+    def get_valid_handlers(self, handlers_component):
+        event_handlers = self.ecs.manage(handlers_component)
+        if not event_handlers:
+            return []
+        ignore_events = self.ecs.manage(components.IgnoreEvents)
+        valid_handlers = [
+            [entity, handlers] for entity, handlers in event_handlers
+            if not entity in ignore_events
+        ]
+        return valid_handlers
+
+    def get_valid_panel_handlers(self, handlers_component):
+        event_handlers = self.ecs.manage(handlers_component)
+        if not event_handlers:
+            return []
+        panels = self.ecs.manage(components.ConsolePanel)
+        ignore_events = self.ecs.manage(components.IgnoreEvents)
+        valid_handlers = [
+            [entity, panel, handlers] for entity, panel, handlers
+            in self.ecs.join(event_handlers.entities, panels, event_handlers)
+            if not entity in ignore_events
+        ]
+        return valid_handlers
+
     def handle_event(self, event, entity, handlers):
         value = None
         for handler, callback in handlers:
@@ -50,47 +74,47 @@ class EventsHandlersSystem(System):
         if event.repeat and not self.is_valid_repeat(event):
             return
 
-        event_handlers = self.ecs.manage(components.OnKeyPress)
-        if not event_handlers:
-            return
-
-        ignore_events = self.ecs.manage(components.IgnoreEvents)
+        event_handlers = self.get_valid_handlers(components.OnKeyPress)
         for entity, handlers in event_handlers:
-            if entity in ignore_events:
+            self.handle_event(event, entity, handlers)
+
+    def on_mouse_over_event(self, event, handlers_component):
+        for entity, panel, handlers in self.get_valid_panel_handlers(handlers_component):
+            if not event.position in panel:
                 continue
-            return self.handle_event(event, entity, handlers)
+            self.handle_event(event, entity, handlers)
 
-    def on_mouse_event(self, event, event_handlers):
-        if not event_handlers:
-            return
-
-        panels = self.ecs.manage(components.ConsolePanel)
-        ignore_events = self.ecs.manage(components.IgnoreEvents)
-        for entity, panel, handlers in self.ecs.join(event_handlers.entities, panels, event_handlers):
-            if entity in ignore_events:
+    def on_mouse_in_event(self, event, handlers_component):
+        for entity, panel, handlers in self.get_valid_panel_handlers(handlers_component):
+            if event.prev_position in panel:
+                # cursor did not enter, just moved over
                 continue
             if not event.position in panel:
                 continue
-            return self.handle_event(event, entity, handlers)
+            self.handle_event(event, entity, handlers)
+
+    def on_mouse_out_event(self, event, handlers_component):
+        for entity, panel, handlers in self.get_valid_panel_handlers(handlers_component):
+            if not event.prev_position in panel:
+                continue
+            if event.position in panel:
+                # cursor did not leave, just moved over
+                continue
+            self.handle_event(event, entity, handlers)
 
     def on_mouse_press(self, event):
-        event_handlers = self.ecs.manage(components.OnMouseClick)
-        return self.on_mouse_event(event, event_handlers)
+        self.on_mouse_over_event(event, components.OnMouseClick)
 
     def on_mouse_motion(self, event):
-        event_handlers = self.ecs.manage(components.OnMouseOver)
-        return self.on_mouse_event(event, event_handlers)
+        self.on_mouse_in_event(event, components.OnMouseIn)
+        self.on_mouse_over_event(event, components.OnMouseOver)
+        # TODO: For MouseOut to be 100% accurate we would need to process mouse leaving game window
+        self.on_mouse_out_event(event, components.OnMouseOut)
 
     def on_mouse_wheel(self, event):
-        event_handlers = self.ecs.manage(components.OnMouseWheel)
-        if not event_handlers:
-            return
-
-        ignore_events = self.ecs.manage(components.IgnoreEvents)
+        event_handlers = self.get_valid_handlers(components.OnMouseWheel)
         for entity, handlers in event_handlers:
-            if entity in ignore_events:
-                continue
-            return self.handle_event(event, entity, handlers)
+            self.handle_event(event, entity, handlers)
 
     def on_quit(self, event):
         log.warning('Quitting...')
@@ -117,5 +141,5 @@ class EventsHandlersSystem(System):
                 self.on_mouse_motion(event)
             if event.type == EventType.MOUSE_WHEEL:
                 self.on_mouse_wheel(event)
-            return
+            break
 
