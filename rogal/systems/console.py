@@ -34,11 +34,13 @@ class LayoutSytem(ConsoleSystem):
 
     def run(self):
         ui_manager = self.ecs.resources.ui_manager
-        window_wigdets = self.ecs.manage(components.WindowWidgets)
-        for window, widgets in window_wigdets:
-            if not widgets.needs_update:
+        wigdets = self.ecs.manage(components.UIWidget)
+        panels = self.ecs.manage(components.ConsolePanel)
+        for window, widget in wigdets:
+            if not widget.needs_update:
                 continue
-            widgets.layout(ui_manager, window, self.root)
+            panel = panels.get(window) or self.root
+            widget.layout(ui_manager, window, panel)
 
 
 class RenderingSystem(ConsoleSystem):
@@ -78,11 +80,10 @@ class RenderingSystem(ConsoleSystem):
         self.root.clear(self.default_colors)
 
         # Render all panels
-        z_order = self.ecs.manage(components.ZOrder)
         panels = self.ecs.manage(components.ConsolePanel)
         renderers = self.ecs.manage(components.PanelRenderer)
-        for z, panel, renderer in sorted(
-            self.ecs.join(z_order, panels, renderers),
+        for panel, renderer in sorted(
+            self.ecs.join(panels, renderers),
             key=itemgetter(0)
         ):
             with perf.Perf(renderer.renderer.render):

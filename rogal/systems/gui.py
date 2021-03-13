@@ -10,23 +10,23 @@ from ..utils import perf
 log = logging.getLogger(__name__)
 
 
-class CreateWindowsSystem(System):
+class CreateUIWidgetsSystem(System):
 
     def init_windows(self):
-        self.ecs.create(components.CreateWindow('IN_GAME'))
+        self.ecs.create(components.CreateUIWidget('IN_GAME'))
 
     def create_windows(self):
-        to_create = self.ecs.manage(components.CreateWindow)
+        to_create = self.ecs.manage(components.CreateUIWidget)
         if not to_create:
             return
 
         ui_manager = self.ecs.resources.ui_manager
-        window_wigdets = self.ecs.manage(components.WindowWidgets)
+        widgets = self.ecs.manage(components.UIWidget)
         for window, create in to_create:
-            widgets_layout = ui_manager.create_widgets_layout(
-                window, create.window_type, create.context,
+            widget = ui_manager.create_widget(
+                create.widget_type, create.context,
             )
-            window_wigdets.insert(window, widgets_layout)
+            widgets.insert(window, widget)
 
         to_create.clear()
 
@@ -36,24 +36,28 @@ class CreateWindowsSystem(System):
         self.create_windows()
 
 
-class DestroyWindowsSystem(System):
+class DestroyUIWidgetsSystem(System):
 
     def get_children(self, parents):
-        parent_windows = self.ecs.manage(components.ParentWindow)
+        parent_windows = self.ecs.manage(components.ParentUIWidget)
         children = set()
         for entity, parent in parent_windows:
             if parent in parents:
                 children.add(entity)
+        if children:
+            children.update(self.get_children(children))
         return children
 
     def run(self):
-        to_destroy = self.ecs.manage(components.DestroyWindow)
-        if not to_destroy:
-            return
-
-        parents = set(to_destroy.entities)
-        while parents:
-            children = self.get_children(parents)
+        to_destroy = self.ecs.manage(components.DestroyUIWidget)
+        if to_destroy:
+            parents = set(to_destroy.entities)
             self.ecs.remove(*parents)
-            parents = children
+            children = self.get_children(parents)
+            self.ecs.remove(*children)
+
+        to_destroy = self.ecs.manage(components.DestroyUIWidgetChildren)
+        if to_destroy:
+            children = self.get_children(to_destroy.entities)
+            self.ecs.remove(*children)
 

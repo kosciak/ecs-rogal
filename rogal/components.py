@@ -15,45 +15,49 @@ from . import terrain
 
 # GUI, Windows, Rendering
 
-class CreateWindow(Component):
-    __slots__ = ('window_type', 'context', )
+class CreateUIWidget(Component):
+    __slots__ = ('widget_type', 'context', )
 
-    def __init__(self, window_type, context=None):
-        self.window_type = window_type
+    def __init__(self, widget_type, context=None):
+        self.widget_type = widget_type
         self.context = context or {}
 
 
-DestroyWindow = Flag('DestroyWindow')
+DestroyUIWidget = Flag('DestroyUIWidget')
 
-ParentWindow = EntityReference('ParentWindow')
+DestroyUIWidgetChildren = Flag('DestroyUIWidgetChildren')
+
+ParentUIWidget = EntityReference('ParentUIWidget')
 
 
-class WindowWidgets(Component):
-    __slots__ = ('widgets_layout', 'needs_update', )
+class UIWidget(Component):
+    __slots__ = ('widget', 'needs_update', )
 
-    def __init__(self, widgets_layout, needs_update=True):
-        self.widgets_layout = widgets_layout
+    def __init__(self, widget, needs_update=True):
+        self.widget = widget
         self.needs_update = needs_update
 
     def invalidate(self):
         self.needs_update = True
 
-    def layout(self, ui_manager, window, panel):
-        self.widgets_layout.layout(ui_manager, window, panel)
+    def layout(self, ui_manager, parent, panel):
+        self.widget.layout(ui_manager, parent, panel)
         self.needs_update = False
 
 
-ZOrder = Int('ZOrder')
-
-
+@functools.total_ordering
 class ConsolePanel(Component):
-    __slots__ = ('panel', )
+    __slots__ = ('panel', 'z_order', )
 
-    def __init__(self, panel):
+    def __init__(self, panel, z_order):
         self.panel = panel
+        self.z_order = z_order
 
     def __contains__(self, position):
         return position in self.panel
+
+    def __lt__(self, other):
+        return self.z_order < other.z_order
 
 
 class PanelRenderer(Component):

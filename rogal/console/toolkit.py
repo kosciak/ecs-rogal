@@ -77,7 +77,7 @@ def get_align_position(panel, size, align, padding=Padding.ZERO):
 
 class Renderer:
 
-    def layout(self, manager, parent, panel, z_order=ZOrder.BASE):
+    def layout(self, manager, parent, panel, z_order=None):
         return manager.create(parent, panel=panel, renderer=self, z_order=z_order)
 
     def clear(self, panel, colors):
@@ -130,7 +130,7 @@ class Widget(WithSizeMixin):
     def padded_size(self):
         return Size(self.padded_width, self.padded_height)
 
-    def layout(self, manager, parent, panel, z_order=ZOrder.BASE):
+    def layout(self, manager, parent, panel, z_order=None):
         return parent
 
 
@@ -153,7 +153,7 @@ class Container:
     def extend(self, widgets):
         self.widgets.extend(widgets)
 
-    def layout(self, manager, parent, panel, z_order=ZOrder.BASE):
+    def layout(self, manager, parent, panel, z_order=None):
         for widget in self.widgets:
             z_order += 1
             widget.layout(manager, parent, panel, z_order)
@@ -191,7 +191,7 @@ class Text(Widget, Renderer):
         # panel = panel.create_panel(position, self.size)
         return panel
 
-    def layout(self, manager, parent, panel, z_order=ZOrder.BASE):
+    def layout(self, manager, parent, panel, z_order=None):
         return manager.create(parent, panel=self.get_layout_panel(panel), renderer=self, z_order=z_order)
 
     def render(self, panel):
@@ -265,7 +265,7 @@ class Decorations(WithSizeMixin, Renderer):
             Size(panel.width-self.width, panel.height-self.height)
         )
 
-    def layout(self, manager, parent, panel, z_order=ZOrder.BASE):
+    def layout(self, manager, parent, panel, z_order=None):
         # Always use all available space
         return manager.create(parent, panel=panel, renderer=self, z_order=z_order)
 
@@ -305,7 +305,7 @@ class Decorated(Widget):
         panel = panel.create_panel(position, size)
         return panel
 
-    def layout(self, manager, parent, panel, z_order=ZOrder.BASE):
+    def layout(self, manager, parent, panel, z_order=None):
         panel = self.get_layout_panel(panel)
         entity = manager.create(parent, panel=panel, z_order=z_order)
         self.decorations.layout(manager, entity, panel, z_order)
@@ -339,7 +339,7 @@ class Row(Container, Widget):
             max([widget.padded_height for widget in self])
         )
 
-    def layout(self, manager, parent, panel, z_order=ZOrder.BASE):
+    def layout(self, manager, parent, panel, z_order=None):
         position = get_position(panel, self.size, self.align, self.padding)
         for widget in self:
             subpanel = panel.create_panel(position, widget.padded_size)
@@ -374,7 +374,7 @@ class List(Container, Widget):
             sum([widget.padded_height for widget in self])
         )
 
-    def layout(self, manager, parent, panel, z_order=ZOrder.BASE):
+    def layout(self, manager, parent, panel, z_order=None):
         position = get_position(panel, self.size, self.align, self.padding)
         for widget in self:
             subpanel = panel.create_panel(position, widget.padded_size)
@@ -395,7 +395,7 @@ class Split(Container):
         self.top = top
         self.bottom = bottom
 
-    def layout(self, manager, parent, panel, z_order=ZOrder.BASE):
+    def layout(self, manager, parent, panel, z_order=None):
         panels = panel.split(self.left, self.right, self.top, self.bottom)
         for i, widget in enumerate(self.widgets):
             if widget:

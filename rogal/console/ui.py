@@ -26,16 +26,25 @@ class WindowTitle(toolkit.Decorated):
 
 class Button(toolkit.Decorated):
 
-    def __init__(self, decorations, width, text, on_mouse_click, align=Align.TOP_LEFT):
+    def __init__(self, decorations, text, width, *,
+                 on_mouse_click,
+                 on_mouse_in=None, on_mouse_over=None, on_mouse_out=None,
+                 align=Align.TOP_LEFT):
         text = toolkit.Text(text, align=Align.CENTER, width=width)
         super().__init__(decorations, text, align=align)
         self.on_mouse_click = on_mouse_click
+        self.on_mouse_in = on_mouse_in
+        self.on_mouse_over = on_mouse_over
+        self.on_mouse_out = on_mouse_out
 
-    def layout(self, manager, parent, panel, z_order=toolkit.ZOrder.BASE):
+    def layout(self, manager, parent, panel, z_order=None):
         entity = super().layout(manager, parent, panel, z_order)
         manager.bind(
             entity,
             on_mouse_click=self.on_mouse_click,
+            on_mouse_in=self.on_mouse_in,
+            on_mouse_over=self.on_mouse_over,
+            on_mouse_out=self.on_mouse_out,
         )
         return entity
 
@@ -65,7 +74,8 @@ class Window(toolkit.Container):
     def extend(self, widgets):
         self.content.extend(widgets)
 
-    def layout(self, manager, parent, panel, z_order=toolkit.ZOrder.BASE):
+    def layout(self, manager, parent, panel, z_order=None):
+        z_order = z_order or toolkit.ZOrder.BASE
         entity = super().layout(manager, parent, panel, z_order)
         manager.bind(
             entity,
@@ -87,13 +97,14 @@ class ModalWindow(Window, toolkit.Widget):
         )
         self.size = size
 
-    def layout(self, manager, parent, panel, z_order=toolkit.ZOrder.MODAL):
+    def layout(self, manager, parent, panel, z_order=None):
         position = toolkit.get_position(panel.root, self.size, self.align, self.padding)
         panel = panel.create_panel(position, self.size)
+        z_order = z_order or toolkit.ZOrder.MODAL
         return super().layout(manager, parent, panel, z_order)
 
 
-class WidgetsLayoutManager:
+class WidgetsBuilder:
 
     def __init__(self, ecs):
         self.ecs = ecs
@@ -149,11 +160,20 @@ class WidgetsLayoutManager:
     def create_button(self, text, callback, value):
         button = Button(
             decorations=self.button_decorations,
-            width=self.button_width,
             text=text,
+            width=self.button_width,
             on_mouse_click={
                 handlers.MouseLeftButtonPress(self.ecs, value): callback,
             },
+            # on_mouse_in={
+            #     handlers.MouseIn(self.ecs): lambda *args: print(f'IN: {button.decorated.txt}'),
+            # },
+            # on_mouse_over={
+            #     handlers.MouseIn(self.ecs): lambda *args: print(f'OVER: {button.decorated.txt}'),
+            # },
+            # on_mouse_out={
+            #     handlers.MouseOut(self.ecs): lambda *args: print(f'OUT: {button.decorated.txt}'),
+            # },
         )
         return button
 
@@ -163,9 +183,9 @@ class WidgetsLayoutManager:
             buttons_row.append(self.create_button(text, callback, value))
         return buttons_row
 
-    def create(self, window, window_type, context):
+    def create(self, widget_type, context):
         # TODO: Move layout definitions to data/ui.yaml ?
-        if window_type == 'YES_NO_PROMPT':
+        if widget_type == 'YES_NO_PROMPT':
             title = context['title']
             msg = context['msg']
             callback = context['callback']
@@ -191,7 +211,7 @@ class WidgetsLayoutManager:
 
             widgets_layout.extend([msg, buttons])
 
-        if window_type == 'IN_GAME':
+        if widget_type == 'IN_GAME':
             widgets_layout = toolkit.Split(bottom=12)
 
             camera = self.create_window(title='mapcam')
@@ -209,22 +229,38 @@ class UIManager:
 
     def __init__(self, ecs):
         self.ecs = ecs
-        self.layout_manager = WidgetsLayoutManager(self.ecs)
+        self.widgets_builder = WidgetsBuilder(self.ecs)
+
+    def insert(self, entity, *,
+               panel=None,
+               z_order=None,
+               renderer=None,
+              ):
+        if panel:
+            self.ecs.manage(components.ConsolePanel).insert(
+                entity, panel, z_order or toolkit.ZOrder.BASE,
+            )
+        if renderer:
+            self.ecs.manage(components.PanelRenderer).insert(
+                entity, renderer,
+            )
 
     def create(self, parent, *,
                panel=None,
-               renderer=None,
                z_order=None,
+               renderer=None,
               ):
         entity = self.ecs.create(
-            components.ParentWindow(parent),
-            panel and components.ConsolePanel(panel),
-            renderer and components.PanelRenderer(renderer),
-            z_order and components.ZOrder(z_order),
+            components.ParentUIWidget(parent),
         )
+        self.insert(entity, panel=panel, z_order=z_order, renderer=renderer)
         return entity
 
-    def bind(self, entity, on_key_press=None, on_mouse_click=None, on_mouse_over=None):
+    def bind(self, entity, *,
+             on_key_press=None,
+             on_mouse_click=None,
+             on_mouse_in=None, on_mouse_over=None, on_mouse_out=None,
+            ):
         if on_key_press:
             self.ecs.manage(components.OnKeyPress).insert(
                 entity, on_key_press,
@@ -233,14 +269,22 @@ class UIManager:
             self.ecs.manage(components.OnMouseClick).insert(
                 entity, on_mouse_click,
             )
+        if on_mouse_in:
+            self.ecs.manage(components.OnMouseIn).insert(
+                entity, on_mouse_in,
+            )
         if on_mouse_over:
             self.ecs.manage(components.OnMouseOver).insert(
                 entity, on_mouse_over,
             )
+        if on_mouse_out:
+            self.ecs.manage(components.OnMouseOut).insert(
+                entity, on_mouse_out,
+            )
 
-    def create_widgets_layout(self, window, window_type, context):
-        widgets_layout = self.layout_manager.create(
-            window, window_type, context,
+    def create_widget(self, widget_type, context):
+        widget = self.widgets_builder.create(
+            widget_type, context,
         )
-        return widgets_layout
+        return widget
 

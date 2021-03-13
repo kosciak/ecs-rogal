@@ -122,8 +122,8 @@ def run():
 
         systems.run_state.UpdateStateSystem(ecs),
 
-        systems.gui.DestroyWindowsSystem(ecs),
-        systems.gui.CreateWindowsSystem(ecs),
+        systems.gui.DestroyUIWidgetsSystem(ecs),
+        systems.gui.CreateUIWidgetsSystem(ecs),
         systems.console.LayoutSytem(ecs),
         systems.console.RenderingSystem(ecs),
     ]:
