@@ -11,12 +11,6 @@ from .core import Align, Padding
 
 '''
 TODO:
-How it should work:
-- create window with all the widgets
-- call layout and create renderers entities
-- render called by system, need Z-order to sort what to render first!
-
-TODO:
 - progress bars (paint background only and print tiles)
 
 '''
@@ -75,10 +69,36 @@ def get_align_position(panel, size, align, padding=Padding.ZERO):
     )
 
 
-class Renderer:
+class UIElement:
 
-    def layout(self, manager, parent, panel, z_order=None):
-        return manager.create(parent, panel=panel, renderer=self, z_order=z_order)
+    """Abstract UI element that can be layouted on panel."""
+
+    def get_layout_panel(self, panel):
+        return panel
+
+    def get_renderer(self):
+        return None
+
+    def layout(self, manager, widget, panel, z_order=None):
+        panel = self.get_layout_panel(panel)
+        manager.insert(
+            widget,
+            panel=panel,
+            z_order=z_order,
+            renderer=self.get_renderer(),
+        )
+        self.layout_children(manager, widget, panel, z_order)
+
+    def layout_children(self, manager, parent, panel, z_order):
+        return
+
+
+class Renderer(UIElement):
+
+    """Abstract UI element that can render it's contents on panel."""
+
+    def get_renderer(self):
+        return self
 
     def clear(self, panel, colors):
         panel.clear(colors)
@@ -103,9 +123,9 @@ class Blinking(Renderer):
         return self.renderer.render(panel)
 
 
-class Widget(WithSizeMixin):
+class Widget(WithSizeMixin, UIElement):
 
-    """Layout widget with it's own size, alignment and padding.
+    """UI element with with it's own size, alignment and padding.
 
     NOTE: Subclasses MUST provide size attribute!
 
@@ -130,41 +150,42 @@ class Widget(WithSizeMixin):
     def padded_size(self):
         return Size(self.padded_width, self.padded_height)
 
-    def layout(self, manager, parent, panel, z_order=None):
-        raise NotImplementedError()
+    def get_layout_panel(self, panel):
+        position = get_position(panel, self.size, self.align, self.padding)
+        panel = panel.create_panel(position, self.size)
+        return panel
 
 
-class Container:
+class Container(UIElement):
 
     """Free form container.
 
-    Widgets are rendered in FIFO order and each widget use whole panel. 
+    Widgets are rendered in FIFO order and each widget use whole panel.
     Will overdraw previous ones if they overlap.
 
     """
 
     def __init__(self, widgets=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.widgets = list(widgets or [])
+        self.children = list(widgets or [])
 
     def append(self, widget):
-        self.widgets.append(widget)
+        self.children.append(widget)
 
     def extend(self, widgets):
-        self.widgets.extend(widgets)
+        self.children.extend(widgets)
 
-    def layout(self, manager, parent, panel, z_order=None):
-        entity = manager.create(parent, panel=panel, z_order=z_order)
-        for widget in self.widgets:
+    def layout_children(self, manager, parent, panel, z_order):
+        for child in self.children:
+            widget = manager.create(parent)
             z_order += 1
-            widget.layout(manager, entity, panel, z_order)
-        return entity
+            child.layout(manager, widget, panel, z_order)
 
     def __len__(self):
-        return len(self.widgets)
+        return len(self.children)
 
     def __iter__(self):
-        yield from self.widgets
+        yield from self.children
 
 
 class Text(Widget, Renderer):
@@ -192,8 +213,8 @@ class Text(Widget, Renderer):
         # panel = panel.create_panel(position, self.size)
         return panel
 
-    def layout(self, manager, parent, panel, z_order=None):
-        return manager.create(parent, panel=self.get_layout_panel(panel), renderer=self, z_order=z_order)
+    def get_renderer(self):
+        return self
 
     def render(self, panel):
         position = get_align_position(panel, self.txt_size, self.align, self.padding)
@@ -266,9 +287,8 @@ class Decorations(WithSizeMixin, Renderer):
             Size(panel.width-self.width, panel.height-self.height)
         )
 
-    def layout(self, manager, parent, panel, z_order=None):
-        # Always use all available space
-        return manager.create(parent, panel=panel, renderer=self, z_order=z_order)
+    def get_renderer(self):
+        return self
 
     def render(self, panel):
         panel.draw(self.top, Position(1, 0), Size(panel.width-2, 1))
@@ -306,14 +326,12 @@ class Decorated(Widget):
         panel = panel.create_panel(position, size)
         return panel
 
-    def layout(self, manager, parent, panel, z_order=None):
-        panel = self.get_layout_panel(panel)
-        entity = manager.create(parent, panel=panel, z_order=z_order)
-        self.decorations.layout(manager, entity, panel, z_order)
+    def layout_children(self, manager, parent, panel, z_order):
+        widget = manager.create(parent)
+        self.decorations.layout(manager, widget, panel, z_order)
+        widget = manager.create(parent)
         panel = self.decorations.inner_panel(panel)
-        z_order += 1
-        self.decorated.layout(manager, entity, panel, z_order)
-        return entity
+        self.decorated.layout(manager, widget, panel, z_order+1)
 
 
 class Row(Container, Widget):
@@ -333,21 +351,20 @@ class Row(Container, Widget):
 
     @property
     def size(self):
-        if not self.widgets:
+        if not self.children:
             return None
         return Size(
-            sum([widget.padded_width for widget in self]),
-            max([widget.padded_height for widget in self])
+            sum([widget.padded_width for widget in self.children]),
+            max([widget.padded_height for widget in self.children])
         )
 
-    def layout(self, manager, parent, panel, z_order=None):
-        entity = manager.create(parent, panel=panel, z_order=z_order)
+    def layout_children(self, manager, parent, panel, z_order):
         position = get_position(panel, self.size, self.align, self.padding)
-        for widget in self:
-            subpanel = panel.create_panel(position, widget.padded_size)
-            widget.layout(manager, entity, subpanel, z_order)
-            position += Position(widget.padded_width, 0)
-        return entity
+        for child in self.children:
+            widget = manager.create(parent)
+            subpanel = panel.create_panel(position, child.padded_size)
+            child.layout(manager, widget, subpanel, z_order)
+            position += Position(child.padded_width, 0)
 
 
 # TODO: ???
@@ -369,21 +386,20 @@ class List(Container, Widget):
 
     @property
     def size(self):
-        if not self.widgets:
+        if not self.children:
             return None
         return Size(
-            max([widget.padded_width for widget in self]),
-            sum([widget.padded_height for widget in self])
+            max([widget.padded_width for widget in self.children]),
+            sum([widget.padded_height for widget in self.children])
         )
 
-    def layout(self, manager, parent, panel, z_order=None):
-        entity = manager.create(parent, panel=panel, z_order=z_order)
+    def layout_children(self, manager, parent, panel, z_order):
         position = get_position(panel, self.size, self.align, self.padding)
-        for widget in self:
-            subpanel = panel.create_panel(position, widget.padded_size)
-            widget.layout(manager, entity, subpanel, z_order)
-            position += Position(0, widget.padded_height)
-        return entity
+        for child in self.children:
+            widget = manager.create(parent)
+            subpanel = panel.create_panel(position, child.padded_size)
+            child.layout(manager, widget, subpanel, z_order)
+            position += Position(0, child.padded_height)
 
 
 
@@ -398,13 +414,12 @@ class Split(Container):
         self.top = top
         self.bottom = bottom
 
-    def layout(self, manager, parent, panel, z_order=None):
-        entity = manager.create(parent, panel=panel, z_order=z_order)
+    def layout_children(self, manager, parent, panel, z_order):
         panels = panel.split(self.left, self.right, self.top, self.bottom)
-        for i, widget in enumerate(self.widgets):
-            if widget:
-                widget.layout(manager, entity, panels[i], z_order)
+        for i, child in enumerate(self.children):
+            if child:
+                widget = manager.create(parent)
+                child.layout(manager, widget, panels[i], z_order)
             if i >= 2:
                 break
-        return entity
 

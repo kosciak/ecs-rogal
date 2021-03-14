@@ -37,17 +37,16 @@ class Button(toolkit.Decorated):
         self.on_mouse_over = on_mouse_over
         self.on_mouse_out = on_mouse_out
 
-    def layout(self, manager, parent, panel, z_order=None):
-        entity = super().layout(manager, parent, panel, z_order)
-        manager.insert(entity, widget=self)
+    def layout(self, manager, widget, panel, z_order=None):
+        super().layout(manager, widget, panel, z_order)
+        manager.insert(widget, ui_widget=self)
         manager.bind(
-            entity,
+            widget,
             on_mouse_click=self.on_mouse_click,
             on_mouse_in=self.on_mouse_in,
             on_mouse_over=self.on_mouse_over,
             on_mouse_out=self.on_mouse_out,
         )
-        return entity
 
 
 class Window(toolkit.Container):
@@ -58,7 +57,7 @@ class Window(toolkit.Container):
         self.content = toolkit.Container()
         self.on_key_press = on_key_press
 
-        self.widgets.extend([
+        self.children.extend([
             toolkit.Decorated(
                 decorations=decorations,
                 align=Align.TOP_LEFT,
@@ -75,15 +74,14 @@ class Window(toolkit.Container):
     def extend(self, widgets):
         self.content.extend(widgets)
 
-    def layout(self, manager, parent, panel, z_order=None):
+    def layout(self, manager, widget, panel, z_order=None):
         z_order = z_order or toolkit.ZOrder.BASE
-        entity = super().layout(manager, parent, panel, z_order)
-        manager.insert(entity, widget=self)
+        super().layout(manager, widget, panel, z_order)
+        manager.insert(widget, ui_widget=self)
         manager.bind(
-            entity,
+            widget,
             on_key_press=self.on_key_press,
         )
-        return entity
 
 
 class ModalWindow(Window, toolkit.Widget):
@@ -99,11 +97,9 @@ class ModalWindow(Window, toolkit.Widget):
         )
         self.size = size
 
-    def layout(self, manager, parent, panel, z_order=None):
-        position = toolkit.get_position(panel.root, self.size, self.align, self.padding)
-        panel = panel.create_panel(position, self.size)
+    def layout(self, manager, widget, panel, z_order=None):
         z_order = z_order or toolkit.ZOrder.MODAL
-        return super().layout(manager, parent, panel, z_order)
+        super().layout(manager, widget, panel, z_order)
 
 
 class WidgetsBuilder:
@@ -233,60 +229,58 @@ class UIManager:
         self.ecs = ecs
         self.widgets_builder = WidgetsBuilder(self.ecs)
 
-    def insert(self, entity, *,
-               widget=None,
+    def insert(self, widget, *,
+               ui_widget=None,
                panel=None,
                z_order=None,
                renderer=None,
               ):
-        if widget:
+        if ui_widget:
             self.ecs.manage(components.UIWidget).insert(
-                entity, widget, needs_update=False,
+                widget, ui_widget, needs_update=False,
             )
         if panel:
             self.ecs.manage(components.ConsolePanel).insert(
-                entity, panel, z_order or toolkit.ZOrder.BASE,
+                widget, panel, z_order or toolkit.ZOrder.BASE,
             )
         if renderer:
             self.ecs.manage(components.PanelRenderer).insert(
-                entity, renderer,
+                widget, renderer,
             )
 
-    def create(self, parent, *,
-               panel=None,
-               z_order=None,
+    def create(self, parent, panel=None, z_order=None, *,
                renderer=None,
               ):
-        entity = self.ecs.create(
+        widget = self.ecs.create(
             components.ParentUIWidget(parent),
         )
-        self.insert(entity, panel=panel, z_order=z_order, renderer=renderer)
-        return entity
+        self.insert(widget, panel=panel, z_order=z_order, renderer=renderer)
+        return widget
 
-    def bind(self, entity, *,
+    def bind(self, widget, *,
              on_key_press=None,
              on_mouse_click=None,
              on_mouse_in=None, on_mouse_over=None, on_mouse_out=None,
             ):
         if on_key_press:
             self.ecs.manage(components.OnKeyPress).insert(
-                entity, on_key_press,
+                widget, on_key_press,
             )
         if on_mouse_click:
             self.ecs.manage(components.OnMouseClick).insert(
-                entity, on_mouse_click,
+                widget, on_mouse_click,
             )
         if on_mouse_in:
             self.ecs.manage(components.OnMouseIn).insert(
-                entity, on_mouse_in,
+                widget, on_mouse_in,
             )
         if on_mouse_over:
             self.ecs.manage(components.OnMouseOver).insert(
-                entity, on_mouse_over,
+                widget, on_mouse_over,
             )
         if on_mouse_out:
             self.ecs.manage(components.OnMouseOut).insert(
-                entity, on_mouse_out,
+                widget, on_mouse_out,
             )
 
     def create_widget(self, widget_type, context):

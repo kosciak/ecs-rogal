@@ -35,8 +35,8 @@ class LayoutSytem(ConsoleSystem):
     def get_widgets_to_update(self):
         widgets = self.ecs.manage(components.UIWidget)
         to_update = [
-            (window, widget) for window, widget in widgets
-            if widget.needs_update
+            (widget, content) for widget, content in widgets
+            if content.needs_update
         ]
         return to_update
 
@@ -46,11 +46,13 @@ class LayoutSytem(ConsoleSystem):
             return
         ui_manager = self.ecs.resources.ui_manager
         panels = self.ecs.manage(components.ConsolePanel)
-        for window, widget in widgets:
-            if not widget.needs_update:
-                continue
-            panel = panels.get(window) or self.root
-            widget.layout(ui_manager, window, panel)
+        for widget, content in widgets:
+            panel = panels.get(widget)
+            if panel is None:
+                content.layout(ui_manager, widget, self.root)
+            else:
+                z_order = self.ecs.manage(components.ZOrder).get(widget)
+                content.layout_children(ui_manager, widget, panel, z_roder)
 
 
 class RenderingSystem(ConsoleSystem):
