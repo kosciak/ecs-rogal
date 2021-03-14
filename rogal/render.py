@@ -49,7 +49,7 @@ class Camera(Rectangular, toolkit.Renderer):
         self.show_boundaries = show_boundaries
 
         self.walls_terrain_type = terrain.Type.WALL
-        self.bitmasked_walls = self.tileset.bitmasks['WALLS_DLINE']
+        self.bitmasked_walls = self.tileset.bitmasks.WALLS_DLINE
 
     @property
     def size(self):

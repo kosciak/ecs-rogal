@@ -3,9 +3,10 @@ import functools
 import logging
 import uuid
 
-from .run_state import RunState
-
 from ..utils import perf
+from ..utils.attrdict import AttrDict
+
+from .run_state import RunState
 
 
 log = logging.getLogger(__name__)
@@ -255,13 +256,8 @@ class SystemsManager:
         yield from self.systems
 
 
-class ResourcesManager(dict):
-
-    def __getattr__(self, name):
-        return self.get(name)
-
-    def __setattr__(self, name, value):
-        self[name] = value
+class ResourcesManager(AttrDict):
+    pass
 
 
 class ECS:

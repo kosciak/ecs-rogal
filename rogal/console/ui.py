@@ -111,18 +111,18 @@ class WidgetsBuilder:
         self.default_colors = Colors(self.tileset.palette.fg, self.tileset.palette.bg)
 
         self.window_decorations = toolkit.Decorations(
-            *self.tileset.decorations['DSLINE'],
+            *self.tileset.decorations.DSLINE,
             colors=self.default_colors
         )
 
         self.title_decorations = toolkit.Decorations(
-            *self.tileset.decorations['MINIMAL_DSLINE'],
+            *self.tileset.decorations.MINIMAL_DSLINE,
             colors=self.default_colors
         )
         self.title_align = Align.TOP_CENTER
 
         self.button_decorations = toolkit.Decorations(
-            *self.tileset.decorations['LINE'],
+            *self.tileset.decorations.LINE,
             colors=self.default_colors
         )
         self.button_width = 8

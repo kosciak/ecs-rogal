@@ -1,6 +1,8 @@
 import collections
 import importlib
 
+from ..utils.attrdict import AttrDict
+
 from .core import Tile
 from .symbols import Symbol
 from . import tilesheets
@@ -111,7 +113,7 @@ class Tileset:
         return tiles
 
     def parse_symbols(self, data, category):
-        symbols = {}
+        symbols = AttrDict()
         for name, values in data[category].items():
             symbols[name] = [Symbol.get(ch) for ch in values]
         return symbols
