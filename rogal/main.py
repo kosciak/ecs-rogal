@@ -84,7 +84,7 @@ def run():
     ecs.resources.wrapper = TcodWrapper(
         console_size=CONSOLE_SIZE,
         palette=ecs.resources.tileset.palette,
-        tilesheet=ecs.resources.tileset.tilesheet,
+        tileset=ecs.resources.tileset.tilesheet,
         resizable=False,
         title='Rogal test'
     )

@@ -187,14 +187,14 @@ class TcodWrapper(IOWrapper):
     def __init__(self,
         console_size,
         palette,
-        tilesheet,
+        tileset,
         resizable=False,
         title=None,
         enable_joystick=False,
     ):
         self.console_size = console_size
         self._palette = palette
-        self._tilesheet = tilesheet
+        self._tileset = tileset
         self.resizable = resizable
         self.title=title
         self._context = None
@@ -211,7 +211,7 @@ class TcodWrapper(IOWrapper):
                 columns=self.console_size.width,
                 rows=self.console_size.height,
                 title=self.title,
-                tileset=self.tilesheet,
+                tileset=self.tileset,
                 sdl_window_flags=self.resizable and tcod.context.SDL_WINDOW_RESIZABLE
             )
             self._context = context
@@ -223,16 +223,26 @@ class TcodWrapper(IOWrapper):
         return tcod.tileset.load_tilesheet(
             tilesheet.path, tilesheet.columns, tilesheet.rows, tilesheet.charmap)
 
-    @property
-    def tilesheet(self):
-        return self.load_tilesheet(self._tilesheet)
+    def load_truetype_font(self, truetype_font):
+        return tcod.tileset.load_truetype_font(
+            truetype_font.path, truetype_font.width, truetype_font.height)
 
-    @tilesheet.setter
-    def tilesheet(self, tilesheet):
-        self._tilesheet = tilesheet
+    def load_tileset(self, tileset):
+        if tileset.path.endswith('.ttf'):
+            return self.load_truetype_font(tileset)
+        else:
+            return self.load_tilesheet(tileset)
+
+    @property
+    def tileset(self):
+        return self.load_tileset(self._tileset)
+
+    @tileset.setter
+    def tileset(self, tileset):
+        self._tileset = tileset
         if self.is_initialized:
-            tilesheet = self.load_tilesheet(self._tilesheet)
-            self.context.change_tilesheet(tilesheet)
+            tileset = self.load_tileset(self._tileset)
+            self.context.change_tileset(tileset)
 
     def create_console(self, size=None):
         # TODO: Check options and resizing behaviour

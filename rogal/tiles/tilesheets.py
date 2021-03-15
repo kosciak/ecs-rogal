@@ -8,6 +8,15 @@ ASSETS_DIR = 'assets'
 FONTS_DIR = os.path.join(ASSETS_DIR, 'fonts')
 
 
+class TrueTypeFont(collections.namedtuple(
+    'TrueTypeFont', [
+        'path',
+        'width',
+        'height',
+    ])):
+
+    __slots__ = ()
+
 
 class Tilesheet(collections.namedtuple(
     'Tilesheet', [
@@ -34,3 +43,10 @@ TERMINAL_12x12_CP = Tilesheet(
     charsets.CP437,
 )
 
+
+# Looks BAD... :(
+ROBOTO_MONO_12x12_TTF = TrueTypeFont(
+    '/usr/share/fonts/google-roboto-mono/RobotoMono-Regular.ttf',
+    12,
+    12,
+)
