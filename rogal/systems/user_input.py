@@ -103,6 +103,9 @@ class EventsHandlersSystem(System):
             self.handle_event(event, entity, handlers)
 
     def on_mouse_press(self, event):
+        self.on_mouse_over_event(event, components.OnMousePress)
+
+    def on_mouse_click(self, event):
         self.on_mouse_over_event(event, components.OnMouseClick)
 
     def on_mouse_motion(self, event):
@@ -137,6 +140,8 @@ class EventsHandlersSystem(System):
                 self.on_key_press(event)
             if event.type == EventType.MOUSE_BUTTON_PRESS:
                 self.on_mouse_press(event)
+            if event.type == EventType.MOUSE_BUTTON_UP:
+                self.on_mouse_click(event)
             if event.type == EventType.MOUSE_MOTION:
                 self.on_mouse_motion(event)
             if event.type == EventType.MOUSE_WHEEL:

@@ -122,7 +122,7 @@ class NumericIndexKeyPress(KeyPressHandler):
             return index
 
 
-class MouseButtonPress(EventHandler):
+class MouseButtonEvent(EventHandler):
 
     BUTTONS = {}
 
@@ -135,19 +135,19 @@ class MouseButtonPress(EventHandler):
             return self.value
 
 
-class MouseLeftButtonPress(MouseButtonPress):
+class MouseLeftButton(MouseButtonEvent):
     BUTTONS = {MouseButton.LEFT, }
 
-class MouseRightButtonPress(MouseButtonPress):
+class MouseRightButton(MouseButtonEvent):
     BUTTONS = {MouseButton.RIGHT, }
 
-class MouseMiddleButtonPress(MouseButtonPress):
+class MouseMiddleButton(MouseButtonEvent):
     BUTTONS = {MouseButton.MIDDLE, }
 
-class MouseX1ButtonPress(MouseButtonPress):
+class MouseX1Button(MouseButtonEvent):
     BUTTONS = {MouseButton.X1, }
 
-class MouseX2ButtonPress(MouseButtonPress):
+class MouseX2Button(MouseButtonEvent):
     BUTTONS = {MouseButton.X2, }
 
 

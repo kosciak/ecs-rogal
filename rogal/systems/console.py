@@ -25,7 +25,8 @@ class ConsoleSystem(System):
     @property
     def root(self):
         if self.ecs.resources.root_panel is None:
-            self.ecs.resources.root_panel = self.wrapper.create_panel()
+            panel = self.wrapper.create_panel()
+            self.ecs.resources.root_panel = panel
         self._root = self.ecs.resources.root_panel
         return self._root
 
@@ -52,7 +53,7 @@ class LayoutSytem(ConsoleSystem):
                 content.layout(ui_manager, widget, self.root)
             else:
                 z_order = self.ecs.manage(components.ZOrder).get(widget)
-                content.layout_children(ui_manager, widget, panel, z_roder)
+                content.layout_children(ui_manager, widget, panel, z_order)
 
 
 class RenderingSystem(ConsoleSystem):
@@ -99,7 +100,6 @@ class RenderingSystem(ConsoleSystem):
             key=itemgetter(0)
         ):
             with perf.Perf(renderer.renderer.render):
-                renderer.clear(panel, self.default_colors)
                 renderer.render(panel)
 
         # Show rendered panel

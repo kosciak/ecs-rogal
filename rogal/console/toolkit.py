@@ -87,6 +87,8 @@ class UIElement:
             z_order=z_order,
             renderer=self.get_renderer(),
         )
+        if z_order:
+            z_order += 1
         self.layout_children(manager, widget, panel, z_order)
 
     def layout_children(self, manager, parent, panel, z_order):
@@ -100,11 +102,18 @@ class Renderer(UIElement):
     def get_renderer(self):
         return self
 
-    def clear(self, panel, colors):
-        panel.clear(colors)
-
     def render(self, panel):
         raise NotImplementedError()
+
+
+class ClearPanel(Renderer):
+
+    def __init__(self, colors):
+        super().__init__()
+        self.colors = colors
+
+    def render(self, panel):
+        panel.clear(self.colors)
 
 
 class Blinking(Renderer):

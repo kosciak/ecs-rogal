@@ -44,6 +44,10 @@ class UIWidget(Component):
         self.widget.layout(ui_manager, parent, panel)
         self.needs_update = False
 
+    def layout_children(self, ui_manager, parent, panel, z_order):
+        self.widget.layout_children(ui_manager, parent, panel, z_order)
+        self.needs_update = False
+
 
 @functools.total_ordering
 class ConsolePanel(Component):
@@ -63,12 +67,8 @@ class ConsolePanel(Component):
 class PanelRenderer(Component):
     __slots__ = ('renderer', )
 
-    def __init__(self, renderer):
-        # TODO: Z-order?
+    def __init__(self, renderer, ):
         self.renderer = renderer
-
-    def clear(self, panel, colors):
-        self.renderer.clear(panel.panel, colors)
 
     def render(self, panel):
         self.renderer.render(panel.panel)
@@ -103,6 +103,8 @@ OnMouseIn = EventHandlers('OnMouseIn')
 OnMouseOver = EventHandlers('OnMouseOver')
 
 OnMouseOut = EventHandlers('OnMouseOut')
+
+OnMousePress = EventHandlers('OnMousePress')
 
 OnMouseClick = EventHandlers('OnMouseClick')
 

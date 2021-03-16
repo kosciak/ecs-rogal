@@ -254,11 +254,11 @@ class RootPanel(Panel):
         return Panel(self, position, size)
 
     def rgb(self, color):
-        if not color:
+        if color is None:
             return None
         if isinstance(color, Color):
             return color.rgb
-        if isinstance(color, tuple):
+        if isinstance(color, (tuple, list)):
             if len(color) == 3:
                 return color
             else:

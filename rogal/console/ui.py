@@ -27,22 +27,33 @@ class WindowTitle(toolkit.Decorated):
 class Button(toolkit.Decorated):
 
     def __init__(self, decorations, text, width, *,
-                 on_mouse_click,
+                 default_colors,
+                 on_mouse_click, on_mouse_press=None,
                  on_mouse_in=None, on_mouse_over=None, on_mouse_out=None,
-                 align=Align.TOP_LEFT):
+                 selected_colors=None,
+                 align=Align.TOP_LEFT,
+                ):
         text = toolkit.Text(text, align=Align.CENTER, width=width)
         super().__init__(decorations, text, align=align)
+        self.default_colors = default_colors
+        self.selected_colors = selected_colors
         self.on_mouse_click = on_mouse_click
+        self.on_mouse_press = on_mouse_press
         self.on_mouse_in = on_mouse_in
         self.on_mouse_over = on_mouse_over
         self.on_mouse_out = on_mouse_out
 
     def layout(self, manager, widget, panel, z_order=None):
         super().layout(manager, widget, panel, z_order)
-        manager.insert(widget, ui_widget=self)
+        manager.insert(
+            widget,
+            ui_widget=self,
+            renderer=toolkit.ClearPanel(self.default_colors),
+        )
         manager.bind(
             widget,
             on_mouse_click=self.on_mouse_click,
+            on_mouse_press=self.on_mouse_press,
             on_mouse_in=self.on_mouse_in,
             on_mouse_over=self.on_mouse_over,
             on_mouse_out=self.on_mouse_out,
@@ -51,17 +62,22 @@ class Button(toolkit.Decorated):
 
 class Window(toolkit.Container):
 
-    def __init__(self, decorations, title=None, on_key_press=None, *args, **kwargs):
+    def __init__(self, decorations, default_colors,
+                 title=None,
+                 on_key_press=None,
+                 *args, **kwargs
+                ):
         super().__init__(*args, **kwargs)
         self.frame = toolkit.Container()
         self.content = toolkit.Container()
+        self.default_colors=default_colors
         self.on_key_press = on_key_press
 
         self.children.extend([
             toolkit.Decorated(
                 decorations=decorations,
-                align=Align.TOP_LEFT,
                 decorated=self.content,
+                align=Align.TOP_LEFT,
             ),
             self.frame,
         ])
@@ -77,7 +93,11 @@ class Window(toolkit.Container):
     def layout(self, manager, widget, panel, z_order=None):
         z_order = z_order or toolkit.ZOrder.BASE
         super().layout(manager, widget, panel, z_order)
-        manager.insert(widget, ui_widget=self)
+        manager.insert(
+            widget,
+            ui_widget=self,
+            renderer=toolkit.ClearPanel(self.default_colors),
+        )
         manager.bind(
             widget,
             on_key_press=self.on_key_press,
@@ -86,11 +106,16 @@ class Window(toolkit.Container):
 
 class ModalWindow(Window, toolkit.Widget):
 
-    def __init__(self, align, padding, size, decorations, title=None, on_key_press=None, *args, **kwargs):
+    def __init__(self, align, padding, size, decorations, default_colors,
+                 title=None,
+                 on_key_press=None,
+                 *args, **kwargs
+                ):
         super().__init__(
             align=align,
             padding=padding,
             decorations=decorations,
+            default_colors=default_colors,
             title=title,
             on_key_press=on_key_press,
             *args, **kwargs,
@@ -112,18 +137,18 @@ class WidgetsBuilder:
 
         self.window_decorations = toolkit.Decorations(
             *self.tileset.decorations.DSLINE,
-            colors=self.default_colors
+            colors=None,
         )
 
         self.title_decorations = toolkit.Decorations(
             *self.tileset.decorations.MINIMAL_DSLINE,
-            colors=self.default_colors
+            colors=None,
         )
         self.title_align = Align.TOP_CENTER
 
         self.button_decorations = toolkit.Decorations(
             *self.tileset.decorations.LINE,
-            colors=self.default_colors
+            colors=None,
         )
         self.button_width = 8
         self.buttons_align = Align.BOTTOM_CENTER
@@ -141,6 +166,7 @@ class WidgetsBuilder:
     def create_window(self, title=None, on_key_press=None):
         window = Window(
             decorations=self.window_decorations,
+            default_colors=self.default_colors,
             title=self.create_title(title),
             on_key_press=on_key_press,
         )
@@ -149,6 +175,7 @@ class WidgetsBuilder:
     def create_modal_window(self, align, padding, size, title=None, on_key_press=None):
         window = ModalWindow(
             align=align, padding=padding, size=size,
+            default_colors=self.default_colors,
             decorations=self.window_decorations,
             title=self.create_title(title),
             on_key_press=on_key_press,
@@ -160,18 +187,25 @@ class WidgetsBuilder:
             decorations=self.button_decorations,
             text=text,
             width=self.button_width,
+            default_colors=self.default_colors,
+            selected_colors=self.default_colors.invert(),
             on_mouse_click={
-                handlers.MouseLeftButtonPress(self.ecs, value): callback,
+                handlers.MouseLeftButton(self.ecs, value): callback,
             },
-            # on_mouse_in={
-            #     handlers.MouseIn(self.ecs): lambda *args: print(f'IN: {button.decorated.txt}'),
-            # },
-            # on_mouse_over={
-            #     handlers.MouseIn(self.ecs): lambda *args: print(f'OVER: {button.decorated.txt}'),
-            # },
-            # on_mouse_out={
-            #     handlers.MouseOut(self.ecs): lambda *args: print(f'OUT: {button.decorated.txt}'),
-            # },
+            # TODO: Clean up this mess of handlers!
+            on_mouse_in={
+                # handlers.MouseIn(self.ecs): lambda widget, *args: print(f'IN: {button.decorated.txt}'),
+                # handlers.MouseIn(self.ecs): lambda widget, *args: self.ecs.manage(components.PanelRenderer).insert(widget, toolkit.ClearPanel(Colors(fg=self.tileset.palette.BRIGHT_WHITE, bg=self.tileset.palette.bg))),
+                handlers.MouseIn(self.ecs): lambda widget, *args: self.ecs.manage(components.PanelRenderer).insert(widget, toolkit.ClearPanel(button.selected_colors)),
+            },
+            on_mouse_over={
+                # handlers.MouseOver(self.ecs): lambda widget, *args: print(f'OVER: {button.decorated.txt}'),
+                handlers.MouseOver(self.ecs): lambda widget, *args: self.ecs.manage(components.PanelRenderer).insert(widget, toolkit.ClearPanel(button.selected_colors)),
+            },
+            on_mouse_out={
+                # handlers.MouseOut(self.ecs): lambda widget, *args: print(f'OUT: {button.decorated.txt}'),
+                handlers.MouseOut(self.ecs): lambda widget, *args: self.ecs.manage(components.PanelRenderer).insert(widget, toolkit.ClearPanel(button.default_colors)),
+            },
         )
         return button
 
@@ -259,7 +293,7 @@ class UIManager:
 
     def bind(self, widget, *,
              on_key_press=None,
-             on_mouse_click=None,
+             on_mouse_click=None, on_mouse_press=None,
              on_mouse_in=None, on_mouse_over=None, on_mouse_out=None,
             ):
         if on_key_press:
@@ -269,6 +303,10 @@ class UIManager:
         if on_mouse_click:
             self.ecs.manage(components.OnMouseClick).insert(
                 widget, on_mouse_click,
+            )
+        if on_mouse_press:
+            self.ecs.manage(components.OnMousePress).insert(
+                widget, on_mouse_press,
             )
         if on_mouse_in:
             self.ecs.manage(components.OnMouseIn).insert(
