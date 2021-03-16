@@ -226,6 +226,8 @@ class Text(Widget, Renderer):
         return self
 
     def render(self, panel):
+        if self.colors:
+            panel.clear(self.colors)
         position = get_align_position(panel, self.txt_size, self.align, self.padding)
         panel.print(self.txt, position, colors=self.colors, align=self.align)
 

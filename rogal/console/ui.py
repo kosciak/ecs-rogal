@@ -17,13 +17,6 @@ from . import toolkit
 # TODO: Cursor (blinking)
 
 
-class WindowTitle(toolkit.Decorated):
-
-    def __init__(self, decorations, text, align=Align.TOP_LEFT):
-        text = toolkit.Text(text, align=align)
-        super().__init__(decorations, text, align=align, padding=Padding(0, 1))
-
-
 class Button(toolkit.Decorated):
 
     def __init__(self, decorations, text, width, *,
@@ -153,13 +146,18 @@ class WidgetsBuilder:
         self.button_width = 8
         self.buttons_align = Align.BOTTOM_CENTER
 
-    def create_title(self, title):
+    def create_window_title(self, title):
         if title is None:
             return
-        title = WindowTitle(
+        title = toolkit.Decorated(
             decorations=self.title_decorations,
-            text=title,
+            decorated=toolkit.Text(
+                title,
+                colors=self.default_colors,
+                align=self.title_align,
+            ),
             align=self.title_align,
+            padding=Padding(0, 1),
         )
         return title
 
@@ -167,7 +165,7 @@ class WidgetsBuilder:
         window = Window(
             decorations=self.window_decorations,
             default_colors=self.default_colors,
-            title=self.create_title(title),
+            title=self.create_window_title(title),
             on_key_press=on_key_press,
         )
         return window
@@ -177,7 +175,7 @@ class WidgetsBuilder:
             align=align, padding=padding, size=size,
             default_colors=self.default_colors,
             decorations=self.window_decorations,
-            title=self.create_title(title),
+            title=self.create_window_title(title),
             on_key_press=on_key_press,
         )
         return window
