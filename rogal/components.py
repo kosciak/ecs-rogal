@@ -106,6 +106,8 @@ OnMouseOut = EventHandlers('OnMouseOut')
 
 OnMousePress = EventHandlers('OnMousePress')
 
+OnMouseUp = EventHandlers('OnMouseUp')
+
 OnMouseClick = EventHandlers('OnMouseClick')
 
 OnMouseWheel = EventHandlers('OnMouseWheel')

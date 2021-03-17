@@ -21,32 +21,39 @@ class Button(toolkit.Decorated):
 
     def __init__(self, decorations, text, width, *,
                  default_colors,
-                 on_mouse_click, on_mouse_press=None,
+                 on_mouse_click, on_mouse_press=None, on_mouse_up=None,
                  on_mouse_in=None, on_mouse_over=None, on_mouse_out=None,
-                 selected_colors=None,
+                 selected_colors=None, press_colors=None,
                  align=Align.TOP_LEFT,
                 ):
         text = toolkit.Text(text, align=Align.CENTER, width=width)
         super().__init__(decorations, text, align=align)
         self.default_colors = default_colors
-        self.selected_colors = selected_colors
+        self.selected_colors = selected_colors or self.default_colors
+        self.press_colors = press_colors or self.selected_colors
+        self.renderer = toolkit.ClearPanel(self.default_colors)
         self.on_mouse_click = on_mouse_click
         self.on_mouse_press = on_mouse_press
+        self.on_mouse_up = on_mouse_up
         self.on_mouse_in = on_mouse_in
         self.on_mouse_over = on_mouse_over
         self.on_mouse_out = on_mouse_out
+
+    def set_colors(self, colors):
+        self.renderer.colors = colors
 
     def layout(self, manager, widget, panel, z_order=None):
         super().layout(manager, widget, panel, z_order)
         manager.insert(
             widget,
             ui_widget=self,
-            renderer=toolkit.ClearPanel(self.default_colors),
+            renderer=self.renderer,
         )
         manager.bind(
             widget,
             on_mouse_click=self.on_mouse_click,
             on_mouse_press=self.on_mouse_press,
+            on_mouse_up=self.on_mouse_up,
             on_mouse_in=self.on_mouse_in,
             on_mouse_over=self.on_mouse_over,
             on_mouse_out=self.on_mouse_out,
@@ -187,22 +194,27 @@ class WidgetsBuilder:
             width=self.button_width,
             default_colors=self.default_colors,
             selected_colors=self.default_colors.invert(),
+            press_colors=Colors(fg=self.tileset.palette.bg, bg=self.tileset.palette.BRIGHT_WHITE),
             on_mouse_click={
                 handlers.MouseLeftButton(self.ecs, value): callback,
             },
+            on_mouse_press={
+                handlers.MouseLeftButton(self.ecs): lambda widget, *args: button.set_colors(button.press_colors),
+            },
+            on_mouse_up={
+                handlers.MouseLeftButton(self.ecs): lambda widget, *args: button.set_colors(button.selected_colors),
+            },
             # TODO: Clean up this mess of handlers!
             on_mouse_in={
-                # handlers.MouseIn(self.ecs): lambda widget, *args: print(f'IN: {button.decorated.txt}'),
-                # handlers.MouseIn(self.ecs): lambda widget, *args: self.ecs.manage(components.PanelRenderer).insert(widget, toolkit.ClearPanel(Colors(fg=self.tileset.palette.BRIGHT_WHITE, bg=self.tileset.palette.bg))),
-                handlers.MouseIn(self.ecs): lambda widget, *args: self.ecs.manage(components.PanelRenderer).insert(widget, toolkit.ClearPanel(button.selected_colors)),
+                handlers.MouseIn(self.ecs): lambda widget, *args: print(f'IN: {button.decorated.txt}'),
+                handlers.MouseIn(self.ecs): lambda widget, *args: button.set_colors(button.selected_colors),
             },
             on_mouse_over={
-                # handlers.MouseOver(self.ecs): lambda widget, *args: print(f'OVER: {button.decorated.txt}'),
-                handlers.MouseOver(self.ecs): lambda widget, *args: self.ecs.manage(components.PanelRenderer).insert(widget, toolkit.ClearPanel(button.selected_colors)),
+                handlers.MouseOver(self.ecs): lambda widget, *args: print(f'OVER: {button.decorated.txt}'),
             },
             on_mouse_out={
-                # handlers.MouseOut(self.ecs): lambda widget, *args: print(f'OUT: {button.decorated.txt}'),
-                handlers.MouseOut(self.ecs): lambda widget, *args: self.ecs.manage(components.PanelRenderer).insert(widget, toolkit.ClearPanel(button.default_colors)),
+                handlers.MouseOut(self.ecs): lambda widget, *args: print(f'OUT: {button.decorated.txt}'),
+                handlers.MouseOut(self.ecs): lambda widget, *args: button.set_colors(button.default_colors),
             },
         )
         return button
@@ -291,7 +303,7 @@ class UIManager:
 
     def bind(self, widget, *,
              on_key_press=None,
-             on_mouse_click=None, on_mouse_press=None,
+             on_mouse_click=None, on_mouse_press=None, on_mouse_up=None,
              on_mouse_in=None, on_mouse_over=None, on_mouse_out=None,
             ):
         if on_key_press:
@@ -305,6 +317,10 @@ class UIManager:
         if on_mouse_press:
             self.ecs.manage(components.OnMousePress).insert(
                 widget, on_mouse_press,
+            )
+        if on_mouse_up:
+            self.ecs.manage(components.OnMouseUp).insert(
+                widget, on_mouse_up,
             )
         if on_mouse_in:
             self.ecs.manage(components.OnMouseIn).insert(

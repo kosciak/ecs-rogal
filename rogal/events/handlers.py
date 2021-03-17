@@ -126,13 +126,13 @@ class MouseButtonEvent(EventHandler):
 
     BUTTONS = {}
 
-    def __init__(self, ecs, value):
+    def __init__(self, ecs, value=None):
         super().__init__(ecs)
         self.value = value
 
     def handle(self, event):
         if event.button in self.BUTTONS:
-            return self.value
+            return self.value or event.position
 
 
 class MouseLeftButton(MouseButtonEvent):
