@@ -95,7 +95,7 @@ class UIElement:
         return
 
 
-class Renderer(UIElement):
+class Renderer:
 
     """Abstract UI element that can render it's contents on panel."""
 
@@ -197,7 +197,7 @@ class Container(UIElement):
         yield from self.children
 
 
-class Text(Widget, Renderer):
+class Text(Renderer, Widget):
 
     """Text widget and renderer."""
 
@@ -232,7 +232,7 @@ class Text(Widget, Renderer):
         panel.print(self.txt, position, colors=self.colors, align=self.align)
 
 
-class Decorations(WithSizeMixin, Renderer):
+class Decorations(WithSizeMixin, Renderer, UIElement):
 
     """Frame decorations."""
 

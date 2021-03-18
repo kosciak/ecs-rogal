@@ -31,7 +31,7 @@ SCROLLABLE_CAMERA = False
 SHOW_BOUNDARIES = True
 
 
-class Camera(Rectangular, toolkit.Renderer):
+class Camera(Rectangular, toolkit.Renderer, toolkit.UIElement):
 
     def __init__(self, ecs,
                  scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
@@ -260,7 +260,7 @@ class Camera(Rectangular, toolkit.Renderer):
             self.draw_entities(location.level_id, coverage, revealed, visible)
 
 
-class MessageLog(toolkit.Renderer):
+class MessageLog(toolkit.Renderer, toolkit.UIElement):
 
     def render(self, panel):
         """Render logging records."""

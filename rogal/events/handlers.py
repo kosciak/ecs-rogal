@@ -18,9 +18,6 @@ Each Handler should just return simple value, no fancy logic here.
 
 class EventHandler:
 
-    def __init__(self, ecs):
-        self.ecs = ecs
-
     def handle(self, event):
         raise NotImplementedError()
 
@@ -28,7 +25,7 @@ class EventHandler:
 class KeyPressHandler(EventHandler):
 
     def __init__(self, ecs):
-        super().__init__(ecs)
+        self.ecs = ecs
         self.key_bindings = self.ecs.resources.key_bindings
 
 
@@ -126,13 +123,15 @@ class MouseButtonEvent(EventHandler):
 
     BUTTONS = {}
 
-    def __init__(self, ecs, value=None):
-        super().__init__(ecs)
+    def __init__(self, value=None):
+        super().__init__()
         self.value = value
 
     def handle(self, event):
         if event.button in self.BUTTONS:
-            return self.value or event.position
+            if self.value is None:
+                return event.position
+            return self.value
 
 
 class MouseLeftButton(MouseButtonEvent):
