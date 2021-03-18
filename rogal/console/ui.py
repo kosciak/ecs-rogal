@@ -333,6 +333,7 @@ class UIManager:
             self.ecs.manage(components.OnMouseWheel).insert(
                 widget, on_mouse_wheel,
             )
+        self.ecs.manage(components.GrabInputFocus).insert(widget)
 
     def create_widget(self, widget_type, context):
         widget = self.widgets_builder.create(

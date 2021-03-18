@@ -112,8 +112,12 @@ OnMouseClick = EventHandlers('OnMouseClick')
 
 OnMouseWheel = EventHandlers('OnMouseWheel')
 
-# TODO: Use something like HasFocus(priority) instead?
-IgnoreEvents = Flag('IgnoreEvents')
+
+InputFocus = Int('InputFocus')
+
+GrabInputFocus = Flag('GrabInputFocus')
+
+HasInputFocus = Flag('HasInputFocus')
 
 
 # Flags
@@ -217,6 +221,7 @@ class Location(WithPositionMixin, Component):
         return data
 
 
+@functools.total_ordering
 class Renderable(Component):
     __slots__ = ('_tile', 'render_order', )
     params = ('tile_visible', 'tile_revealed', 'render_order', )

@@ -21,7 +21,6 @@ class YesNoPrompt:
     def __init__(self, ecs, entity, title, msg, callback, *args, **kwargs):
         self.ecs = ecs
 
-        self.ignore_events = self.ecs.manage(components.IgnoreEvents)
         self.entity = entity
 
         self.title=title
@@ -46,15 +45,9 @@ class YesNoPrompt:
             ),
         )
 
-        # Ignore event_handlers from entity
-        self.ignore_events.insert(self.entity)
-
     def close(self):
         # Close prompt window
         self.ecs.manage(components.DestroyUIWidget).insert(self.window)
-
-        # Restore previous event_handlers for entity
-        self.ignore_events.remove(self.entity)
 
     def on_event(self, entity, value):
         self.close()
@@ -116,6 +109,7 @@ class PlayerInput(TakeActionHandler):
 
     def set_event_handlers(self, actor):
         self.ecs.manage(components.OnKeyPress).insert(actor, self.on_key_press)
+        self.ecs.manage(components.GrabInputFocus).insert(actor)
 
     def remove_event_handlers(self, actor):
         self.ecs.manage(components.OnKeyPress).remove(actor)

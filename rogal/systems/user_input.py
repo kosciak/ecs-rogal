@@ -1,3 +1,4 @@
+import collections
 import logging
 import time
 
@@ -11,6 +12,36 @@ from ..utils import perf
 
 
 log = logging.getLogger(__name__)
+
+
+class InputFocusSystem(System):
+
+    def run(self):
+        input_focus = self.ecs.manage(components.InputFocus)
+        grab_focus = self.ecs.manage(components.GrabInputFocus)
+        has_focus = self.ecs.manage(components.HasInputFocus)
+
+        focus_per_priority = collections.defaultdict(set)
+        for entity, priority in input_focus:
+            focus_per_priority[priority].add(entity)
+
+        max_priority = max(focus_per_priority.keys() or [0, ])
+        next_priority = max_priority
+        if has_focus:
+            next_priority = max_priority + 1
+
+        for entity in grab_focus.entities:
+            if entity in has_focus:
+                continue
+            focus_per_priority[next_priority].add(entity)
+            input_focus.insert(entity, next_priority)
+        grab_focus.clear()
+
+        max_priority = max(focus_per_priority.keys() or [0, ])
+        has_focus.clear()
+
+        for entity in focus_per_priority.get(max_priority, []):
+            has_focus.insert(entity)
 
 
 class EventsHandlersSystem(System):
@@ -36,10 +67,10 @@ class EventsHandlersSystem(System):
         event_handlers = self.ecs.manage(handlers_component)
         if not event_handlers:
             return []
-        ignore_events = self.ecs.manage(components.IgnoreEvents)
+        has_focus = self.ecs.manage(components.HasInputFocus)
         valid_handlers = [
             [entity, handlers] for entity, handlers in event_handlers
-            if not entity in ignore_events
+            if entity in has_focus
         ]
         return valid_handlers
 
@@ -48,11 +79,11 @@ class EventsHandlersSystem(System):
         if not event_handlers:
             return []
         panels = self.ecs.manage(components.ConsolePanel)
-        ignore_events = self.ecs.manage(components.IgnoreEvents)
+        has_focus = self.ecs.manage(components.HasInputFocus)
         valid_handlers = [
             [entity, panel, handlers] for entity, panel, handlers
             in self.ecs.join(event_handlers.entities, panels, event_handlers)
-            if not entity in ignore_events
+            if entity in has_focus
         ]
         return valid_handlers
 

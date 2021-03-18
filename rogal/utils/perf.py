@@ -55,6 +55,6 @@ class Perf:
         total = sum(times)
         avg = total / len(times)
         med = sorted(times)[len(times)//2]
-        log.debug(f'{name:50s} - calls: {len(times):7d}   avg: {avg:2.4f}   med: {med:2.4f}   max: {max(times):2.4f}   total: {total:2.4f}')
+        log.debug(f'{name:60s} - calls: {len(times):7d}   avg: {avg:2.4f}   med: {med:2.4f}   max: {max(times):2.4f}   total: {total:2.4f}')
 
 atexit.register(Perf.stats)

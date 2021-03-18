@@ -101,6 +101,7 @@ def run():
         systems.actions.ActionsQueueSystem(ecs),
         systems.actions.TakeActionsSystem(ecs),
 
+        systems.user_input.InputFocusSystem(ecs),
         systems.user_input.EventsHandlersSystem(ecs),
 
         systems.commands.QuitSystem(ecs),
