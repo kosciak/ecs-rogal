@@ -65,6 +65,38 @@ class Padding(collections.namedtuple(
 Padding.ZERO = Padding(0, 0, 0, 0)
 
 
+def get_x(panel_width, width, align, padding=Padding.ZERO):
+    if align & Align.RIGHT:
+        x = panel_width - width - padding.right
+    elif align & Align.CENTER:
+        x = panel_width//2 - width//2 - padding.right + padding.left
+    else:
+        x = padding.left
+    return x
+
+
+def get_align_x(panel_width, width, align, padding=Padding.ZERO):
+    if align & Align.RIGHT:
+        x = panel_width - padding.right - 1
+    elif align & Align.CENTER:
+        x = panel_width//2 - padding.right + padding.left
+    else:
+        x = padding.left
+    return x
+
+
+def get_y(panel_height, height, align, padding=Padding.ZERO):
+    if align & Align.TOP:
+        y = padding.top
+    elif align & Align.BOTTOM:
+        y = panel_height - height - padding.bottom
+    elif align & Align.MIDDLE:
+        y = panel_height//2 - height//2 - padding.bottom + padding.top
+    else:
+        y = padding.top
+    return y
+
+
 class Console:
 
     def __init__(self, size):
@@ -182,6 +214,20 @@ class Panel(Rectangular, TilesGrid):
         if root and not root == self.root:
             offset -= root
         return offset
+
+    def get_position(self, size, align, padding=Padding.ZERO):
+        """Return Position (top-left) where widget would be placed."""
+        return Position(
+            get_x(self.width, size.width, align, padding),
+            get_y(self.height, size.height, align, padding)
+        )
+
+    def get_align_position(self, size, align, padding=Padding.ZERO):
+        """Return Position (of alignment point) where widget would be placed."""
+        return Position(
+            get_align_x(self.width, size.width, align, padding),
+            get_y(self.height, size.height, align, padding)
+        )
 
     # NOTE: Only position is translated, it is NOT checked if prints are outside of Panel!
 

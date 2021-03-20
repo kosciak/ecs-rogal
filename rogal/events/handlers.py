@@ -119,6 +119,42 @@ class NumericIndexKeyPress(KeyPressHandler):
             return index
 
 
+class TextInput(EventHandler):
+
+    ALLOWED_CHARACTERS = {
+        *string.digits,
+        *string.ascii_letters,
+        *string.punctuation,
+        ' ',
+    }
+
+    def handle(self, event):
+        if event.key in self.ALLOWED_CHARACTERS:
+            return event.key
+
+class TextEdit(KeyPressHandler):
+
+    def handle(self, event):
+        if event.key in self.key_bindings.text_edit.ENTER:
+            return 'ENTER'
+        elif event.key in self.key_bindings.text_edit.CLEAR:
+            return 'CLEAR'
+        elif event.key in self.key_bindings.text_edit.BACKSPACE:
+            return 'BACKSPACE'
+        elif event.key in self.key_bindings.text_edit.DELETE:
+            return 'DELETE'
+        elif event.key in self.key_bindings.text_edit.HOME:
+            return 'HOME'
+        elif event.key in self.key_bindings.text_edit.END:
+            return 'END'
+        elif event.key in self.key_bindings.text_edit.FORWARD:
+            return 'FORWARD'
+        elif event.key in self.key_bindings.text_edit.BACKWARD:
+            return 'BACKWARD'
+        elif event.key in self.key_bindings.text_edit.PASTE:
+            return 'PASTE'
+
+
 class MouseButtonEvent(EventHandler):
 
     BUTTONS = {}

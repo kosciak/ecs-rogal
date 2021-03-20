@@ -17,10 +17,13 @@ from . import toolkit
 # TODO: Cursor (blinking)
 
 
-class UIWidget:
+class UIWidget(toolkit.PaintPanel):
 
     DEFAULT_Z_ORDER = None
     handlers = {}
+
+    def __init__(self, default_colors, *args, **kwargs):
+        super().__init__(colors=default_colors, *args, **kwargs)
 
     def layout(self, manager, widget, panel, z_order=None):
         z_order = z_order or self.DEFAULT_Z_ORDER
@@ -35,20 +38,78 @@ class UIWidget:
         )
 
 
+class TextInput(toolkit.Text):
+
+    def __init__(self, ecs, width, *,
+                 default_colors,
+                 default_text=None,
+                 align=Align.TOP_LEFT,
+                 padding=Padding.ZERO,
+                ):
+        # TODO: Text + Cursor (blinking reverse colors on position)
+        super().__init__(
+            default_text or '',
+            width=width,
+            align=Align.TOP_LEFT,
+            padding=padding,
+        )
+        self.handlers = dict(
+            on_key_press={
+                handlers.TextInput(): self.on_input,
+                handlers.TextEdit(ecs): self.on_edit,
+            }
+        )
+
+    def layout(self, manager, widget, panel, z_order=None):
+        super().layout(manager, widget, panel, z_order)
+        manager.bind(
+            widget,
+            **self.handlers,
+        )
+
+    def on_input(self, widget, key):
+        if len(self.txt) < self.width:
+            self.txt += key
+
+    def on_edit(self, widget, cmd):
+        if cmd == 'ENTER':
+            # TODO: callback(self.txt)
+            pass
+        elif cmd == 'CLEAR':
+            self.txt = ''
+        elif cmd == 'BACKSPACE':
+            self.txt = self.txt and self.txt[:-1]
+        elif cmd == 'DELETE':
+            pass
+        elif cmd == 'HOME':
+            pass
+        elif cmd == 'END':
+            pass
+        elif cmd == 'FORWARD':
+            pass
+        elif cmd == 'BACKWARD':
+            pass
+        elif cmd == 'PASTE':
+            pass
+
+
 class Button(UIWidget, toolkit.Decorated):
 
-    def __init__(self, decorations, text, width, *,
+    def __init__(self, decorations, text, *,
                  on_mouse_click,
                  default_colors,
                  selected_colors=None, press_colors=None,
                  align=Align.TOP_LEFT,
                 ):
-        text = toolkit.Text(text, align=Align.CENTER, width=width)
-        super().__init__(decorations, text, align=align)
+        super().__init__(
+            decorations=decorations,
+            decorated=text,
+            align=align,
+            default_colors=default_colors,
+        )
         self.default_colors = default_colors
         self.selected_colors = selected_colors or self.default_colors
         self.press_colors = press_colors or self.selected_colors
-        self.renderer = toolkit.ClearPanel(self.default_colors)
         self.handlers = dict(
             on_mouse_click=on_mouse_click,
             on_mouse_press={
@@ -70,32 +131,36 @@ class Button(UIWidget, toolkit.Decorated):
             },
         )
 
-    def get_renderer(self):
-        return self.renderer
+    @property
+    def txt(self):
+        return self.decorated.txt
 
-    def on_select(self, *args, **kwargs):
-        self.renderer.colors = self.selected_colors
+    @txt.setter
+    def txt(self, txt):
+        self.decorated.txt = text
 
-    def on_unselect(self, *args, **kwargs):
-        self.renderer.colors = self.default_colors
+    def on_select(self, widget, value):
+        self.colors = self.selected_colors
 
-    def on_press(self, *args, **kwargs):
-        self.renderer.colors = self.press_colors
+    def on_unselect(self, widget, value):
+        self.colors = self.default_colors
+
+    def on_press(self, widget, position):
+        self.colors = self.press_colors
 
 
 class Window(UIWidget, toolkit.Container):
 
     DEFAULT_Z_ORDER = toolkit.ZOrder.BASE
 
-    def __init__(self, decorations, default_colors,
+    def __init__(self, decorations, default_colors, *,
                  title=None,
                  on_key_press=None,
-                 *args, **kwargs
+                 **kwargs
                 ):
-        super().__init__(*args, **kwargs)
+        super().__init__(default_colors=default_colors, **kwargs)
         self.frame = toolkit.Container()
         self.content = toolkit.Container()
-        self.default_colors=default_colors
         self.handlers = dict(
             on_key_press=on_key_press,
         )
@@ -117,18 +182,15 @@ class Window(UIWidget, toolkit.Container):
     def extend(self, widgets):
         self.content.extend(widgets)
 
-    def get_renderer(self):
-        return toolkit.ClearPanel(self.default_colors)
-
 
 class ModalWindow(Window, toolkit.Widget):
 
     DEFAULT_Z_ORDER = toolkit.ZOrder.MODAL
 
-    def __init__(self, align, padding, size, decorations, default_colors,
+    def __init__(self, align, padding, size, decorations, default_colors, *,
                  title=None,
                  on_key_press=None,
-                 *args, **kwargs
+                 **kwargs
                 ):
         super().__init__(
             align=align,
@@ -137,7 +199,7 @@ class ModalWindow(Window, toolkit.Widget):
             default_colors=default_colors,
             title=title,
             on_key_press=on_key_press,
-            *args, **kwargs,
+            **kwargs,
         )
         self.size = size
 
@@ -205,14 +267,20 @@ class WidgetsBuilder:
     def create_button(self, text, callback, value):
         button = Button(
             decorations=self.button_decorations,
-            text=text,
-            width=self.button_width,
+            text=toolkit.Text(
+                text,
+                width=self.button_width,
+                align=Align.CENTER,
+            ),
             on_mouse_click={
                 handlers.MouseLeftButton(value): callback,
             },
             default_colors=self.default_colors,
             selected_colors=self.default_colors.invert(),
-            press_colors=Colors(fg=self.tileset.palette.bg, bg=self.tileset.palette.BRIGHT_WHITE),
+            press_colors=Colors(
+                fg=self.tileset.palette.bg,
+                bg=self.tileset.palette.BRIGHT_WHITE
+            ),
         )
         return button
 
@@ -221,6 +289,15 @@ class WidgetsBuilder:
         for text, value in buttons:
             buttons_row.append(self.create_button(text, callback, value))
         return buttons_row
+
+    def create_text_input(self, width, text=None):
+        text_input = TextInput(
+            self.ecs,
+            width=width,
+            default_text=text,
+            default_colors=self.default_colors,
+        )
+        return text_input
 
     def create(self, widget_type, context):
         # TODO: Move layout definitions to data/ui.yaml ?
@@ -239,7 +316,11 @@ class WidgetsBuilder:
                 },
             )
 
-            msg = toolkit.Text(msg, align=Align.TOP_CENTER, padding=Padding(1, 0))
+            msg = toolkit.Text(
+                msg,
+                align=Align.TOP_CENTER,
+                padding=Padding(1, 0),
+            )
             buttons = self.create_buttons_row(
                 callback=callback,
                 buttons=[
@@ -247,6 +328,8 @@ class WidgetsBuilder:
                     ['No',  False],
                 ],
             )
+
+            # msg = self.create_text_input(38)
 
             widgets_layout.extend([msg, buttons])
 

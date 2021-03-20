@@ -21,54 +21,6 @@ class ZOrder:
     MODAL = 100
 
 
-def get_x(panel_width, width, align, padding=Padding.ZERO):
-    if align & Align.RIGHT:
-        x = panel_width - width - padding.right
-    elif align & Align.CENTER:
-        x = panel_width//2 - width//2 - padding.right + padding.left
-    else:
-        x = padding.left
-    return x
-
-
-def get_align_x(panel_width, width, align, padding=Padding.ZERO):
-    if align & Align.RIGHT:
-        x = panel_width - padding.right - 1
-    elif align & Align.CENTER:
-        x = panel_width//2 - padding.right + padding.left
-    else:
-        x = padding.left
-    return x
-
-
-def get_y(panel_height, height, align, padding=Padding.ZERO):
-    if align & Align.TOP:
-        y = padding.top
-    elif align & Align.BOTTOM:
-        y = panel_height - height - padding.bottom
-    elif align & Align.MIDDLE:
-        y = panel_height//2 - height//2 - padding.bottom + padding.top
-    else:
-        y = padding.top
-    return y
-
-
-def get_position(panel, size, align, padding=Padding.ZERO):
-    """Return Position (top-left) where widget would be placed."""
-    return Position(
-        get_x(panel.width, size.width, align, padding),
-        get_y(panel.height, size.height, align, padding)
-    )
-
-
-def get_align_position(panel, size, align, padding=Padding.ZERO):
-    """Return Position (of alignment point) where widget would be placed."""
-    return Position(
-        get_align_x(panel.width, size.width, align, padding),
-        get_y(panel.height, size.height, align, padding)
-    )
-
-
 class UIElement:
 
     """Abstract UI element that can be layouted on panel."""
@@ -106,10 +58,10 @@ class Renderer:
         raise NotImplementedError()
 
 
-class ClearPanel(Renderer):
+class PaintPanel(Renderer):
 
-    def __init__(self, colors):
-        super().__init__()
+    def __init__(self, colors, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.colors = colors
 
     def render(self, panel):
@@ -160,7 +112,7 @@ class Widget(WithSizeMixin, UIElement):
         return Size(self.padded_width, self.padded_height)
 
     def get_layout_panel(self, panel):
-        position = get_position(panel, self.size, self.align, self.padding)
+        position = panel.get_position(self.size, self.align, self.padding)
         panel = panel.create_panel(position, self.size)
         return panel
 
@@ -206,7 +158,7 @@ class Text(Renderer, Widget):
         self.txt = txt
         self.colors = colors
 
-        lines = self.txt.splitlines()
+        lines = self.txt.splitlines() or ['', ]
         self.txt_size = Size(
             max(len(line) for line in lines),
             len(lines)
@@ -218,7 +170,7 @@ class Text(Renderer, Widget):
 
     def get_layout_panel(self, panel):
         panel = panel.create_panel(Position.ZERO, Size(panel.width, self.padded_height))
-        # position = get_position(panel, self.size, self.align)
+        # position = panel.get_position(self.size, self.align)
         # panel = panel.create_panel(position, self.size)
         return panel
 
@@ -228,7 +180,7 @@ class Text(Renderer, Widget):
     def render(self, panel):
         if self.colors:
             panel.clear(self.colors)
-        position = get_align_position(panel, self.txt_size, self.align, self.padding)
+        position = panel.get_align_position(self.txt_size, self.align, self.padding)
         panel.print(self.txt, position, colors=self.colors, align=self.align)
 
 
@@ -333,7 +285,7 @@ class Decorated(Widget):
 
     def get_layout_panel(self, panel):
         size = self.size or panel.size
-        position = get_position(panel, size, self.align, self.padding)
+        position = panel.get_position(size, self.align, self.padding)
         panel = panel.create_panel(position, size)
         return panel
 
@@ -370,7 +322,7 @@ class Row(Container, Widget):
         )
 
     def layout_children(self, manager, parent, panel, z_order):
-        position = get_position(panel, self.size, self.align, self.padding)
+        position = panel.get_position(self.size, self.align, self.padding)
         for child in self.children:
             widget = manager.create(parent)
             subpanel = panel.create_panel(position, child.padded_size)
@@ -405,7 +357,7 @@ class List(Container, Widget):
         )
 
     def layout_children(self, manager, parent, panel, z_order):
-        position = get_position(panel, self.size, self.align, self.padding)
+        position = panel.get_position(self.size, self.align, self.padding)
         for child in self.children:
             widget = manager.create(parent)
             subpanel = panel.create_panel(position, child.padded_size)
