@@ -96,6 +96,8 @@ EventHandlers = component_type(EventHandlersComponent)
 
 OnQuit = EventHandlers('OnQuit')
 
+OnTextInput = EventHandlers('OnTextInput')
+
 OnKeyPress = EventHandlers('OnKeyPress')
 
 OnMouseIn = EventHandlers('OnMouseIn')

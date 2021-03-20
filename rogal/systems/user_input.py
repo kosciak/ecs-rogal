@@ -102,6 +102,11 @@ class EventsHandlersSystem(System):
         self._prev_times[event.type] = now
         return True
 
+    def on_text_input(self, event):
+        event_handlers = self.get_valid_handlers(components.OnTextInput)
+        for entity, handlers in event_handlers:
+            self.handle_event(event, entity, handlers)
+
     def on_key_press(self, event):
         if event.repeat and not self.is_valid_repeat(event):
             return
@@ -179,16 +184,18 @@ class EventsHandlersSystem(System):
             log.debug(f'Event: {event}')
             if event.type == EventType.QUIT:
                 self.on_quit(event)
-            if event.type == EventType.KEY_PRESS:
+            elif event.type == EventType.TEXT_INPUT:
+                self.on_text_input(event)
+            elif event.type == EventType.KEY_PRESS:
                 self.on_key_press(event)
-            if event.type == EventType.MOUSE_BUTTON_PRESS:
+            elif event.type == EventType.MOUSE_BUTTON_PRESS:
                 self.on_mouse_press(event)
-            if event.type == EventType.MOUSE_BUTTON_UP:
+            elif event.type == EventType.MOUSE_BUTTON_UP:
                 self.on_mouse_click(event)
                 self.on_mouse_up(event)
-            if event.type == EventType.MOUSE_MOTION:
+            elif event.type == EventType.MOUSE_MOTION:
                 self.on_mouse_motion(event)
-            if event.type == EventType.MOUSE_WHEEL:
+            elif event.type == EventType.MOUSE_WHEEL:
                 self.on_mouse_wheel(event)
             break
 

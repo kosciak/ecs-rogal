@@ -129,8 +129,9 @@ class TextInput(EventHandler):
     }
 
     def handle(self, event):
-        if event.key in self.ALLOWED_CHARACTERS:
-            return event.key
+        if event.text in self.ALLOWED_CHARACTERS:
+            return event.text
+
 
 class TextEdit(KeyPressHandler):
 

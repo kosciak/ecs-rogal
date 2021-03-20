@@ -1,6 +1,6 @@
 from .. import components
 
-from ..geometry import Size
+from ..geometry import Position, Vector, Size
 from ..tiles import Colors
 
 from ..events import handlers
@@ -13,8 +13,6 @@ from . import toolkit
 
 # TODO: frames overlapping, and fixing overlapped/overdrawn characters to merge borders/decorations
 # TODO: Scrollable Panels?
-# TODO: TextInput
-# TODO: Cursor (blinking)
 
 
 class UIWidget(toolkit.PaintPanel):
@@ -38,7 +36,24 @@ class UIWidget(toolkit.PaintPanel):
         )
 
 
-class TextInput(toolkit.Text):
+class Cursor(toolkit.Renderer, toolkit.UIElement):
+
+    def __init__(self, colors, position=None, blinking=1200):
+        self.colors = colors
+        self.position = position or Position.ZERO
+        self.rate = blinking
+
+    def move(self, vector):
+        self.position = self.position.move(vector)
+
+    def get_renderer(self):
+        return toolkit.Blinking(self, rate=self.rate)
+
+    def render(self, panel):
+        panel.paint(self.colors, self.position)
+
+
+class TextInput(UIWidget, toolkit.Container, toolkit.Widget):
 
     def __init__(self, ecs, width, *,
                  default_colors,
@@ -46,30 +61,48 @@ class TextInput(toolkit.Text):
                  align=Align.TOP_LEFT,
                  padding=Padding.ZERO,
                 ):
-        # TODO: Text + Cursor (blinking reverse colors on position)
         super().__init__(
-            default_text or '',
-            width=width,
             align=Align.TOP_LEFT,
             padding=padding,
+            default_colors=default_colors,
         )
+        self.size = Size(width, 1)
+        self.text = toolkit.Text(
+            default_text or '',
+            width=width,
+        )
+        self.cursor = Cursor(
+            colors=default_colors.invert(),
+            blinking=1200,
+        )
+        self.cursor.position = Position(len(self.txt), 0)
+        self.children.extend([
+            self.text,
+            self.cursor,
+        ])
         self.handlers = dict(
-            on_key_press={
+            on_text_input={
                 handlers.TextInput(): self.on_input,
+            },
+            on_key_press={
                 handlers.TextEdit(ecs): self.on_edit,
-            }
+            },
         )
 
-    def layout(self, manager, widget, panel, z_order=None):
-        super().layout(manager, widget, panel, z_order)
-        manager.bind(
-            widget,
-            **self.handlers,
-        )
+    @property
+    def txt(self):
+        return self.text.txt
 
-    def on_input(self, widget, key):
+    @txt.setter
+    def txt(self, txt):
+        self.text.txt = txt
+
+    def on_input(self, widget, char):
         if len(self.txt) < self.width:
-            self.txt += key
+            before_cursor = self.txt[:self.cursor.position.x]
+            after_cursor = self.txt[self.cursor.position.x:]
+            self.txt = before_cursor + char + after_cursor
+            self.cursor.move(Vector(1, 0))
 
     def on_edit(self, widget, cmd):
         if cmd == 'ENTER':
@@ -77,18 +110,28 @@ class TextInput(toolkit.Text):
             pass
         elif cmd == 'CLEAR':
             self.txt = ''
+            self.cursor.position = Position.ZERO
         elif cmd == 'BACKSPACE':
-            self.txt = self.txt and self.txt[:-1]
+            before_cursor = self.txt[:self.cursor.position.x]
+            if before_cursor:
+                after_cursor = self.txt[self.cursor.position.x:]
+                self.txt = before_cursor[:-1] + after_cursor
+                self.cursor.move(Vector(-1, 0))
         elif cmd == 'DELETE':
-            pass
+            after_cursor = self.txt[self.cursor.position.x:]
+            if after_cursor:
+                before_cursor = self.txt[:self.cursor.position.x]
+                self.txt = before_cursor + after_cursor[1:]
         elif cmd == 'HOME':
-            pass
+            self.cursor.position = Position.ZERO
         elif cmd == 'END':
-            pass
+            self.cursor.position = Position(len(self.txt), 0)
         elif cmd == 'FORWARD':
-            pass
+            if self.cursor.position.x < len(self.txt):
+                self.cursor.move(Vector(1, 0))
         elif cmd == 'BACKWARD':
-            pass
+            if self.cursor.position.x > 0:
+                self.cursor.move(Vector(-1, 0))
         elif cmd == 'PASTE':
             pass
 
@@ -379,11 +422,16 @@ class UIManager:
         return widget
 
     def bind(self, widget, *,
+             on_text_input=None,
              on_key_press=None,
              on_mouse_click=None, on_mouse_press=None, on_mouse_up=None,
              on_mouse_in=None, on_mouse_over=None, on_mouse_out=None,
              on_mouse_wheel=None,
             ):
+        if on_text_input:
+            self.ecs.manage(components.OnTextInput).insert(
+                widget, on_text_input,
+            )
         if on_key_press:
             self.ecs.manage(components.OnKeyPress).insert(
                 widget, on_key_press,
