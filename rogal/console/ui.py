@@ -18,7 +18,6 @@ from . import toolkit
 class UIWidget(toolkit.PaintPanel):
 
     DEFAULT_Z_ORDER = None
-    handlers = {}
 
     def __init__(self, default_colors, *args, **kwargs):
         super().__init__(colors=default_colors, *args, **kwargs)
@@ -30,27 +29,6 @@ class UIWidget(toolkit.PaintPanel):
             widget,
             ui_widget=self,
         )
-        manager.bind(
-            widget,
-            **self.handlers,
-        )
-
-
-class Cursor(toolkit.Renderer, toolkit.UIElement):
-
-    def __init__(self, colors, position=None, blinking=1200):
-        self.colors = colors
-        self.position = position or Position.ZERO
-        self.rate = blinking
-
-    def move(self, vector):
-        self.position = self.position.move(vector)
-
-    def get_renderer(self):
-        return toolkit.Blinking(self, rate=self.rate)
-
-    def render(self, panel):
-        panel.paint(self.colors, self.position)
 
 
 class TextInput(UIWidget, toolkit.Container, toolkit.Widget):
@@ -71,13 +49,14 @@ class TextInput(UIWidget, toolkit.Container, toolkit.Widget):
             default_text or '',
             width=width,
         )
-        self.cursor = Cursor(
-            colors=default_colors.invert(),
+        self.cursor = toolkit.Cursor(
+            # colors=default_colors.invert(),
             blinking=1200,
         )
         self.cursor.position = Position(len(self.txt), 0)
         self.children.extend([
             self.text,
+            # TODO: Cursor only if has focus and ready for input?
             self.cursor,
         ])
         self.handlers = dict(
@@ -87,6 +66,7 @@ class TextInput(UIWidget, toolkit.Container, toolkit.Widget):
             on_key_press={
                 handlers.TextEdit(ecs): self.on_edit,
             },
+            # TODO: change cursor on mouse over
         )
 
     @property
@@ -338,7 +318,8 @@ class WidgetsBuilder:
             self.ecs,
             width=width,
             default_text=text,
-            default_colors=self.default_colors,
+            # default_colors=self.default_colors,
+            default_colors=Colors(fg=self.tileset.palette.fg, bg=self.tileset.palette.BRIGHT_BLACK),
         )
         return text_input
 

@@ -25,6 +25,8 @@ class UIElement:
 
     """Abstract UI element that can be layouted on panel."""
 
+    handlers = {}
+
     def get_layout_panel(self, panel):
         return panel
 
@@ -38,6 +40,10 @@ class UIElement:
             panel=panel,
             z_order=z_order,
             renderer=self.get_renderer(),
+        )
+        manager.bind(
+            widget,
+            **self.handlers,
         )
         if z_order:
             z_order += 1
@@ -147,6 +153,29 @@ class Container(UIElement):
 
     def __iter__(self):
         yield from self.children
+
+
+class Cursor(Renderer, UIElement):
+
+    def __init__(self, *, colors=None, position=None, blinking=None):
+        self.colors = colors
+        self.position = position or Position.ZERO
+        self.rate = blinking
+
+    def move(self, vector):
+        self.position = self.position.move(vector)
+
+    def get_renderer(self):
+        if self.rate:
+            return Blinking(self, rate=self.rate)
+        else:
+            return self
+
+    def render(self, panel):
+        if self.colors:
+            panel.paint(self.colors, self.position)
+        else:
+            panel.invert(self.position)
 
 
 class Text(Renderer, Widget):
