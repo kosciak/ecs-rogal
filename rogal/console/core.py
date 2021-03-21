@@ -170,6 +170,14 @@ class TilesGrid(WithSizeMixin):
         """
         raise NotImplementedError()
 
+    def invert(self, position, size=None, *args, **kwargs):
+        """Invert Colors on given position.
+
+        If size provided invert color on rectangle.
+
+        """
+        raise NotImplementedError()
+
     def mask(self, tile, mask, position=None, *args, **kwargs):
         """Draw Tile on positions where mask is True, startig on position."""
         raise NotImplementedError()
@@ -262,6 +270,14 @@ class Panel(Rectangular, TilesGrid):
 
         """
         return self.root.paint(colors, self.offset(position), size=size, *args, **kwargs)
+
+    def invert(self, position, size=None, *args, **kwargs):
+        """Invert Colors on given position.
+
+        If size provided invert color on rectangle.
+
+        """
+        return self.root.invert(self.offset(position), size=size, *args, **kwargs)
 
     def mask(self, tile, mask, position=None, *args, **kwargs):
         """Draw Tile on positions where mask is True, startig on position."""
@@ -371,6 +387,21 @@ class RootPanel(Panel):
 
     def paint(self, colors, position, size=None, *args, **kwargs):
         self._draw(None, colors, position, size=size, *args, **kwargs)
+
+    def invert(self, position, size=None, *args, **kwargs):
+        # NOTE: console is in order="C", so we need to do some transpositions
+        j, i = position
+        if size:
+            height, width = size
+            fg = self.console.fg[i:i+width, j:j+height].copy()
+            bg = self.console.bg[i:i+width, j:j+height].copy()
+            self.console.fg[i:i+width, j:j+height] = bg
+            self.console.bg[i:i+width, j:j+height] = fg
+        else:
+            fg = tuple(self.console.fg[i, j])
+            bg = tuple(self.console.bg[i, j])
+            self.console.fg[i, j] = bg
+            self.console.bg[i, j] = fg
 
     def mask(self, tile, mask, position=None):
         position = position or Position.ZERO
