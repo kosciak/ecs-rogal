@@ -7,6 +7,7 @@ from ..ecs import System
 from ..ecs.run_state import RunState
 
 from ..events import EventType
+from ..events.mouse import MouseState
 
 from ..utils import perf
 
@@ -57,11 +58,13 @@ class EventsHandlersSystem(System):
         super().__init__(ecs)
         self.wrapper = self.ecs.resources.wrapper
         self.wait = self.WAIT
+
         self.repeat_rate = repeat_rate
         self._prev_times = {}
-        self.prev_mouse_position = None
-        self.mouse_press_positions = {}
+
         self.mouse_in_entities = set()
+        self.ecs.resources.mouse_state = MouseState()
+        self.mouse = self.ecs.resources.mouse_state
 
     def get_valid_handlers(self, handlers_component):
         event_handlers = self.ecs.manage(handlers_component)
@@ -126,7 +129,7 @@ class EventsHandlersSystem(System):
         for entity, panel, handlers in self.get_valid_panel_handlers(handlers_component):
             if not event.position in panel:
                 continue
-            if entity in self.mouse_in_entities and self.prev_mouse_position and self.prev_mouse_position in panel:
+            if entity in self.mouse_in_entities and self.mouse.prev_position and self.mouse.prev_position in panel:
                 # cursor did not enter, just moved over
                 continue
             self.mouse_in_entities.add(entity)
@@ -143,24 +146,25 @@ class EventsHandlersSystem(System):
 
     def on_mouse_press(self, event):
         self.on_mouse_over_event(event, components.OnMousePress)
-        self.prev_mouse_position = event.position
-        self.mouse_press_positions[event.button] = event.position
+        self.mouse.update(press_event=event)
 
     def on_mouse_up(self, event):
         self.on_mouse_over_event(event, components.OnMouseUp)
-        self.mouse_press_positions.pop(event.button, None)
+        self.mouse.update(up_event=event)
 
     def on_mouse_click(self, event):
-        if not event.position == self.mouse_press_positions[event.button]:
+        # Fire OnMouseClick if button was pressed and released without moving
+        if not self.mouse.is_click(event.button):
+            # Position changed between button press and up
             return
         self.on_mouse_over_event(event, components.OnMouseClick)
 
     def on_mouse_motion(self, event):
+        self.mouse.update(motion_event=event)
         self.on_mouse_in_event(event, components.OnMouseIn)
         self.on_mouse_over_event(event, components.OnMouseOver)
         # TODO: For MouseOut to be 100% accurate we would need to process mouse leaving (game) window
         self.on_mouse_out_event(event, components.OnMouseOut)
-        self.prev_mouse_position = event.position
 
     def on_mouse_wheel(self, event):
         event_handlers = self.get_valid_handlers(components.OnMouseWheel)

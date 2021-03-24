@@ -12,7 +12,8 @@ from .sdl_const import (
 )
 
 from .. import events
-from ..events.keys import Key, MouseButton
+from ..events.keys import Key
+from ..events.mouse import MouseButton
 
 
 """Use SDL data directly instead of tcod wrappers."""

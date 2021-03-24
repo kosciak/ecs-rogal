@@ -3,7 +3,7 @@ import string
 
 from ..geometry import Direction
 
-from .keys import MouseButton
+from .mouse import MouseButton
 
 
 log = logging.getLogger(__name__)
