@@ -1,7 +1,6 @@
 # Key bindings data
 
 text_edit:
-  ENTER: [ENTER, KP_ENTER, ]
   CLEAR: ['^u', '^l', ]
   BACKSPACE: [BACKSPACE, '^h', ]
   DELETE: [DELETE, '^d', ]
@@ -19,6 +18,7 @@ index:
 common:
   CONFIRM: [SPACE, ENTER, KP_ENTER, ]
   DISCARD: [ESCAPE, ]
+  SUBMIT: [ENTER, KP_ENTER, ]
   MORE: [SPACE, ENTER, KP_ENTER, ]
   'YES': [y, Y, ]
   'NO': [n, N, ]

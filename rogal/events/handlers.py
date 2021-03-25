@@ -69,8 +69,6 @@ class YesNoKeyPress(KeyPressHandler):
             return True
         if event.key in self.key_bindings.common.NO:
             return False
-        if event.key in self.key_bindings.common.DISCARD:
-            return False
 
 
 class ConfirmKeyPress(KeyPressHandler):
@@ -136,9 +134,7 @@ class TextInput(EventHandler):
 class TextEdit(KeyPressHandler):
 
     def handle(self, event):
-        if event.key in self.key_bindings.text_edit.ENTER:
-            return 'ENTER'
-        elif event.key in self.key_bindings.text_edit.CLEAR:
+        if event.key in self.key_bindings.text_edit.CLEAR:
             return 'CLEAR'
         elif event.key in self.key_bindings.text_edit.BACKSPACE:
             return 'BACKSPACE'

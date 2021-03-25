@@ -1,8 +1,8 @@
-import functools
 import logging
 
 from . import components
 from .events import handlers
+from . import gui
 from .rng import rng
 
 from .utils import perf
@@ -13,49 +13,6 @@ msg_log = logging.getLogger('rogal.messages')
 
 
 ACTION_COST = 60
-
-
-# TODO: Move to separate module! gui?
-class YesNoPrompt:
-
-    def __init__(self, ecs, entity, title, msg, callback, *args, **kwargs):
-        self.ecs = ecs
-
-        self.entity = entity
-
-        self.title=title
-        self.msg = msg
-
-        self.window = None
-        self.callback = functools.partial(callback, entity, *args, **kwargs)
-        self.args = args
-        self.kwargs = kwargs
-
-    def show(self):
-        # Show prompt window and set events_handler
-        msg_log.warning(f'{self.msg} Yes / No')
-        self.window = self.ecs.create(
-            components.CreateUIWidget(
-                widget_type='YES_NO_PROMPT',
-                context=dict(
-                    title=self.title,
-                    msg=self.msg,
-                    callback=self.on_event,
-                ),
-            ),
-        )
-
-    def close(self):
-        # Close prompt window
-        self.ecs.manage(components.DestroyUIWidget).insert(self.window)
-
-    def on_event(self, entity, value):
-        self.close()
-        if value is True:
-            # self.callback(self.entity, *self.args, **self.kwargs)
-            self.callback()
-        if value is False:
-            log.debug('Quit aborted...')
 
 
 class TakeActionHandler:
@@ -179,12 +136,15 @@ class PlayerInput(TakeActionHandler):
             return manager.insert(actor)
 
         if action is components.WantsToQuit:
-            prompt = YesNoPrompt(
+            prompt = gui.YesNoPrompt(
+            # prompt = gui.TextInputPrompt(
                 self.ecs,
-                entity=actor,
-                title='Quit?',
-                msg='Are you sure you want to quit?',
+                context=dict(
+                    title='Quit?',
+                    msg='Are you sure you want to quit?',
+                ),
                 callback=self.insert_action,
+                actor=actor,
                 action=action,
             )
             return prompt.show()

@@ -46,7 +46,7 @@ class LayoutSytem(ConsoleSystem):
         if not widgets:
             return
         ui_manager = self.ecs.resources.ui_manager
-        panels = self.ecs.manage(components.ConsolePanel)
+        panels = self.ecs.manage(components.Console)
         for widget, content in widgets:
             panel = panels.get(widget)
             if panel is None:
@@ -93,14 +93,14 @@ class RenderingSystem(ConsoleSystem):
         self.root.clear(self.default_colors)
 
         # Render all panels
-        panels = self.ecs.manage(components.ConsolePanel)
-        renderers = self.ecs.manage(components.PanelRenderer)
-        for panel, renderer in sorted(
-            self.ecs.join(panels, renderers),
+        consoles = self.ecs.manage(components.Console)
+        panel_renderers = self.ecs.manage(components.PanelRenderer)
+        for console, panel_renderer in sorted(
+            self.ecs.join(consoles, panel_renderers),
             key=itemgetter(0)
         ):
-            with perf.Perf(renderer.renderer.render):
-                renderer.render(panel)
+            with perf.Perf(panel_renderer.renderer.render):
+                panel_renderer.renderer.render(console.panel)
 
         # Show rendered panel
         self.wrapper.flush(self.root)

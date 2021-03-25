@@ -38,9 +38,8 @@ class InputFocusSystem(System):
             input_focus.insert(entity, next_priority)
         grab_focus.clear()
 
-        max_priority = max(focus_per_priority.keys() or [0, ])
         has_focus.clear()
-
+        max_priority = max(focus_per_priority.keys() or [0, ])
         for entity in focus_per_priority.get(max_priority, []):
             has_focus.insert(entity)
 
@@ -81,11 +80,11 @@ class EventsHandlersSystem(System):
         event_handlers = self.ecs.manage(handlers_component)
         if not event_handlers:
             return []
-        panels = self.ecs.manage(components.ConsolePanel)
+        consoles = self.ecs.manage(components.Console)
         has_focus = self.ecs.manage(components.HasInputFocus)
         valid_handlers = [
-            [entity, panel, handlers] for entity, panel, handlers
-            in self.ecs.join(event_handlers.entities, panels, event_handlers)
+            [entity, console, handlers] for entity, console, handlers
+            in self.ecs.join(event_handlers.entities, consoles, event_handlers)
             if entity in has_focus
         ]
         return valid_handlers
@@ -119,27 +118,27 @@ class EventsHandlersSystem(System):
             self.handle_event(event, entity, handlers)
 
     def on_mouse_over_event(self, event, handlers_component):
-        for entity, panel, handlers in self.get_valid_panel_handlers(handlers_component):
-            if not event.position in panel:
+        for entity, console, handlers in self.get_valid_panel_handlers(handlers_component):
+            if not event.position in console.panel:
                 continue
             self.handle_event(event, entity, handlers)
 
     def on_mouse_in_event(self, event, handlers_component):
         self.mouse_in_entities.intersection_update(self.ecs.entities)
-        for entity, panel, handlers in self.get_valid_panel_handlers(handlers_component):
-            if not event.position in panel:
+        for entity, console, handlers in self.get_valid_panel_handlers(handlers_component):
+            if not event.position in console.panel:
                 continue
-            if entity in self.mouse_in_entities and self.mouse.prev_position and self.mouse.prev_position in panel:
+            if entity in self.mouse_in_entities and self.mouse.prev_position and self.mouse.prev_position in console.panel:
                 # cursor did not enter, just moved over
                 continue
             self.mouse_in_entities.add(entity)
             self.handle_event(event, entity, handlers)
 
     def on_mouse_out_event(self, event, handlers_component):
-        for entity, panel, handlers in self.get_valid_panel_handlers(handlers_component):
-            if not event.prev_position in panel:
+        for entity, console, handlers in self.get_valid_panel_handlers(handlers_component):
+            if not event.prev_position in console.panel:
                 continue
-            if event.position in panel:
+            if event.position in console.panel:
                 # cursor did not leave, just moved over
                 continue
             self.handle_event(event, entity, handlers)

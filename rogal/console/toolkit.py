@@ -16,36 +16,34 @@ TODO:
 '''
 
 
-class ZOrder:
-    BASE = 1
-    MODAL = 100
-
-
 class UIElement:
 
     """Abstract UI element that can be layouted on panel."""
 
+    DEFAULT_Z_ORDER = None
+
     handlers = {}
+    renderer = None
 
     def get_layout_panel(self, panel):
         return panel
 
-    def get_renderer(self):
-        return None
-
     def layout(self, manager, widget, panel, z_order=None):
+        z_order = z_order or self.DEFAULT_Z_ORDER
         panel = self.get_layout_panel(panel)
         manager.insert(
             widget,
             panel=panel,
             z_order=z_order,
-            renderer=self.get_renderer(),
+            renderer=self.renderer,
         )
         manager.bind(
             widget,
             **self.handlers,
         )
-        if z_order:
+        if self.handlers:
+            manager.grab_focus(widget)
+        if self.renderer and z_order:
             z_order += 1
         self.layout_children(manager, widget, panel, z_order)
 
@@ -57,14 +55,15 @@ class Renderer:
 
     """Abstract UI element that can render it's contents on panel."""
 
-    def get_renderer(self):
+    @property
+    def renderer(self):
         return self
 
     def render(self, panel):
         raise NotImplementedError()
 
 
-class PaintPanel(Renderer):
+class ClearPanel(Renderer):
 
     def __init__(self, colors, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -74,20 +73,28 @@ class PaintPanel(Renderer):
         panel.clear(self.colors)
 
 
+class InvertColors(Renderer):
+
+    def render(self, panel):
+        panel.invert(Position.ZERO, panel.size)
+
+
+# TODO: RenderEffect?
 class Blinking(Renderer):
 
     BLINK_RATE = 1200
 
     def __init__(self, renderer, rate=BLINK_RATE):
-        self.renderer = renderer
+        self._renderer = renderer
         self.rate = rate // 2
 
     def render(self, panel):
         # TODO: blinking MUST be synchronized (during a frame) between ALL renderers!
         #       Maybe should be done on System level? NOT calling render if Blinking component present?
+        # rate < 0 should mean inverted blinking
         if int((time.time()*1000) / self.rate) % 2 == 0:
             return
-        return self.renderer.render(panel)
+        return self._renderer.render(panel)
 
 
 class Widget(WithSizeMixin, UIElement):
@@ -158,6 +165,7 @@ class Container(UIElement):
 class Cursor(Renderer, UIElement):
 
     def __init__(self, *, colors=None, position=None, blinking=None):
+        # TODO: char? or even tile?
         self.colors = colors
         self.position = position or Position.ZERO
         self.rate = blinking
@@ -165,7 +173,8 @@ class Cursor(Renderer, UIElement):
     def move(self, vector):
         self.position = self.position.move(vector)
 
-    def get_renderer(self):
+    @property
+    def renderer(self):
         if self.rate:
             return Blinking(self, rate=self.rate)
         else:
@@ -202,9 +211,6 @@ class Text(Renderer, Widget):
         # position = panel.get_position(self.size, self.align)
         # panel = panel.create_panel(position, self.size)
         return panel
-
-    def get_renderer(self):
-        return self
 
     def render(self, panel):
         if self.colors:
@@ -279,9 +285,6 @@ class Decorations(WithSizeMixin, Renderer, UIElement):
             Size(panel.width-self.width, panel.height-self.height)
         )
 
-    def get_renderer(self):
-        return self
-
     def render(self, panel):
         panel.draw(self.top, Position(1, 0), Size(panel.width-2, 1))
         panel.draw(self.bottom, Position(1, panel.height-1), Size(panel.width-2, 1))
@@ -351,7 +354,8 @@ class Row(Container, Widget):
         )
 
     def layout_children(self, manager, parent, panel, z_order):
-        position = panel.get_position(self.size, self.align, self.padding)
+        position = panel.get_position(self.size, self.align)
+        print(panel, position)
         for child in self.children:
             widget = manager.create(parent)
             subpanel = panel.create_panel(position, child.padded_size)
@@ -386,7 +390,7 @@ class List(Container, Widget):
         )
 
     def layout_children(self, manager, parent, panel, z_order):
-        position = panel.get_position(self.size, self.align, self.padding)
+        position = panel.get_position(self.size, self.align)
         for child in self.children:
             widget = manager.create(parent)
             subpanel = panel.create_panel(position, child.padded_size)

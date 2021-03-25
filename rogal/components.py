@@ -6,7 +6,6 @@ import numpy as np
 from .ecs import Component
 from .ecs.components import Flag, IntFlag, Int, Counter, FloatComponent, String, EntityReference, EntitiesRefs
 from .ecs.components import component_type
-from .ecs import EntitiesSet
 from . import flags
 from .geometry import Direction, Position, Size, Rectangular, WithPositionMixin
 from .tiles import RenderOrder
@@ -50,15 +49,12 @@ class UIWidget(Component):
 
 
 @functools.total_ordering
-class ConsolePanel(Component):
+class Console(Component):
     __slots__ = ('panel', 'z_order', )
 
     def __init__(self, panel, z_order):
         self.panel = panel
         self.z_order = z_order
-
-    def __contains__(self, position):
-        return position in self.panel
 
     def __lt__(self, other):
         return self.z_order < other.z_order
@@ -69,11 +65,6 @@ class PanelRenderer(Component):
 
     def __init__(self, renderer, ):
         self.renderer = renderer
-
-    def render(self, panel):
-        self.renderer.render(panel.panel)
-
-# TODO: HasFocus, OnScreen, maybe associated Input/InputHandler?
 
 
 # Events and user input
@@ -225,6 +216,7 @@ class Location(WithPositionMixin, Component):
 
 @functools.total_ordering
 class Renderable(Component):
+    # TODO: Rename to ConsoleTile ?
     __slots__ = ('_tile', 'render_order', )
     params = ('tile_visible', 'tile_revealed', 'render_order', )
 

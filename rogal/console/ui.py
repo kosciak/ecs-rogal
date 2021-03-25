@@ -15,15 +15,28 @@ from . import toolkit
 # TODO: Scrollable Panels?
 
 
-class UIWidget(toolkit.PaintPanel):
+class ZOrder:
+    BASE = 1
+    MODAL = 100
 
-    DEFAULT_Z_ORDER = None
+
+class UIWidget:
 
     def __init__(self, default_colors, *args, **kwargs):
-        super().__init__(colors=default_colors, *args, **kwargs)
+        super().__init__(*args, **kwargs)
+        self.renderer = toolkit.ClearPanel(
+            colors=default_colors,
+        )
+
+    @property
+    def colors(self):
+        return self.renderer.colors
+
+    @colors.setter
+    def colors(self, colors):
+        self.renderer.colors = colors
 
     def layout(self, manager, widget, panel, z_order=None):
-        z_order = z_order or self.DEFAULT_Z_ORDER
         super().layout(manager, widget, panel, z_order)
         manager.insert(
             widget,
@@ -56,7 +69,7 @@ class TextInput(UIWidget, toolkit.Container, toolkit.Widget):
         self.cursor.position = Position(len(self.txt), 0)
         self.children.extend([
             self.text,
-            # TODO: Cursor only if has focus and ready for input?
+            # TODO: Show Cursor only if has focus and ready for input?
             self.cursor,
         ])
         self.handlers = dict(
@@ -78,16 +91,15 @@ class TextInput(UIWidget, toolkit.Container, toolkit.Widget):
         self.text.txt = txt
 
     def on_input(self, widget, char):
-        if len(self.txt) < self.width:
+        if len(self.txt) < self.width-1:
             before_cursor = self.txt[:self.cursor.position.x]
             after_cursor = self.txt[self.cursor.position.x:]
             self.txt = before_cursor + char + after_cursor
             self.cursor.move(Vector(1, 0))
 
     def on_edit(self, widget, cmd):
-        if cmd == 'ENTER':
-            # TODO: callback(self.txt)
-            pass
+        if not cmd:
+            return
         elif cmd == 'CLEAR':
             self.txt = ''
             self.cursor.position = Position.ZERO
@@ -174,7 +186,7 @@ class Button(UIWidget, toolkit.Decorated):
 
 class Window(UIWidget, toolkit.Container):
 
-    DEFAULT_Z_ORDER = toolkit.ZOrder.BASE
+    DEFAULT_Z_ORDER = ZOrder.BASE
 
     def __init__(self, decorations, default_colors, *,
                  title=None,
@@ -208,7 +220,7 @@ class Window(UIWidget, toolkit.Container):
 
 class ModalWindow(Window, toolkit.Widget):
 
-    DEFAULT_Z_ORDER = toolkit.ZOrder.MODAL
+    DEFAULT_Z_ORDER = ZOrder.MODAL
 
     def __init__(self, align, padding, size, decorations, default_colors, *,
                  title=None,
@@ -313,11 +325,12 @@ class WidgetsBuilder:
             buttons_row.append(self.create_button(text, callback, value))
         return buttons_row
 
-    def create_text_input(self, width, text=None):
+    def create_text_input(self, width, text=None, padding=Padding.ZERO):
         text_input = TextInput(
             self.ecs,
             width=width,
             default_text=text,
+            padding=padding,
             # default_colors=self.default_colors,
             default_colors=Colors(fg=self.tileset.palette.fg, bg=self.tileset.palette.BRIGHT_BLACK),
         )
@@ -337,6 +350,7 @@ class WidgetsBuilder:
                 title=title,
                 on_key_press={
                     handlers.YesNoKeyPress(self.ecs): callback,
+                    handlers.OnKeyPress(self.ecs, 'common.DISCARD', False): callback,
                 },
             )
 
@@ -348,14 +362,53 @@ class WidgetsBuilder:
             buttons = self.create_buttons_row(
                 callback=callback,
                 buttons=[
-                    ['Yes', True],
                     ['No',  False],
+                    ['Yes', True],
                 ],
             )
 
             # msg = self.create_text_input(38)
 
             widgets_layout.extend([msg, buttons])
+
+        if widget_type == 'TEXT_INPUT_PROMPT':
+            title = context['title']
+            msg = context['msg']
+            callback = context['callback']
+
+            input_row = toolkit.Row(
+                align=Align.TOP_CENTER,
+                padding=Padding(1, 0),
+            )
+            prompt = toolkit.Text(
+                "Text:",
+            )
+            text_input = self.create_text_input(
+                width=26,
+                padding=Padding(0, 0, 0, 1),
+            )
+            input_row.extend([prompt, text_input])
+
+            buttons = self.create_buttons_row(
+                callback=callback,
+                buttons=[
+                    ['Cancel', False],
+                    ['OK',     text_input],
+                ],
+            )
+
+            widgets_layout = self.create_modal_window(
+                align=Align.TOP_CENTER,
+                padding=Padding(12, 0),
+                size=Size(40, 8),
+                title=title,
+                on_key_press={
+                    handlers.OnKeyPress(self.ecs, 'common.SUBMIT', text_input): callback,
+                    handlers.OnKeyPress(self.ecs, 'common.DISCARD', False): callback,
+                },
+            )
+
+            widgets_layout.extend([input_row, buttons])
 
         if widget_type == 'IN_GAME':
             widgets_layout = toolkit.Split(bottom=12)
@@ -388,8 +441,8 @@ class UIManager:
                 widget, ui_widget, needs_update=False,
             )
         if panel:
-            self.ecs.manage(components.ConsolePanel).insert(
-                widget, panel, z_order or toolkit.ZOrder.BASE,
+            self.ecs.manage(components.Console).insert(
+                widget, panel, z_order or ZOrder.BASE,
             )
         if renderer:
             self.ecs.manage(components.PanelRenderer).insert(
@@ -445,7 +498,12 @@ class UIManager:
             self.ecs.manage(components.OnMouseWheel).insert(
                 widget, on_mouse_wheel,
             )
+
+    def grab_focus(self, widget):
         self.ecs.manage(components.GrabInputFocus).insert(widget)
+
+    def release_focus(self, widget):
+        self.ecs.manage(components.InputFocus).insert(widget)
 
     def create_widget(self, widget_type, context):
         widget = self.widgets_builder.create(
