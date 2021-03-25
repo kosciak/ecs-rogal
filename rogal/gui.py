@@ -1,18 +1,17 @@
 import functools
 import logging
 
-from . import components
-
 
 log = logging.getLogger(__name__)
 
 
 class Prompt:
 
-    WIDGEt_TYPE = None
+    WIDGET_TYPE = None
 
     def __init__(self, ecs, context, callback, *args, **kwargs):
         self.ecs = ecs
+        self.ui_manager = self.ecs.resources.ui_manager
 
         self.window = None
         self.context = context
@@ -20,17 +19,10 @@ class Prompt:
         self.context['callback'] = self.on_event
 
     def show(self):
-        # Show prompt window and set events_handler
-        self.window = self.ecs.create(
-            components.CreateUIWidget(
-                widget_type=self.WIDGEt_TYPE,
-                context=self.context,
-            ),
-        )
+        self.window = self.ui_manager.create(self.WIDGET_TYPE, context=self.context)
 
     def close(self):
-        # Close prompt window
-        self.ecs.manage(components.DestroyUIWidget).insert(self.window)
+        self.ui_manager.destroy(self.window)
 
     def on_event(self, entity, value):
         raise NotImplementedError()
@@ -38,7 +30,7 @@ class Prompt:
 
 class YesNoPrompt(Prompt):
 
-    WIDGEt_TYPE = 'YES_NO_PROMPT'
+    WIDGET_TYPE = 'YES_NO_PROMPT'
 
     def on_event(self, entity, value):
         self.close()
@@ -50,7 +42,7 @@ class YesNoPrompt(Prompt):
 
 class TextInputPrompt(Prompt):
 
-    WIDGEt_TYPE = 'TEXT_INPUT_PROMPT'
+    WIDGET_TYPE = 'TEXT_INPUT_PROMPT'
 
     def on_event(self, entity, value):
         self.close()

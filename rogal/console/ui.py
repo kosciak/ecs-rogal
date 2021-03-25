@@ -430,6 +430,24 @@ class UIManager:
         self.ecs = ecs
         self.widgets_builder = WidgetsBuilder(self.ecs)
 
+    def create(self, widget_type, context):
+        widget = self.ecs.create(
+            components.CreateUIWidget(
+                widget_type=widget_type,
+                context=context,
+            ),
+        )
+        return widget
+
+    def destroy(self, widget):
+        self.ecs.manage(components.DestroyUIWidget).insert(widget)
+
+    def create_child(self, parent):
+        widget = self.ecs.create(
+            components.ParentUIWidget(parent),
+        )
+        return widget
+
     def insert(self, widget, *,
                ui_widget=None,
                panel=None,
@@ -448,12 +466,6 @@ class UIManager:
             self.ecs.manage(components.PanelRenderer).insert(
                 widget, renderer,
             )
-
-    def create(self, parent):
-        widget = self.ecs.create(
-            components.ParentUIWidget(parent),
-        )
-        return widget
 
     def bind(self, widget, *,
              on_text_input=None,

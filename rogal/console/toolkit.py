@@ -12,6 +12,9 @@ from .core import Align, Padding
 '''
 TODO:
 - progress bars (paint background only and print tiles)
+- renderer + post_effects that can alter already rendered children
+    HOW to add this post process renderers so they would be rendered in correct order?
+    Need to be rendered AFTER all children are rendered but BEFORE overlapping widget
 
 '''
 
@@ -151,7 +154,7 @@ class Container(UIElement):
 
     def layout_children(self, manager, parent, panel, z_order):
         for child in self.children:
-            widget = manager.create(parent)
+            widget = manager.create_child(parent)
             z_order += 1
             child.layout(manager, widget, panel, z_order)
 
@@ -322,9 +325,9 @@ class Decorated(Widget):
         return panel
 
     def layout_children(self, manager, parent, panel, z_order):
-        widget = manager.create(parent)
+        widget = manager.create_child(parent)
         self.decorations.layout(manager, widget, panel, z_order)
-        widget = manager.create(parent)
+        widget = manager.create_child(parent)
         panel = self.decorations.inner_panel(panel)
         self.decorated.layout(manager, widget, panel, z_order+1)
 
@@ -357,7 +360,7 @@ class Row(Container, Widget):
         position = panel.get_position(self.size, self.align)
         print(panel, position)
         for child in self.children:
-            widget = manager.create(parent)
+            widget = manager.create_child(parent)
             subpanel = panel.create_panel(position, child.padded_size)
             child.layout(manager, widget, subpanel, z_order)
             position += Position(child.padded_width, 0)
@@ -392,7 +395,7 @@ class List(Container, Widget):
     def layout_children(self, manager, parent, panel, z_order):
         position = panel.get_position(self.size, self.align)
         for child in self.children:
-            widget = manager.create(parent)
+            widget = manager.create_child(parent)
             subpanel = panel.create_panel(position, child.padded_size)
             child.layout(manager, widget, subpanel, z_order)
             position += Position(0, child.padded_height)
@@ -414,7 +417,7 @@ class Split(Container):
         panels = panel.split(self.left, self.right, self.top, self.bottom)
         for i, child in enumerate(self.children):
             if child:
-                widget = manager.create(parent)
+                widget = manager.create_child(parent)
                 child.layout(manager, widget, panels[i], z_order)
             if i >= 2:
                 break
