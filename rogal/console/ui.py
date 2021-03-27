@@ -514,6 +514,8 @@ class UIManager:
     def grab_focus(self, widget):
         self.ecs.manage(components.GrabInputFocus).insert(widget)
 
+    # TODO: get_focus -> just set current InputFocus value, not higher one!
+
     def release_focus(self, widget):
         self.ecs.manage(components.InputFocus).insert(widget)
 

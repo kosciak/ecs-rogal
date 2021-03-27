@@ -96,6 +96,7 @@ def run():
     # Register systems
     # NOTE: Systems are run in order they were registered
     for system in [
+        # Game related systems
         systems.levels.LevelsSystem(ecs, level_generator),
 
         systems.actions.ActionsQueueSystem(ecs),
@@ -103,8 +104,6 @@ def run():
 
         systems.user_input.InputFocusSystem(ecs),
         systems.user_input.EventsHandlersSystem(ecs),
-
-        systems.commands.QuitSystem(ecs),
 
         systems.actions.MeleeCombatSystem(ecs),
         systems.actions.RestingSystem(ecs),
@@ -118,6 +117,9 @@ def run():
         systems.awerness.RevealLevelSystem(ecs),
 
         systems.actions.ActionsPerformedSystem(ecs),
+
+        # Core engine related systems
+        systems.commands.QuitSystem(ecs),
 
         systems.real_time.TTLSystem(ecs),
 

@@ -1,5 +1,6 @@
 import collections
 import string
+import time
 
 
 ASCII_CHARS = set()
@@ -120,6 +121,31 @@ class Key:
         if modifiers:
             key = f'{modifiers}-{key}'
         return key
+
+
+class KeyboardState:
+
+    def __init__(self, max_repeat_rate=None):
+        self.max_repeat_rate = max_repeat_rate
+        self._last_valid_press = {}
+        self.pressed_keys = set()
+
+    def is_valid_press(self, key):
+        if not self.max_repeat_rate:
+            return True
+        now = time.time()
+        prev_time = self._last_valid_press.get(key)
+        if prev_time and now - prev_time < self.max_repeat_rate:
+            return False
+        self._last_valid_press[key] = now
+        return True
+
+    def update(self, press_event=None, up_event=None):
+        if press_event:
+            self.pressed_keys.add(press_event.key)
+        if up_event:
+            self.pressed_keys.discard(up_event.key)
+            self._last_valid_press.pop(up_event.key, None)
 
 
 class Bindings(collections.defaultdict):

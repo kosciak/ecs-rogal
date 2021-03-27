@@ -1,12 +1,12 @@
 import collections
 import logging
-import time
 
 from .. import components
 from ..ecs import System
 from ..ecs.run_state import RunState
 
 from ..events import EventType
+from ..events.keys import KeyboardState
 from ..events.mouse import MouseState
 
 from ..utils import perf
@@ -47,19 +47,19 @@ class InputFocusSystem(System):
 class EventsHandlersSystem(System):
 
     WAIT = 1./60
-    REPEAT_RATE = 1./6
+    MAX_REPEAT_RATE = 1./6
 
     INCLUDE_STATES = {
         RunState.WAITING_FOR_INPUT,
     }
 
-    def __init__(self, ecs, repeat_rate=REPEAT_RATE):
+    def __init__(self, ecs, repeat_rate=MAX_REPEAT_RATE):
         super().__init__(ecs)
         self.wrapper = self.ecs.resources.wrapper
         self.wait = self.WAIT
 
-        self.repeat_rate = repeat_rate
-        self._prev_times = {}
+        self.ecs.resources.keyboard_state = KeyboardState(max_repeat_rate=repeat_rate)
+        self.keys = self.ecs.resources.keyboard_state
 
         self.mouse_in_entities = set()
         self.ecs.resources.mouse_state = MouseState()
@@ -96,21 +96,13 @@ class EventsHandlersSystem(System):
             if value is not None:
                 callback(entity, value)
 
-    def is_valid_repeat(self, event):
-        now = time.time()
-        prev_time = self._prev_times.get(event.type)
-        if prev_time and now - prev_time < self.repeat_rate:
-            return False
-        self._prev_times[event.type] = now
-        return True
-
     def on_text_input(self, event):
         event_handlers = self.get_valid_handlers(components.OnTextInput)
         for entity, handlers in event_handlers:
             self.handle_event(event, entity, handlers)
 
     def on_key_press(self, event):
-        if event.repeat and not self.is_valid_repeat(event):
+        if event.repeat and not self.keys.is_valid_press(event.key):
             return
 
         event_handlers = self.get_valid_handlers(components.OnKeyPress)
@@ -121,6 +113,7 @@ class EventsHandlersSystem(System):
         for entity, console, handlers in self.get_valid_panel_handlers(handlers_component):
             if not event.position in console.panel:
                 continue
+            self.mouse_in_entities.add(entity)
             self.handle_event(event, entity, handlers)
 
     def on_mouse_in_event(self, event, handlers_component):
@@ -128,7 +121,8 @@ class EventsHandlersSystem(System):
         for entity, console, handlers in self.get_valid_panel_handlers(handlers_component):
             if not event.position in console.panel:
                 continue
-            if entity in self.mouse_in_entities and self.mouse.prev_position and self.mouse.prev_position in console.panel:
+            if entity in self.mouse_in_entities and \
+               self.mouse.prev_position and self.mouse.prev_position in console.panel:
                 # cursor did not enter, just moved over
                 continue
             self.mouse_in_entities.add(entity)
@@ -145,24 +139,22 @@ class EventsHandlersSystem(System):
 
     def on_mouse_press(self, event):
         self.on_mouse_over_event(event, components.OnMousePress)
-        self.mouse.update(press_event=event)
 
     def on_mouse_up(self, event):
         self.on_mouse_over_event(event, components.OnMouseUp)
-        self.mouse.update(up_event=event)
 
     def on_mouse_click(self, event):
         # Fire OnMouseClick if button was pressed and released without moving
         if not self.mouse.is_click(event.button):
             # Position changed between button press and up
             return
+        # TODO: Press, show button, release -> click is registered!
         self.on_mouse_over_event(event, components.OnMouseClick)
 
     def on_mouse_motion(self, event):
-        self.mouse.update(motion_event=event)
         self.on_mouse_in_event(event, components.OnMouseIn)
         self.on_mouse_over_event(event, components.OnMouseOver)
-        # TODO: For MouseOut to be 100% accurate we would need to process mouse leaving (game) window
+        # TODO: For OnMouseOut to be 100% accurate we would need to process mouse leaving (game) window
         self.on_mouse_out_event(event, components.OnMouseOut)
 
     def on_mouse_wheel(self, event):
@@ -171,8 +163,9 @@ class EventsHandlersSystem(System):
             self.handle_event(event, entity, handlers)
 
     def on_quit(self, event):
-        log.warning('Quitting...')
-        raise SystemExit()
+        self.ecs.create(
+            components.WantsToQuit,
+        )
 
     def run(self):
         acts_now = self.ecs.manage(components.ActsNow)
@@ -184,19 +177,25 @@ class EventsHandlersSystem(System):
         #       to any entity, not only to actors (for example to GUI elements)
         #       BUT there must be some ActsNow actor for system to be running!
         for event in self.wrapper.events(self.wait):
-            log.debug(f'Event: {event}')
+            # log.debug(f'Event: {event}')
             if event.type == EventType.QUIT:
                 self.on_quit(event)
             elif event.type == EventType.TEXT_INPUT:
                 self.on_text_input(event)
             elif event.type == EventType.KEY_PRESS:
+                self.keys.update(press_event=event)
                 self.on_key_press(event)
+            elif event.type == EventType.KEY_UP:
+                self.keys.update(up_event=event)
             elif event.type == EventType.MOUSE_BUTTON_PRESS:
+                self.mouse.update(press_event=event)
                 self.on_mouse_press(event)
             elif event.type == EventType.MOUSE_BUTTON_UP:
                 self.on_mouse_click(event)
                 self.on_mouse_up(event)
+                self.mouse.update(up_event=event)
             elif event.type == EventType.MOUSE_MOTION:
+                self.mouse.update(motion_event=event)
                 self.on_mouse_motion(event)
             elif event.type == EventType.MOUSE_WHEEL:
                 self.on_mouse_wheel(event)

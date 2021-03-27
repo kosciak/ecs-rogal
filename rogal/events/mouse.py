@@ -12,26 +12,33 @@ class MouseState:
     def __init__(self):
         self.position = None
         self.prev_position = None
-        self.drag_position = {}
-        self.clicks = set()
+        self.press_positions = {}
+        self._clicks = set()
+
+    @property
+    def pressed_buttons(self):
+        return self.press_positions.keys()
+
+    def drag_start(self, button):
+        return self.press_positions.get(button)
 
     def is_click(self, button):
-        return button in self.clicks
+        return button in self._clicks
 
     def update(self, motion_event=None, press_event=None, up_event=None):
         if motion_event:
             self.prev_position = self.position
             self.position = motion_event.position
             if motion_event.motion:
-                self.clicks.clear()
+                self._clicks.clear()
         if press_event:
             if self.position is None:
                 self.position = press_event.position
-            self.drag_position[press_event.button] = press_event.position
-            self.clicks.add(press_event.button)
+            self.press_positions[press_event.button] = press_event.position
+            self._clicks.add(press_event.button)
         if up_event:
             if self.position is None:
                 self.position = up_event.position
-            self.drag_position.pop(up_event.button, None)
-            self.clicks.discard(up_event.button)
+            self.press_positions.pop(up_event.button, None)
+            self._clicks.discard(up_event.button)
 
