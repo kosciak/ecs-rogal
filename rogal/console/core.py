@@ -133,8 +133,8 @@ class TilesGrid(WithSizeMixin):
     __slots__ = ()
 
     def _empty_tile(self, colors):
-        fg = (colors and colors.fg) or DEFAULT_FG
-        bg = (colors and colors.bg) or DEFAULT_BG
+        fg = (colors and colors.fg)# or DEFAULT_FG
+        bg = (colors and colors.bg)# or DEFAULT_BG
         return Tile.create(DEFAULT_CH, fg=fg, bg=bg)
 
     def clear(self, colors=None, *args, **kwargs):

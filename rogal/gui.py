@@ -49,6 +49,19 @@ class TextInputPrompt(Prompt):
         if value is False:
             log.debug('Prompt closed...')
         elif value is not None:
-            log.warning(value.txt)
+            log.warning(f'Text: {value.txt}')
+            # self.callback(value.txt)
+
+
+class AlphabeticSelectPrompt(Prompt):
+
+    WIDGET_TYPE = 'ALPHABETIC_SELECT_PROMPT'
+
+    def on_event(self, entity, value):
+        self.close()
+        if value is False:
+            log.debug('Prompt closed...')
+        elif value is not None:
+            log.warning(f'Selected: {value}')
             # self.callback(value.txt)
 

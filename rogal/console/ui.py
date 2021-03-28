@@ -1,3 +1,5 @@
+import string
+
 from .. import components
 
 from ..geometry import Position, Vector, Size
@@ -274,6 +276,7 @@ class WidgetsBuilder:
                 title,
                 colors=self.default_colors,
                 align=self.title_align,
+                width=10,
             ),
             align=self.title_align,
             padding=Padding(0, 1),
@@ -319,8 +322,11 @@ class WidgetsBuilder:
         )
         return button
 
-    def create_buttons_row(self, callback, buttons):
-        buttons_row = toolkit.Row(align=self.buttons_align)
+    def create_buttons_row(self, callback, buttons, padding=Padding.ZERO):
+        buttons_row = toolkit.Row(
+            align=self.buttons_align,
+            padding=padding,
+        )
         for text, value in buttons:
             buttons_row.append(self.create_button(text, callback, value))
         return buttons_row
@@ -350,7 +356,7 @@ class WidgetsBuilder:
                 title=title,
                 on_key_press={
                     handlers.YesNoKeyPress(self.ecs): callback,
-                    handlers.OnKeyPress(self.ecs, 'common.DISCARD', False): callback,
+                    handlers.DiscardKeyPress(self.ecs): callback,
                 },
             )
 
@@ -359,12 +365,14 @@ class WidgetsBuilder:
                 align=Align.TOP_CENTER,
                 padding=Padding(1, 0),
             )
+
             buttons = self.create_buttons_row(
                 callback=callback,
                 buttons=[
                     ['No',  False],
                     ['Yes', True],
                 ],
+                padding=Padding(1, 0, 0, 0),
             )
 
             # msg = self.create_text_input(38)
@@ -395,6 +403,7 @@ class WidgetsBuilder:
                     ['Cancel', False],
                     ['OK',     text_input],
                 ],
+                padding=Padding(1, 0, 0, 0),
             )
 
             widgets_layout = self.create_modal_window(
@@ -404,11 +413,75 @@ class WidgetsBuilder:
                 title=title,
                 on_key_press={
                     handlers.OnKeyPress(self.ecs, 'common.SUBMIT', text_input): callback,
-                    handlers.OnKeyPress(self.ecs, 'common.DISCARD', False): callback,
+                    handlers.DiscardKeyPress(self.ecs): callback,
                 },
             )
 
             widgets_layout.extend([input_row, buttons])
+
+        if widget_type == 'ALPHABETIC_SELECT_PROMPT':
+            title = context['title']
+            msg = 'Select something'
+            callback = context['callback']
+            items = [f'index: {i}' for i in range(10)]
+
+            msg = toolkit.Text(
+                msg,
+                align=Align.TOP_CENTER,
+                padding=Padding(1, 0),
+            )
+
+            buttons = self.create_buttons_row(
+                callback=callback,
+                buttons=[
+                    ['Cancel', False],
+                ],
+                padding=Padding(1, 0, 0, 0),
+            )
+
+            widgets_layout = self.create_modal_window(
+                align=Align.TOP_CENTER,
+                padding=Padding(12, 0),
+                size=Size(
+                    20,
+                    self.window_decorations.height+msg.padded_height+buttons.padded_height+len(items)
+                ),
+                title=title,
+                on_key_press={
+                    handlers.AlphabeticIndexKeyPress(self.ecs, size=len(items)): callback,
+                    handlers.DiscardKeyPress(self.ecs): callback,
+                },
+            )
+
+            items_list = toolkit.List(
+                align=Align.TOP_LEFT,
+                padding=Padding(3, 0, 0, 0),
+            )
+            # TODO: Move to create_list()
+            for i, item in enumerate(items):
+                items_list.append(
+                    # TODO: Move to create_list_item()
+                    toolkit.Row(
+                        widgets=[
+                            toolkit.Text(
+                                f'{string.ascii_lowercase[i]})',
+                                padding=Padding(0, 1, 0, 0),
+                            ),
+                            toolkit.Text(
+                                item,
+                                colors=Colors(
+                                    fg=self.tileset.palette.BLUE,
+                                ),
+                            ),
+                        ],
+                        align=Align.TOP_LEFT,
+                        # TODO: on_mouse_click, on_mouse_hover
+                    )
+                )
+
+            widgets_layout.extend([msg, items_list, buttons])
+
+            return widgets_layout
 
         if widget_type == 'IN_GAME':
             widgets_layout = toolkit.Split(bottom=12)

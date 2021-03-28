@@ -167,8 +167,8 @@ class Container(UIElement):
 
 class Cursor(Renderer, UIElement):
 
-    def __init__(self, *, colors=None, position=None, blinking=None):
-        # TODO: char? or even tile?
+    def __init__(self, *, glyph=None, colors=None, position=None, blinking=None):
+        self.glyph = glyph # NOTE: if glyph is set it will OVERWRITE character under cursor!
         self.colors = colors
         self.position = position or Position.ZERO
         self.rate = blinking
@@ -184,7 +184,9 @@ class Cursor(Renderer, UIElement):
             return self
 
     def render(self, panel):
-        if self.colors:
+        if self.glyph:
+            panel.print(self.glyph.char, self.position, colors=self.colors)
+        elif self.colors:
             panel.paint(self.colors, self.position)
         else:
             panel.invert(self.position)
@@ -358,7 +360,6 @@ class Row(Container, Widget):
 
     def layout_children(self, manager, parent, panel, z_order):
         position = panel.get_position(self.size, self.align)
-        print(panel, position)
         for child in self.children:
             widget = manager.create_child(parent)
             subpanel = panel.create_panel(position, child.padded_size)

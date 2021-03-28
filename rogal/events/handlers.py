@@ -73,34 +73,52 @@ class YesNoKeyPress(KeyPressHandler):
 
 class ConfirmKeyPress(KeyPressHandler):
 
-    """Return True for CONFIRM, or False for DISCARD."""
+    """Return True for CONFIRM."""
 
     def handle(self, event):
         if event.key in self.key_bindings.common.CONFIRM:
             return True
+
+
+class DiscardKeyPress(KeyPressHandler):
+
+    """Return False for DISCARD."""
+
+    def handle(self, event):
         if event.key in self.key_bindings.common.DISCARD:
             return False
 
 
-class AlphabeticIndexKeyPress(KeyPressHandler):
+class IndexKeypressHandler(KeyPressHandler):
+
+    def __init__(self, ecs, size, *args, **kwargs):
+        super().__init__(ecs, *args, **kwargs)
+        self.size = size
+
+
+class AlphabeticIndexKeyPress(IndexKeypressHandler):
 
     """Return 0-25 index when selecting using ascii letters."""
 
     def handle(self, event):
         if event.key in self.key_bindings.index.ALPHABETIC:
-            return string.ascii_lowercase.index(event.key)
+            index = string.ascii_lowercase.index(event.key)
+            if index < self.size:
+                return index
 
 
-class AlphabeticUpperIndexKeyPress(KeyPressHandler):
+class AlphabeticUpperIndexKeyPress(IndexKeypressHandler):
 
     """Return 0-25 index when selecting using ascii letters."""
 
     def handle(self, event):
         if event.key in self.key_bindings.index.ALPHABETIC_UPPER:
-            return string.ascii_uppercase.index(event.key)
+            index = string.ascii_uppercase.index(event.key)
+            if index < self.size:
+                return index
 
 
-class NumericIndexKeyPress(KeyPressHandler):
+class NumericIndexKeyPress(IndexKeypressHandler):
 
     """Return 0-9 index when selecting using digits.
 
@@ -114,7 +132,8 @@ class NumericIndexKeyPress(KeyPressHandler):
             index -= 1
             if index < 0:
                 index = 9
-            return index
+            if index < self.size:
+                return index
 
 
 class TextInput(EventHandler):
