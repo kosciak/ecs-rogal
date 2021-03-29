@@ -276,7 +276,7 @@ class WidgetsBuilder:
                 title,
                 colors=self.default_colors,
                 align=self.title_align,
-                width=10,
+                # width=10,
             ),
             align=self.title_align,
             padding=Padding(0, 1),
@@ -341,6 +341,34 @@ class WidgetsBuilder:
             default_colors=Colors(fg=self.tileset.palette.fg, bg=self.tileset.palette.BRIGHT_BLACK),
         )
         return text_input
+
+    def create_list_item(self, width, item, callback, index):
+        list_item = toolkit.Row(
+            align=Align.TOP_LEFT,
+        )
+
+        index_text = toolkit.Text(
+            f'{string.ascii_lowercase[index]})',
+            padding=Padding(0, 1),
+        )
+        item_text = toolkit.Text(
+            item,
+            colors=Colors(
+                fg=self.tileset.palette.BLUE,
+            ),
+            width=width-index_text.padded_size.width,
+        )
+
+        list_item.extend([index_text, item_text])
+
+        list_item.handlers = dict(
+            on_mouse_click={
+                handlers.MouseLeftButton(index): callback,
+            },
+            # TODO: on_mouse_hover
+        )
+
+        return list_item
 
     def create(self, widget_type, context):
         # TODO: Move layout definitions to data/ui.yaml ?
@@ -441,7 +469,7 @@ class WidgetsBuilder:
 
             widgets_layout = self.create_modal_window(
                 align=Align.TOP_CENTER,
-                padding=Padding(12, 0),
+                padding=Padding(8, 0),
                 size=Size(
                     20,
                     self.window_decorations.height+msg.padded_height+buttons.padded_height+len(items)
@@ -458,25 +486,9 @@ class WidgetsBuilder:
                 padding=Padding(3, 0, 0, 0),
             )
             # TODO: Move to create_list()
-            for i, item in enumerate(items):
+            for index, item in enumerate(items):
                 items_list.append(
-                    # TODO: Move to create_list_item()
-                    toolkit.Row(
-                        widgets=[
-                            toolkit.Text(
-                                f'{string.ascii_lowercase[i]})',
-                                padding=Padding(0, 1, 0, 0),
-                            ),
-                            toolkit.Text(
-                                item,
-                                colors=Colors(
-                                    fg=self.tileset.palette.BLUE,
-                                ),
-                            ),
-                        ],
-                        align=Align.TOP_LEFT,
-                        # TODO: on_mouse_click, on_mouse_hover
-                    )
+                    self.create_list_item(18, item, callback, index)
                 )
 
             widgets_layout.extend([msg, items_list, buttons])

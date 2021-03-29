@@ -25,8 +25,10 @@ class UIElement:
 
     DEFAULT_Z_ORDER = None
 
-    handlers = {}
-    renderer = None
+    def __init__(self):
+        self.children = []
+        self.renderer = None
+        self.handlers = {}
 
     def get_layout_panel(self, panel):
         return panel
@@ -58,9 +60,9 @@ class Renderer:
 
     """Abstract UI element that can render it's contents on panel."""
 
-    @property
-    def renderer(self):
-        return self
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.renderer = self
 
     def render(self, panel):
         raise NotImplementedError()
@@ -88,6 +90,7 @@ class Blinking(Renderer):
     BLINK_RATE = 1200
 
     def __init__(self, renderer, rate=BLINK_RATE):
+        super().__init__()
         self._renderer = renderer
         self.rate = rate // 2
 
@@ -168,20 +171,15 @@ class Container(UIElement):
 class Cursor(Renderer, UIElement):
 
     def __init__(self, *, glyph=None, colors=None, position=None, blinking=None):
+        super().__init__()
         self.glyph = glyph # NOTE: if glyph is set it will OVERWRITE character under cursor!
         self.colors = colors
         self.position = position or Position.ZERO
-        self.rate = blinking
+        if blinking:
+            self.renderer = Blinking(self, rate=blinking)
 
     def move(self, vector):
         self.position = self.position.move(vector)
-
-    @property
-    def renderer(self):
-        if self.rate:
-            return Blinking(self, rate=self.rate)
-        else:
-            return self
 
     def render(self, panel):
         if self.glyph:
@@ -241,6 +239,7 @@ class Decorations(WithSizeMixin, Renderer, UIElement):
         bottom_left=None, bottom_right=None,
         *, colors=None,
     ):
+        super().__init__()
         self.top = Tile.create(top, fg=colors and colors.fg, bg=colors and colors.bg)
         self.bottom = Tile.create(bottom, fg=colors and colors.fg, bg=colors and colors.bg)
         self.left = Tile.create(left, fg=colors and colors.fg, bg=colors and colors.bg)
@@ -310,7 +309,7 @@ class Decorated(Widget):
     """Decorations with element rendered inside of them."""
 
     def __init__(self, decorations, decorated, *, align, padding=Padding.ZERO):
-        super().__init__(align, padding)
+        super().__init__(align=align, padding=padding)
         self.decorations = decorations
         self.decorated = decorated
 
@@ -408,7 +407,7 @@ class Split(Container):
     """Container that renders widgets on each side of splitted panel."""
 
     def __init__(self, widgets=None, *, left=None, right=None, top=None, bottom=None):
-        super().__init__(widgets)
+        super().__init__(widgets=widgets)
         self.left = left
         self.right = right
         self.top = top
