@@ -1,4 +1,9 @@
 ipython
 # jedi 0.18.x is backwargs incompatibile with ipython, force use of 0.17.2 until issue is resolved
-jedi==0.17.2
+#jedi==0.18.0
+
+pipdeptree
+
+# Profile
+snakeviz
 

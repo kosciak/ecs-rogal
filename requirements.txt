@@ -1,3 +1,4 @@
-tcod==11.18.2
-numpy==1.19.4
-PyYAML==5.3.1
+tcod==12.1.0
+numpy==1.20.2
+PyYAML==5.4.1
+freetype-py==2.2.0
