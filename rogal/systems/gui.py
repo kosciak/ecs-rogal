@@ -55,9 +55,11 @@ class DestroyUIWidgetsSystem(System):
             self.ecs.remove(*parents)
             children = self.get_children(parents)
             self.ecs.remove(*children)
+        to_destroy.clear()
 
         to_destroy = self.ecs.manage(components.DestroyUIWidgetChildren)
         if to_destroy:
             children = self.get_children(to_destroy.entities)
             self.ecs.remove(*children)
+        to_destroy.clear()
 

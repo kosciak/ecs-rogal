@@ -52,8 +52,7 @@ class LayoutSytem(ConsoleSystem):
             if panel is None:
                 content.layout(ui_manager, widget, self.root)
             else:
-                z_order = self.ecs.manage(components.ZOrder).get(widget)
-                content.layout_children(ui_manager, widget, panel, z_order)
+                content.layout_content(ui_manager, widget, panel.panel, panel.z_order)
 
 
 class RenderingSystem(ConsoleSystem):
@@ -100,6 +99,7 @@ class RenderingSystem(ConsoleSystem):
             key=itemgetter(0)
         ):
             with perf.Perf(panel_renderer.renderer.render):
+                # TODO: pass timestamp / self._last_run to synchronize blinking / effects?
                 panel_renderer.renderer.render(console.panel)
 
         # Show rendered panel

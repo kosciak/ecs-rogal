@@ -48,12 +48,16 @@ class UIElement:
         )
         if self.handlers:
             manager.grab_focus(widget)
+        return self.layout_content(manager, widget, panel, z_order)
+
+    def layout_content(self, manager, widget, panel, z_order):
         if self.renderer and z_order:
             z_order += 1
-        self.layout_children(manager, widget, panel, z_order)
+        z_order = self.layout_children(manager, widget, panel, z_order)
+        return z_order
 
     def layout_children(self, manager, parent, panel, z_order):
-        return
+        return z_order
 
 
 class Renderer:
@@ -76,6 +80,16 @@ class ClearPanel(Renderer):
 
     def render(self, panel):
         panel.clear(self.colors)
+
+
+class PaintPanel(Renderer):
+
+    def __init__(self, colors, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.colors = colors
+
+    def render(self, panel):
+        panel.paint(self.colors, Position.ZERO, panel.size)
 
 
 class InvertColors(Renderer):
@@ -138,7 +152,7 @@ class Widget(WithSizeMixin, UIElement):
 
 class Container(UIElement):
 
-    """Free form container.
+    """UIElements container.
 
     Widgets are rendered in FIFO order and each widget use whole panel.
     Will overdraw previous ones if they overlap.
@@ -154,12 +168,6 @@ class Container(UIElement):
 
     def extend(self, widgets):
         self.children.extend(widgets)
-
-    def layout_children(self, manager, parent, panel, z_order):
-        for child in self.children:
-            widget = manager.create_child(parent)
-            z_order += 1
-            child.layout(manager, widget, panel, z_order)
 
     def __len__(self):
         return len(self.children)
@@ -330,95 +338,5 @@ class Decorated(Widget):
         self.decorations.layout(manager, widget, panel, z_order)
         widget = manager.create_child(parent)
         panel = self.decorations.inner_panel(panel)
-        self.decorated.layout(manager, widget, panel, z_order+1)
-
-
-class Row(Container, Widget):
-
-    """Horizontal container.
-
-    Widgets are rendererd in FIFO order from left to right.
-
-    align=LEFT    |AA BB CC      |
-    align=RIGHT   |      AA BB CC|
-    align=CENTER  |   AA BB CC   |
-
-    """
-
-    def __init__(self, widgets=None, *, align, padding=Padding.ZERO):
-        super().__init__(widgets=widgets, align=align, padding=padding)
-
-    @property
-    def size(self):
-        if not self.children:
-            return None
-        return Size(
-            sum([widget.padded_width for widget in self.children]),
-            max([widget.padded_height for widget in self.children])
-        )
-
-    def layout_children(self, manager, parent, panel, z_order):
-        position = panel.get_position(self.size, self.align)
-        for child in self.children:
-            widget = manager.create_child(parent)
-            subpanel = panel.create_panel(position, child.padded_size)
-            child.layout(manager, widget, subpanel, z_order)
-            position += Position(child.padded_width, 0)
-
-
-# TODO: ???
-# class JustifiedRow:
-#     # |AA    BB    CC|
-#     pass
-
-
-class List(Container, Widget):
-
-    """Vertical container.
-
-    Widgets are rendererd in FIFO order from top to bottom.
-
-    """
-
-    def __init__(self, widgets=None, *, align, padding=Padding.ZERO):
-        super().__init__(widgets=widgets, align=align, padding=padding)
-
-    @property
-    def size(self):
-        if not self.children:
-            return None
-        return Size(
-            max([widget.padded_width for widget in self.children]),
-            sum([widget.padded_height for widget in self.children])
-        )
-
-    def layout_children(self, manager, parent, panel, z_order):
-        position = panel.get_position(self.size, self.align)
-        for child in self.children:
-            widget = manager.create_child(parent)
-            subpanel = panel.create_panel(position, child.padded_size)
-            child.layout(manager, widget, subpanel, z_order)
-            position += Position(0, child.padded_height)
-
-
-
-class Split(Container):
-
-    """Container that renders widgets on each side of splitted panel."""
-
-    def __init__(self, widgets=None, *, left=None, right=None, top=None, bottom=None):
-        super().__init__(widgets=widgets)
-        self.left = left
-        self.right = right
-        self.top = top
-        self.bottom = bottom
-
-    def layout_children(self, manager, parent, panel, z_order):
-        panels = panel.split(self.left, self.right, self.top, self.bottom)
-        for i, child in enumerate(self.children):
-            if child:
-                widget = manager.create_child(parent)
-                child.layout(manager, widget, panels[i], z_order)
-            if i >= 2:
-                break
+        return self.decorated.layout(manager, widget, panel, z_order+1)
 

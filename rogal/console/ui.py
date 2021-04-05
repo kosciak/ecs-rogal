@@ -11,6 +11,7 @@ from .. import render
 
 from .core import Align, Padding
 from . import toolkit
+from . import containers
 
 
 # TODO: frames overlapping, and fixing overlapped/overdrawn characters to merge borders/decorations
@@ -29,6 +30,8 @@ class UIWidget:
         self.renderer = toolkit.ClearPanel(
             colors=default_colors,
         )
+        self.widget = None
+        self.manager = None
 
     @property
     def colors(self):
@@ -39,14 +42,19 @@ class UIWidget:
         self.renderer.colors = colors
 
     def layout(self, manager, widget, panel, z_order=None):
-        super().layout(manager, widget, panel, z_order)
+        self.manager = manager
+        self.widget = widget
         manager.insert(
             widget,
             ui_widget=self,
         )
+        return super().layout(manager, widget, panel, z_order)
+
+    def redraw(self):
+        self.manager.redraw(self.widget)
 
 
-class TextInput(UIWidget, toolkit.Container, toolkit.Widget):
+class TextInput(UIWidget, containers.Overlay, toolkit.Widget):
 
     def __init__(self, ecs, width, *,
                  default_colors,
@@ -178,15 +186,19 @@ class Button(UIWidget, toolkit.Decorated):
 
     def on_select(self, widget, value):
         self.colors = self.selected_colors
+        self.redraw();
 
     def on_unselect(self, widget, value):
         self.colors = self.default_colors
+        self.redraw()
 
     def on_press(self, widget, position):
         self.colors = self.press_colors
+        self.redraw()
 
 
-class Window(UIWidget, toolkit.Container):
+# TODO: Consider renaming to DecoratedPanel?
+class Window(UIWidget, containers.Overlay):
 
     DEFAULT_Z_ORDER = ZOrder.BASE
 
@@ -196,8 +208,8 @@ class Window(UIWidget, toolkit.Container):
                  **kwargs
                 ):
         super().__init__(default_colors=default_colors, **kwargs)
-        self.frame = toolkit.Container()
-        self.content = toolkit.Container()
+        self.frame = containers.Overlay()
+        self.content = containers.Overlay()
         self.handlers = dict(
             on_key_press=on_key_press,
         )
@@ -323,7 +335,7 @@ class WidgetsBuilder:
         return button
 
     def create_buttons_row(self, callback, buttons, padding=Padding.ZERO):
-        buttons_row = toolkit.Row(
+        buttons_row = containers.Row(
             align=self.buttons_align,
             padding=padding,
         )
@@ -343,7 +355,7 @@ class WidgetsBuilder:
         return text_input
 
     def create_list_item(self, width, item, callback, index):
-        list_item = toolkit.Row(
+        list_item = containers.Row(
             align=Align.TOP_LEFT,
         )
 
@@ -365,7 +377,7 @@ class WidgetsBuilder:
             on_mouse_click={
                 handlers.MouseLeftButton(index): callback,
             },
-            # TODO: on_mouse_hover
+            # TODO: on_mouse_over
         )
 
         return list_item
@@ -412,7 +424,7 @@ class WidgetsBuilder:
             msg = context['msg']
             callback = context['callback']
 
-            input_row = toolkit.Row(
+            input_row = containers.Row(
                 align=Align.TOP_CENTER,
                 padding=Padding(1, 0),
             )
@@ -481,7 +493,7 @@ class WidgetsBuilder:
                 },
             )
 
-            items_list = toolkit.List(
+            items_list = containers.List(
                 align=Align.TOP_LEFT,
                 padding=Padding(3, 0, 0, 0),
             )
@@ -496,7 +508,7 @@ class WidgetsBuilder:
             return widgets_layout
 
         if widget_type == 'IN_GAME':
-            widgets_layout = toolkit.Split(bottom=12)
+            widgets_layout = containers.Split(bottom=12)
 
             camera = self.create_window(title='mapcam')
             camera.content.append(render.Camera(self.ecs))
@@ -532,6 +544,12 @@ class UIManager:
             components.ParentUIWidget(parent),
         )
         return widget
+
+    def redraw(self, widget):
+        self.ecs.manage(components.DestroyUIWidgetChildren).insert(widget)
+        content = self.ecs.manage(components.UIWidget).get(widget)
+        if content:
+            content.invalidate()
 
     def insert(self, widget, *,
                ui_widget=None,
@@ -602,7 +620,7 @@ class UIManager:
     # TODO: get_focus -> just set current InputFocus value, not higher one!
 
     def release_focus(self, widget):
-        self.ecs.manage(components.InputFocus).insert(widget)
+        self.ecs.manage(components.InputFocus).remove(widget)
 
     def create_widget(self, widget_type, context):
         widget = self.widgets_builder.create(

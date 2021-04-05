@@ -224,6 +224,8 @@ class TcodWrapper(IOWrapper):
             tilesheet.path, tilesheet.columns, tilesheet.rows, tilesheet.charmap)
 
     def load_truetype_font(self, truetype_font):
+        # TODO: Check: https://github.com/libtcod/python-tcod/blob/develop/examples/ttf.py
+        #       For improved support for TTF fonts
         return tcod.tileset.load_truetype_font(
             truetype_font.path, truetype_font.width, truetype_font.height)
 

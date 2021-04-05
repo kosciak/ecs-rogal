@@ -43,8 +43,8 @@ class UIWidget(Component):
         self.widget.layout(ui_manager, parent, panel)
         self.needs_update = False
 
-    def layout_children(self, ui_manager, parent, panel, z_order):
-        self.widget.layout_children(ui_manager, parent, panel, z_order)
+    def layout_content(self, ui_manager, parent, panel, z_order):
+        self.widget.layout_content(ui_manager, parent, panel, z_order)
         self.needs_update = False
 
 
