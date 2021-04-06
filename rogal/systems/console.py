@@ -50,9 +50,9 @@ class LayoutSytem(ConsoleSystem):
         for widget, content in widgets:
             panel = panels.get(widget)
             if panel is None:
-                content.layout(ui_manager, widget, self.root)
+                content.layout(ui_manager, widget, panel=self.root, z_order=0)
             else:
-                content.layout_content(ui_manager, widget, panel.panel, panel.z_order)
+                content.layout_content(ui_manager, widget, panel=panel.panel, z_order=panel.z_order)
 
 
 class RenderingSystem(ConsoleSystem):

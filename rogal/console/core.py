@@ -20,6 +20,11 @@ DEFAULT_FG = RGB(255, 255, 255).rgb
 DEFAULT_BG = RGB(0, 0, 0).rgb
 
 
+class ZOrder:
+    BASE = 1
+    MODAL = 100
+
+
 class Align(IntFlag):
     # Horizontal alignment
     LEFT = 0    # tcod.LEFT

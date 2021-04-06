@@ -111,6 +111,5 @@ class Split(toolkit.Container):
                 children_z_orders.append(child_z_order or 0)
             if i >= 2:
                 break
-        print(children_z_orders)
         return children_z_orders and max(children_z_orders) or z_order
 

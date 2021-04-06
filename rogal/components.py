@@ -39,8 +39,8 @@ class UIWidget(Component):
     def invalidate(self):
         self.needs_update = True
 
-    def layout(self, ui_manager, parent, panel):
-        self.widget.layout(ui_manager, parent, panel)
+    def layout(self, ui_manager, parent, panel, z_order=0):
+        self.widget.layout(ui_manager, parent, panel, z_order)
         self.needs_update = False
 
     def layout_content(self, ui_manager, parent, panel, z_order):

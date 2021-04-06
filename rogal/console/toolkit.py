@@ -23,17 +23,16 @@ class UIElement:
 
     """Abstract UI element that can be layouted on panel."""
 
-    DEFAULT_Z_ORDER = None
+    DEFAULT_Z_ORDER = 0
 
     def __init__(self):
-        self.children = []
         self.renderer = None
         self.handlers = {}
 
     def get_layout_panel(self, panel):
         return panel
 
-    def layout(self, manager, widget, panel, z_order=None):
+    def layout(self, manager, widget, panel, z_order):
         z_order = z_order or self.DEFAULT_Z_ORDER
         panel = self.get_layout_panel(panel)
         manager.insert(
@@ -42,21 +41,17 @@ class UIElement:
             z_order=z_order,
             renderer=self.renderer,
         )
+
         manager.bind(
             widget,
             **self.handlers,
         )
         if self.handlers:
             manager.grab_focus(widget)
+
         return self.layout_content(manager, widget, panel, z_order)
 
-    def layout_content(self, manager, widget, panel, z_order):
-        if self.renderer and z_order:
-            z_order += 1
-        z_order = self.layout_children(manager, widget, panel, z_order)
-        return z_order
-
-    def layout_children(self, manager, parent, panel, z_order):
+    def layout_content(self, manager, parent, panel, z_order):
         return z_order
 
 
@@ -117,6 +112,26 @@ class Blinking(Renderer):
         return self._renderer.render(panel)
 
 
+class PostPorcessed:
+
+    def __init__(self, post_renderers=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.post_renderers = list(post_renderers or [])
+
+    def layout_content(self, manager, parent, panel, z_order):
+        z_order = super().layout_content(manager, parent, panel, z_order)
+        for renderer in self.post_renderers:
+            widget = manager.create_child(parent)
+            z_order += 1
+            manager.insert(
+                widget,
+                panel=panel,
+                z_order=z_order,
+                renderer=renderer,
+            )
+        return z_order
+
+
 class Widget(WithSizeMixin, UIElement):
 
     """UI element with with it's own size, alignment and padding.
@@ -162,6 +177,14 @@ class Container(UIElement):
     def __init__(self, widgets=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.children = list(widgets or [])
+
+    def layout_content(self, manager, parent, panel, z_order):
+        z_order = self.layout_children(manager, parent, panel, z_order+1)
+        return z_order
+
+    def layout_children(self, manager, parent, panel, z_order):
+        # Return highest z_order of all children
+        return z_order
 
     def append(self, widget):
         self.children.append(widget)
@@ -333,10 +356,10 @@ class Decorated(Widget):
         panel = panel.create_panel(position, size)
         return panel
 
-    def layout_children(self, manager, parent, panel, z_order):
+    def layout_content(self, manager, parent, panel, z_order):
         widget = manager.create_child(parent)
-        self.decorations.layout(manager, widget, panel, z_order)
+        self.decorations.layout(manager, widget, panel, z_order+1)
         widget = manager.create_child(parent)
         panel = self.decorations.inner_panel(panel)
-        return self.decorated.layout(manager, widget, panel, z_order+1)
+        return self.decorated.layout(manager, widget, panel, z_order+2)
 
