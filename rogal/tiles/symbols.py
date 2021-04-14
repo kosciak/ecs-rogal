@@ -137,6 +137,9 @@ class Symbol:
     BULLET = Glyph(8226)           # •
     BULLET_INV = Glyph(9688)       # ◘
 
+    CIRCLE = Glyph(9675)           # ○
+    CIRCLE_INV = Glyph(9689)       # ◙
+
     MALE = Glyph(9794)             # ♂
     FEMALE = Glyph(9792)           # ♀
 
@@ -168,6 +171,9 @@ class Symbol:
     GREATER_EQUAL = Glyph(8805)    # ≥
     LESS_EQUAL = Glyph(8804)       # ≤
     APPROXIMATION = Glyph(247)     # ≈
+
+    DOT_OPERATOR = Glyph(8729)     # ∙
+    MIDDLE_DOT = Glyph(183)        # ·
 
     BULLET_SQUARE = Glyph(9632)    # ■
 
