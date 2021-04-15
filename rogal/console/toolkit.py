@@ -3,6 +3,7 @@ import time
 
 from ..geometry import Position, Size, WithSizeMixin
 from ..tiles import Tile
+from ..utils .attrdict import DefaultAttrDict
 
 from .core import Align, Padding
 
@@ -12,9 +13,6 @@ from .core import Align, Padding
 '''
 TODO:
 - progress bars (paint background only and print tiles)
-- renderer + post_effects that can alter already rendered children
-    HOW to add this post process renderers so they would be rendered in correct order?
-    Need to be rendered AFTER all children are rendered but BEFORE overlapping widget
 
 '''
 
@@ -27,7 +25,7 @@ class UIElement:
 
     def __init__(self):
         self.renderer = None
-        self.handlers = {}
+        self.handlers = DefaultAttrDict(dict)
 
     def get_layout_panel(self, panel):
         return panel
@@ -142,7 +140,7 @@ class Widget(WithSizeMixin, UIElement):
 
     __slots__ = ('align', 'padding', )
 
-    def __init__(self, align, padding=Padding.ZERO, *args, **kwargs):
+    def __init__(self, align=Align.TOP_LEFT, padding=Padding.ZERO, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.align = align
         self.padding = padding
@@ -335,11 +333,12 @@ class Decorations(WithSizeMixin, Renderer, UIElement):
         return any(self.top, self.bottom, self.left, self.right)
 
 
+# TODO: Rename to Frame?
 class Decorated(Widget):
 
     """Decorations with element rendered inside of them."""
 
-    def __init__(self, decorations, decorated, *, align, padding=Padding.ZERO):
+    def __init__(self, decorations, decorated, *, align=Align.TOP_LEFT, padding=Padding.ZERO):
         super().__init__(align=align, padding=padding)
         self.decorations = decorations
         self.decorated = decorated

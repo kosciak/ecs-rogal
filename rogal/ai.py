@@ -53,7 +53,6 @@ class PlayerInput(TakeActionHandler):
         self.on_key_press = components.OnKeyPress()
         for handler_cls, callback in [
             [handlers.DirectionKeyPress, self.try_direction],
-            [handlers.ChangeLevelKeyPress, self.try_change_level],
         ]:
             self.on_key_press.bind(handler_cls(self.ecs), callback)
 
@@ -62,7 +61,16 @@ class PlayerInput(TakeActionHandler):
             ['actions.REST', components.WantsToRest, self.try_action],
             ['actions.REVEAL_LEVEL', components.WantsToRevealLevel, self.try_action],
         ]:
-            self.on_key_press.bind(handlers.OnKeyPress(self.ecs, key_binding, action), callback)
+            self.on_key_press.bind(
+                handlers.OnKeyPress(self.ecs, key_binding, action),
+                callback
+            )
+
+        self.on_key_press.bind(
+            handlers.NextPrevKeyPress(self.ecs, 'actions.NEXT_LEVEL', 'actions.PREV_LEVEL'),
+            self.try_change_level
+        )
+
 
     def set_event_handlers(self, actor):
         self.ecs.manage(components.OnKeyPress).insert(actor, self.on_key_press)
@@ -136,9 +144,9 @@ class PlayerInput(TakeActionHandler):
             return manager.insert(actor)
 
         if action is components.WantsToQuit:
-            prompt = gui.YesNoPrompt(
+            # prompt = gui.YesNoPrompt(
             # prompt = gui.TextInputPrompt(
-            # prompt = gui.AlphabeticSelectPrompt(
+            prompt = gui.AlphabeticSelectPrompt(
                 self.ecs,
                 context=dict(
                     title='Quit?',

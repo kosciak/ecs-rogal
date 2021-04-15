@@ -82,16 +82,14 @@ class WidgetsBuilder:
 
     def create_button(self, text, callback, value):
         button = widgets.Button(
-            decorations=self.button_decorations,
+            value, callback,
+            default_colors=self.default_colors,
             text=toolkit.Text(
                 text,
                 width=self.button_width,
                 align=Align.CENTER,
             ),
-            on_mouse_click={
-                handlers.MouseLeftButton(value): callback,
-            },
-            default_colors=self.default_colors,
+            decorations=self.button_decorations,
             # selected_colors=self.default_colors.invert(),
             press_colors=Colors(
                 bg=self.tileset.palette.bg,
@@ -137,10 +135,8 @@ class WidgetsBuilder:
         )
 
         list_item = widgets.ListItem(
+            item, callback,
             index_text, item_text,
-            on_mouse_click={
-                handlers.MouseLeftButton(index): callback,
-            },
             default_colors=self.default_colors,
             selected_renderers=[
                 toolkit.InvertColors(),
@@ -149,6 +145,16 @@ class WidgetsBuilder:
         )
 
         return list_item
+
+    def create_list_separator(self, width):
+        separator = toolkit.Text(
+            '-'*(width//3),
+            width=width,
+            # padding=Padding(0, 1),
+            align=Align.TOP_CENTER,
+        )
+
+        return separator
 
     def create(self, widget_type, context):
         # TODO: Move layout definitions to data/ui.yaml ?
@@ -252,22 +258,27 @@ class WidgetsBuilder:
                 padding=Padding(8, 0),
                 size=Size(
                     20,
-                    self.window_decorations.height+msg.padded_height+buttons.padded_height+len(items)
+                    self.window_decorations.height+msg.padded_height+buttons.padded_height+len(items)+1
                 ),
                 title=title,
                 on_key_press={
-                    handlers.AlphabeticIndexKeyPress(self.ecs, size=len(items)): callback,
+                    # handlers.AlphabeticIndexKeyPress(self.ecs, size=len(items)): callback,
                     handlers.DiscardKeyPress(self.ecs): callback,
                 },
             )
 
-            items_list = containers.List(
+            items_list = widgets.ListBox(
+                self.ecs,
                 align=Align.TOP_LEFT,
                 padding=Padding(3, 0, 0, 0),
             )
             # TODO: Move to create_list()
             for index, item in enumerate(items):
-                items_list.append(
+                if index == len(items) / 2:
+                    items_list.append_separator(
+                        self.create_list_separator(18)
+                    )
+                items_list.append_item(
                     self.create_list_item(18, item, callback, index)
                 )
 

@@ -1,3 +1,5 @@
+from enum import Enum, auto
+
 from ..geometry import Position, Vector, Size
 
 from ..events import handlers
@@ -38,7 +40,120 @@ class UIWidget:
         self.manager.redraw(self.widget)
 
 
-class TextInput(UIWidget, containers.Overlay, toolkit.Widget):
+class WidgetState(Enum):
+    HOVERED = auto()
+    PRESSED = auto()
+    FOCUSED = auto()
+    SELECTED = auto()
+
+
+class Stateful:
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.states = set()
+
+    @property
+    def is_hovered(self):
+        return WidgetState.HOVERED in self.states
+
+    @property
+    def is_pressed(self):
+        return WidgetState.PRESSD in self.states
+
+    @property
+    def is_focused(self):
+        return WidgetState.FOCUSED in self.states
+
+    @property
+    def is_selected(self):
+        return WidgetState.SELECTED in self.states
+
+    def enter(self):
+        self.states.add(WidgetState.HOVERED)
+
+    def leave(self):
+        self.states.discard(WidgetState.HOVERED)
+        self.states.discard(WidgetState.PRESSED)
+
+    def press(self, position):
+        self.states.add(WidgetState.PRESSED)
+
+    def focus(self):
+        self.states.add(WidgetState.FOCUSED)
+
+    def unfocus(self):
+        self.states.discard(WidgetState.FOCUSED)
+
+    def select(self):
+        self.states.add(WidgetState.SELECTED)
+
+    def unselect(self):
+        self.states.discard(WidgetState.SELECTED)
+
+    def toggle(self):
+        is_selected = WidgetState.SELECTED in self.states
+        if is_selected:
+            self.unselect()
+        else:
+            self.select()
+
+
+class Activable:
+
+    def __init__(self, callback, value, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.callback = callback
+        self.value = value
+
+    def activate(self):
+        return self.callback(self.widget, self.value)
+
+
+class MouseOperated(Stateful):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.handlers.on_mouse_click.update({
+            handlers.MouseLeftButton(): self.on_click,
+        })
+        self.handlers.on_mouse_press.update({
+            handlers.MouseLeftButton(): self.on_press,
+        })
+        self.handlers.on_mouse_up.update({
+            handlers.MouseLeftButton(): self.on_enter,
+        })
+        self.handlers.on_mouse_in.update({
+            handlers.MouseIn(): self.on_enter,
+        })
+        self.handlers.on_mouse_over.update({
+            handlers.MouseOver(): self.on_over,
+        })
+        self.handlers.on_mouse_out.update({
+            handlers.MouseOut(): self.on_leave,
+        })
+
+    def on_enter(self, widget, *args, **kwargs):
+        self.enter()
+
+    def on_over(self, widget, position, *args, **kwargs):
+        self.hover(position)
+
+    def on_leave(self, widget, *args, **kwargs):
+        self.leave()
+
+    def on_press(self, widget, position, *args, **kwargs):
+        self.press(position)
+
+    def on_click(self, widget, position, *args, **kwargs):
+        self.toggle()
+
+    def hover(self, position):
+        if not self.is_hovered:
+            self.enter()
+
+
+class TextInput(MouseOperated, UIWidget, containers.Overlay, toolkit.Widget):
 
     def __init__(self, ecs, width, *,
                  default_colors,
@@ -66,15 +181,12 @@ class TextInput(UIWidget, containers.Overlay, toolkit.Widget):
             # TODO: Show Cursor only if has focus and ready for input?
             self.cursor,
         ])
-        self.handlers = dict(
-            on_text_input={
-                handlers.TextInput(): self.on_input,
-            },
-            on_key_press={
-                handlers.TextEdit(ecs): self.on_edit,
-            },
-            # TODO: change cursor on mouse over
-        )
+        self.handlers.on_text_input.update({
+            handlers.TextInput(): self.on_input,
+        })
+        self.handlers.on_key_press.update({
+            handlers.TextEdit(ecs): self.on_edit,
+        })
 
     @property
     def txt(self):
@@ -122,16 +234,16 @@ class TextInput(UIWidget, containers.Overlay, toolkit.Widget):
             pass
 
 
-class Button(UIWidget, toolkit.PostPorcessed, toolkit.Decorated):
+class Button(Activable, MouseOperated, UIWidget, toolkit.PostPorcessed, toolkit.Decorated):
 
-    def __init__(self, decorations, text, *,
-                 on_mouse_click,
+    def __init__(self, value, callback, text, decorations, *,
                  default_colors,
                  selected_colors=None, press_colors=None,
                  selected_renderers=None,
                  align=Align.TOP_LEFT,
                 ):
         super().__init__(
+            callback=callback, value=value,
             decorations=decorations,
             decorated=text,
             align=align,
@@ -141,23 +253,6 @@ class Button(UIWidget, toolkit.PostPorcessed, toolkit.Decorated):
         self.selected_colors = selected_colors or self.default_colors
         self.press_colors = press_colors or self.selected_colors
         self.selected_renderers = list(selected_renderers or [])
-        self.handlers = dict(
-            on_mouse_click=on_mouse_click,
-            on_mouse_press={
-                handlers.MouseLeftButton(): self.on_press,
-            },
-            on_mouse_up={
-                handlers.MouseLeftButton(): self.on_select,
-            },
-            on_mouse_in={
-                handlers.MouseIn(): self.on_select,
-            },
-            on_mouse_over={
-            },
-            on_mouse_out={
-                handlers.MouseOut(): self.on_unselect,
-            },
-        )
 
     @property
     def txt(self):
@@ -167,31 +262,37 @@ class Button(UIWidget, toolkit.PostPorcessed, toolkit.Decorated):
     def txt(self, txt):
         self.decorated.txt = text
 
-    def on_select(self, widget, value):
+    def enter(self):
+        super().enter()
         self.colors = self.selected_colors
         self.post_renderers = self.selected_renderers
         self.redraw();
 
-    def on_unselect(self, widget, value):
+    def leave(self):
+        super().leave()
         self.colors = self.default_colors
         self.post_renderers = []
         self.redraw()
 
-    def on_press(self, widget, position):
+    def press(self, position):
+        super().press(position)
         self.colors = self.press_colors
         self.post_renderers = self.selected_renderers
         self.redraw()
 
+    def select(self):
+        self.activate()
 
-class ListItem(UIWidget, toolkit.PostPorcessed, containers.Row):
 
-    def __init__(self, index, item, *,
-                 on_mouse_click,
+class ListItem(Activable, MouseOperated, UIWidget, toolkit.PostPorcessed, containers.Row):
+
+    def __init__(self, value, callback, index, item, *,
                  default_colors,
                  selected_renderers=None,
                  align=Align.TOP_LEFT,
                 ):
         super().__init__(
+            callback=callback, value=value,
             widgets=[
                 index,
                 item,
@@ -200,29 +301,89 @@ class ListItem(UIWidget, toolkit.PostPorcessed, containers.Row):
             default_colors=default_colors,
         )
         self.selected_renderers = list(selected_renderers or [])
-        self.handlers = dict(
-            on_mouse_click=on_mouse_click,
-            on_mouse_in={
-                handlers.MouseIn(): self.on_select,
-            },
-            on_mouse_over={
-            },
-            on_mouse_out={
-                handlers.MouseOut(): self.on_unselect,
-            },
-        )
 
-    def on_select(self, widget, value):
+    def enter(self):
+        super().enter()
         self.post_renderers = self.selected_renderers
         self.redraw();
 
-    def on_unselect(self, widget, value):
+    def leave(self):
+        super().leave()
         self.post_renderers = []
         self.redraw()
 
-    def on_press(self, widget, position):
+    def press(self, position):
+        super().press(position)
         self.post_renderers = self.selected_renderers
         self.redraw()
+
+    def focus(self):
+        super().focus()
+        self.post_renderers = self.selected_renderers
+        self.redraw()
+
+    def unfocus(self):
+        super().unfocus()
+        self.post_renderers = []
+        self.redraw()
+
+    def select(self):
+        self.activate()
+
+
+class ListBox(containers.List):
+
+    def __init__(self, ecs, align=Align.TOP_LEFT, padding=Padding.ZERO):
+        super().__init__(align=align, padding=padding)
+        self.items = []
+        self.handlers.on_key_press.update({
+            # TODO: Not sure if about Index handler... 
+            #       Each item should have it's own hotkey, they might not be in same order as index hotkeys
+            handlers.AlphabeticIndexKeyPress(ecs): self.on_index,
+            handlers.NextPrevKeyPress(ecs, 'list.NEXT', 'list.PREV'): self.on_focus_change,
+            handlers.OnKeyPress(ecs, 'list.SELECT'): self.on_select,
+        })
+        self.handlers.on_mouse_over.update({
+            handlers.MouseOver(): self.on_mouse_over,
+        })
+
+    def append_item(self, item):
+        self.append(item)
+        self.items.append(item)
+
+    def append_separator(self, separator):
+        self.append(separator)
+
+    def on_mouse_over(self, widget, position):
+        for item in self.items:
+            if item.is_focused and not item.is_hovered:
+                return item.unfocus()
+
+    def on_focus_change(self, widget, direction):
+        index = None
+        for i, item in enumerate(self.items):
+            if item.is_focused or item.is_hovered:
+                index = i
+                break
+        if index is not None:
+            self.items[index].unfocus()
+            self.items[index].leave()
+            index += direction
+            index %= len(self.items)
+            self.items[index].focus()
+        else:
+            index = max(direction-1, -1)
+            self.items[index].focus()
+
+    def on_select(self, widget, value):
+        for item in self.items:
+            if item.is_focused or item.is_hovered:
+                return item.toggle()
+
+    def on_index(self, widget, index):
+        if index < len(self.items):
+            self.items[index].toggle()
+
 
 
 # TODO: Consider renaming to DecoratedPanel?
@@ -238,9 +399,7 @@ class Window(UIWidget, containers.Overlay):
         super().__init__(default_colors=default_colors, **kwargs)
         self.frame = containers.Overlay()
         self.content = containers.Overlay()
-        self.handlers = dict(
-            on_key_press=on_key_press,
-        )
+        self.handlers.on_key_press.update(on_key_press or {})
 
         self.children.extend([
             toolkit.Decorated(

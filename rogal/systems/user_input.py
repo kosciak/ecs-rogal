@@ -114,6 +114,9 @@ class EventsHandlersSystem(System):
             if not event.position in console.panel:
                 continue
             self.mouse_in_entities.add(entity)
+            # TODO: Need to pass: event.position.offset(console.panel.position)
+            #       So event_handler will get position relative to panel
+            # print(event.position.offset(console.panel.position))
             self.handle_event(event, entity, handlers)
 
     def on_mouse_in_event(self, event, handlers_component):

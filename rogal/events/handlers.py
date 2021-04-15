@@ -31,10 +31,12 @@ class KeyPressHandler(EventHandler):
 
 class OnKeyPress(KeyPressHandler):
 
-    def __init__(self, ecs, key_binding, value):
+    def __init__(self, ecs, key_binding, value=None):
         super().__init__(ecs)
         self.key_binding = self.key_bindings.get(key_binding)
         self.value = value
+        if self.value is None:
+            self.value = True
 
     def handle(self, event):
         if event.key in self.key_binding:
@@ -51,12 +53,17 @@ class DirectionKeyPress(KeyPressHandler):
                 return direction
 
 
-class ChangeLevelKeyPress(KeyPressHandler):
+class NextPrevKeyPress(KeyPressHandler):
+
+    def __init__(self, ecs, next_key_binding, prev_prev_binding):
+        super().__init__(ecs)
+        self.next_key_binding = self.key_bindings.get(next_key_binding)
+        self.prev_prev_binding = self.key_bindings.get(prev_prev_binding)
 
     def handle(self, event):
-        if event.key in self.key_bindings.actions.NEXT_LEVEL:
+        if event.key in self.next_key_binding:
             return 1
-        if event.key in self.key_bindings.actions.PREV_LEVEL:
+        if event.key in self.prev_prev_binding:
             return -1
 
 
@@ -91,7 +98,7 @@ class DiscardKeyPress(KeyPressHandler):
 
 class IndexKeypressHandler(KeyPressHandler):
 
-    def __init__(self, ecs, size, *args, **kwargs):
+    def __init__(self, ecs, size=None, *args, **kwargs):
         super().__init__(ecs, *args, **kwargs)
         self.size = size
 
@@ -103,8 +110,9 @@ class AlphabeticIndexKeyPress(IndexKeypressHandler):
     def handle(self, event):
         if event.key in self.key_bindings.index.ALPHABETIC:
             index = string.ascii_lowercase.index(event.key)
-            if index < self.size:
-                return index
+            if self.size and index >= self.size:
+                return
+            return index
 
 
 class AlphabeticUpperIndexKeyPress(IndexKeypressHandler):
@@ -114,8 +122,9 @@ class AlphabeticUpperIndexKeyPress(IndexKeypressHandler):
     def handle(self, event):
         if event.key in self.key_bindings.index.ALPHABETIC_UPPER:
             index = string.ascii_uppercase.index(event.key)
-            if index < self.size:
-                return index
+            if self.size and index >= self.size:
+                return
+            return index
 
 
 class NumericIndexKeyPress(IndexKeypressHandler):
@@ -132,8 +141,9 @@ class NumericIndexKeyPress(IndexKeypressHandler):
             index -= 1
             if index < 0:
                 index = 9
-            if index < self.size:
-                return index
+            if self.size and index >= self.size:
+                return
+            return index
 
 
 class TextInput(EventHandler):
