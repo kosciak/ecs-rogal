@@ -99,17 +99,6 @@ class Stateful:
             self.select()
 
 
-class Activable:
-
-    def __init__(self, callback, value, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.callback = callback
-        self.value = value
-
-    def activate(self):
-        return self.callback(self.widget, self.value)
-
-
 class MouseOperated(Stateful):
 
     def __init__(self, *args, **kwargs):
@@ -151,6 +140,33 @@ class MouseOperated(Stateful):
     def hover(self, position):
         if not self.is_hovered:
             self.enter()
+
+
+class WithHotkey(Stateful):
+
+    def __init__(self, ecs, key_binding, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.handlers.on_key_press.update({
+            handlers.OnKeyPress(ecs, key_binding): self.on_hotkey,
+        })
+
+    def on_hotkey(self, widget, key, *args, **kwargs):
+        self.toggle()
+
+
+class Activable:
+
+    def __init__(self, callback, value, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.callback = callback
+        self.value = value
+
+    def activate(self):
+        return self.callback(self.widget, self.value)
+
+    def select(self):
+        super().select()
+        self.activate()
 
 
 class TextInput(MouseOperated, UIWidget, containers.Overlay, toolkit.Widget):
@@ -280,18 +296,16 @@ class Button(Activable, MouseOperated, UIWidget, toolkit.PostPorcessed, toolkit.
         self.post_renderers = self.selected_renderers
         self.redraw()
 
-    def select(self):
-        self.activate()
 
+class ListItem(Activable, MouseOperated, WithHotkey, UIWidget, toolkit.PostPorcessed, containers.Row):
 
-class ListItem(Activable, MouseOperated, UIWidget, toolkit.PostPorcessed, containers.Row):
-
-    def __init__(self, value, callback, index, item, *,
+    def __init__(self, ecs, key_binding, callback, value, index, item, *,
                  default_colors,
                  selected_renderers=None,
                  align=Align.TOP_LEFT,
                 ):
         super().__init__(
+            ecs=ecs, key_binding=key_binding,
             callback=callback, value=value,
             widgets=[
                 index,
@@ -327,9 +341,6 @@ class ListItem(Activable, MouseOperated, UIWidget, toolkit.PostPorcessed, contai
         self.post_renderers = []
         self.redraw()
 
-    def select(self):
-        self.activate()
-
 
 class ListBox(containers.List):
 
@@ -337,9 +348,6 @@ class ListBox(containers.List):
         super().__init__(align=align, padding=padding)
         self.items = []
         self.handlers.on_key_press.update({
-            # TODO: Not sure if about Index handler... 
-            #       Each item should have it's own hotkey, they might not be in same order as index hotkeys
-            handlers.AlphabeticIndexKeyPress(ecs): self.on_index,
             handlers.NextPrevKeyPress(ecs, 'list.NEXT', 'list.PREV'): self.on_focus_change,
             handlers.OnKeyPress(ecs, 'list.SELECT'): self.on_select,
         })

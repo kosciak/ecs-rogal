@@ -33,7 +33,7 @@ class OnKeyPress(KeyPressHandler):
 
     def __init__(self, ecs, key_binding, value=None):
         super().__init__(ecs)
-        self.key_binding = self.key_bindings.get(key_binding)
+        self.key_binding = self.key_bindings.get(key_binding) or key_binding
         self.value = value
         if self.value is None:
             self.value = True

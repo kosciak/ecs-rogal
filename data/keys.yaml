@@ -1,29 +1,34 @@
 # Key bindings data
 
 text_edit:
-  CLEAR: ['^u', '^l', ]
-  BACKSPACE: [BACKSPACE, '^h', ]
-  DELETE: [DELETE, '^d', ]
-  HOME: [HOME, '^a', ]
-  END: [END, '^e', ]
-  FORWARD: [RIGHT, '^f', ]
-  BACKWARD: [LEFT, '^b', ]
-  PASTE: ['^v', '^V', 'Shift-Insert', ]
+  CLEAR:      ['^u', '^l', ]
+  BACKSPACE:  [BACKSPACE, '^h', ]
+  DELETE:     [DELETE, '^d', ]
+  HOME:       [HOME, '^a', ]
+  END:        [END, '^e', ]
+  FORWARD:    [RIGHT, '^f', ]
+  BACKWARD:   [LEFT, '^b', ]
+  PASTE:      ['^v', '^V', 'Shift-Insert', ]
 
 index:
-  ALPHABETIC: [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, ]
-  ALPHABETIC_UPPER: [A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ]
-  NUMERIC: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ]
+  ALPHABETIC:         [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, ]
+  ALPHABETIC_UPPER:   [A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, ]
+  NUMERIC:            ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ]
+
+list:
+  NEXT:     [DOWN, ]
+  PREV:     [UP, ]
+  SELECT:   [ENTER, KP_ENTER, ]
 
 common:
-  CONFIRM: [SPACE, ENTER, KP_ENTER, ]
-  DISCARD: [ESCAPE, ]
-  SUBMIT: [ENTER, KP_ENTER, ]
-  MORE: [SPACE, ENTER, KP_ENTER, ]
-  'YES': [y, Y, ]
-  'NO': [n, N, ]
-  NEXT: [TAB, ]
-  PREV: [SHIFT_TAB, ]
+  CONFIRM:  [SPACE, ENTER, KP_ENTER, ]
+  DISCARD:  [ESCAPE, ]
+  SUBMIT:   [ENTER, KP_ENTER, ]
+  MORE:     [SPACE, ENTER, KP_ENTER, ]
+  'YES':    [y, Y, ]
+  'NO':     [n, N, ]
+  NEXT:     [TAB, ]
+  PREV:     [SHIFT_TAB, ]
 
 directions: 
   N:  [UP,        k,  KP_8, ]
@@ -36,8 +41,8 @@ directions:
   NW: [HOME,      y,  KP_7, ]
 
 actions:
-  QUIT: ['^q', ESCAPE, ]
-  REST: ['.', KP_5, KP_0, CLEAR, ]
+  QUIT:         ['^q', ESCAPE, ]
+  REST:         ['.', KP_5, KP_0, CLEAR, ]
   REVEAL_LEVEL: [r, R, ]
-  NEXT_LEVEL: ['Shift-.', ]
-  PREV_LEVEL: ['Shift-,', ]
+  NEXT_LEVEL:   ['Shift-.', ]
+  PREV_LEVEL:   ['Shift-,', ]

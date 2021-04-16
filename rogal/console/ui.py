@@ -121,9 +121,9 @@ class WidgetsBuilder:
         )
         return text_input
 
-    def create_list_item(self, width, item, callback, index):
+    def create_list_item(self, width, item, key_binding, callback, index):
         index_text = toolkit.Text(
-            f'{string.ascii_lowercase[index]})',
+            f'{key_binding})',
             padding=Padding(0, 1),
         )
         item_text = toolkit.Text(
@@ -135,8 +135,10 @@ class WidgetsBuilder:
         )
 
         list_item = widgets.ListItem(
-            item, callback,
-            index_text, item_text,
+            self.ecs,
+            key_binding=key_binding,
+            callback=callback, value=index,
+            index=index_text, item=item_text,
             default_colors=self.default_colors,
             selected_renderers=[
                 toolkit.InvertColors(),
@@ -278,8 +280,9 @@ class WidgetsBuilder:
                     items_list.append_separator(
                         self.create_list_separator(18)
                     )
+                key_binding = string.ascii_lowercase[index]
                 items_list.append_item(
-                    self.create_list_item(18, item, callback, index)
+                    self.create_list_item(18, item, key_binding, callback, index)
                 )
 
             widgets_layout.extend([msg, items_list, buttons])
