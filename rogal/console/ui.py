@@ -158,136 +158,143 @@ class WidgetsBuilder:
 
         return separator
 
+    def create_yes_no_prompt(self, context):
+        title = context['title']
+        msg = context['msg']
+        callback = context['callback']
+
+        widgets_layout = self.create_modal_window(
+            align=Align.TOP_CENTER,
+            padding=Padding(12, 0),
+            size=Size(40, 8),
+            title=title,
+            on_key_press={
+                handlers.YesNoKeyPress(self.ecs): callback,
+                handlers.DiscardKeyPress(self.ecs): callback,
+            },
+        )
+
+        msg = toolkit.Text(
+            msg,
+            align=Align.TOP_CENTER,
+            padding=Padding(1, 0),
+        )
+
+        buttons = self.create_buttons_row(
+            callback=callback,
+            buttons=[
+                ['No',  False],
+                ['Yes', True],
+            ],
+            padding=Padding(1, 0, 0, 0),
+        )
+
+        widgets_layout.extend([msg, buttons])
+        return widgets_layout
+
+    def create_text_input(self, context):
+        title = context['title']
+        msg = context['msg']
+        callback = context['callback']
+
+        input_row = containers.Row(
+            align=Align.TOP_CENTER,
+            padding=Padding(1, 0),
+        )
+        prompt = toolkit.Text(
+            "Text:",
+        )
+        text_input = self.create_text_input(
+            width=26,
+            padding=Padding(0, 0, 0, 1),
+        )
+        input_row.extend([prompt, text_input])
+
+        buttons = self.create_buttons_row(
+            callback=callback,
+            buttons=[
+                ['Cancel', False],
+                ['OK',     text_input],
+            ],
+            padding=Padding(1, 0, 0, 0),
+        )
+
+        widgets_layout = self.create_modal_window(
+            align=Align.TOP_CENTER,
+            padding=Padding(12, 0),
+            size=Size(40, 8),
+            title=title,
+            on_key_press={
+                handlers.OnKeyPress(self.ecs, 'common.SUBMIT', text_input): callback,
+                handlers.DiscardKeyPress(self.ecs): callback,
+            },
+        )
+
+        widgets_layout.extend([input_row, buttons])
+        return widgets_layout
+
+    def create_alphabetic_select_prompt(self, context):
+        title = context['title']
+        msg = 'Select something'
+        callback = context['callback']
+        items = [f'index: {i}' for i in range(10)]
+
+        msg = toolkit.Text(
+            msg,
+            align=Align.TOP_CENTER,
+            padding=Padding(1, 0),
+        )
+
+        buttons = self.create_buttons_row(
+            callback=callback,
+            buttons=[
+                ['Cancel', False],
+            ],
+            padding=Padding(1, 0, 0, 0),
+        )
+
+        widgets_layout = self.create_modal_window(
+            align=Align.TOP_CENTER,
+            padding=Padding(8, 0),
+            size=Size(
+                20,
+                self.window_decorations.height+msg.padded_height+buttons.padded_height+len(items)+1
+            ),
+            title=title,
+            on_key_press={
+                handlers.DiscardKeyPress(self.ecs): callback,
+            },
+        )
+
+        items_list = widgets.ListBox(
+            self.ecs,
+            align=Align.TOP_LEFT,
+            padding=Padding(3, 0, 0, 0),
+        )
+        # TODO: Move to create_list()
+        for index, item in enumerate(items):
+            if index == len(items) / 2:
+                items_list.append_separator(
+                    self.create_list_separator(18)
+                )
+            key_binding = string.ascii_lowercase[index]
+            items_list.append_item(
+                self.create_list_item(18, item, key_binding, callback, index)
+            )
+
+        widgets_layout.extend([msg, items_list, buttons])
+        return widgets_layout
+
     def create(self, widget_type, context):
         # TODO: Move layout definitions to data/ui.yaml ?
         if widget_type == 'YES_NO_PROMPT':
-            title = context['title']
-            msg = context['msg']
-            callback = context['callback']
-
-            widgets_layout = self.create_modal_window(
-                align=Align.TOP_CENTER,
-                padding=Padding(12, 0),
-                size=Size(40, 8),
-                title=title,
-                on_key_press={
-                    handlers.YesNoKeyPress(self.ecs): callback,
-                    handlers.DiscardKeyPress(self.ecs): callback,
-                },
-            )
-
-            msg = toolkit.Text(
-                msg,
-                align=Align.TOP_CENTER,
-                padding=Padding(1, 0),
-            )
-
-            buttons = self.create_buttons_row(
-                callback=callback,
-                buttons=[
-                    ['No',  False],
-                    ['Yes', True],
-                ],
-                padding=Padding(1, 0, 0, 0),
-            )
-
-            # msg = self.create_text_input(38)
-
-            widgets_layout.extend([msg, buttons])
+            widgets_layout = self.create_yes_no_prompt(context)
 
         if widget_type == 'TEXT_INPUT_PROMPT':
-            title = context['title']
-            msg = context['msg']
-            callback = context['callback']
-
-            input_row = containers.Row(
-                align=Align.TOP_CENTER,
-                padding=Padding(1, 0),
-            )
-            prompt = toolkit.Text(
-                "Text:",
-            )
-            text_input = self.create_text_input(
-                width=26,
-                padding=Padding(0, 0, 0, 1),
-            )
-            input_row.extend([prompt, text_input])
-
-            buttons = self.create_buttons_row(
-                callback=callback,
-                buttons=[
-                    ['Cancel', False],
-                    ['OK',     text_input],
-                ],
-                padding=Padding(1, 0, 0, 0),
-            )
-
-            widgets_layout = self.create_modal_window(
-                align=Align.TOP_CENTER,
-                padding=Padding(12, 0),
-                size=Size(40, 8),
-                title=title,
-                on_key_press={
-                    handlers.OnKeyPress(self.ecs, 'common.SUBMIT', text_input): callback,
-                    handlers.DiscardKeyPress(self.ecs): callback,
-                },
-            )
-
-            widgets_layout.extend([input_row, buttons])
+            widgets_layout = self.create_text_input_prompt(context)
 
         if widget_type == 'ALPHABETIC_SELECT_PROMPT':
-            title = context['title']
-            msg = 'Select something'
-            callback = context['callback']
-            items = [f'index: {i}' for i in range(10)]
-
-            msg = toolkit.Text(
-                msg,
-                align=Align.TOP_CENTER,
-                padding=Padding(1, 0),
-            )
-
-            buttons = self.create_buttons_row(
-                callback=callback,
-                buttons=[
-                    ['Cancel', False],
-                ],
-                padding=Padding(1, 0, 0, 0),
-            )
-
-            widgets_layout = self.create_modal_window(
-                align=Align.TOP_CENTER,
-                padding=Padding(8, 0),
-                size=Size(
-                    20,
-                    self.window_decorations.height+msg.padded_height+buttons.padded_height+len(items)+1
-                ),
-                title=title,
-                on_key_press={
-                    # handlers.AlphabeticIndexKeyPress(self.ecs, size=len(items)): callback,
-                    handlers.DiscardKeyPress(self.ecs): callback,
-                },
-            )
-
-            items_list = widgets.ListBox(
-                self.ecs,
-                align=Align.TOP_LEFT,
-                padding=Padding(3, 0, 0, 0),
-            )
-            # TODO: Move to create_list()
-            for index, item in enumerate(items):
-                if index == len(items) / 2:
-                    items_list.append_separator(
-                        self.create_list_separator(18)
-                    )
-                key_binding = string.ascii_lowercase[index]
-                items_list.append_item(
-                    self.create_list_item(18, item, key_binding, callback, index)
-                )
-
-            widgets_layout.extend([msg, items_list, buttons])
-
-            return widgets_layout
+            widgets_layout = self.create_alphabetic_select_prompt(context)
 
         if widget_type == 'IN_GAME':
             widgets_layout = containers.Split(bottom=12)

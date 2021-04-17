@@ -112,7 +112,11 @@ Int = component_type(IntComponent)
 Bool = component_type(IntComponent)
 Float = component_type(IntComponent)
 String = component_type(Component, str)
+List = component_type(Component, list)
+Set = component_type(Component, set)
+
 EntityReference = component_type(Component, Entity)
 EntitiesRefs = component_type(Component, EntitiesSet)
+
 Counter = component_type(CounterComponent)
 

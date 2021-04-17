@@ -192,8 +192,7 @@ class TcodWrapper(IOWrapper):
         title=None,
         enable_joystick=False,
     ):
-        self.console_size = console_size
-        self._palette = palette
+        super().__init__(console_size, palette)
         self._tileset = tileset
         self.resizable = resizable
         self.title=title
@@ -304,7 +303,6 @@ class TcodWrapper(IOWrapper):
         return event
 
     def events(self, wait=None):
-        # TODO: wrappers.sdl and create rogal.events.core directly from sld events?
         if wait is False:
             events_gen = sdl2.get_events()
         else:

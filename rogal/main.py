@@ -88,7 +88,6 @@ def run():
         resizable=False,
         title='Rogal test'
     )
-    ecs.resources.root_panel = None
 
     # Console UI manager
     ecs.resources.ui_manager = ui.UIManager(ecs)

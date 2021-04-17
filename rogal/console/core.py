@@ -105,6 +105,7 @@ def get_y(panel_height, height, align, padding=Padding.ZERO):
 class Console:
 
     def __init__(self, size):
+        size = Size(size.height, size.width)
         self.tiles_rgb = np.zeros(size, dtype=dtypes.rgb_console_dt, order="C")
         self.ch[...] = DEFAULT_CH
         self.fg[...] = DEFAULT_FG
@@ -338,8 +339,8 @@ class RootPanel(Panel):
         self.console.tiles_rgb[...] = (DEFAULT_CH, fg, bg)
 
     def _draw(self, ch, colors, position, size=None, *args, **kwargs):
-        fg = self.rgb(colors.fg)
-        bg = self.rgb(colors.bg)
+        fg = self.rgb(colors and colors.fg)
+        bg = self.rgb(colors and colors.bg)
         # NOTE: console is in order="C", so we need to do some transpositions
         j, i = position
         if size:

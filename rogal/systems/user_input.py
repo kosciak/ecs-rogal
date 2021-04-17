@@ -71,8 +71,8 @@ class EventsHandlersSystem(System):
             return []
         has_focus = self.ecs.manage(components.HasInputFocus)
         valid_handlers = [
-            [entity, handlers] for entity, handlers in event_handlers
-            if entity in has_focus
+            [entity, handlers] for entity, with_focus, handlers
+            in self.ecs.join(event_handlers.entities, has_focus, event_handlers)
         ]
         return valid_handlers
 
@@ -83,9 +83,8 @@ class EventsHandlersSystem(System):
         consoles = self.ecs.manage(components.Console)
         has_focus = self.ecs.manage(components.HasInputFocus)
         valid_handlers = [
-            [entity, console, handlers] for entity, console, handlers
-            in self.ecs.join(event_handlers.entities, consoles, event_handlers)
-            if entity in has_focus
+            [entity, console, handlers] for entity, with_focus, console, handlers
+            in self.ecs.join(event_handlers.entities, has_focus, consoles, event_handlers)
         ]
         return valid_handlers
 

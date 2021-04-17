@@ -1,3 +1,5 @@
+import sys
+
 from enum import Enum
 
 
@@ -20,6 +22,7 @@ class CSI_Code(Enum):
     CUB = 'D'   # Cursor Back
     CNL = 'E'   # Cursor Next Line
     CPL = 'F'   # Cursor Previous Line
+    CHA = 'G'   # Cursor Horizontal Absolute
     CUP = 'H'   # Cursor Position
     ED = 'J'    # Erase Display
     EL = 'K'    # Erase Line
@@ -68,6 +71,36 @@ class Color(Enum):
 
 def sequence(escape_sequence, code, *parameters):
     return '%s%s%s' % (escape_sequence, ';'.join([f'{param}' for param in parameters]), code)
+
+
+def cursor_up(n=1):
+    return sequence(EscapeSequence.CSI.value, CSI_Code.CUU.value, n)
+
+def cursor_down(n=1):
+    return sequence(EscapeSequence.CSI.value, CSI_Code.CUD.value, n)
+
+def cursor_forward(n=1):
+    return sequence(EscapeSequence.CSI.value, CSI_Code.CUF.value, n)
+
+def cursor_back(n=1):
+    return sequence(EscapeSequence.CSI.value, CSI_Code.CUB.value, n)
+
+def cursor_next_line(n=1):
+    return sequence(EscapeSequence.CSI.value, CSI_Code.CNL.value, n)
+
+def cursor_prev_line(n=1):
+    return sequence(EscapeSequence.CSI.value, CSI_Code.CPL.value, n)
+
+def cursor_column(n=1):
+    return sequence(EscapeSequence.CSI.value, CSI_Code.CHA.value, n)
+
+def cursor_position(n=1, m=1):
+    """Move cursor to row n, column m (1-indexed from top-left)."""
+    return sequence(EscapeSequence.CSI.value, CSI_Code.CUP.value, n, m)
+
+
+def erase_display(n=1):
+    return sequence(EscapeSequence.CSI.value, CSI_Code.ED.value, n)
 
 
 def sgr(*parameters):
@@ -200,5 +233,6 @@ def show_console(console):
         for ch, fg, bg in row:
             row_txt.append(fg_rgb(*fg)+bg_rgb(*bg)+chr(ch)+reset())
         lines.append(''.join(row_txt))
-    print('\n'.join(lines))
+    sys.stdout.write('\n'.join(lines))
+    sys.stdout.flush()
 

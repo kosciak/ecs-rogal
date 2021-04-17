@@ -23,6 +23,7 @@ class MouseState:
         return self.press_positions.get(button)
 
     def is_click(self, button):
+        # TODO: Add click interval? So click only if interval between press and up is < X miliseconds
         return button in self._clicks
 
     def update(self, motion_event=None, press_event=None, up_event=None):
