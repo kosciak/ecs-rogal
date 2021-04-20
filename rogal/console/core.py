@@ -15,9 +15,8 @@ This should make working on UI much easier, and maybe allow to use other cli/gra
 
 """
 
+
 DEFAULT_CH = ord(' ')
-DEFAULT_FG = RGB(255, 255, 255).rgb
-DEFAULT_BG = RGB(0, 0, 0).rgb
 
 
 class ZOrder:
@@ -102,14 +101,18 @@ def get_y(panel_height, height, align, padding=Padding.ZERO):
     return y
 
 
+# TODO: rename to RGBConsole
 class Console:
+
+    DEFAULT_FG = RGB(255, 255, 255).rgb
+    DEFAULT_BG = RGB(0, 0, 0).rgb
 
     def __init__(self, size):
         size = Size(size.height, size.width)
         self.tiles_rgb = np.zeros(size, dtype=dtypes.rgb_console_dt, order="C")
         self.ch[...] = DEFAULT_CH
-        self.fg[...] = DEFAULT_FG
-        self.bg[...] = DEFAULT_BG
+        self.fg[...] = self.DEFAULT_FG
+        self.bg[...] = self.DEFAULT_BG
 
     @property
     def width(self):
@@ -322,6 +325,7 @@ class RootPanel(Panel):
         return Panel(self, position, size)
 
     def rgb(self, color):
+        # TODO: move to Console.get_color(color, palette)
         if color is None:
             return None
         if isinstance(color, Color):
