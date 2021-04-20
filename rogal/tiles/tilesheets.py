@@ -45,8 +45,8 @@ TERMINAL_12x12_CP = Tilesheet(
 
 
 # Looks BAD... :(
-ROBOTO_MONO_12x12_TTF = TrueTypeFont(
-    '/usr/share/fonts/google-roboto-mono/RobotoMono-Regular.ttf',
+DEJA_VU_SANS_MONO_12x12_TTF = TrueTypeFont(
+    '/usr/share/fonts/dejavu-sans-mono-fonts/DejaVuSansMono.ttf',
     12,
     12,
 )

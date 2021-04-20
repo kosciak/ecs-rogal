@@ -1,0 +1,24 @@
+windows:
+  YES_NO_PROMPT:
+    ModalWindow:
+      - align: TOP_CENTER
+      - padding: [12, 0]
+      - size: [40, 8]
+      - title: '{{ title }}'
+      - content:
+        - Text:
+          - '{{ msg }}'
+          - align: TOP_CENTER
+          - padding: [1, 0]
+        - Buttons: {'Yes': True, 'No': False}
+
+  IN_GAME:
+    Split: 
+      - bottom: 12
+      - widgets:
+        - Window:
+          - title: 'mapcam'
+          - content: [render.Camera, ]
+        - Window:
+          - title: 'logs'
+          - content: [render.MessageLog, ]

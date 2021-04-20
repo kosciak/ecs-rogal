@@ -222,11 +222,45 @@ class TcodWrapper(IOWrapper):
         return tcod.tileset.load_tilesheet(
             tilesheet.path, tilesheet.columns, tilesheet.rows, tilesheet.charmap)
 
-    def load_truetype_font(self, truetype_font):
-        # TODO: Check: https://github.com/libtcod/python-tcod/blob/develop/examples/ttf.py
-        #       For improved support for TTF fonts
+    def load_truetype_font_obsolete(self, truetype_font):
         return tcod.tileset.load_truetype_font(
             truetype_font.path, truetype_font.width, truetype_font.height)
+
+    def load_truetype_font(self, font):
+        # See: Check: https://github.com/libtcod/python-tcod/blob/develop/examples/ttf.py
+        #       For improved support for TTF fonts
+        import freetype
+        import numpy as np
+
+        ttf = freetype.Face(font.path)
+        ttf.set_pixel_sizes(font.width, font.height)
+        tileset = tcod.tileset.Tileset(font.width, font.height)
+        for codepoint, glyph_index in ttf.get_chars():
+            ttf.load_glyph(glyph_index)
+            bitmap = ttf.glyph.bitmap
+            assert bitmap.pixel_mode == freetype.FT_PIXEL_MODE_GRAY
+            bitmap_array = np.asarray(bitmap.buffer).reshape(
+                (bitmap.width, bitmap.rows), order="F"
+            )
+            if bitmap_array.size == 0:
+                continue  # Skip blank glyphs.
+            output_image = np.zeros((font.width, font.height), dtype=np.uint8, order="F")
+            out_slice = output_image
+
+            # Adjust the position to center this glyph on the tile.
+            # TODO: Seems to be messing up box drawing chars...
+            left = (font.width - bitmap.width) // 2
+            top = font.height - ttf.glyph.bitmap_top + ttf.size.descender // 64
+
+            # `max` is used because I was too lazy to properly slice the array.
+            out_slice = out_slice[max(0, left) :, max(0, top) :]
+            out_slice[
+                : bitmap_array.shape[0], : bitmap_array.shape[1]
+            ] = bitmap_array[: out_slice.shape[0], : out_slice.shape[1]]
+
+            tileset.set_tile(codepoint, output_image.transpose())
+        # TODO: Need some fallback for missing glyphs
+        return tileset
 
     def load_tileset(self, tileset):
         if tileset.path.endswith('.ttf'):

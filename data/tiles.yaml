@@ -1,6 +1,7 @@
 # Renderable tiles data
 
 tilesheet: TERMINAL_12x12_CP
+# tilesheet: DEJA_VU_SANS_MONO_12x12_TTF
 
 palette: rogal.colors.x11.TANGO_DARK
 
