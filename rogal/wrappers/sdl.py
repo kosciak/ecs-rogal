@@ -1,7 +1,5 @@
 import functools
 
-from cffi import FFI
-
 from .sdl_const import (
     SDL_SubSystem,
     SDL_EventType,
@@ -17,9 +15,6 @@ from ..events.mouse import MouseButton
 
 
 """Use SDL data directly instead of tcod wrappers."""
-
-
-ffi = FFI()
 
 
 SDL_KEYCODE_TO_KEY = {
@@ -103,17 +98,17 @@ def get_key(sym, mod):
     )
 
 
-def parse_quit_event(sdl_event):
+def parse_quit_event(ffi, sdl_event):
     return events.Quit(sdl_event)
 
 
-def parse_window_event(sdl_event):
+def parse_window_event(ffi, sdl_event):
     event_id = sdl_event.window.event
     # TODO: WindowEvent subclasses based on event_id?
     return events.WindowEvent(sdl_event, event_id)
 
 
-def parse_keyboard_event(sdl_event):
+def parse_keyboard_event(ffi, sdl_event):
     if sdl_event.type == SDL_EventType.SDL_KEYDOWN:
         event_cls = events.KeyPress
     elif sdl_event.type == SDL_EventType.SDL_KEYUP:
@@ -124,12 +119,12 @@ def parse_keyboard_event(sdl_event):
     return event_cls(sdl_event, key, repeat)
 
 
-def parse_text_input_event(sdl_event):
+def parse_text_input_event(ffi, sdl_event):
     text = ffi.string(sdl_event.text.text, 32).decode("utf8")
     return events.TextInput(sdl_event, text)
 
 
-def parse_mouse_motion_event(sdl_event):
+def parse_mouse_motion_event(ffi, sdl_event):
     motion = sdl_event.motion
     state = motion.state
     buttons = []
@@ -146,7 +141,7 @@ def parse_mouse_motion_event(sdl_event):
     return events.MouseMotion(sdl_event, motion.x, motion.y, motion.xrel, motion.yrel, buttons)
 
 
-def parse_mouse_button_event(sdl_event):
+def parse_mouse_button_event(ffi, sdl_event):
     if sdl_event.type == SDL_EventType.SDL_MOUSEBUTTONDOWN:
         event_cls = events.MouseButtonPress
     elif sdl_event.type == SDL_EventType.SDL_MOUSEBUTTONUP:
@@ -156,7 +151,7 @@ def parse_mouse_button_event(sdl_event):
     return event_cls(sdl_event, btn.x, btn.y, button, btn.clicks)
 
 
-def parse_mouse_wheel_event(sdl_event):
+def parse_mouse_wheel_event(ffi, sdl_event):
     wheel = sdl_event.wheel
     dx = wheel.x
     dy = wheel.y
@@ -166,17 +161,17 @@ def parse_mouse_wheel_event(sdl_event):
     return events.MouseWheel(sdl_event, dx, dy)
 
 
-def parse_joy_axis_motion_event(sdl_event):
+def parse_joy_axis_motion_event(ffi, sdl_event):
     axis = sdl_event.jaxis
     return events.JoyAxisMotion(sdl_event, axis.axis, axis.value)
 
 
-def parse_joy_hat_motion_event(sdl_event):
+def parse_joy_hat_motion_event(ffi, sdl_event):
     hat = sdl_event.jhat
     return events.JoyHatMotion(sdl_event, hat.hat, hat.value)
 
 
-def parse_joy_button_event(sdl_event):
+def parse_joy_button_event(ffi, sdl_event):
     if sdl_event.type == SDL_EventType.SDL_JOYBUTTONDOWN:
         event_cls = events.JoyButtonPress
     elif sdl_event.type == SDL_EventType.SDL_JOYBUTTONUP:
@@ -217,10 +212,10 @@ SDL_EVENT_PARSERS = {
 }
 
 
-def parse_sdl_event(sdl_event):
+def parse_sdl_event(ffi, sdl_event):
     parse_fn = SDL_EVENT_PARSERS.get(sdl_event.type)
     if parse_fn:
-        return parse_fn(sdl_event)
+        return parse_fn(ffi, sdl_event)
     else:
         return events.UnknownEvent(sdl_event)
 
@@ -292,7 +287,7 @@ class SDL2Wrapper:
     def get_events(self):
         sdl_event = self.ffi.new("SDL_Event*")
         while self.lib.SDL_PollEvent(sdl_event):
-            yield parse_sdl_event(sdl_event)
+            yield parse_sdl_event(self.ffi, sdl_event)
 
     def wait_for_events(self, timeout=None):
         if timeout is not None:
