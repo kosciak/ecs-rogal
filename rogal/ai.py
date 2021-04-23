@@ -144,9 +144,9 @@ class PlayerInput(TakeActionHandler):
             return manager.insert(actor)
 
         if action is components.WantsToQuit:
-            # prompt = gui.YesNoPrompt(
+            prompt = gui.YesNoPrompt(
             # prompt = gui.TextInputPrompt(
-            prompt = gui.AlphabeticSelectPrompt(
+            # prompt = gui.AlphabeticSelectPrompt(
                 self.ecs,
                 context=dict(
                     title='Quit?',
