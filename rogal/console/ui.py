@@ -10,8 +10,10 @@ from ..events import handlers
 from .. import render
 
 from .core import Align, Padding, ZOrder
-from . import containers
 from . import toolkit
+from . import containers
+from . import decorations
+from . import renderers
 from . import widgets
 
 
@@ -27,18 +29,18 @@ class WidgetsBuilder:
         self.tileset = self.ecs.resources.tileset
         self.default_colors = Colors(self.tileset.palette.fg, self.tileset.palette.bg)
 
-        self.window_decorations = toolkit.Decorations(
+        self.window_frame = decorations.Frame(
             *self.tileset.decorations.DSLINE,
             colors=None,
         )
 
-        self.title_decorations = toolkit.Decorations(
+        self.title_frame = decorations.Frame(
             *self.tileset.decorations.MINIMAL_DSLINE,
             colors=None,
         )
         self.title_align = Align.TOP_CENTER
 
-        self.button_decorations = toolkit.Decorations(
+        self.button_frame = decorations.Frame(
             *self.tileset.decorations.LINE,
             colors=None,
         )
@@ -48,9 +50,9 @@ class WidgetsBuilder:
     def create_window_title(self, title):
         if title is None:
             return
-        title = toolkit.Decorated(
-            decorations=self.title_decorations,
-            decorated=toolkit.Text(
+        title = decorations.Framed(
+            frame=self.title_frame,
+            content=toolkit.Text(
                 title,
                 colors=self.default_colors,
                 align=self.title_align,
@@ -63,7 +65,7 @@ class WidgetsBuilder:
 
     def create_window(self, title=None, on_key_press=None):
         window = widgets.Window(
-            decorations=self.window_decorations,
+            frame=self.window_frame,
             default_colors=self.default_colors,
             title=self.create_window_title(title),
             on_key_press=on_key_press,
@@ -74,7 +76,7 @@ class WidgetsBuilder:
         window = widgets.ModalWindow(
             align=align, padding=padding, size=size,
             default_colors=self.default_colors,
-            decorations=self.window_decorations,
+            frame=self.window_frame,
             title=self.create_window_title(title),
             on_key_press=on_key_press,
         )
@@ -89,14 +91,14 @@ class WidgetsBuilder:
                 width=self.button_width,
                 align=Align.CENTER,
             ),
-            decorations=self.button_decorations,
+            frame=self.button_frame,
             # selected_colors=self.default_colors.invert(),
             press_colors=Colors(
                 bg=self.tileset.palette.bg,
                 fg=self.tileset.palette.BRIGHT_WHITE
             ),
             selected_renderers=[
-                toolkit.InvertColors(),
+                renderers.InvertColors(),
             ],
         )
         return button
@@ -141,8 +143,8 @@ class WidgetsBuilder:
             index=index_text, item=item_text,
             default_colors=self.default_colors,
             selected_renderers=[
-                toolkit.InvertColors(),
-                toolkit.PaintPanel(Colors(bg=item_text.colors.fg)),
+                renderers.InvertColors(),
+                renderers.PaintPanel(Colors(bg=item_text.colors.fg)),
             ],
         )
 
@@ -258,7 +260,7 @@ class WidgetsBuilder:
             padding=Padding(8, 0),
             size=Size(
                 20,
-                self.window_decorations.height+msg.padded_height+buttons.padded_height+len(items)+1
+                self.window_frame.height+msg.padded_height+buttons.padded_height+len(items)+1
             ),
             title=title,
             on_key_press={

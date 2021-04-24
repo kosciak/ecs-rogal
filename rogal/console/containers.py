@@ -4,9 +4,9 @@ from .core import Padding
 from . import toolkit
 
 
-class Overlay(toolkit.Container):
+class Stack(toolkit.Container):
 
-    """Free form container where all children are overlayed on top of each other."""
+    """Free form container where all children are stacked on top of each other."""
 
     def layout_children(self, manager, parent, panel, z_order):
         for child in self.children:
@@ -103,11 +103,11 @@ class Split(toolkit.Container):
 
     def layout_children(self, manager, parent, panel, z_order):
         children_z_orders = []
-        panels = panel.split(self.left, self.right, self.top, self.bottom)
+        subpanels = panel.split(self.left, self.right, self.top, self.bottom)
         for i, child in enumerate(self.children):
             if child:
                 widget = manager.create_child(parent)
-                child_z_order = child.layout(manager, widget, panels[i], z_order)
+                child_z_order = child.layout(manager, widget, subpanels[i], z_order)
                 children_z_orders.append(child_z_order or 0)
             if i >= 2:
                 break

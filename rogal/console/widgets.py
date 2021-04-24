@@ -5,15 +5,17 @@ from ..geometry import Position, Vector, Size
 from ..events import handlers
 
 from .core import Align, Padding, ZOrder
-from . import containers
 from . import toolkit
+from . import containers
+from . import decorations
+from . import renderers
 
 
 class UIWidget:
 
     def __init__(self, default_colors, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.renderer = toolkit.ClearPanel(
+        self.renderer = renderers.ClearPanel(
             colors=default_colors,
         )
         self.widget = None
@@ -169,7 +171,7 @@ class Activable:
         self.activate()
 
 
-class TextInput(MouseOperated, UIWidget, containers.Overlay, toolkit.Widget):
+class TextInput(MouseOperated, UIWidget, containers.Stack, toolkit.Widget):
 
     def __init__(self, ecs, width, *,
                  default_colors,
@@ -250,9 +252,9 @@ class TextInput(MouseOperated, UIWidget, containers.Overlay, toolkit.Widget):
             pass
 
 
-class Button(Activable, MouseOperated, UIWidget, toolkit.PostPorcessed, toolkit.Decorated):
+class Button(Activable, MouseOperated, UIWidget, toolkit.PostPorcessed, decorations.Framed):
 
-    def __init__(self, value, callback, text, decorations, *,
+    def __init__(self, value, callback, text, frame, *,
                  default_colors,
                  selected_colors=None, press_colors=None,
                  selected_renderers=None,
@@ -260,8 +262,8 @@ class Button(Activable, MouseOperated, UIWidget, toolkit.PostPorcessed, toolkit.
                 ):
         super().__init__(
             callback=callback, value=value,
-            decorations=decorations,
-            decorated=text,
+            frame=frame,
+            content=text,
             align=align,
             default_colors=default_colors,
         )
@@ -272,11 +274,11 @@ class Button(Activable, MouseOperated, UIWidget, toolkit.PostPorcessed, toolkit.
 
     @property
     def txt(self):
-        return self.decorated.txt
+        return self.content.txt
 
     @txt.setter
     def txt(self, txt):
-        self.decorated.txt = text
+        self.content.txt = text
 
     def enter(self):
         super().enter()
@@ -394,25 +396,25 @@ class ListBox(containers.List):
 
 
 
-# TODO: Consider renaming to DecoratedPanel?
-class Window(UIWidget, containers.Overlay):
+# TODO: Consider renaming to FramedPanel?
+class Window(UIWidget, containers.Stack):
 
     DEFAULT_Z_ORDER = ZOrder.BASE
 
-    def __init__(self, decorations, default_colors, *,
+    def __init__(self, frame, default_colors, *,
                  title=None,
                  on_key_press=None,
                  **kwargs
                 ):
         super().__init__(default_colors=default_colors, **kwargs)
-        self.frame = containers.Overlay()
-        self.content = containers.Overlay()
+        self.frame = containers.Stack()
+        self.content = containers.Stack()
         self.handlers.on_key_press.update(on_key_press or {})
 
         self.children.extend([
-            toolkit.Decorated(
-                decorations=decorations,
-                decorated=self.content,
+            decorations.Framed(
+                frame=frame,
+                content=self.content,
                 align=Align.TOP_LEFT,
             ),
             self.frame,
@@ -431,7 +433,7 @@ class ModalWindow(Window, toolkit.Widget):
 
     DEFAULT_Z_ORDER = ZOrder.MODAL
 
-    def __init__(self, align, padding, size, decorations, default_colors, *,
+    def __init__(self, align, padding, size, frame, default_colors, *,
                  title=None,
                  on_key_press=None,
                  **kwargs
@@ -439,7 +441,7 @@ class ModalWindow(Window, toolkit.Widget):
         super().__init__(
             align=align,
             padding=padding,
-            decorations=decorations,
+            frame=frame,
             default_colors=default_colors,
             title=title,
             on_key_press=on_key_press,
