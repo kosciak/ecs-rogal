@@ -1,5 +1,6 @@
 from enum import IntFlag
 import collections
+import functools
 
 import numpy as np
 
@@ -104,35 +105,36 @@ def get_y(panel_height, height, align, padding=Padding.ZERO):
 # TODO: rename to RGBConsole
 class Console:
 
+    TILES_DTYPE = dtypes.CONSOLE_RGB_DT
     DEFAULT_FG = RGB(255, 255, 255).rgb
     DEFAULT_BG = RGB(0, 0, 0).rgb
 
     def __init__(self, size):
         size = Size(size.height, size.width)
-        self.tiles_rgb = np.zeros(size, dtype=dtypes.rgb_console_dt, order="C")
+        self.tiles = np.zeros(size, dtype=self.TILES_DTYPE, order="C")
         self.ch[...] = DEFAULT_CH
         self.fg[...] = self.DEFAULT_FG
         self.bg[...] = self.DEFAULT_BG
 
     @property
     def width(self):
-        return self.tiles_rgb.shape[1]
+        return self.tiles.shape[1]
 
     @property
     def height(self):
-        return self.tiles_rgb.shape[0]
+        return self.tiles.shape[0]
 
     @property
     def ch(self):
-        return self.tiles_rgb['ch']
+        return self.tiles['ch']
 
     @property
     def fg(self):
-        return self.tiles_rgb['fg']
+        return self.tiles['fg']
 
     @property
     def bg(self):
-        return self.tiles_rgb['bg']
+        return self.tiles['bg']
 
 
 class TilesGrid(WithSizeMixin):
@@ -317,15 +319,16 @@ class RootPanel(Panel):
         self.clear()
 
     def _empty_tile(self, colors):
-        fg = self.rgb(colors and colors.fg) or self.palette.fg
-        bg = self.rgb(colors and colors.bg) or self.palette.bg
+        fg = self.get_color(colors and colors.fg) or self.palette.fg
+        bg = self.get_color(colors and colors.bg) or self.palette.bg
         return Tile.create(DEFAULT_CH, fg=fg, bg=bg)
 
     def create_panel(self, position, size):
         return Panel(self, position, size)
 
-    def rgb(self, color):
-        # TODO: move to Console.get_color(color, palette)
+    @functools.lru_cache(maxsize=None)
+    def get_color(self, color):
+        # TODO: move to Console.get_color(color, palette) ??
         if color is None:
             return None
         if isinstance(color, Color):
@@ -338,13 +341,13 @@ class RootPanel(Panel):
         return self.palette.get(color).rgb
 
     def clear(self, colors=None, *args, **kwargs):
-        fg = self.rgb(colors and colors.fg) or self.palette.fg.rgb
-        bg = self.rgb(colors and colors.bg) or self.palette.bg.rgb
-        self.console.tiles_rgb[...] = (DEFAULT_CH, fg, bg)
+        fg = self.get_color(colors and colors.fg) or self.palette.fg.rgb
+        bg = self.get_color(colors and colors.bg) or self.palette.bg.rgb
+        self.console.tiles[...] = (DEFAULT_CH, fg, bg)
 
     def _draw(self, ch, colors, position, size=None, *args, **kwargs):
-        fg = self.rgb(colors and colors.fg)
-        bg = self.rgb(colors and colors.bg)
+        fg = self.get_color(colors and colors.fg)
+        bg = self.get_color(colors and colors.bg)
         # NOTE: console is in order="C", so we need to do some transpositions
         j, i = position
         if size:
@@ -365,8 +368,8 @@ class RootPanel(Panel):
 
     def _print_line(self, text, position, colors=None, align=None, *args, **kwargs):
         chars = [ord(ch) for ch in text]
-        fg = self.rgb(colors and colors.fg)
-        bg = self.rgb(colors and colors.bg)
+        fg = self.get_color(colors and colors.fg)
+        bg = self.get_color(colors and colors.bg)
         align = align or Align.LEFT
         # NOTE: console is in order="C", so we need to do some transpositions
         j, i = position
@@ -415,8 +418,8 @@ class RootPanel(Panel):
 
     def mask(self, tile, mask, position=None):
         position = position or Position.ZERO
-        fg = self.rgb(tile.fg)
-        bg = self.rgb(tile.bg)
+        fg = self.get_color(tile.fg)
+        bg = self.get_color(tile.bg)
         # NOTE: console is in order="C", so we need to do some transpositions
         j, i = position
         mask = mask.transpose()

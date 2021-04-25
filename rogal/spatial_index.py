@@ -34,13 +34,13 @@ class SpatialIndex:
     @staticmethod
     def init_flags(size):
         """Init flags array."""
-        flags = np.zeros(size, dtype=dtypes.flags_dt)
+        flags = np.zeros(size, dtype=dtypes.FLAGS_DT)
         return flags
 
     @staticmethod
     def init_terrain(size):
         """Init terrain tiles array."""
-        terrain = np.zeros(size, dtype=dtypes.terrain_dt)
+        terrain = np.zeros(size, dtype=dtypes.TERRAIN_DT)
         return terrain
 
     def create_level(self, level_id, depth, terrain):

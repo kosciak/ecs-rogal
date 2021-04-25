@@ -2,7 +2,7 @@ import numpy as np
 
 
 # Same as tcod.console.Console._DTYPE_RGB
-rgb_console_dt = np.dtype({
+CONSOLE_RGB_DT = np.dtype({
     'names':    ['ch', 'fg', 'bg'],
     'formats':  ['<i4', ('u1', (3,)), ('u1', (3,))],
     'offsets':  [0, 4, 8],
@@ -10,26 +10,26 @@ rgb_console_dt = np.dtype({
 })
 
 
-rgb_dt = np.dtype('3B')
-rgba_dt = np.dtype('4B')
+RGB_DT = np.dtype('3B')
+RGBA_DT = np.dtype('4B')
 
 
-tile_rgb_dt = np.dtype([
-    ('ch',          '<i4'),
-    ('fg',          rgb_dt),
-    ('bg',          rgb_dt),
+TILE_RGB_DT = np.dtype([
+    ('ch',      '<i4'),
+    ('fg',      RGB_DT),
+    ('bg',      RGB_DT),
 ])
 
 
-terrain_dt = np.dtype('u1')
+TERRAIN_DT = np.dtype('u1')
 
 
-flags_dt = np.dtype('u4')
+FLAGS_DT = np.dtype('u4')
 
 
-movement_cost_dt = np.dtype([
-    ('walk',        'u2'),
-    ('fly',         'u2'),
-    ('swim',        'u2'),
+MOVEMENT_COST_DT = np.dtype([
+    ('walk',    'u2'),
+    ('fly',     'u2'),
+    ('swim',    'u2'),
 ])
 

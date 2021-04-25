@@ -23,21 +23,21 @@ class TcodRootPanel(RootPanel):
         return str(self.console)
 
     def clear(self, colors=None, *args, **kwargs):
-        fg = self.rgb(colors and colors.fg) or self.palette.fg.rgb
-        bg = self.rgb(colors and colors.bg) or self.palette.bg.rgb
+        fg = self.get_color(colors and colors.fg) or self.palette.fg.rgb
+        bg = self.get_color(colors and colors.bg) or self.palette.bg.rgb
         return self._clear(fg=fg, bg=bg, *args, **kwargs)
 
     def print(self, text, position, colors=None, align=None, *args, **kwargs):
         # NOTE: Do NOT change already set colors!
-        fg = self.rgb(colors and colors.fg)
-        bg = self.rgb(colors and colors.bg)
+        fg = self.get_color(colors and colors.fg)
+        bg = self.get_color(colors and colors.bg)
         align = align or Align.LEFT
         return self._print(
             position.x, position.y, text, fg=fg, bg=bg, alignment=align, *args, **kwargs)
 
     def draw(self, tile, position, size=None, *args, **kwargs):
-        fg = self.rgb(tile.fg)
-        bg = self.rgb(tile.bg)
+        fg = self.get_color(tile.fg)
+        bg = self.get_color(tile.bg)
         if size:
             return self._draw_rect(
                 position.x, position.y, size.width, size.height,

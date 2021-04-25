@@ -102,12 +102,8 @@ class Tileset:
             else:
                 ch, fg = values
                 bg = None
-            visible = Tile.create(
-                Symbol.get(ch),
-                self.palette.get(fg),
-                self.palette.get(bg)
-            )
-            revealed = self.revealed_fn(visible)
+            visible = Tile.create(Symbol.get(ch), fg, bg)
+            revealed = self.revealed_fn(visible) # TODO: Don't like it... It assumes it will work with Color
             tile = RenderableTile(name, visible, revealed)
             tiles[name] = tile
         return tiles
