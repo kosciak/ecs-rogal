@@ -1,6 +1,5 @@
 from ..geometry import Position, Size
 
-from .core import Padding
 from . import toolkit
 
 
@@ -27,16 +26,16 @@ class Row(toolkit.Container, toolkit.Widget):
 
     """
 
-    def __init__(self, content=None, *, align, padding=Padding.ZERO):
-        super().__init__(content=content, align=align, padding=padding)
+    def __init__(self, content=None, *, align):
+        super().__init__(content=content, align=align)
 
     @property
     def size(self):
         if not self.children:
             return None
         return Size(
-            sum([widget.padded_width for widget in self.children]),
-            max([widget.padded_height for widget in self.children])
+            sum([widget.width for widget in self.children]),
+            max([widget.height for widget in self.children])
         )
 
     def layout_content(self, manager, parent, panel, z_order):
@@ -44,10 +43,10 @@ class Row(toolkit.Container, toolkit.Widget):
         position = panel.get_position(self.size, self.align)
         for child in self.children:
             widget = manager.create_child(parent)
-            subpanel = panel.create_panel(position, child.padded_size)
+            subpanel = panel.create_panel(position, child.size)
             child_z_order = child.layout(manager, widget, subpanel, z_order+1)
             children_z_orders.append(child_z_order or 0)
-            position += Position(child.padded_width, 0)
+            position += Position(child.width, 0)
         return children_z_orders and max(children_z_orders) or z_order
 
 
@@ -65,16 +64,16 @@ class List(toolkit.Container, toolkit.Widget):
 
     """
 
-    def __init__(self, content=None, *, align, padding=Padding.ZERO):
-        super().__init__(content=content, align=align, padding=padding)
+    def __init__(self, content=None, *, align):
+        super().__init__(content=content, align=align)
 
     @property
     def size(self):
         if not self.children:
             return None
         return Size(
-            max([widget.padded_width for widget in self.children]),
-            sum([widget.padded_height for widget in self.children])
+            max([widget.width for widget in self.children]),
+            sum([widget.height for widget in self.children])
         )
 
     def layout_content(self, manager, parent, panel, z_order):
@@ -82,10 +81,10 @@ class List(toolkit.Container, toolkit.Widget):
         position = panel.get_position(self.size, self.align)
         for child in self.children:
             widget = manager.create_child(parent)
-            subpanel = panel.create_panel(position, child.padded_size)
+            subpanel = panel.create_panel(position, child.size)
             child_z_order = child.layout(manager, widget, subpanel, z_order+1)
             children_z_orders.append(child_z_order or 0)
-            position += Position(0, child.padded_height)
+            position += Position(0, child.height)
         return children_z_orders and max(children_z_orders) or z_order
 
 

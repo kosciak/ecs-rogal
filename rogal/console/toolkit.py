@@ -3,7 +3,7 @@ import time
 from ..geometry import Position, Size, WithSizeMixin
 from ..utils .attrdict import DefaultAttrDict
 
-from .core import Align, Padding
+from .core import Align
 
 
 """Console UI basic widgets and renderers toolkit."""
@@ -53,33 +53,23 @@ class UIElement:
 
 class Widget(WithSizeMixin, UIElement):
 
-    """UI element with with it's own size, alignment and padding.
+    """UI element with with it's own size and alignment.
 
     NOTE: Subclasses MUST provide size attribute!
 
     """
 
-    __slots__ = ('align', 'padding', )
+    __slots__ = ('align', )
 
-    def __init__(self, *, align=Align.TOP_LEFT, padding=Padding.ZERO, **kwargs):
+    def __init__(self, *, align=None, **kwargs):
         super().__init__(**kwargs)
-        self.align = align
-        self.padding = padding
-
-    @property
-    def padded_width(self):
-        return self.width + self.padding.left + self.padding.right
-
-    @property
-    def padded_height(self):
-        return self.height + self.padding.top + self.padding.bottom
-
-    @property
-    def padded_size(self):
-        return Size(self.padded_width, self.padded_height)
+        if align is None:
+            self.align = Align.TOP_LEFT
+        else:
+            self.align = align
 
     def get_layout_panel(self, panel):
-        position = panel.get_position(self.size, self.align, self.padding)
+        position = panel.get_position(self.size, self.align)
         panel = panel.create_panel(position, self.size)
         return panel
 

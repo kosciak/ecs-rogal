@@ -50,15 +50,17 @@ class WidgetsBuilder:
     def create_window_title(self, title):
         if title is None:
             return
-        title = decorations.Framed(
-            content=basic.Text(
-                title,
-                colors=self.default_colors,
+        title = decorations.Padded(
+            content=decorations.Framed(
+                content=basic.Text(
+                    title,
+                    colors=self.default_colors,
+                    align=self.title_align,
+                    # width=10,
+                ),
+                frame=self.title_frame,
                 align=self.title_align,
-                # width=10,
             ),
-            frame=self.title_frame,
-            align=self.title_align,
             padding=Padding(0, 1),
         )
         return title
@@ -72,9 +74,12 @@ class WidgetsBuilder:
         )
         return window
 
-    def create_modal_window(self, align, padding, size, title=None, on_key_press=None):
-        window = widgets.ModalWindow(
-            align=align, padding=padding, size=size,
+    # def create_modal_window(self, align, padding, size, title=None, on_key_press=None):
+    def create_modal_window(self, align, size, title=None, on_key_press=None):
+        window = content=widgets.ModalWindow(
+            # align=align, padding=padding,
+            align=align,
+            size=size,
             default_colors=self.default_colors,
             frame=self.window_frame,
             title=self.create_window_title(title),
@@ -106,7 +111,7 @@ class WidgetsBuilder:
     def create_buttons_row(self, callback, buttons, padding=Padding.ZERO):
         buttons_row = containers.Row(
             align=self.buttons_align,
-            padding=padding,
+            # padding=padding,
         )
         for text, value in buttons:
             buttons_row.append(self.create_button(text, callback, value))
@@ -117,15 +122,17 @@ class WidgetsBuilder:
             self.ecs,
             width=width,
             default_text=text,
-            padding=padding,
+            # padding=padding,
             # default_colors=self.default_colors,
             default_colors=Colors(fg=self.tileset.palette.fg, bg=self.tileset.palette.BRIGHT_BLACK),
         )
         return text_input
 
     def create_list_item(self, width, item, key_binding, callback, index):
-        index_text = basic.Text(
-            f'{key_binding})',
+        index_text = decorations.Padded(
+            content=basic.Text(
+                f'{key_binding})',
+            ),
             padding=Padding(0, 1),
         )
         item_text = basic.Text(
@@ -133,7 +140,7 @@ class WidgetsBuilder:
             colors=Colors(
                 fg=self.tileset.palette.BLUE,
             ),
-            width=width-index_text.padded_size.width,
+            width=width-index_text.width,
         )
 
         list_item = widgets.ListItem(
@@ -165,9 +172,8 @@ class WidgetsBuilder:
         msg = context['msg']
         callback = context['callback']
 
-        widgets_layout = self.create_modal_window(
+        window = self.create_modal_window(
             align=Align.TOP_CENTER,
-            padding=Padding(12, 0),
             size=Size(40, 8),
             title=title,
             on_key_press={
@@ -179,7 +185,6 @@ class WidgetsBuilder:
         msg = basic.Text(
             msg,
             align=Align.TOP_CENTER,
-            padding=Padding(1, 0),
         )
 
         buttons = self.create_buttons_row(
@@ -188,10 +193,23 @@ class WidgetsBuilder:
                 ['No',  False],
                 ['Yes', True],
             ],
-            padding=Padding(1, 0, 0, 0),
         )
 
-        widgets_layout.extend([msg, buttons])
+        window.extend([
+            decorations.Padded(
+                content=msg,
+                padding=Padding(1, 0),
+            ),
+            decorations.Padded(
+                content=buttons,
+                padding=Padding(1, 0, 0, 0),
+            ),
+        ])
+
+        widgets_layout = decorations.Padded(
+            content=window,
+            padding=Padding(12, 0),
+        )
         return widgets_layout
 
     def create_text_input_prompt(self, context):
@@ -199,18 +217,20 @@ class WidgetsBuilder:
         msg = context['msg']
         callback = context['callback']
 
-        input_row = containers.Row(
-            align=Align.TOP_CENTER,
-            padding=Padding(1, 0),
-        )
         prompt = basic.Text(
-            "Text:",
+            "Text: ",
         )
         text_input = self.create_text_input(
             width=26,
-            padding=Padding(0, 0, 0, 1),
         )
-        input_row.extend([prompt, text_input])
+
+        input_row = containers.Row(
+            align=Align.TOP_CENTER,
+        )
+        input_row.extend([
+            prompt,
+            text_input,
+        ])
 
         buttons = self.create_buttons_row(
             callback=callback,
@@ -218,12 +238,10 @@ class WidgetsBuilder:
                 ['Cancel', False],
                 ['OK',     text_input],
             ],
-            padding=Padding(1, 0, 0, 0),
         )
 
-        widgets_layout = self.create_modal_window(
+        window = self.create_modal_window(
             align=Align.TOP_CENTER,
-            padding=Padding(12, 0),
             size=Size(40, 8),
             title=title,
             on_key_press={
@@ -232,7 +250,21 @@ class WidgetsBuilder:
             },
         )
 
-        widgets_layout.extend([input_row, buttons])
+        window.extend([
+            decorations.Padded(
+                content=input_row,
+                padding=Padding(1, 0),
+            ),
+            decorations.Padded(
+                content=buttons,
+                padding=Padding(1, 0, 0, 0),
+            ),
+        ])
+
+        widgets_layout = decorations.Padded(
+            content=window,
+            padding=Padding(12, 0),
+        )
         return widgets_layout
 
     def create_alphabetic_select_prompt(self, context):
@@ -244,7 +276,6 @@ class WidgetsBuilder:
         msg = basic.Text(
             msg,
             align=Align.TOP_CENTER,
-            padding=Padding(1, 0),
         )
 
         buttons = self.create_buttons_row(
@@ -252,15 +283,13 @@ class WidgetsBuilder:
             buttons=[
                 ['Cancel', False],
             ],
-            padding=Padding(1, 0, 0, 0),
         )
 
-        widgets_layout = self.create_modal_window(
+        window = self.create_modal_window(
             align=Align.TOP_CENTER,
-            padding=Padding(8, 0),
             size=Size(
                 20,
-                self.window_frame.extents.height+msg.padded_height+buttons.padded_height+len(items)+1
+                self.window_frame.extents.height+msg.height+buttons.height+len(items)+4
             ),
             title=title,
             on_key_press={
@@ -271,7 +300,6 @@ class WidgetsBuilder:
         items_list = widgets.ListBox(
             self.ecs,
             align=Align.TOP_LEFT,
-            padding=Padding(3, 0, 0, 0),
         )
         # TODO: Move to create_list()
         for index, item in enumerate(items):
@@ -284,7 +312,25 @@ class WidgetsBuilder:
                 self.create_list_item(18, item, key_binding, callback, index)
             )
 
-        widgets_layout.extend([msg, items_list, buttons])
+        window.extend([
+            decorations.Padded(
+                content=msg,
+                padding=Padding(1, 0),
+            ),
+            decorations.Padded(
+                content=items_list,
+                padding=Padding(3, 0, 0, 0),
+            ),
+            decorations.Padded(
+                content=buttons,
+                padding=Padding(1, 0, 0, 0),
+            ),
+        ])
+
+        widgets_layout = decorations.Padded(
+            content=window,
+            padding=Padding(8, 0),
+        )
         return widgets_layout
 
     def create(self, widget_type, context):

@@ -4,7 +4,7 @@ from ..geometry import Position, Vector, Size
 
 from ..events import handlers
 
-from .core import Align, Padding, ZOrder
+from .core import Align, ZOrder
 from . import toolkit
 from . import basic
 from . import containers
@@ -178,11 +178,9 @@ class TextInput(MouseOperated, UIWidget, containers.Stack, toolkit.Widget):
                  default_colors,
                  default_text=None,
                  align=Align.TOP_LEFT,
-                 padding=Padding.ZERO,
                 ):
         super().__init__(
             align=Align.TOP_LEFT,
-            padding=padding,
             default_colors=default_colors,
         )
         self.size = Size(width, 1)
@@ -347,8 +345,8 @@ class ListItem(Activable, MouseOperated, WithHotkey, UIWidget, toolkit.PostPorce
 
 class ListBox(containers.List):
 
-    def __init__(self, ecs, align=Align.TOP_LEFT, padding=Padding.ZERO):
-        super().__init__(align=align, padding=padding)
+    def __init__(self, ecs, align=Align.TOP_LEFT):
+        super().__init__(align=align)
         self.items = []
         self.handlers.on_key_press.update({
             handlers.NextPrevKeyPress(ecs, 'list.NEXT', 'list.PREV'): self.on_focus_change,
@@ -434,14 +432,13 @@ class ModalWindow(Window, toolkit.Widget):
 
     DEFAULT_Z_ORDER = ZOrder.MODAL
 
-    def __init__(self, align, padding, size, frame, default_colors, *,
+    def __init__(self, align, size, frame, default_colors, *,
                  title=None,
                  on_key_press=None,
                  **kwargs
                 ):
         super().__init__(
             align=align,
-            padding=padding,
             frame=frame,
             default_colors=default_colors,
             title=title,

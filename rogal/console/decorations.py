@@ -1,20 +1,19 @@
 from ..geometry import Position, Size
 from ..tiles import Tile
 
-from .core import Align, Padding
 from . import toolkit
 
 
 """Widgets that wrap other widget and change their look."""
 
 
-# TODO: instead of Widget.padding use separate Padded widget
+class Padded(toolkit.Widget):
 
-class Padded(toolkit.UIElement):
-
-    def __init__(self, content, padding, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, content, padding, *, align=None, **kwargs):
+        # TODO: use content.align instead of align in constructor? OR align=align or content.align?
+        super().__init__(align=align or content.align, **kwargs)
         self.content = content
+        self.default_z_order = content.DEFAULT_Z_ORDER
         self.padding = padding
 
         self.size = Size(
@@ -25,8 +24,8 @@ class Padded(toolkit.UIElement):
     def get_inner_panel(self, panel):
         position = Position(self.padding.left, self.padding.top)
         size = Size(
-            panel.width - self.padding.left + self.padding.right,
-            panel.height - self.padding.top + self.padding.bottom,
+            panel.width - self.padding.left - self.padding.right,
+            panel.height - self.padding.top - self.padding.bottom,
         )
         return panel.create_panel(position, size)
 
@@ -34,6 +33,9 @@ class Padded(toolkit.UIElement):
         widget = manager.create_child(parent)
         panel = self.get_inner_panel(panel)
         return self.content.layout(manager, widget, panel, z_order+1)
+
+    def layout(self, manager, widget, panel, z_order):
+        return super().layout(manager, widget, panel, z_order or self.default_z_order)
 
 
 
@@ -124,20 +126,20 @@ class Framed(toolkit.Widget):
 
     """Frame with element rendered inside."""
 
-    def __init__(self, content, frame, *, align=Align.TOP_LEFT, padding=Padding.ZERO):
-        super().__init__(align=align, padding=padding)
+    def __init__(self, content, frame, *, align=None):
+        super().__init__(align=align)
         self.content = content
         self.frame = frame
 
         size = getattr(self.content, 'size', None)
         self.size = size and Size(
-            self.content.padded_width + self.frame.extents.width,
-            self.content.padded_height + self.frame.extents.height
+            self.content.width + self.frame.extents.width,
+            self.content.height + self.frame.extents.height
         )
 
     def get_layout_panel(self, panel):
         size = self.size or panel.size
-        position = panel.get_position(size, self.align, self.padding)
+        position = panel.get_position(size, self.align)
         panel = panel.create_panel(position, size)
         return panel
 

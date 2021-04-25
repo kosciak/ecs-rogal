@@ -1,6 +1,6 @@
 from ..geometry import Position, Size
 
-from .core import Align, Padding
+from .core import Align
 
 from . import toolkit
 from . import renderers
@@ -35,8 +35,8 @@ class Text(toolkit.Renderer, toolkit.Widget):
 
     """Text widget and renderer."""
 
-    def __init__(self, txt, width=None, colors=None, *, align=Align.TOP_LEFT, padding=Padding.ZERO):
-        super().__init__(align=align, padding=padding)
+    def __init__(self, txt, width=None, colors=None, *, align=Align.TOP_LEFT):
+        super().__init__(align=align)
         self.txt = txt
         self.colors = colors
 
@@ -51,7 +51,7 @@ class Text(toolkit.Renderer, toolkit.Widget):
         )
 
     def get_layout_panel(self, panel):
-        panel = panel.create_panel(Position.ZERO, Size(panel.width, self.padded_height))
+        panel = panel.create_panel(Position.ZERO, self.size)
         # position = panel.get_position(self.size, self.align)
         # panel = panel.create_panel(position, self.size)
         return panel
@@ -59,6 +59,6 @@ class Text(toolkit.Renderer, toolkit.Widget):
     def render(self, panel):
         if self.colors:
             panel.clear(self.colors)
-        position = panel.get_align_position(self.txt_size, self.align, self.padding)
+        position = panel.get_align_position(self.txt_size, self.align)
         panel.print(self.txt, position, colors=self.colors, align=self.align)
 
