@@ -6,6 +6,7 @@ from ..events import handlers
 
 from .core import Align, Padding, ZOrder
 from . import toolkit
+from . import basic
 from . import containers
 from . import decorations
 from . import renderers
@@ -185,11 +186,11 @@ class TextInput(MouseOperated, UIWidget, containers.Stack, toolkit.Widget):
             default_colors=default_colors,
         )
         self.size = Size(width, 1)
-        self.text = toolkit.Text(
+        self.text = basic.Text(
             default_text or '',
             width=width,
         )
-        self.cursor = toolkit.Cursor(
+        self.cursor = basic.Cursor(
             # colors=default_colors.invert(),
             blinking=1200,
         )
@@ -262,8 +263,8 @@ class Button(Activable, MouseOperated, UIWidget, toolkit.PostPorcessed, decorati
                 ):
         super().__init__(
             callback=callback, value=value,
-            frame=frame,
             content=text,
+            frame=frame,
             align=align,
             default_colors=default_colors,
         )
@@ -309,7 +310,7 @@ class ListItem(Activable, MouseOperated, WithHotkey, UIWidget, toolkit.PostPorce
         super().__init__(
             ecs=ecs, key_binding=key_binding,
             callback=callback, value=value,
-            widgets=[
+            content=[
                 index,
                 item,
             ],
@@ -413,8 +414,8 @@ class Window(UIWidget, containers.Stack):
 
         self.children.extend([
             decorations.Framed(
-                frame=frame,
                 content=self.content,
+                frame=frame,
                 align=Align.TOP_LEFT,
             ),
             self.frame,

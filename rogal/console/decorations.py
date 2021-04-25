@@ -5,7 +5,37 @@ from .core import Align, Padding
 from . import toolkit
 
 
+"""Widgets that wrap other widget and change their look."""
+
+
 # TODO: instead of Widget.padding use separate Padded widget
+
+class Padded(toolkit.UIElement):
+
+    def __init__(self, content, padding, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.content = content
+        self.padding = padding
+
+        self.size = Size(
+            self.content.width and self.content.width + self.padding.left + self.padding.right or 0,
+            self.content.height and self.content.height + self.padding.top + self.padding.bottom or 0,
+        )
+
+    def get_inner_panel(self, panel):
+        position = Position(self.padding.left, self.padding.top)
+        size = Size(
+            panel.width - self.padding.left + self.padding.right,
+            panel.height - self.padding.top + self.padding.bottom,
+        )
+        return panel.create_panel(position, size)
+
+    def layout_content(self, manager, parent, panel, z_order):
+        widget = manager.create_child(parent)
+        panel = self.get_inner_panel(panel)
+        return self.content.layout(manager, widget, panel, z_order+1)
+
+
 
 # TODO: Only Renderer set as renderer for Framed? What about Button that subclasses it?
 class Frame(toolkit.Renderer, toolkit.UIElement):
@@ -94,10 +124,10 @@ class Framed(toolkit.Widget):
 
     """Frame with element rendered inside."""
 
-    def __init__(self, frame, content, *, align=Align.TOP_LEFT, padding=Padding.ZERO):
+    def __init__(self, content, frame, *, align=Align.TOP_LEFT, padding=Padding.ZERO):
         super().__init__(align=align, padding=padding)
-        self.frame = frame
         self.content = content
+        self.frame = frame
 
         size = getattr(self.content, 'size', None)
         self.size = size and Size(
@@ -117,5 +147,4 @@ class Framed(toolkit.Widget):
         widget = manager.create_child(parent)
         panel = self.frame.inner_panel(panel)
         return self.content.layout(manager, widget, panel, z_order+2)
-
 

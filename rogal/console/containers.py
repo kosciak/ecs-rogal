@@ -8,7 +8,7 @@ class Stack(toolkit.Container):
 
     """Free form container where all children are stacked on top of each other."""
 
-    def layout_children(self, manager, parent, panel, z_order):
+    def layout_content(self, manager, parent, panel, z_order):
         for child in self.children:
             widget = manager.create_child(parent)
             z_order = child.layout(manager, widget, panel, z_order+1)
@@ -27,8 +27,8 @@ class Row(toolkit.Container, toolkit.Widget):
 
     """
 
-    def __init__(self, widgets=None, *, align, padding=Padding.ZERO):
-        super().__init__(widgets=widgets, align=align, padding=padding)
+    def __init__(self, content=None, *, align, padding=Padding.ZERO):
+        super().__init__(content=content, align=align, padding=padding)
 
     @property
     def size(self):
@@ -39,13 +39,13 @@ class Row(toolkit.Container, toolkit.Widget):
             max([widget.padded_height for widget in self.children])
         )
 
-    def layout_children(self, manager, parent, panel, z_order):
+    def layout_content(self, manager, parent, panel, z_order):
         children_z_orders = []
         position = panel.get_position(self.size, self.align)
         for child in self.children:
             widget = manager.create_child(parent)
             subpanel = panel.create_panel(position, child.padded_size)
-            child_z_order = child.layout(manager, widget, subpanel, z_order)
+            child_z_order = child.layout(manager, widget, subpanel, z_order+1)
             children_z_orders.append(child_z_order or 0)
             position += Position(child.padded_width, 0)
         return children_z_orders and max(children_z_orders) or z_order
@@ -65,8 +65,8 @@ class List(toolkit.Container, toolkit.Widget):
 
     """
 
-    def __init__(self, widgets=None, *, align, padding=Padding.ZERO):
-        super().__init__(widgets=widgets, align=align, padding=padding)
+    def __init__(self, content=None, *, align, padding=Padding.ZERO):
+        super().__init__(content=content, align=align, padding=padding)
 
     @property
     def size(self):
@@ -77,13 +77,13 @@ class List(toolkit.Container, toolkit.Widget):
             sum([widget.padded_height for widget in self.children])
         )
 
-    def layout_children(self, manager, parent, panel, z_order):
+    def layout_content(self, manager, parent, panel, z_order):
         children_z_orders = []
         position = panel.get_position(self.size, self.align)
         for child in self.children:
             widget = manager.create_child(parent)
             subpanel = panel.create_panel(position, child.padded_size)
-            child_z_order = child.layout(manager, widget, subpanel, z_order)
+            child_z_order = child.layout(manager, widget, subpanel, z_order+1)
             children_z_orders.append(child_z_order or 0)
             position += Position(0, child.padded_height)
         return children_z_orders and max(children_z_orders) or z_order
@@ -94,20 +94,20 @@ class Split(toolkit.Container):
 
     """Container that renders widgets on each side of splitted panel."""
 
-    def __init__(self, widgets=None, *, left=None, right=None, top=None, bottom=None):
-        super().__init__(widgets=widgets)
+    def __init__(self, content=None, *, left=None, right=None, top=None, bottom=None):
+        super().__init__(content=content)
         self.left = left
         self.right = right
         self.top = top
         self.bottom = bottom
 
-    def layout_children(self, manager, parent, panel, z_order):
+    def layout_content(self, manager, parent, panel, z_order):
         children_z_orders = []
         subpanels = panel.split(self.left, self.right, self.top, self.bottom)
         for i, child in enumerate(self.children):
             if child:
                 widget = manager.create_child(parent)
-                child_z_order = child.layout(manager, widget, subpanels[i], z_order)
+                child_z_order = child.layout(manager, widget, subpanels[i], z_order+1)
                 children_z_orders.append(child_z_order or 0)
             if i >= 2:
                 break

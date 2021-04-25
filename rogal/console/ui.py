@@ -10,7 +10,7 @@ from ..events import handlers
 from .. import render
 
 from .core import Align, Padding, ZOrder
-from . import toolkit
+from . import basic
 from . import containers
 from . import decorations
 from . import renderers
@@ -51,13 +51,13 @@ class WidgetsBuilder:
         if title is None:
             return
         title = decorations.Framed(
-            frame=self.title_frame,
-            content=toolkit.Text(
+            content=basic.Text(
                 title,
                 colors=self.default_colors,
                 align=self.title_align,
                 # width=10,
             ),
+            frame=self.title_frame,
             align=self.title_align,
             padding=Padding(0, 1),
         )
@@ -86,7 +86,7 @@ class WidgetsBuilder:
         button = widgets.Button(
             value, callback,
             default_colors=self.default_colors,
-            text=toolkit.Text(
+            text=basic.Text(
                 text,
                 width=self.button_width,
                 align=Align.CENTER,
@@ -124,11 +124,11 @@ class WidgetsBuilder:
         return text_input
 
     def create_list_item(self, width, item, key_binding, callback, index):
-        index_text = toolkit.Text(
+        index_text = basic.Text(
             f'{key_binding})',
             padding=Padding(0, 1),
         )
-        item_text = toolkit.Text(
+        item_text = basic.Text(
             item,
             colors=Colors(
                 fg=self.tileset.palette.BLUE,
@@ -151,7 +151,7 @@ class WidgetsBuilder:
         return list_item
 
     def create_list_separator(self, width):
-        separator = toolkit.Text(
+        separator = basic.Text(
             '-'*(width//3),
             width=width,
             # padding=Padding(0, 1),
@@ -176,7 +176,7 @@ class WidgetsBuilder:
             },
         )
 
-        msg = toolkit.Text(
+        msg = basic.Text(
             msg,
             align=Align.TOP_CENTER,
             padding=Padding(1, 0),
@@ -194,7 +194,7 @@ class WidgetsBuilder:
         widgets_layout.extend([msg, buttons])
         return widgets_layout
 
-    def create_text_input(self, context):
+    def create_text_input_prompt(self, context):
         title = context['title']
         msg = context['msg']
         callback = context['callback']
@@ -203,7 +203,7 @@ class WidgetsBuilder:
             align=Align.TOP_CENTER,
             padding=Padding(1, 0),
         )
-        prompt = toolkit.Text(
+        prompt = basic.Text(
             "Text:",
         )
         text_input = self.create_text_input(
@@ -241,7 +241,7 @@ class WidgetsBuilder:
         callback = context['callback']
         items = [f'index: {i}' for i in range(10)]
 
-        msg = toolkit.Text(
+        msg = basic.Text(
             msg,
             align=Align.TOP_CENTER,
             padding=Padding(1, 0),
@@ -260,7 +260,7 @@ class WidgetsBuilder:
             padding=Padding(8, 0),
             size=Size(
                 20,
-                self.window_frame.height+msg.padded_height+buttons.padded_height+len(items)+1
+                self.window_frame.extents.height+msg.padded_height+buttons.padded_height+len(items)+1
             ),
             title=title,
             on_key_press={
