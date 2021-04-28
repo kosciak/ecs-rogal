@@ -50,12 +50,6 @@ class Text(toolkit.Renderer, toolkit.Widget):
             len(lines)
         )
 
-    def get_layout_panel(self, panel):
-        panel = panel.create_panel(Position.ZERO, self.size)
-        # position = panel.get_position(self.size, self.align)
-        # panel = panel.create_panel(position, self.size)
-        return panel
-
     def render(self, panel):
         if self.colors:
             panel.clear(self.colors)

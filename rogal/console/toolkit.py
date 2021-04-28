@@ -69,8 +69,12 @@ class Widget(WithSizeMixin, UIElement):
             self.align = align
 
     def get_layout_panel(self, panel):
-        position = panel.get_position(self.size, self.align)
-        panel = panel.create_panel(position, self.size)
+        size = Size(
+            self.width or panel.width,
+            self.height or panel.height,
+        )
+        position = panel.get_position(size, self.align)
+        panel = panel.create_panel(position, size)
         return panel
 
 

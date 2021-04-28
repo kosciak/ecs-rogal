@@ -13,12 +13,14 @@ class Padded(toolkit.Widget):
         # TODO: use content.align instead of align in constructor? OR align=align or content.align?
         super().__init__(align=align or content.align, **kwargs)
         self.content = content
-        self.default_z_order = content.DEFAULT_Z_ORDER
+        self.default_z_order = self.content.DEFAULT_Z_ORDER
         self.padding = padding
 
+        width = self.content.width
+        height = self.content.height
         self.size = Size(
-            self.content.width and self.content.width + self.padding.left + self.padding.right or 0,
-            self.content.height and self.content.height + self.padding.top + self.padding.bottom or 0,
+            width and (width + self.padding.left + self.padding.right) or 0,
+            height and (height + self.padding.top + self.padding.bottom) or 0,
         )
 
     def get_inner_panel(self, panel):
@@ -131,17 +133,12 @@ class Framed(toolkit.Widget):
         self.content = content
         self.frame = frame
 
-        size = getattr(self.content, 'size', None)
-        self.size = size and Size(
-            self.content.width + self.frame.extents.width,
-            self.content.height + self.frame.extents.height
+        width = getattr(self.content, 'width', None)
+        height = getattr(self.content, 'height', None)
+        self.size = Size(
+            width and (width + self.frame.extents.width) or 0,
+            height and (height + self.frame.extents.height) or 0,
         )
-
-    def get_layout_panel(self, panel):
-        size = self.size or panel.size
-        position = panel.get_position(size, self.align)
-        panel = panel.create_panel(position, size)
-        return panel
 
     def layout_content(self, manager, parent, panel, z_order):
         widget = manager.create_child(parent)
