@@ -180,10 +180,11 @@ class TextInput(MouseOperated, UIWidget, containers.Stack, toolkit.Widget):
                  align=Align.TOP_LEFT,
                 ):
         super().__init__(
+            width=width,
+            height=1,
             align=Align.TOP_LEFT,
             default_colors=default_colors,
         )
-        self.size = Size(width, 1)
         self.text = basic.Text(
             default_text or '',
             width=width,
@@ -439,6 +440,8 @@ class ModalWindow(Window, toolkit.Widget):
                  **kwargs
                 ):
         super().__init__(
+            width=size.width,
+            height=size.height,
             align=align,
             frame=frame,
             default_colors=default_colors,
@@ -446,5 +449,4 @@ class ModalWindow(Window, toolkit.Widget):
             on_key_press=on_key_press,
             **kwargs,
         )
-        self.size = size
 

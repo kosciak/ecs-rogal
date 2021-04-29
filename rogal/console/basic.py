@@ -36,7 +36,6 @@ class Text(toolkit.Renderer, toolkit.Widget):
     """Text widget and renderer."""
 
     def __init__(self, txt, width=None, colors=None, *, align=Align.TOP_LEFT):
-        super().__init__(align=align)
         self.txt = txt
         self.colors = colors
 
@@ -45,10 +44,12 @@ class Text(toolkit.Renderer, toolkit.Widget):
             max(len(line) for line in lines),
             len(lines)
         )
-        self.size = Size(
-            max(width or 0, self.txt_size.width),
-            len(lines)
-        )
+        #     max(width or 0, self.txt_size.width),
+        super().__init__(width=width is None and self.txt_size.width or width, align=align)
+
+    @property
+    def height(self):
+        return self.txt_size.height
 
     def render(self, panel):
         if self.colors:

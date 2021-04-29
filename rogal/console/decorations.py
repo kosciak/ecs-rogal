@@ -16,12 +16,15 @@ class Padded(toolkit.Widget):
         self.default_z_order = self.content.DEFAULT_Z_ORDER
         self.padding = padding
 
+    @property
+    def width(self):
         width = self.content.width
+        return width and (width + self.padding.left + self.padding.right) or 0
+
+    @property
+    def height(self):
         height = self.content.height
-        self.size = Size(
-            width and (width + self.padding.left + self.padding.right) or 0,
-            height and (height + self.padding.top + self.padding.bottom) or 0,
-        )
+        return height and (height + self.padding.top + self.padding.bottom) or 0
 
     def get_inner_panel(self, panel):
         position = Position(self.padding.left, self.padding.top)
@@ -133,12 +136,15 @@ class Framed(toolkit.Widget):
         self.content = content
         self.frame = frame
 
-        width = getattr(self.content, 'width', None)
-        height = getattr(self.content, 'height', None)
-        self.size = Size(
-            width and (width + self.frame.extents.width) or 0,
-            height and (height + self.frame.extents.height) or 0,
-        )
+    @property
+    def width(self):
+        width = self.content.width
+        return width and (width + self.frame.extents.width) or 0
+
+    @property
+    def height(self):
+        height = self.content.height
+        return height and (height + self.frame.extents.height) or 0
 
     def layout_content(self, manager, parent, panel, z_order):
         widget = manager.create_child(parent)

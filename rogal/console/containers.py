@@ -30,18 +30,23 @@ class Row(toolkit.Container, toolkit.Widget):
         super().__init__(content=content, align=align)
 
     @property
-    def size(self):
-        if not self.children:
-            return None
+    def width(self):
+        if self._width:
+            return self._width
         widths = [widget.width for widget in self.children]
+        return sum(widths)
+
+    @property
+    def height(self):
+        if self._height:
+            return self._height
         heights = [widget.height for widget in self.children]
-        return Size(
-            sum(widths),
-            max(heights)
-        )
+        heights.append(0)
+        return max(heights)
 
     def layout_content(self, manager, parent, panel, z_order):
         children_z_orders = []
+        # TODO: self.size assumes that both width and height are defined!
         position = panel.get_position(self.size, self.align)
         for child in self.children:
             widget = manager.create_child(parent)
@@ -70,18 +75,23 @@ class List(toolkit.Container, toolkit.Widget):
         super().__init__(content=content, align=align)
 
     @property
-    def size(self):
-        if not self.children:
-            return None
+    def width(self):
+        if self._width:
+            return self._width
         widths = [widget.width for widget in self.children]
+        widths.append(0)
+        return max(widths)
+
+    @property
+    def height(self):
+        if self._height:
+            return self._height
         heights = [widget.height for widget in self.children]
-        return Size(
-            max(widths),
-            sum(heights)
-        )
+        return sum(heights)
 
     def layout_content(self, manager, parent, panel, z_order):
-        children_z_orders = []
+        children_z_orders = [z_order, ]
+        # TODO: self.size assumes that both width and height are defined!
         position = panel.get_position(self.size, self.align)
         for child in self.children:
             widget = manager.create_child(parent)
@@ -89,8 +99,7 @@ class List(toolkit.Container, toolkit.Widget):
             child_z_order = child.layout(manager, widget, subpanel, z_order+1)
             children_z_orders.append(child_z_order or 0)
             position += Position(0, child.height)
-        return children_z_orders and max(children_z_orders) or z_order
-
+        return max(children_z_orders)
 
 
 class Split(toolkit.Container):

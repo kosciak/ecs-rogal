@@ -1,6 +1,6 @@
 import time
 
-from ..geometry import Position, Size, WithSizeMixin
+from ..geometry import Position, Size
 from ..utils .attrdict import DefaultAttrDict
 
 from .core import Align
@@ -24,6 +24,14 @@ class UIElement:
     def __init__(self):
         self.renderer = None
         self.handlers = DefaultAttrDict(dict)
+
+    @property
+    def width(self):
+        return 0
+
+    @property
+    def height(self):
+        return 0
 
     def get_layout_panel(self, panel):
         return panel
@@ -51,7 +59,7 @@ class UIElement:
         return z_order
 
 
-class Widget(WithSizeMixin, UIElement):
+class Widget(UIElement):
 
     """UI element with with it's own size and alignment.
 
@@ -61,14 +69,27 @@ class Widget(WithSizeMixin, UIElement):
 
     __slots__ = ('align', )
 
-    def __init__(self, *, align=None, **kwargs):
+    def __init__(self, *, width=None, height=None, align=None, **kwargs):
         super().__init__(**kwargs)
-        if align is None:
-            self.align = Align.TOP_LEFT
-        else:
-            self.align = align
+        self._width = width
+        self._height = height
+        self.align = align is None and Align.TOP_LEFT or align
+
+    @property
+    def width(self):
+        return self._width or 0
+
+    @property
+    def height(self):
+        return self._height or 0
+
+    @property
+    def size(self):
+        return Size(self.width, self.height)
 
     def get_layout_panel(self, panel):
+        if not (self.width or self.height):
+            return panel
         size = Size(
             self.width or panel.width,
             self.height or panel.height,
