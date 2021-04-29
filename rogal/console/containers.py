@@ -33,9 +33,11 @@ class Row(toolkit.Container, toolkit.Widget):
     def size(self):
         if not self.children:
             return None
+        widths = [widget.width for widget in self.children]
+        heights = [widget.height for widget in self.children]
         return Size(
-            sum([widget.width for widget in self.children]),
-            max([widget.height for widget in self.children])
+            sum(widths),
+            max(heights)
         )
 
     def layout_content(self, manager, parent, panel, z_order):
@@ -71,9 +73,11 @@ class List(toolkit.Container, toolkit.Widget):
     def size(self):
         if not self.children:
             return None
+        widths = [widget.width for widget in self.children]
+        heights = [widget.height for widget in self.children]
         return Size(
-            max([widget.width for widget in self.children]),
-            sum([widget.height for widget in self.children])
+            max(widths),
+            sum(heights)
         )
 
     def layout_content(self, manager, parent, panel, z_order):

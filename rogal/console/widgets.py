@@ -251,7 +251,7 @@ class TextInput(MouseOperated, UIWidget, containers.Stack, toolkit.Widget):
             pass
 
 
-class Button(Activable, MouseOperated, UIWidget, toolkit.PostPorcessed, decorations.Framed):
+class Button(Activable, MouseOperated, UIWidget, toolkit.PostProcessed, decorations.Framed):
 
     def __init__(self, value, callback, text, frame, *,
                  default_colors,
@@ -298,7 +298,7 @@ class Button(Activable, MouseOperated, UIWidget, toolkit.PostPorcessed, decorati
         self.redraw()
 
 
-class ListItem(Activable, MouseOperated, WithHotkey, UIWidget, toolkit.PostPorcessed, containers.Row):
+class ListItem(Activable, MouseOperated, WithHotkey, UIWidget, toolkit.PostProcessed, containers.Row):
 
     def __init__(self, ecs, key_binding, callback, value, index, item, *,
                  default_colors,
@@ -407,6 +407,7 @@ class Window(UIWidget, containers.Stack):
                 ):
         super().__init__(default_colors=default_colors, **kwargs)
         self.frame = containers.Stack()
+        # TODO: Instead of frame use header, footer?
         self.content = containers.Stack()
         self.handlers.on_key_press.update(on_key_press or {})
 

@@ -116,7 +116,7 @@ class Renderer:
         raise NotImplementedError()
 
 
-class PostPorcessed:
+class PostProcessed:
 
     def __init__(self, post_renderers=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
