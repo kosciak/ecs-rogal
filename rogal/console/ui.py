@@ -140,7 +140,7 @@ class WidgetsBuilder:
             colors=Colors(
                 fg=self.tileset.palette.BLUE,
             ),
-            width=width-index_text.width,
+            width=0,
         )
 
         list_item = widgets.ListItem(

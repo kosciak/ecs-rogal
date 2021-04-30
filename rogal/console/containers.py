@@ -3,15 +3,33 @@ from ..geometry import Position, Size
 from . import toolkit
 
 
-class Stack(toolkit.Container):
+class Stack(toolkit.Container, toolkit.Widget):
 
-    """Free form container where all children are stacked on top of each other."""
+    """Free form container where all children are stacked on top of each other.
+
+    Widgets are rendered in FIFO order and each widget use whole panel.
+    Will overdraw previous ones if they overlap.
+
+    """
 
     def layout_content(self, manager, parent, panel, z_order):
         for child in self.children:
             widget = manager.create_child(parent)
             z_order = child.layout(manager, widget, panel, z_order+1)
         return z_order
+
+
+def calc_sizes(available_size, sizes):
+    if all(sizes):
+        return sizes
+    # Calc size for fixed size elements
+    reserved = sum(size for size in sizes if size)
+    left = available_size - reserved
+    # Now calc default size for elements withour fixed size
+    dynamic_num = len([size for size in sizes if not size])
+    default_size = left // dynamic_num
+    # TODO: What about modulo?
+    return [size or default_size for size in sizes]
 
 
 class Row(toolkit.Container, toolkit.Widget):
@@ -33,28 +51,34 @@ class Row(toolkit.Container, toolkit.Widget):
     def width(self):
         if self._width:
             return self._width
-        widths = [widget.width for widget in self.children]
+        widths = [child.width for child in self.children]
+        if 0 in widths:
+            return 0
         return sum(widths)
 
     @property
     def height(self):
         if self._height:
             return self._height
-        heights = [widget.height for widget in self.children]
+        heights = [child.height for child in self.children]
+        if 0 in heights:
+            return 0
         heights.append(0)
         return max(heights)
 
     def layout_content(self, manager, parent, panel, z_order):
-        children_z_orders = []
-        # TODO: self.size assumes that both width and height are defined!
-        position = panel.get_position(self.size, self.align)
-        for child in self.children:
+        z_orders = [z_order, ]
+        position = Position.ZERO
+        widths = [child.width for child in self.children]
+        calc_widths = calc_sizes(panel.width, widths)
+        for i, child in enumerate(self.children):
             widget = manager.create_child(parent)
-            subpanel = panel.create_panel(position, child.size)
+            size = Size(calc_widths[i], child.height or panel.height)
+            subpanel = panel.create_panel(position, size)
             child_z_order = child.layout(manager, widget, subpanel, z_order+1)
-            children_z_orders.append(child_z_order or 0)
-            position += Position(child.width, 0)
-        return children_z_orders and max(children_z_orders) or z_order
+            z_orders.append(child_z_order or 0)
+            position += Position(calc_widths[i], 0)
+        return max(z_orders)
 
 
 # TODO: ???
@@ -78,7 +102,9 @@ class List(toolkit.Container, toolkit.Widget):
     def width(self):
         if self._width:
             return self._width
-        widths = [widget.width for widget in self.children]
+        widths = [child.width for child in self.children]
+        if 0 in widths:
+            return 0
         widths.append(0)
         return max(widths)
 
@@ -86,23 +112,27 @@ class List(toolkit.Container, toolkit.Widget):
     def height(self):
         if self._height:
             return self._height
-        heights = [widget.height for widget in self.children]
+        heights = [child.height for child in self.children]
+        if 0 in heights:
+            return 0
         return sum(heights)
 
     def layout_content(self, manager, parent, panel, z_order):
-        children_z_orders = [z_order, ]
-        # TODO: self.size assumes that both width and height are defined!
-        position = panel.get_position(self.size, self.align)
-        for child in self.children:
+        z_orders = [z_order, ]
+        position = Position.ZERO
+        heights = [child.height for child in self.children]
+        calc_heights = calc_sizes(panel.height, heights)
+        for i, child in enumerate(self.children):
             widget = manager.create_child(parent)
-            subpanel = panel.create_panel(position, child.size)
+            size = Size(child.width or panel.width, calc_heights[i])
+            subpanel = panel.create_panel(position, size)
             child_z_order = child.layout(manager, widget, subpanel, z_order+1)
-            children_z_orders.append(child_z_order or 0)
-            position += Position(0, child.height)
-        return max(children_z_orders)
+            z_orders.append(child_z_order or 0)
+            position += Position(0, calc_heights[i])
+        return max(z_orders)
 
 
-class Split(toolkit.Container):
+class Split(toolkit.Container, toolkit.Widget):
 
     """Container that renders widgets on each side of splitted panel."""
 
@@ -114,14 +144,14 @@ class Split(toolkit.Container):
         self.bottom = bottom
 
     def layout_content(self, manager, parent, panel, z_order):
-        children_z_orders = []
+        z_orders = []
         subpanels = panel.split(self.left, self.right, self.top, self.bottom)
         for i, child in enumerate(self.children):
             if child:
                 widget = manager.create_child(parent)
                 child_z_order = child.layout(manager, widget, subpanels[i], z_order+1)
-                children_z_orders.append(child_z_order or 0)
+                z_orders.append(child_z_order or 0)
             if i >= 2:
                 break
-        return children_z_orders and max(children_z_orders) or z_order
+        return z_orders and max(z_orders) or z_order
 

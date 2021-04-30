@@ -59,15 +59,12 @@ class UIElement:
         return z_order
 
 
+# TODO: Consider merging UIElement and Widget! 
+#       Right now implementation of render.Camera (and how it handle it's size) makes it difficult
+
 class Widget(UIElement):
 
-    """UI element with with it's own size and alignment.
-
-    NOTE: Subclasses MUST provide size attribute!
-
-    """
-
-    __slots__ = ('align', )
+    """UI element wth with it's own (fixed) size and alignment."""
 
     def __init__(self, *, width=None, height=None, align=None, **kwargs):
         super().__init__(**kwargs)
@@ -77,36 +74,34 @@ class Widget(UIElement):
 
     @property
     def width(self):
+        """Return widget's fixed width or 0 if whole available space should be used."""
         return self._width or 0
 
     @property
     def height(self):
+        """Return widget's fixed height or 0 if whole available space should be used."""
         return self._height or 0
 
-    @property
-    def size(self):
-        return Size(self.width, self.height)
-
-    def get_layout_panel(self, panel):
-        if not (self.width or self.height):
-            return panel
+    def get_size(self, panel):
+        """Return widget's size based on available panel space."""
         size = Size(
             self.width or panel.width,
             self.height or panel.height,
         )
+        return size
+
+    def get_layout_panel(self, panel):
+        if not (self.width or self.height):
+            return panel
+        size = self.get_size(panel)
         position = panel.get_position(size, self.align)
         panel = panel.create_panel(position, size)
         return panel
 
 
-class Container(UIElement):
+class Container:
 
-    """UIElements container.
-
-    Widgets are rendered in FIFO order and each widget use whole panel.
-    Will overdraw previous ones if they overlap.
-
-    """
+    """UIElements container mixin."""
 
     def __init__(self, content=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -138,6 +133,8 @@ class Renderer:
 
 
 class PostProcessed:
+
+    """Adds list of post_renderers that will alter alter already rendered widget."""
 
     def __init__(self, post_renderers=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
