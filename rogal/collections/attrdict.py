@@ -24,3 +24,9 @@ class DefaultAttrDict(AttrMixin, collections.defaultdict):
     def __getattr__(self, name):
         return self[name]
 
+
+class NestedAttrDict(DefaultAttrDict):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(NestedAttrDict, *args, **kwargs)
+

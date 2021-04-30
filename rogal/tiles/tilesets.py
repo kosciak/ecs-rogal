@@ -1,7 +1,7 @@
 import collections
 import importlib
 
-from ..utils.attrdict import AttrDict
+from ..collections.attrdict import AttrDict
 
 from .core import Tile
 from .symbols import Symbol

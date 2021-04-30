@@ -3,8 +3,8 @@ import functools
 import logging
 import uuid
 
+from ..collections.attrdict import AttrDict
 from ..utils import perf
-from ..utils.attrdict import AttrDict
 
 from .run_state import RunState
 

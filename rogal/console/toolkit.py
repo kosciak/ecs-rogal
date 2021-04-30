@@ -1,7 +1,7 @@
 import time
 
+from ..collections .attrdict import DefaultAttrDict
 from ..geometry import Position, Size
-from ..utils .attrdict import DefaultAttrDict
 
 from .core import Align
 
