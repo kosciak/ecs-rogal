@@ -27,7 +27,8 @@ class WidgetsBuilder:
         self.ecs = ecs
 
         self.tileset = self.ecs.resources.tileset
-        self.default_colors = Colors(self.tileset.palette.fg, self.tileset.palette.bg)
+        self.palette = self.tileset.palette
+        self.default_colors = Colors(self.palette.fg, self.palette.bg)
 
         self.window_frame = decorations.Frame(
             *self.tileset.decorations.DSLINE,
@@ -74,12 +75,10 @@ class WidgetsBuilder:
         )
         return window
 
-    # def create_modal_window(self, align, padding, size, title=None, on_key_press=None):
     def create_modal_window(self, align, size, title=None, on_key_press=None):
         window = content=widgets.ModalWindow(
-            # align=align, padding=padding,
-            align=align,
             size=size,
+            align=align,
             default_colors=self.default_colors,
             frame=self.window_frame,
             title=self.create_window_title(title),
@@ -99,8 +98,8 @@ class WidgetsBuilder:
             frame=self.button_frame,
             # selected_colors=self.default_colors.invert(),
             press_colors=Colors(
-                bg=self.tileset.palette.bg,
-                fg=self.tileset.palette.BRIGHT_WHITE
+                bg=self.palette.bg,
+                fg=self.palette.BRIGHT_WHITE
             ),
             selected_renderers=[
                 renderers.InvertColors(),
@@ -108,23 +107,21 @@ class WidgetsBuilder:
         )
         return button
 
-    def create_buttons_row(self, callback, buttons, padding=Padding.ZERO):
+    def create_buttons_row(self, callback, buttons):
         buttons_row = containers.Row(
             align=self.buttons_align,
-            # padding=padding,
         )
         for text, value in buttons:
             buttons_row.append(self.create_button(text, callback, value))
         return buttons_row
 
-    def create_text_input(self, width, text=None, padding=Padding.ZERO):
+    def create_text_input(self, width, text=None):
         text_input = widgets.TextInput(
             self.ecs,
             width=width,
             default_text=text,
-            # padding=padding,
             # default_colors=self.default_colors,
-            default_colors=Colors(fg=self.tileset.palette.fg, bg=self.tileset.palette.BRIGHT_BLACK),
+            default_colors=Colors(fg=self.palette.fg, bg=self.palette.BRIGHT_BLACK),
         )
         return text_input
 
@@ -138,7 +135,7 @@ class WidgetsBuilder:
         item_text = basic.Text(
             item,
             colors=Colors(
-                fg=self.tileset.palette.BLUE,
+                fg=self.palette.BLUE,
             ),
             width=0,
         )
@@ -157,12 +154,11 @@ class WidgetsBuilder:
 
         return list_item
 
-    def create_list_separator(self, width):
+    def create_list_separator(self):
         separator = basic.Text(
-            '-'*(width//3),
-            width=width,
-            # padding=Padding(0, 1),
-            align=Align.TOP_CENTER,
+            '-'*5,
+            width=0,
+            align=Align.CENTER,
         )
 
         return separator
@@ -173,8 +169,8 @@ class WidgetsBuilder:
         callback = context['callback']
 
         window = self.create_modal_window(
-            align=Align.TOP_CENTER,
             size=Size(40, 8),
+            align=Align.TOP_CENTER,
             title=title,
             on_key_press={
                 handlers.YesNoKeyPress(self.ecs): callback,
@@ -305,7 +301,7 @@ class WidgetsBuilder:
         for index, item in enumerate(items):
             if index == len(items) / 2:
                 items_list.append_separator(
-                    self.create_list_separator(18)
+                    self.create_list_separator()
                 )
             key_binding = string.ascii_lowercase[index]
             items_list.append_item(

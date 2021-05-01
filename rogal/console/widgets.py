@@ -434,7 +434,7 @@ class ModalWindow(Window, toolkit.Widget):
 
     DEFAULT_Z_ORDER = ZOrder.MODAL
 
-    def __init__(self, align, size, frame, default_colors, *,
+    def __init__(self, size, align, frame, default_colors, *,
                  title=None,
                  on_key_press=None,
                  **kwargs

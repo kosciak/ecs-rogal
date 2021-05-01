@@ -79,6 +79,10 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
 
         return adjusted_position + adjust_move
 
+    def update_cam_area(self, panel, level, position):
+        position = self.camera_position(panel, level, position)
+        self.cam_area = Rectangle(position, panel.size)
+
     def get_coverage(self, panel, level):
         """Return part of the level that is covered by camera."""
         coverage = self.cam_area & level
@@ -245,8 +249,7 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
         else:
             seen = self.spatial.revealable(location.level_id)
 
-        position = self.camera_position(panel, level, position)
-        self.cam_area = Rectangle(position, panel.size)
+        self.update_cam_area(panel, level, position)
 
         coverage = self.get_coverage(panel, level)
         if not coverage:
