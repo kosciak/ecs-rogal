@@ -71,7 +71,7 @@ SDL_KEYCODE_TO_KEY = {
     SDL_Keycode.SDLK_KP_ENTER: Key.KP_ENTER,
     SDL_Keycode.SDLK_KP_PERIOD: Key.KP_PERIOD,
     SDL_Keycode.SDLK_KP_COMMA: Key.KP_COMMA,
-    SDL_Keycode.SDLK_KP_CLEAR: Key.CLEAR,
+    SDL_Keycode.SDLK_KP_CLEAR: Key.KP_CLEAR,
 }
 
 
@@ -95,6 +95,7 @@ def get_key(sym, mod):
         ctrl=mod & SDL_Keymod.KMOD_CTRL,
         alt=mod & SDL_Keymod.KMOD_ALT,
         shift=mod & SDL_Keymod.KMOD_SHIFT,
+        gui=mod & SDL_Keymod.KMOD_GUI,
     )
 
 

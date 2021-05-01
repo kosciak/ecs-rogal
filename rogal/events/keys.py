@@ -16,6 +16,7 @@ class Modifier:
     SHIFT = 'Shift-'
     CTRL = 'Ctrl-'
     ALT = 'Alt-'
+    GUI = 'Super-'
     CTRL_SHORT = '^'
     ALT_SHORT = '!'
 
@@ -76,7 +77,7 @@ class Key:
     KP_ENTER = 'KeyPad Enter'
     KP_PERIOD = 'KeyPad Period'
     KP_COMMA = 'KeyPad Comma'
-    CLEAR = 'KeyPad Clear' # Keypad Clear key (on Mac?)
+    KP_CLEAR = 'KeyPad Clear' # Keypad Clear key (on Mac?)
 
     UNKNOWN = 'Unknown'
 
@@ -104,7 +105,11 @@ class Key:
         return f'{modifier}{with_modifiers}'
 
     @classmethod
-    def with_modifiers(cls, key, ctrl=False, alt=False, shift=False):
+    def _with_gui(cls, key, with_modifiers):
+        return f'{Modifier.GUI}{with_modifiers}'
+
+    @classmethod
+    def with_modifiers(cls, key, ctrl=False, alt=False, shift=False, gui=False):
         with_modifiers = key
         if shift:
             with_modifiers = cls._with_shift(key, with_modifiers)
@@ -112,6 +117,8 @@ class Key:
             with_modifiers = cls._with_alt(key, with_modifiers)
         if ctrl:
             with_modifiers = cls._with_ctrl(key, with_modifiers)
+        if gui:
+            with_modifiers = cls._with_gui(key, with_modifiers)
         return with_modifiers
 
     @staticmethod
