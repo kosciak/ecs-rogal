@@ -103,7 +103,7 @@ class TextInput(Event):
         self.text = text
 
     def __repr__(self):
-        return f'<{self.__class__.__name__} text={self.text}>'
+        return f'<{self.__class__.__name__} text={self.text!r}>'
 
 
 class MouseMotion(Event):
@@ -134,7 +134,8 @@ class MouseMotion(Event):
         return self.pixel_position.moved_from(self.motion)
 
     def __repr__(self):
-        return f'<{self.__class__.__name__} position={self.position}, motion={self.motion}, buttons={self.buttons}>'
+        buttons = [button.name for button in sorted(self.buttons)]
+        return f'<{self.__class__.__name__} position={self.position}, motion={self.motion}, buttons={buttons}>'
 
 
 class MouseButtonEvent(Event):
@@ -151,7 +152,7 @@ class MouseButtonEvent(Event):
         self.position = Position(x, y)
 
     def __repr__(self):
-        return f'<{self.__class__.__name__} position={self.position}, button={self.button}, clicks={self.clicks}>'
+        return f'<{self.__class__.__name__} position={self.position}, button={self.button.name}, clicks={self.clicks}>'
 
 
 class MouseButtonPress(MouseButtonEvent):

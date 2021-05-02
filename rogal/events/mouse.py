@@ -1,10 +1,12 @@
+import enum
 
-class MouseButton:
-    LEFT = 'LMB'
-    MIDDLE = 'MMB'
-    RIGHT = 'RMB'
-    X1 = 'X1MB'
-    X2 = 'X2MB'
+
+class MouseButton(enum.IntEnum):
+    LEFT = 1
+    MIDDLE = 2
+    RIGHT = 3
+    X1 = 4
+    X2 = 5
 
 
 class MouseState:

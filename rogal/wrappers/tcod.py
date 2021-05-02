@@ -1,4 +1,3 @@
-import collections
 import functools
 import logging
 
@@ -15,7 +14,7 @@ from . import sdl
 log = logging.getLogger(__name__)
 
 
-sdl2 = sdl.SDL2Wrapper(ffi, lib)
+sdl2 = sdl.SDL2(ffi, lib)
 
 
 class TcodRootPanel(RootPanel):
@@ -198,7 +197,6 @@ class TcodWrapper(IOWrapper):
         self.resizable = resizable
         self.title=title
         self._context = None
-        self._events_queue = collections.deque()
         self.enable_joystick = enable_joystick
 
     @property
@@ -341,14 +339,14 @@ class TcodWrapper(IOWrapper):
     def process_events(self, events):
         """Process events - update, filter, merge, etc."""
         processed_events = []
-        for event in events:
+        for event in list(events):
             # Intercept WINDOW RESIZE and update self.console_size?
             event = self.update_event(event)
             processed_events.append(event)
         return processed_events
 
-    def get_events(self, wait=None):
-        """Get and process all pending events."""
+    def get_events_gen(self, wait=None):
+        """Get all pending events."""
         if wait is False:
             events_gen = sdl2.get_events()
         else:
@@ -356,14 +354,7 @@ class TcodWrapper(IOWrapper):
             if wait is True:
                 wait = None
             events_gen = sdl2.wait_for_events(wait)
-        self._events_queue.extend(self.process_events(list(events_gen)))
-
-    def events(self, wait=None):
-        while self._events_queue:
-            yield self._events_queue.popleft()
-        self.get_events(wait)
-        while self._events_queue:
-            yield self._events_queue.popleft()
+        return events_gen
 
     def close(self):
         if self.is_initialized:

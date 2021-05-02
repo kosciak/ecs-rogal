@@ -1,5 +1,9 @@
 import functools
 
+from .. import events
+from ..events.keys import Key
+from ..events.mouse import MouseButton
+
 from .sdl_const import (
     SDL_SubSystem,
     SDL_EventType,
@@ -8,10 +12,6 @@ from .sdl_const import (
     SDL_MouseButton, SDL_MouseButtonMask, SDL_MouseWheelDirection,
     SDL_SystemCursor,
 )
-
-from .. import events
-from ..events.keys import Key
-from ..events.mouse import MouseButton
 
 
 """Use SDL data directly instead of tcod wrappers."""
@@ -221,7 +221,7 @@ def parse_sdl_event(ffi, sdl_event):
         return events.UnknownEvent(sdl_event)
 
 
-class SDL2Wrapper:
+class SDL2:
 
     def __init__(self, ffi, lib):
         self.ffi = ffi
