@@ -266,6 +266,25 @@ class SDL2Wrapper:
         return self._parse_string(txt)
 
 
+    # https://wiki.libsdl.org/CategoryMouse
+
+    # def SDL_CreateSystemCursor(cursor_id)
+    # def SDL_SetCursor(cursor)
+
+    def SDL_ShowCursor(self, toggle=None):
+        # https://wiki.libsdl.org/SDL_ShowCursor
+        if toggle is None:
+            is_set = self.SDL_ShowCursor(-1)
+            if is_set:
+                return self.SDL_ShowCursor(0)
+            else:
+                return self.SDL_ShowCursor(1)
+        if toggle:
+            return self.SDL_ShowCursor(1)
+        else:
+            return self.SDL_ShowCursor(0)
+
+
     # https://wiki.libsdl.org/CategoryEvents
 
     def SDL_WaitEvent(self, sdl_event):
