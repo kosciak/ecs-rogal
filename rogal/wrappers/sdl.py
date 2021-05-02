@@ -17,7 +17,7 @@ from .sdl_const import (
 """Use SDL data directly instead of tcod wrappers."""
 
 
-SDL_KEYCODE_TO_KEY = {
+SDL_KEYCODES = {
     SDL_Keycode.SDLK_ESCAPE: Key.ESCAPE,
 
     SDL_Keycode.SDLK_F1: Key.F1,
@@ -75,7 +75,7 @@ SDL_KEYCODE_TO_KEY = {
 }
 
 
-SDL_MOUSE_BUTTON_TO_BUTTON = {
+SDL_MOUSE_BUTTONS = {
     SDL_MouseButton.SDL_BUTTON_LEFT: MouseButton.LEFT,
     SDL_MouseButton.SDL_BUTTON_MIDDLE: MouseButton.MIDDLE,
     SDL_MouseButton.SDL_BUTTON_RIGHT: MouseButton.RIGHT,
@@ -89,7 +89,7 @@ def get_key(sym, mod):
     if 32 <= sym <= 126:
         key = chr(sym)
     else:
-        key = SDL_KEYCODE_TO_KEY.get(sym, str(sym))
+        key = SDL_KEYCODES.get(sym, str(sym))
     return Key.with_modifiers(
         key,
         ctrl=mod & SDL_Keymod.KMOD_CTRL,
@@ -129,16 +129,18 @@ def parse_mouse_motion_event(ffi, sdl_event):
     motion = sdl_event.motion
     state = motion.state
     buttons = []
+
     if state & SDL_MouseButtonMask.SDL_BUTTON_LMASK:
-        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[SDL_MouseButton.SDL_BUTTON_LEFT])
+        buttons.append(SDL_MOUSE_BUTTONS[SDL_MouseButton.SDL_BUTTON_LEFT])
     if state & SDL_MouseButtonMask.SDL_BUTTON_MMASK:
-        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[SDL_MouseButton.SDL_BUTTON_MIDDLE])
+        buttons.append(SDL_MOUSE_BUTTONS[SDL_MouseButton.SDL_BUTTON_MIDDLE])
     if state & SDL_MouseButtonMask.SDL_BUTTON_RMASK:
-        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[SDL_MouseButton.SDL_BUTTON_RIGHT])
+        buttons.append(SDL_MOUSE_BUTTONS[SDL_MouseButton.SDL_BUTTON_RIGHT])
     if state & SDL_MouseButtonMask.SDL_BUTTON_X1MASK:
-        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[SDL_MouseButton.SDL_BUTTON_X1])
+        buttons.append(SDL_MOUSE_BUTTONS[SDL_MouseButton.SDL_BUTTON_X1])
     if state & SDL_MouseButtonMask.SDL_BUTTON_X2MASK:
-        buttons.append(SDL_MOUSE_BUTTON_TO_BUTTON[SDL_MouseButton.SDL_BUTTON_X2])
+        buttons.append(SDL_MOUSE_BUTTONS[SDL_MouseButton.SDL_BUTTON_X2])
+
     return events.MouseMotion(sdl_event, motion.x, motion.y, motion.xrel, motion.yrel, buttons)
 
 
@@ -148,7 +150,7 @@ def parse_mouse_button_event(ffi, sdl_event):
     elif sdl_event.type == SDL_EventType.SDL_MOUSEBUTTONUP:
         event_cls = events.MouseButtonUp
     btn = sdl_event.button
-    button = SDL_MOUSE_BUTTON_TO_BUTTON.get(btn.button)
+    button = SDL_MOUSE_BUTTONS.get(btn.button)
     return event_cls(sdl_event, btn.x, btn.y, button, btn.clicks)
 
 

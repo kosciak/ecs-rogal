@@ -1,9 +1,11 @@
 import curses
 import curses.ascii
+import functools
 import logging
 
 from .. import events
 from ..events.mouse import MouseButton
+from ..events.keys import Key
 
 from .core import IOWrapper
 
@@ -14,6 +16,108 @@ log = logging.getLogger(__name__)
 # NOTE: Just some biolerplate code for initialisation / closing curses screen
 #       Main problem is explicit initialisation of all color pairs
 #       Would need to reverse check index of color in pallette, and init_pair() for each combination
+
+CURSES_KEYCODES = {
+    27: Key.ESCAPE, # '^['
+
+    curses.KEY_F1: Key.F1,
+    curses.KEY_F2: Key.F2,
+    curses.KEY_F3: Key.F3,
+    curses.KEY_F4: Key.F4,
+    curses.KEY_F5: Key.F5,
+    curses.KEY_F6: Key.F6,
+    curses.KEY_F7: Key.F7,
+    curses.KEY_F8: Key.F8,
+    curses.KEY_F9: Key.F9,
+    curses.KEY_F10: Key.F10,
+    curses.KEY_F11: Key.F11,
+    curses.KEY_F12: Key.F12,
+
+    curses.KEY_BACKSPACE: Key.BACKSPACE,
+    ord('\b'): Key.BACKSPACE,
+
+    ord('\t'): Key.TAB,
+
+    curses.KEY_ENTER: Key.RETURN,
+    ord('\n'): Key.RETURN,
+
+    ord(' '): Key.SPACE,
+
+    curses.KEY_UP: Key.UP,
+    curses.KEY_DOWN: Key.DOWN,
+    curses.KEY_LEFT: Key.LEFT,
+    curses.KEY_RIGHT: Key.RIGHT,
+
+    curses.KEY_IC: Key.INSERT,
+    curses.KEY_DC: Key.DELETE,
+    curses.KEY_HOME: Key.HOME,
+    curses.KEY_END: Key.END,
+    curses.KEY_PPAGE: Key.PAGE_UP,
+    curses.KEY_NPAGE: Key.PAGE_DOWN,
+}
+
+
+CURSES_SHIFT_KEYCODES = {
+    curses.KEY_BTAB: Key.TAB,
+
+    curses.KEY_SR: Key.UP,
+    curses.KEY_SF: Key.DOWN,
+    curses.KEY_SLEFT: Key.LEFT,
+    curses.KEY_SRIGHT: Key.RIGHT,
+
+    curses.KEY_SIC: Key.INSERT,
+    curses.KEY_SDC: Key.DELETE,
+    curses.KEY_SHOME: Key.HOME,
+    curses.KEY_SEND: Key.END,
+    curses.KEY_SPREVIOUS: Key.PAGE_UP,
+    curses.KEY_SNEXT: Key.PAGE_DOWN,
+}
+
+
+@functools.lru_cache(maxsize=None)
+def get_key(sym, mod):
+    key = None
+    with_ctrl = False
+    with_shift = False
+    # NOTE: Not able to get ALT modifier; GUI key is not supported at all
+
+    if not isinstance(sym, int):
+        if not curses.ascii.isascii(sym):
+            # Non-ASCII wide character
+            return
+        sym = ord(sym)
+
+    # ASCII characters
+    if 32 <= sym <= 126:
+        key = chr(sym)
+
+    # Non alphanumeric keys
+    if key is None:
+        key = CURSES_KEYCODES.get(sym)
+
+    # Non alphanumeric keys with SHIFT
+    if key is None:
+        key = CURSES_SHIFT_KEYCODES.get(sym)
+        if key:
+            with_shift = True
+
+    # Keys with CTRL
+    if key is None and curses.ascii.isctrl(sym):
+        with_ctrl = True
+        key = curses.ascii.unctrl(sym).lower().strip('^')
+
+    # Not able to match to any other key (for example some keypad keys without NumLock)
+    if key is None:
+        # print(curses.keyname(sym))
+        key = str(sym)
+
+    return Key.with_modifiers(
+        key,
+        ctrl=with_ctrl,
+        # alt=False,
+        shift=with_shift,
+        # gui=False,
+    )
 
 
 def parse_curses_event(curses_event):
@@ -50,18 +154,17 @@ def parse_curses_event(curses_event):
         if button_state & curses.BUTTON3_RELEASED:
             yield events.MouseButtonUp(curses_event, mx, my, MouseButton.RIGHT)
 
-        # TODO: MouseWheel events? BUTTON4_PRESSED and 0x200000
+        # TODO: MouseWheel events? WheelUp seems to be: BUTTON4_PRESSED and WheelDown: 0x200000
 
     else:
-        print('event: %r - %s %s' % (curses_event, curses.ascii.iscntrl(curses_event), curses.ascii.isctrl(curses_event)))
-        if curses.ascii.isctrl(curses_event):
-            curses_event = ord(curses_event)
-        if isinstance(curses_event, int):
-            print(curses_event, curses.keyname(curses_event))
-            # TODO yield KeyPress, KeyUp
-        else:
+        # print('event: %r - %s %s' % (curses_event, curses.ascii.iscntrl(curses_event), curses.ascii.isctrl(curses_event) and curses.ascii.unctrl(curses_event)))
+        key = get_key(curses_event, None)
+        if key:
+            yield events.KeyPress(curses_event, key)
+        if not isinstance(curses_event, int) and not curses.ascii.isctrl(curses_event):
             yield events.TextInput(curses_event, curses_event)
-        yield events.UnknownEvent(curses_event)
+        if key:
+            yield events.KeyUp(curses_event, key)
 
 
 class CursesWrapper(IOWrapper):

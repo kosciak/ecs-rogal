@@ -72,7 +72,7 @@ class WindowEvent(Event):
 class KeyboardEvent(Event):
     __slots__ = ('key', 'repeat', )
 
-    def __init__(self, source, key, repeat):
+    def __init__(self, source, key, repeat=False):
         super().__init__(source)
         self.key = key
         self.repeat = repeat
