@@ -2,6 +2,7 @@ import curses
 import curses.ascii
 import functools
 import logging
+import signal
 
 from .. import events
 from ..events.mouse import MouseButton
@@ -18,7 +19,7 @@ log = logging.getLogger(__name__)
 #       Would need to reverse check index of color in pallette, and init_pair() for each combination
 
 CURSES_KEYCODES = {
-    27: Key.ESCAPE, # '^['
+    curses.ascii.ESC: Key.ESCAPE, # '^['
 
     curses.KEY_F1: Key.F1,
     curses.KEY_F2: Key.F2,
@@ -34,14 +35,15 @@ CURSES_KEYCODES = {
     curses.KEY_F12: Key.F12,
 
     curses.KEY_BACKSPACE: Key.BACKSPACE,
-    ord('\b'): Key.BACKSPACE,
+    curses.ascii.BS: Key.BACKSPACE,
 
-    ord('\t'): Key.TAB,
+    curses.ascii.TAB: Key.TAB,
 
     curses.KEY_ENTER: Key.RETURN,
-    ord('\n'): Key.RETURN,
+    curses.ascii.CR: Key.RETURN,
+    curses.ascii.NL: Key.RETURN,
 
-    ord(' '): Key.SPACE,
+    curses.ascii.SP: Key.SPACE,
 
     curses.KEY_UP: Key.UP,
     curses.KEY_DOWN: Key.DOWN,
@@ -54,10 +56,35 @@ CURSES_KEYCODES = {
     curses.KEY_END: Key.END,
     curses.KEY_PPAGE: Key.PAGE_UP,
     curses.KEY_NPAGE: Key.PAGE_DOWN,
+
+    curses.KEY_C1: Key.KP_1,
+    curses.KEY_C3: Key.KP_3,
+    curses.KEY_B2: Key.KP_5,
+    curses.KEY_A1: Key.KP_7,
+    curses.KEY_A3: Key.KP_9,
+
+    574: Key.KP_5,
+    575: Key.KP_PLUS,
+    577: Key.KP_DIVIDE,
+    579: Key.KP_MULTIPLY,
+    580: Key.KP_MINUS,
 }
 
 
 CURSES_SHIFT_KEYCODES = {
+    curses.KEY_F13: Key.F1,
+    curses.KEY_F14: Key.F2,
+    curses.KEY_F15: Key.F3,
+    curses.KEY_F16: Key.F4,
+    curses.KEY_F17: Key.F5,
+    curses.KEY_F18: Key.F6,
+    curses.KEY_F19: Key.F7,
+    curses.KEY_F20: Key.F8,
+    curses.KEY_F21: Key.F9,
+    curses.KEY_F22: Key.F10,
+    curses.KEY_F23: Key.F11,
+    curses.KEY_F24: Key.F12,
+
     curses.KEY_BTAB: Key.TAB,
 
     curses.KEY_SR: Key.UP,
@@ -108,7 +135,7 @@ def get_key(sym, mod):
 
     # Not able to match to any other key (for example some keypad keys without NumLock)
     if key is None:
-        # print(curses.keyname(sym))
+        print(curses.keyname(sym))
         key = str(sym)
 
     return Key.with_modifiers(
@@ -179,6 +206,12 @@ class CursesWrapper(IOWrapper):
         self._palette = palette
         self._screen = None
 
+    def _signal_handler(self, signal_no, frame):
+        if signal_no == signal.SIGINT:
+            curses.ungetch(3)
+        elif signal_no == signal.SIGTSTP:
+            curses.ungetch(26)
+
     @property
     def is_initialized(self):
         return self._screen is not None
@@ -191,6 +224,8 @@ class CursesWrapper(IOWrapper):
 
         # Turn off echoing of keys
         curses.noecho()
+        # Raw mode - this will catch ^q and ^s (but still not ^z and ^c)
+        curses.raw()
         # No buffering on keyboard input
         curses.cbreak()
         # Set the mouse events to be reported
@@ -216,6 +251,11 @@ class CursesWrapper(IOWrapper):
         screen.nodelay(True)
 
         curses.halfdelay(2)
+
+        # Catch ^c
+        signal.signal(signal.SIGINT, self._signal_handler)
+        # Catch ^z - doesn't seem to work properly...
+        # signal.signal(signal.SIGTSTP, self._signal_handler)
 
         self._screen = screen
 
