@@ -37,6 +37,55 @@ class Keycode(enum.IntEnum):
     ESC = ESCAPE
     SPACE = ord(' ')
 
+    # NOTE: For all printable ASCII characters use ord(char)
+    EXCLAM = ord('!')
+    QUOTEDBL = ord('"')
+    HASH = ord('#')
+    PERCENT = ord('%')
+    DOLLAR = ord('$')
+    AMPERSAND = ord('&')
+    QUOTE = ord('\'')
+    LEFTPAREN = ord('(')
+    RIGHTPAREN = ord(')')
+    ASTERISK = ord('*')
+    PLUS = ord('+')
+    COMMA = ord(',')
+    MINUS = ord('-')
+    PERIOD = ord('.')
+    SLASH = ord('/')
+
+    # 0 = 48
+    # ...
+    # 9 = 57
+
+    COLON = ord(':')
+    SEMICOLON = ord(';')
+    LESS = ord('<')
+    EQUALS = ord('=')
+    GREATER = ord('>')
+    QUESTION = ord('?')
+    AT = ord('@')
+
+    # A = 41
+    # ...
+    # Z = 90
+
+    LEFTBRACKET = ord('[')
+    BACKSLASH = ord('\\')
+    RIGHTBRACKET = ord(']')
+    CARET = ord('^')
+    UNDERSCORE = ord('_')
+    BACKQUOTE = ord('`')
+
+    # a = 97
+    # ...
+    # z = 122
+
+    LEFTBRACE = ord('{')
+    PIPE = ord('|')
+    RIGHTBRACE = ord('}')
+    TILDE = ord('~')
+
     # As returned by xev
     F1 = 0xffbe
     F2 = 0xffbf

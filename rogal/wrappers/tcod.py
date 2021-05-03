@@ -355,6 +355,9 @@ class TcodWrapper(IOWrapper):
             if event.type in MOUSE_EVENT_TYPES:
                 event = self.update_mouse_event(event)
             if event.type == EventType.KEY_PRESS:
+                # Instead of Shift-a we want to use A, instead of Shift-; -> :
+                # It is easy with letters, but not so with punctuations in different places on 
+                # different keyboard layouts. But TextInput will always return correct text value
                 if i+1 < len(events):
                     next_event = events[i+1]
                     if not next_event.type == EventType.TEXT_INPUT:

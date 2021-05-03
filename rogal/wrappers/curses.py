@@ -64,11 +64,30 @@ CURSES_KEYCODES = {
     curses.KEY_A1: Keycode.KP_7,
     curses.KEY_A3: Keycode.KP_9,
 
-    574: Keycode.KP_5,
-    575: Keycode.KP_PLUS,
-    577: Keycode.KP_DIVIDE,
-    579: Keycode.KP_MULTIPLY,
-    580: Keycode.KP_MINUS,
+}
+
+
+# NOTE: These keys might have different codes depending on term settings, better to use keyname
+CURSES_KEYNAMES = {
+    b'kp0': Keycode.KP_0,
+    b'kp1': Keycode.KP_1,
+    b'kp2': Keycode.KP_2,
+    b'kp3': Keycode.KP_3,
+    b'kp4': Keycode.KP_4,
+    b'kp5': Keycode.KP_5,
+    b'kp6': Keycode.KP_6,
+    b'kp7': Keycode.KP_7,
+    b'kp8': Keycode.KP_8,
+    b'kp9': Keycode.KP_9,
+
+    b'kpDIV': Keycode.KP_DIVIDE,
+    b'kpMUL': Keycode.KP_MULTIPLY,
+    b'kpSUB': Keycode.KP_MINUS,
+    b'kpADD': Keycode.KP_PLUS,
+    b'kpDOT': Keycode.KP_PERIOD,
+    b'kpZRO': Keycode.KP_0, # NOT sure about this one
+    b'kpCMA': Keycode.KP_COMMA, # NOT sure about this one
+
 }
 
 
@@ -134,6 +153,10 @@ def get_key(key):
         with_ctrl = True
         key = curses.ascii.unctrl(key).lower().strip('^')
         keycode = ord(key)
+
+    if keycode is None:
+        name = curses.keyname(key)
+        keycode = CURSES_KEYNAMES.get(name)
 
     # Not able to match to any other key (for example some keypad keys without NumLock)
     if keycode is None:
@@ -219,6 +242,18 @@ class CursesWrapper(IOWrapper):
     def is_initialized(self):
         return self._screen is not None
 
+    def initialize_window(self, window):
+        # Enter keypad mode - escape sequences for special keys will be interpreted
+        window.keypad(True)
+
+        # Don't refresh automatically on window change
+        window.immedok(False)
+        # Don't scroll on bottom line
+        window.scrollok(False)
+        # Make getch() non blocking; consided curses.halfdelay()
+        window.nodelay(True)
+        return window
+
     def initialize(self):
         if self.is_initialized:
             return
@@ -247,24 +282,12 @@ class CursesWrapper(IOWrapper):
         except:
             pass
 
-        # Enter keypad mode - escape sequences for special keys will be interpreted
-        screen.keypad(True)
-
-        # Don't refresh automatically on window change
-        screen.immedok(False)
-        # Don't scroll on bottom line
-        screen.scrollok(False)
-        # Make getch() non blocking; consided curses.halfdelay()
-        screen.nodelay(True)
-
-        curses.halfdelay(2)
-
         # Catch ^c
         signal.signal(signal.SIGINT, self._signal_handler)
         # Catch ^z - doesn't seem to work properly...
         # signal.signal(signal.SIGTSTP, self._signal_handler)
 
-        self._screen = screen
+        self._screen = self.initialize_window(screen)
 
     @property
     def screen(self):
@@ -277,12 +300,15 @@ class CursesWrapper(IOWrapper):
     def get_events_gen(self, wait=None):
         self.initialize()
 
-        # TODO: basic curses event handling
         if wait is False:
             self.screen.nodelay(True)
         elif wait is None or wait is True:
             # NOTE: wait==None will wait forever
             self.screen.nodelay(False)
+        else:
+            timeout = min(int(wait*10), 255) or 1
+            curses.halfdelay(timeout)
+
         try:
             # event = self.screen.getch()
             event = self.screen.get_wch()

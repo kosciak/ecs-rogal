@@ -289,6 +289,10 @@ class SDL2:
 
     # https://wiki.libsdl.org/CategoryEvents
 
+    def SDL_Event(self):
+        sdl_event = self.ffi.new("SDL_Event*")
+        return sdl_event
+
     def SDL_WaitEvent(self, sdl_event):
         # See: https://wiki.libsdl.org/SDL_WaitEvent
         if sdl_event is None:
@@ -307,7 +311,7 @@ class SDL2:
 
 
     def get_events(self):
-        sdl_event = self.ffi.new("SDL_Event*")
+        sdl_event = self.SDL_Event()
         while self.lib.SDL_PollEvent(sdl_event):
             yield parse_sdl_event(self.ffi, sdl_event)
 
