@@ -8,6 +8,7 @@ ASCII_CHARS = set()
 for chars in [
     string.digits,
     string.ascii_lowercase,
+    string.ascii_uppercase,
     string.punctuation,
 ]:
     ASCII_CHARS.update(*chars)
@@ -109,8 +110,21 @@ class Key(collections.namedtuple(
             modifiers |= Modifier.GUI
         return super().__new__(cls, keycode, modifiers)
 
+    def replace(self, keycode):
+        if keycode in ASCII_CHARS:
+            keycode = ord(keycode)
+        if isinstance(keycode, int) and 32 < keycode < 127:
+            modifiers = self.modifiers
+            if modifiers & Modifier.SHIFT:
+                modifiers = self.modifiers ^ Modifier.SHIFT
+            return Key(keycode, modifiers=modifiers)
+        return self
+
     @staticmethod
     def parse(key):
+        if isinstance(key, Key):
+            return key
+
         modifiers = Modifier.NONE
         key = key.split('-')
 

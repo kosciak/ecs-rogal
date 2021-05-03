@@ -17,6 +17,13 @@ log = logging.getLogger(__name__)
 sdl2 = sdl.SDL2(ffi, lib)
 
 
+MOUSE_EVENT_TYPES = {
+    EventType.MOUSE_MOTION,
+    EventType.MOUSE_BUTTON_PRESS,
+    EventType.MOUSE_BUTTON_UP,
+}
+
+
 class TcodRootPanel(RootPanel):
 
     def __str__(self):
@@ -322,14 +329,12 @@ class TcodWrapper(IOWrapper):
         cursor = sdl2.SDL_CreateSystemCursor(cursor_id)
         sdl2.SDL_SetCursor(cursor)
 
-    def update_event(self, event):
-        if event.type == EventType.MOUSE_MOTION or \
-           event.type == EventType.MOUSE_BUTTON_PRESS or\
-           event.type == EventType.MOUSE_BUTTON_UP:
-            pixel_position = event.position
-            x, y = self.context.pixel_to_tile(*pixel_position)
-            event.set_position(x, y)
-            event.set_pixel_position(*pixel_position)
+    def update_mouse_event(self, event):
+        pixel_position = event.position
+        x, y = self.context.pixel_to_tile(*pixel_position)
+        event.set_position(x, y)
+        event.set_pixel_position(*pixel_position)
+
         if event.type == EventType.MOUSE_MOTION:
             pixel_motion = event.motion
             prev_position = event.pixel_position.moved_from(pixel_motion)
@@ -338,14 +343,23 @@ class TcodWrapper(IOWrapper):
             dy = event.position.y - prev_y
             event.set_motion(dx, dy)
             event.set_pixel_motion(*pixel_motion)
+
         return event
 
     def process_events(self, events):
         """Process events - update, filter, merge, etc."""
         processed_events = []
-        for event in list(events):
-            # Intercept WINDOW RESIZE and update self.console_size?
-            event = self.update_event(event)
+        events = list(events)
+        for i, event in enumerate(events):
+            # TODO: Intercept WINDOW RESIZE and update self.console_size?
+            if event.type in MOUSE_EVENT_TYPES:
+                event = self.update_mouse_event(event)
+            if event.type == EventType.KEY_PRESS:
+                if i+1 < len(events):
+                    next_event = events[i+1]
+                    if not next_event.type == EventType.TEXT_INPUT:
+                        continue
+                    event.key = event.key.replace(next_event.text)
             processed_events.append(event)
         return processed_events
 

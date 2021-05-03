@@ -78,7 +78,7 @@ class KeyboardEvent(Event):
         self.repeat = repeat
 
     def __repr__(self):
-        return f'<{self.__class__.__name__} key={self.key}, repeat={self.repeat}>'
+        return f'<{self.__class__.__name__} key="{self.key}", repeat={self.repeat}>'
 
 
 class KeyPress(KeyboardEvent):

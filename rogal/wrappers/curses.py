@@ -116,7 +116,7 @@ def get_key(key):
         key = ord(key)
 
     # ASCII characters
-    if 32 <= key <= 126:
+    if 32 < key < 127:
         keycode = key
 
     # Non alphanumeric keys

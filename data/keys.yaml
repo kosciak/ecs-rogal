@@ -28,7 +28,7 @@ common:
   'YES':    [y, Y, ]
   'NO':     [n, N, ]
   NEXT:     [TAB, ]
-  PREV:     [SHIFT_TAB, ]
+  PREV:     [Shift-TAB, ]
 
 directions: 
   N:  [UP,        k,  KP_8, ]
@@ -42,7 +42,7 @@ directions:
 
 actions:
   QUIT:         ['^q', ESCAPE, ]
-  REST:         ['.', KP_5, KP_0, CLEAR, ]
+  REST:         ['.', KP_5, KP_0, KP_CLEAR, INSERT, ]
   REVEAL_LEVEL: [r, R, ]
-  NEXT_LEVEL:   ['Shift-.', ]
-  PREV_LEVEL:   ['Shift-,', ]
+  NEXT_LEVEL:   ['>', ]
+  PREV_LEVEL:   ['<', ]

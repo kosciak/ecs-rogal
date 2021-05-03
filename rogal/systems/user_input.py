@@ -178,7 +178,7 @@ class EventsHandlersSystem(System):
         # NOTE: It is NOT checked if entity has ActsNow flag, as EventHandlers can be attached
         #       to any entity, not only to actors (for example to GUI elements)
         #       BUT there must be some ActsNow actor for system to be running!
-        for event in self.wrapper.events(self.wait):
+        for event in self.wrapper.events_gen(self.wait):
             # log.debug(f'Event: {event}')
             if event.type == EventType.QUIT:
                 self.on_quit(event)
