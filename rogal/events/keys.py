@@ -1,4 +1,5 @@
 import collections
+import enum
 import string
 import time
 
@@ -12,121 +13,143 @@ for chars in [
     ASCII_CHARS.update(*chars)
 
 
-class Modifier:
-    SHIFT = 'Shift-'
-    CTRL = 'Ctrl-'
-    ALT = 'Alt-'
-    GUI = 'Super-'
-    CTRL_SHORT = '^'
-    ALT_SHORT = '!'
+class Modifier(enum.IntFlag):
+    NONE = 0
+    SHIFT = 1
+    CTRL = 2
+    ALT = 4
+    GUI = 8
+
+    @classmethod
+    def get(cls, name):
+        return cls.__members__.get(name.upper())
 
 
-class Key:
-    ESCAPE = 'Escape'
+class Keycode(enum.IntEnum):
+    UNKNOWN = 0
 
-    F1 = 'F1'
-    F2 = 'F2'
-    F3 = 'F3'
-    F4 = 'F4'
-    F5 = 'F5'
-    F6 = 'F6'
-    F7 = 'F7'
-    F8 = 'F8'
-    F9 = 'F9'
-    F10 = 'F10'
-    F11 = 'F11'
-    F12 = 'F12'
-
-    BACKSPACE = 'Backspace'
-
-    TAB = 'Tab'
-    SHIFT_TAB = f'{Modifier.SHIFT}{TAB}'
-
-    RETURN = 'Return'
+    BACKSPACE = ord('\b')
+    TAB = ord('\t')
+    RETURN = ord('\n')
     ENTER = RETURN
+    ESCAPE = 27
+    ESC = ESCAPE
+    SPACE = ord(' ')
 
-    SPACE = 'Space'
+    # As returned by xev
+    F1 = 0xffbe
+    F2 = 0xffbf
+    F3 = 0xffc0
+    F4 = 0xffc1
+    F5 = 0xffc2
+    F6 = 0xffc3
+    F7 = 0xffc4
+    F8 = 0xffc5
+    F9 = 0xffc6
+    F10 = 0xffc7
+    F11 = 0xffc8
+    F12 = 0xffc9
 
-    UP = 'Up'
-    DOWN = 'Down'
-    LEFT = 'Left'
-    RIGHT = 'Right'
+    # As returned by xev
+    LEFT = 0xff51
+    UP = 0xff52
+    RIGHT = 0xff53
+    DOWN = 0xff54
 
-    INSERT = 'Insert'
-    DELETE = 'Delete'
-    HOME = 'Home'
-    END = 'End'
-    PAGE_UP = 'PageUp'
-    PAGE_DOWN = 'PageDown'
+    INSERT = 0xff63
+    DELETE = 127
+    HOME = 0xff50
+    END = 0xff57
+    PAGE_UP = 0xff55
+    PAGE_DOWN = 0xff56
 
-    KP_0 = 'KeyPad 0'
-    KP_1 = 'KeyPad 1'
-    KP_2 = 'KeyPad 2'
-    KP_3 = 'KeyPad 3'
-    KP_4 = 'KeyPad 4'
-    KP_5 = 'KeyPad 5'
-    KP_6 = 'KeyPad 6'
-    KP_7 = 'KeyPad 7'
-    KP_8 = 'KeyPad 8'
-    KP_9 = 'KeyPad 9'
+    # For KP_* use 0xff00 + matching keycode from normal keyboard
+    KP_0 = 0xff30
+    KP_1 = 0xff31
+    KP_2 = 0xff32
+    KP_3 = 0xff33
+    KP_4 = 0xff34
+    KP_5 = 0xff35
+    KP_6 = 0xff36
+    KP_7 = 0xff37
+    KP_8 = 0xff38
+    KP_9 = 0xff39
 
-    KP_DIVIDE = 'KeyPad Divide'
-    KP_MULTIPLY = 'KeyPad Multiply'
-    KP_MINUS = 'KeyPad Minus'
-    KP_PLUS = 'KeyPad Plus'
-    KP_ENTER = 'KeyPad Enter'
-    KP_PERIOD = 'KeyPad Period'
-    KP_COMMA = 'KeyPad Comma'
-    KP_CLEAR = 'KeyPad Clear' # Keypad Clear key (on Mac?)
-
-    UNKNOWN = 'Unknown'
-
-    @classmethod
-    def _with_shift(cls, key, with_modifiers):
-        if key in string.ascii_lowercase:
-            return key.upper()
-        else:
-            return f'{Modifier.SHIFT}{with_modifiers}'
-
-    @classmethod
-    def _with_alt(cls, key, with_modifiers):
-        if key in ASCII_CHARS:
-            modifier = Modifier.ALT_SHORT
-        else:
-            modifier = Modifier.ALT
-        return f'{modifier}{with_modifiers}'
-
-    @classmethod
-    def _with_ctrl(cls, key, with_modifiers):
-        if key in ASCII_CHARS:
-            modifier = Modifier.CTRL_SHORT
-        else:
-            modifier = Modifier.CTRL
-        return f'{modifier}{with_modifiers}'
+    KP_DIVIDE = 0xff2f
+    KP_MULTIPLY = 0xff2a
+    KP_MINUS = 0xff2d
+    KP_PLUS = 0xff2b
+    KP_ENTER = 0xff0a
+    KP_PERIOD = 0xff2e
+    KP_COMMA = 0xff2c
+    KP_CLEAR = 0xff20 # Keypad Clear key (on Mac?)
 
     @classmethod
-    def _with_gui(cls, key, with_modifiers):
-        return f'{Modifier.GUI}{with_modifiers}'
+    def get(cls, name):
+        return cls.__members__.get(name.upper())
 
-    @classmethod
-    def with_modifiers(cls, key, ctrl=False, alt=False, shift=False, gui=False):
-        with_modifiers = key
-        if shift:
-            with_modifiers = cls._with_shift(key, with_modifiers)
-        if alt:
-            with_modifiers = cls._with_alt(key, with_modifiers)
+
+class Key(collections.namedtuple(
+    'Key', [
+        'keycode',
+        'modifiers',
+    ])):
+
+    __slots__ = ()
+
+    def __new__(cls, keycode, modifiers=None, ctrl=False, alt=False, shift=False, gui=False):
+        modifiers = modifiers or Modifier.NONE
         if ctrl:
-            with_modifiers = cls._with_ctrl(key, with_modifiers)
+            modifiers |= Modifier.CTRL
+        if alt:
+            modifiers |= Modifier.ALT
+        if shift:
+            modifiers |= Modifier.SHIFT
         if gui:
-            with_modifiers = cls._with_gui(key, with_modifiers)
-        return with_modifiers
+            modifiers |= Modifier.GUI
+        return super().__new__(cls, keycode, modifiers)
 
     @staticmethod
     def parse(key):
-        modifiers, sep, key = key.rpartition('-')
-        key = getattr(Key, key, key)
-        if modifiers:
-            key = f'{modifiers}-{key}'
+        modifiers = Modifier.NONE
+        key = key.split('-')
+
+        keycode = key[-1]
+        if keycode.startswith('^'):
+            keycode = keycode.strip('^')
+            modifiers |= Modifier.CTRL
+        if keycode in ASCII_CHARS:
+            keycode = ord(keycode)
+        else:
+            keycode = Keycode.get(keycode) or Keycode.UNKNOWN
+
+        for mod in key[0:-1]:
+            modifier = Modifier.get(mod)
+            if modifier:
+                modifiers |= modifier
+
+        return Key(keycode, modifiers=modifiers)
+
+    def __str__(self):
+        if 32 < self.keycode < 127:
+            key = chr(self.keycode)
+        elif isinstance(self.keycode, Keycode):
+            key = self.keycode.name
+        else:
+            key = str(self.keycode)
+
+        if (self.modifiers == Modifier.CTRL) and 32 < self.keycode < 127:
+            key = f'^{key}'
+        else:
+            if self.modifiers & Modifier.SHIFT:
+                key = f'Shift-{key}'
+            if self.modifiers & Modifier.ALT:
+                key = f'Alt-{key}'
+            if self.modifiers & Modifier.CTRL:
+                key = f'Ctrl-{key}'
+            if self.modifiers & Modifier.GUI:
+                key = f'Super-{key}'
+
         return key
 
 

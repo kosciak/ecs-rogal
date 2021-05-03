@@ -2,11 +2,12 @@ import curses
 import curses.ascii
 import functools
 import logging
+import os
 import signal
 
 from .. import events
 from ..events.mouse import MouseButton
-from ..events.keys import Key
+from ..events.keys import Key, Keycode
 
 from .core import IOWrapper
 
@@ -19,130 +20,131 @@ log = logging.getLogger(__name__)
 #       Would need to reverse check index of color in pallette, and init_pair() for each combination
 
 CURSES_KEYCODES = {
-    curses.ascii.ESC: Key.ESCAPE, # '^['
+    curses.ascii.ESC: Keycode.ESCAPE, # '^['
 
-    curses.KEY_F1: Key.F1,
-    curses.KEY_F2: Key.F2,
-    curses.KEY_F3: Key.F3,
-    curses.KEY_F4: Key.F4,
-    curses.KEY_F5: Key.F5,
-    curses.KEY_F6: Key.F6,
-    curses.KEY_F7: Key.F7,
-    curses.KEY_F8: Key.F8,
-    curses.KEY_F9: Key.F9,
-    curses.KEY_F10: Key.F10,
-    curses.KEY_F11: Key.F11,
-    curses.KEY_F12: Key.F12,
+    curses.KEY_F1: Keycode.F1,
+    curses.KEY_F2: Keycode.F2,
+    curses.KEY_F3: Keycode.F3,
+    curses.KEY_F4: Keycode.F4,
+    curses.KEY_F5: Keycode.F5,
+    curses.KEY_F6: Keycode.F6,
+    curses.KEY_F7: Keycode.F7,
+    curses.KEY_F8: Keycode.F8,
+    curses.KEY_F9: Keycode.F9,
+    curses.KEY_F10: Keycode.F10,
+    curses.KEY_F11: Keycode.F11,
+    curses.KEY_F12: Keycode.F12,
 
-    curses.KEY_BACKSPACE: Key.BACKSPACE,
-    curses.ascii.BS: Key.BACKSPACE,
+    curses.KEY_BACKSPACE: Keycode.BACKSPACE,
+    curses.ascii.BS: Keycode.BACKSPACE,
 
-    curses.ascii.TAB: Key.TAB,
+    curses.ascii.TAB: Keycode.TAB,
 
-    curses.KEY_ENTER: Key.RETURN,
-    curses.ascii.CR: Key.RETURN,
-    curses.ascii.NL: Key.RETURN,
+    curses.KEY_ENTER: Keycode.RETURN,
+    curses.ascii.CR: Keycode.RETURN,
+    curses.ascii.NL: Keycode.RETURN,
 
-    curses.ascii.SP: Key.SPACE,
+    curses.ascii.SP: Keycode.SPACE,
 
-    curses.KEY_UP: Key.UP,
-    curses.KEY_DOWN: Key.DOWN,
-    curses.KEY_LEFT: Key.LEFT,
-    curses.KEY_RIGHT: Key.RIGHT,
+    curses.KEY_UP: Keycode.UP,
+    curses.KEY_DOWN: Keycode.DOWN,
+    curses.KEY_LEFT: Keycode.LEFT,
+    curses.KEY_RIGHT: Keycode.RIGHT,
 
-    curses.KEY_IC: Key.INSERT,
-    curses.KEY_DC: Key.DELETE,
-    curses.KEY_HOME: Key.HOME,
-    curses.KEY_END: Key.END,
-    curses.KEY_PPAGE: Key.PAGE_UP,
-    curses.KEY_NPAGE: Key.PAGE_DOWN,
+    curses.KEY_IC: Keycode.INSERT,
+    curses.KEY_DC: Keycode.DELETE,
+    curses.KEY_HOME: Keycode.HOME,
+    curses.KEY_END: Keycode.END,
+    curses.KEY_PPAGE: Keycode.PAGE_UP,
+    curses.KEY_NPAGE: Keycode.PAGE_DOWN,
 
-    curses.KEY_C1: Key.KP_1,
-    curses.KEY_C3: Key.KP_3,
-    curses.KEY_B2: Key.KP_5,
-    curses.KEY_A1: Key.KP_7,
-    curses.KEY_A3: Key.KP_9,
+    curses.KEY_C1: Keycode.KP_1,
+    curses.KEY_C3: Keycode.KP_3,
+    curses.KEY_B2: Keycode.KP_5,
+    curses.KEY_A1: Keycode.KP_7,
+    curses.KEY_A3: Keycode.KP_9,
 
-    574: Key.KP_5,
-    575: Key.KP_PLUS,
-    577: Key.KP_DIVIDE,
-    579: Key.KP_MULTIPLY,
-    580: Key.KP_MINUS,
+    574: Keycode.KP_5,
+    575: Keycode.KP_PLUS,
+    577: Keycode.KP_DIVIDE,
+    579: Keycode.KP_MULTIPLY,
+    580: Keycode.KP_MINUS,
 }
 
 
 CURSES_SHIFT_KEYCODES = {
-    curses.KEY_F13: Key.F1,
-    curses.KEY_F14: Key.F2,
-    curses.KEY_F15: Key.F3,
-    curses.KEY_F16: Key.F4,
-    curses.KEY_F17: Key.F5,
-    curses.KEY_F18: Key.F6,
-    curses.KEY_F19: Key.F7,
-    curses.KEY_F20: Key.F8,
-    curses.KEY_F21: Key.F9,
-    curses.KEY_F22: Key.F10,
-    curses.KEY_F23: Key.F11,
-    curses.KEY_F24: Key.F12,
+    curses.KEY_F13: Keycode.F1,
+    curses.KEY_F14: Keycode.F2,
+    curses.KEY_F15: Keycode.F3,
+    curses.KEY_F16: Keycode.F4,
+    curses.KEY_F17: Keycode.F5,
+    curses.KEY_F18: Keycode.F6,
+    curses.KEY_F19: Keycode.F7,
+    curses.KEY_F20: Keycode.F8,
+    curses.KEY_F21: Keycode.F9,
+    curses.KEY_F22: Keycode.F10,
+    curses.KEY_F23: Keycode.F11,
+    curses.KEY_F24: Keycode.F12,
 
-    curses.KEY_BTAB: Key.TAB,
+    curses.KEY_BTAB: Keycode.TAB,
 
-    curses.KEY_SR: Key.UP,
-    curses.KEY_SF: Key.DOWN,
-    curses.KEY_SLEFT: Key.LEFT,
-    curses.KEY_SRIGHT: Key.RIGHT,
+    curses.KEY_SR: Keycode.UP,
+    curses.KEY_SF: Keycode.DOWN,
+    curses.KEY_SLEFT: Keycode.LEFT,
+    curses.KEY_SRIGHT: Keycode.RIGHT,
 
-    curses.KEY_SIC: Key.INSERT,
-    curses.KEY_SDC: Key.DELETE,
-    curses.KEY_SHOME: Key.HOME,
-    curses.KEY_SEND: Key.END,
-    curses.KEY_SPREVIOUS: Key.PAGE_UP,
-    curses.KEY_SNEXT: Key.PAGE_DOWN,
+    curses.KEY_SIC: Keycode.INSERT,
+    curses.KEY_SDC: Keycode.DELETE,
+    curses.KEY_SHOME: Keycode.HOME,
+    curses.KEY_SEND: Keycode.END,
+    curses.KEY_SPREVIOUS: Keycode.PAGE_UP,
+    curses.KEY_SNEXT: Keycode.PAGE_DOWN,
 }
 
 
 @functools.lru_cache(maxsize=None)
-def get_key(sym, mod):
-    key = None
+def get_key(key):
+    keycode = None
     with_ctrl = False
     with_shift = False
     # NOTE: Not able to get ALT modifier; GUI key is not supported at all
 
-    if not isinstance(sym, int):
-        if not curses.ascii.isascii(sym):
+    if not isinstance(key, int):
+        if not curses.ascii.isascii(key):
             # Non-ASCII wide character
             return
-        sym = ord(sym)
+        key = ord(key)
 
     # ASCII characters
-    if 32 <= sym <= 126:
-        key = chr(sym)
+    if 32 <= key <= 126:
+        keycode = key
 
     # Non alphanumeric keys
-    if key is None:
-        key = CURSES_KEYCODES.get(sym)
+    if keycode is None:
+        keycode = CURSES_KEYCODES.get(key)
 
     # Non alphanumeric keys with SHIFT
-    if key is None:
-        key = CURSES_SHIFT_KEYCODES.get(sym)
-        if key:
+    if keycode is None:
+        keycode = CURSES_SHIFT_KEYCODES.get(key)
+        if keycode:
             with_shift = True
 
     # Keys with CTRL
-    if key is None and curses.ascii.isctrl(sym):
+    if keycode is None and curses.ascii.isctrl(key):
         with_ctrl = True
-        key = curses.ascii.unctrl(sym).lower().strip('^')
+        key = curses.ascii.unctrl(key).lower().strip('^')
+        keycode = ord(key)
 
     # Not able to match to any other key (for example some keypad keys without NumLock)
-    if key is None:
-        print(curses.keyname(sym))
-        key = str(sym)
+    if keycode is None:
+        # print(curses.keyname(key))
+        keycode = key
 
-    return Key.with_modifiers(
-        key,
+    return Key(
+        keycode,
         ctrl=with_ctrl,
-        # alt=False,
         shift=with_shift,
+        # alt=False,
         # gui=False,
     )
 
@@ -185,7 +187,7 @@ def parse_curses_event(curses_event):
 
     else:
         # print('event: %r - %s %s' % (curses_event, curses.ascii.iscntrl(curses_event), curses.ascii.isctrl(curses_event) and curses.ascii.unctrl(curses_event)))
-        key = get_key(curses_event, None)
+        key = get_key(curses_event)
         if key:
             yield events.KeyPress(curses_event, key)
         if not isinstance(curses_event, int) and not curses.ascii.isctrl(curses_event):
@@ -204,6 +206,7 @@ class CursesWrapper(IOWrapper):
         super().__init__(console_size, palette)
         self.console_size = console_size
         self._palette = palette
+        self.__prev_esc_delay = None
         self._screen = None
 
     def _signal_handler(self, signal_no, frame):
@@ -219,6 +222,10 @@ class CursesWrapper(IOWrapper):
     def initialize(self):
         if self.is_initialized:
             return
+
+        # Set ESC key delay
+        self.__prev_escdelay = os.environ.get('ESCDELAY')
+        os.environ['ESCDELAY'] = '25'
 
         screen = curses.initscr()
 
@@ -292,5 +299,8 @@ class CursesWrapper(IOWrapper):
             curses.echo()
             curses.nocbreak()
             curses.endwin()
+            del os.environ['ESCDELAY']
+            if self.__prev_escdelay:
+                os.environ['ESCDELAY'] = self.__prev_escdelay
             self._screen = None
 

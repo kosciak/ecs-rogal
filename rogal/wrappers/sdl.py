@@ -1,7 +1,7 @@
 import functools
 
 from .. import events
-from ..events.keys import Key
+from ..events.keys import Key, Keycode
 from ..events.mouse import MouseButton
 
 from .sdl_const import (
@@ -18,60 +18,60 @@ from .sdl_const import (
 
 
 SDL_KEYCODES = {
-    SDL_Keycode.SDLK_ESCAPE: Key.ESCAPE,
+    SDL_Keycode.SDLK_ESCAPE: Keycode.ESCAPE,
 
-    SDL_Keycode.SDLK_F1: Key.F1,
-    SDL_Keycode.SDLK_F2: Key.F2,
-    SDL_Keycode.SDLK_F3: Key.F3,
-    SDL_Keycode.SDLK_F4: Key.F4,
-    SDL_Keycode.SDLK_F5: Key.F5,
-    SDL_Keycode.SDLK_F6: Key.F6,
-    SDL_Keycode.SDLK_F7: Key.F7,
-    SDL_Keycode.SDLK_F8: Key.F8,
-    SDL_Keycode.SDLK_F9: Key.F9,
-    SDL_Keycode.SDLK_F10: Key.F10,
-    SDL_Keycode.SDLK_F11: Key.F11,
-    SDL_Keycode.SDLK_F12: Key.F12,
+    SDL_Keycode.SDLK_F1: Keycode.F1,
+    SDL_Keycode.SDLK_F2: Keycode.F2,
+    SDL_Keycode.SDLK_F3: Keycode.F3,
+    SDL_Keycode.SDLK_F4: Keycode.F4,
+    SDL_Keycode.SDLK_F5: Keycode.F5,
+    SDL_Keycode.SDLK_F6: Keycode.F6,
+    SDL_Keycode.SDLK_F7: Keycode.F7,
+    SDL_Keycode.SDLK_F8: Keycode.F8,
+    SDL_Keycode.SDLK_F9: Keycode.F9,
+    SDL_Keycode.SDLK_F10: Keycode.F10,
+    SDL_Keycode.SDLK_F11: Keycode.F11,
+    SDL_Keycode.SDLK_F12: Keycode.F12,
 
-    SDL_Keycode.SDLK_BACKSPACE: Key.BACKSPACE,
+    SDL_Keycode.SDLK_BACKSPACE: Keycode.BACKSPACE,
 
-    SDL_Keycode.SDLK_TAB: Key.TAB,
+    SDL_Keycode.SDLK_TAB: Keycode.TAB,
 
-    SDL_Keycode.SDLK_RETURN: Key.RETURN,
+    SDL_Keycode.SDLK_RETURN: Keycode.RETURN,
 
-    SDL_Keycode.SDLK_SPACE: Key.SPACE,
+    SDL_Keycode.SDLK_SPACE: Keycode.SPACE,
 
-    SDL_Keycode.SDLK_UP: Key.UP,
-    SDL_Keycode.SDLK_DOWN: Key.DOWN,
-    SDL_Keycode.SDLK_LEFT: Key.LEFT,
-    SDL_Keycode.SDLK_RIGHT: Key.RIGHT,
+    SDL_Keycode.SDLK_UP: Keycode.UP,
+    SDL_Keycode.SDLK_DOWN: Keycode.DOWN,
+    SDL_Keycode.SDLK_LEFT: Keycode.LEFT,
+    SDL_Keycode.SDLK_RIGHT: Keycode.RIGHT,
 
-    SDL_Keycode.SDLK_INSERT: Key.INSERT,
-    SDL_Keycode.SDLK_DELETE: Key.DELETE,
-    SDL_Keycode.SDLK_HOME: Key.HOME,
-    SDL_Keycode.SDLK_END: Key.END,
-    SDL_Keycode.SDLK_PAGEUP: Key.PAGE_UP,
-    SDL_Keycode.SDLK_PAGEDOWN: Key.PAGE_DOWN,
+    SDL_Keycode.SDLK_INSERT: Keycode.INSERT,
+    SDL_Keycode.SDLK_DELETE: Keycode.DELETE,
+    SDL_Keycode.SDLK_HOME: Keycode.HOME,
+    SDL_Keycode.SDLK_END: Keycode.END,
+    SDL_Keycode.SDLK_PAGEUP: Keycode.PAGE_UP,
+    SDL_Keycode.SDLK_PAGEDOWN: Keycode.PAGE_DOWN,
 
-    SDL_Keycode.SDLK_KP_0: Key.KP_0,
-    SDL_Keycode.SDLK_KP_1: Key.KP_1,
-    SDL_Keycode.SDLK_KP_2: Key.KP_2,
-    SDL_Keycode.SDLK_KP_3: Key.KP_3,
-    SDL_Keycode.SDLK_KP_4: Key.KP_4,
-    SDL_Keycode.SDLK_KP_5: Key.KP_5,
-    SDL_Keycode.SDLK_KP_6: Key.KP_6,
-    SDL_Keycode.SDLK_KP_7: Key.KP_7,
-    SDL_Keycode.SDLK_KP_8: Key.KP_8,
-    SDL_Keycode.SDLK_KP_9: Key.KP_9,
+    SDL_Keycode.SDLK_KP_0: Keycode.KP_0,
+    SDL_Keycode.SDLK_KP_1: Keycode.KP_1,
+    SDL_Keycode.SDLK_KP_2: Keycode.KP_2,
+    SDL_Keycode.SDLK_KP_3: Keycode.KP_3,
+    SDL_Keycode.SDLK_KP_4: Keycode.KP_4,
+    SDL_Keycode.SDLK_KP_5: Keycode.KP_5,
+    SDL_Keycode.SDLK_KP_6: Keycode.KP_6,
+    SDL_Keycode.SDLK_KP_7: Keycode.KP_7,
+    SDL_Keycode.SDLK_KP_8: Keycode.KP_8,
+    SDL_Keycode.SDLK_KP_9: Keycode.KP_9,
 
-    SDL_Keycode.SDLK_KP_DIVIDE: Key.KP_DIVIDE,
-    SDL_Keycode.SDLK_KP_MULTIPLY: Key.KP_MULTIPLY,
-    SDL_Keycode.SDLK_KP_MINUS: Key.KP_MINUS,
-    SDL_Keycode.SDLK_KP_PLUS: Key.KP_PLUS,
-    SDL_Keycode.SDLK_KP_ENTER: Key.KP_ENTER,
-    SDL_Keycode.SDLK_KP_PERIOD: Key.KP_PERIOD,
-    SDL_Keycode.SDLK_KP_COMMA: Key.KP_COMMA,
-    SDL_Keycode.SDLK_KP_CLEAR: Key.KP_CLEAR,
+    SDL_Keycode.SDLK_KP_DIVIDE: Keycode.KP_DIVIDE,
+    SDL_Keycode.SDLK_KP_MULTIPLY: Keycode.KP_MULTIPLY,
+    SDL_Keycode.SDLK_KP_MINUS: Keycode.KP_MINUS,
+    SDL_Keycode.SDLK_KP_PLUS: Keycode.KP_PLUS,
+    SDL_Keycode.SDLK_KP_ENTER: Keycode.KP_ENTER,
+    SDL_Keycode.SDLK_KP_PERIOD: Keycode.KP_PERIOD,
+    SDL_Keycode.SDLK_KP_COMMA: Keycode.KP_COMMA,
+    SDL_Keycode.SDLK_KP_CLEAR: Keycode.KP_CLEAR,
 }
 
 
@@ -86,12 +86,12 @@ SDL_MOUSE_BUTTONS = {
 
 @functools.lru_cache(maxsize=None)
 def get_key(sym, mod):
-    if 32 <= sym <= 126:
-        key = chr(sym)
+    if 32 < sym < 127:
+        keycode = sym
     else:
-        key = SDL_KEYCODES.get(sym, str(sym))
-    return Key.with_modifiers(
-        key,
+        keycode = SDL_KEYCODES.get(sym, sym)
+    return Key(
+        keycode,
         ctrl=mod & SDL_Keymod.KMOD_CTRL,
         alt=mod & SDL_Keymod.KMOD_ALT,
         shift=mod & SDL_Keymod.KMOD_SHIFT,
