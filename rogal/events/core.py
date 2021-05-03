@@ -113,17 +113,23 @@ class MouseMotion(Event):
 
     def __init__(self, source, x, y, dx, dy, buttons):
         super().__init__(source)
-        self.pixel_position = Position(x, y)
-        self.pixel_motion = Vector(dx, dy)
-        self.position = Position.ZERO
-        self.motion = Vector.ZERO
+        self.position = Position(x, y)
+        self.motion = Vector(dx, dy)
+        self.pixel_position = Position.ZERO
+        self.pixel_motion = Vector.ZERO
         self.buttons = buttons
 
-    def set_tile(self, x, y):
+    def set_position(self, x, y):
         self.position = Position(x, y)
 
-    def set_tile_motion(self, dx, dy):
+    def set_motion(self, dx, dy):
         self.motion = Vector(dx, dy)
+
+    def set_pixel_position(self, x, y):
+        self.pixel_position = Position(x, y)
+
+    def set_pixel_motion(self, dx, dy):
+        self.pixel_motion = Vector(dx, dy)
 
     @property
     def prev_position(self):
@@ -143,13 +149,16 @@ class MouseButtonEvent(Event):
 
     def __init__(self, source, x, y, button, clicks=1):
         super().__init__(source)
-        self.pixel_position = Position(x, y)
-        self.position = Position.ZERO
+        self.position = Position(x, y)
+        self.pixel_position = Position.ZERO
         self.button = button
         self.clicks = clicks
 
-    def set_tile(self, x, y):
+    def set_position(self, x, y):
         self.position = Position(x, y)
+
+    def set_pixel_position(self, x, y):
+        self.pixel_position = Position(x, y)
 
     def __repr__(self):
         return f'<{self.__class__.__name__} position={self.position}, button={self.button.name}, clicks={self.clicks}>'

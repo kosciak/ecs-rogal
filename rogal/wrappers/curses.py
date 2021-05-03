@@ -267,21 +267,6 @@ class CursesWrapper(IOWrapper):
     def flush(self, console):
         curses.doupdate()
 
-    def update_event(self, event):
-        if event.type == events.EventType.MOUSE_MOTION or \
-           event.type == events.EventType.MOUSE_BUTTON_PRESS or\
-           event.type == events.EventType.MOUSE_BUTTON_UP:
-            event.set_tile(*event.pixel_position)
-        return event
-
-    def process_events(self, events):
-        """Process events - update, filter, merge, etc."""
-        processed_events = []
-        for event in list(events):
-            event = self.update_event(event)
-            processed_events.append(event)
-        return processed_events
-
     def get_events_gen(self, wait=None):
         self.initialize()
 

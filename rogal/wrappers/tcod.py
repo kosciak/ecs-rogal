@@ -326,14 +326,18 @@ class TcodWrapper(IOWrapper):
         if event.type == EventType.MOUSE_MOTION or \
            event.type == EventType.MOUSE_BUTTON_PRESS or\
            event.type == EventType.MOUSE_BUTTON_UP:
-            x, y = self.context.pixel_to_tile(*event.pixel_position)
-            event.set_tile(x, y)
+            pixel_position = event.position
+            x, y = self.context.pixel_to_tile(*pixel_position)
+            event.set_position(x, y)
+            event.set_pixel_position(*pixel_position)
         if event.type == EventType.MOUSE_MOTION:
-            prev_position = event.pixel_position.moved_from(event.pixel_motion)
+            pixel_motion = event.motion
+            prev_position = event.pixel_position.moved_from(pixel_motion)
             prev_x, prev_y = self.context.pixel_to_tile(*prev_position)
             dx = event.position.x - prev_x
             dy = event.position.y - prev_y
-            event.set_tile_motion(dx, dy)
+            event.set_motion(dx, dy)
+            event.set_pixel_motion(*pixel_motion)
         return event
 
     def process_events(self, events):
