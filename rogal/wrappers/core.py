@@ -22,6 +22,13 @@ class IOWrapper:
         # TODO: Some event on palette change forcing everything to redraw?
         self._palette = palette
 
+    @property
+    def is_initialized(self):
+        return False
+
+    def initialize(self):
+        raise NotImplementedError()
+
     def create_console(self, size=None):
         # if not size:
         #     return None
@@ -34,7 +41,7 @@ class IOWrapper:
 
     def flush(self, console):
         """Show contents of given console on screen."""
-        return
+        raise NotImplementedError()
 
     def process_events(self, events):
         """Process events - update, filter, merge, etc."""
@@ -57,6 +64,7 @@ class IOWrapper:
             yield self._events_queue.popleft()
 
     def __enter__(self):
+        self.initialize()
         return self
 
     def close(self):

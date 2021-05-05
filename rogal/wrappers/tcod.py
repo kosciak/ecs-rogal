@@ -210,19 +210,22 @@ class TcodWrapper(IOWrapper):
     def is_initialized(self):
         return self._context is not None
 
+    def initialize(self):
+        context = tcod.context.new(
+            columns=self.console_size.width,
+            rows=self.console_size.height,
+            title=self.title,
+            tileset=self.tileset,
+            sdl_window_flags=self.resizable and tcod.context.SDL_WINDOW_RESIZABLE
+        )
+        if self.enable_joystick:
+            self.init_joystick()
+        self._context = context
+
     @property
     def context(self):
         if not self.is_initialized:
-            context = tcod.context.new(
-                columns=self.console_size.width,
-                rows=self.console_size.height,
-                title=self.title,
-                tileset=self.tileset,
-                sdl_window_flags=self.resizable and tcod.context.SDL_WINDOW_RESIZABLE
-            )
-            self._context = context
-            if self.enable_joystick:
-                self.init_joystick()
+            self.initialize()
         return self._context
 
     def load_tilesheet(self, tilesheet):
