@@ -3,6 +3,32 @@ import collections
 from ..console import Console, RootPanel
 
 
+class InputWrapper:
+
+    def __init__(self):
+        self._events_queue = collections.deque()
+
+    def process_events_gen(self, events_gen):
+        """Process events - update, filter, merge, etc."""
+        yield from events
+
+    def get_events_gen(self, wait=None):
+        """Get all pending events."""
+        yield from ()
+
+    def events_gen(self, wait=None):
+        """Yield events."""
+        while self._events_queue:
+            yield self._events_queue.popleft()
+
+        events_gen = self.get_events_gen(wait)
+        processed_events_gen = self.process_events_gen(events_gen)
+        self._events_queue.extend(processed_events_gen)
+
+        while self._events_queue:
+            yield self._events_queue.popleft()
+
+
 class IOWrapper:
 
     def __init__(self,
@@ -11,7 +37,7 @@ class IOWrapper:
     ):
         self.console_size = console_size
         self._palette = palette
-        self._events_queue = collections.deque()
+        self._input = None
 
     @property
     def palette(self):
@@ -43,25 +69,11 @@ class IOWrapper:
         """Show contents of given console on screen."""
         raise NotImplementedError()
 
-    def process_events(self, events):
-        """Process events - update, filter, merge, etc."""
-        return events
-
-    def get_events_gen(self, wait=None):
-        """Get all pending events."""
-        yield from ()
-
     def events_gen(self, wait=None):
         """Yield events."""
-        while self._events_queue:
-            yield self._events_queue.popleft()
-
-        events_gen = self.get_events_gen(wait)
-        processed_events = self.process_events(events_gen)
-        self._events_queue.extend(processed_events)
-
-        while self._events_queue:
-            yield self._events_queue.popleft()
+        if not self.is_initialized:
+            self.initialize()
+        yield from self._input.events_gen(wait)
 
     def __enter__(self):
         self.initialize()

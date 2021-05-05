@@ -8,7 +8,9 @@ from ..console import DEFAULT_CH, Align, RootPanel
 from ..events import EventType
 
 from .core import IOWrapper
+
 from . import sdl
+from .sdl_input import SDLInputWrapper
 
 
 log = logging.getLogger(__name__)
@@ -24,6 +26,7 @@ MOUSE_EVENT_TYPES = {
 }
 
 
+# TODO: Move to tcod_display?
 class TcodRootPanel(RootPanel):
 
     def __str__(self):
@@ -189,6 +192,39 @@ class TcodRootPanel(RootPanel):
         ansi.show_tcod_console(self.console)
 
 
+class TcodSDLInputWrapper(SDLInputWrapper):
+
+    def __init__(self, context):
+        super().__init__(sdl2=sdl2)
+        self.context = context
+
+    def update_mouse_event(self, event):
+        pixel_position = event.position
+        x, y = self.context.pixel_to_tile(*pixel_position)
+        event.set_position(x, y)
+        event.set_pixel_position(*pixel_position)
+
+        if event.type == EventType.MOUSE_MOTION:
+            pixel_motion = event.motion
+            prev_position = event.pixel_position.moved_from(pixel_motion)
+            prev_x, prev_y = self.context.pixel_to_tile(*prev_position)
+            dx = event.position.x - prev_x
+            dy = event.position.y - prev_y
+            event.set_motion(dx, dy)
+            event.set_pixel_motion(*pixel_motion)
+
+        return event
+
+    def process_events_gen(self, events_gen):
+        """Process events - update, filter, merge, etc."""
+        events_gen = super().process_events_gen(events_gen)
+        for i, event in enumerate(events_gen):
+            # TODO: Intercept WINDOW RESIZE and update self.console_size?
+            if event.type in MOUSE_EVENT_TYPES:
+                event = self.update_mouse_event(event)
+            yield event
+
+
 class TcodWrapper(IOWrapper):
 
     def __init__(self,
@@ -199,7 +235,7 @@ class TcodWrapper(IOWrapper):
         title=None,
         enable_joystick=False,
     ):
-        super().__init__(console_size, palette)
+        super().__init__(console_size=console_size, palette=palette)
         self._tileset = tileset
         self.resizable = resizable
         self.title=title
@@ -221,6 +257,7 @@ class TcodWrapper(IOWrapper):
         if self.enable_joystick:
             self.init_joystick()
         self._context = context
+        self._input = TcodSDLInputWrapper(self._context)
 
     @property
     def context(self):
@@ -331,54 +368,6 @@ class TcodWrapper(IOWrapper):
         # See: https://wiki.libsdl.org/SDL_CreateSystemCursor
         cursor = sdl2.SDL_CreateSystemCursor(cursor_id)
         sdl2.SDL_SetCursor(cursor)
-
-    def update_mouse_event(self, event):
-        pixel_position = event.position
-        x, y = self.context.pixel_to_tile(*pixel_position)
-        event.set_position(x, y)
-        event.set_pixel_position(*pixel_position)
-
-        if event.type == EventType.MOUSE_MOTION:
-            pixel_motion = event.motion
-            prev_position = event.pixel_position.moved_from(pixel_motion)
-            prev_x, prev_y = self.context.pixel_to_tile(*prev_position)
-            dx = event.position.x - prev_x
-            dy = event.position.y - prev_y
-            event.set_motion(dx, dy)
-            event.set_pixel_motion(*pixel_motion)
-
-        return event
-
-    def process_events(self, events):
-        """Process events - update, filter, merge, etc."""
-        processed_events = []
-        events = list(events)
-        for i, event in enumerate(events):
-            # TODO: Intercept WINDOW RESIZE and update self.console_size?
-            if event.type in MOUSE_EVENT_TYPES:
-                event = self.update_mouse_event(event)
-            if event.type == EventType.KEY_PRESS:
-                # Instead of Shift-a we want to use A, instead of Shift-; -> :
-                # It is easy with letters, but not so with punctuations in different places on 
-                # different keyboard layouts. But TextInput will always return correct text value
-                if i+1 < len(events):
-                    next_event = events[i+1]
-                    if not next_event.type == EventType.TEXT_INPUT:
-                        continue
-                    event.key = event.key.replace(next_event.text)
-            processed_events.append(event)
-        return processed_events
-
-    def get_events_gen(self, wait=None):
-        """Get all pending events."""
-        if wait is False:
-            events_gen = sdl2.get_events()
-        else:
-            # NOTE: wait==None will wait forever
-            if wait is True:
-                wait = None
-            events_gen = sdl2.wait_for_events(wait)
-        return events_gen
 
     def close(self):
         if self.is_initialized:
