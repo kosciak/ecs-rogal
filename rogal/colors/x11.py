@@ -637,6 +637,7 @@ X11_DARK = ColorPalette(
     name='X11 Dark',
     fg=X11_COLORS[Color.WHITE],
     bg=X11_COLORS[Color.BLACK],
+    color_names=X11Color,
     colors=X11_COLORS,
 )
 

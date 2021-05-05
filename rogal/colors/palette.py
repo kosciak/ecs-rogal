@@ -73,7 +73,7 @@ class ColorPalette:
         return self.get(key)
 
     def invert(self, name=None):
-        return ColorPalette(name or self.name, self.bg, self.fg, self.colors)
+        return ColorPalette(name or self.name, self.bg, self.fg, self.colors[:], color_names=self.color_names)
 
     def __repr__(self):
         return f'<ColorPalette name="{self.name}">'
