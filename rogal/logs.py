@@ -112,6 +112,19 @@ CONFIG = dict(
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
+        'file': {
+            'level': logging.DEBUG,
+            'class': 'logging.FileHandler',
+            'formatter': 'default',
+            'filename': 'rogal.log',
+            'mode': 'w',
+        },
+        'file-verbose': {
+            'level': logging.DEBUG,
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': 'rogal.log',
+        },
         'history': {
             'level': logging.INFO,
             'class': 'rogal.logs.GlobalHistoryHandler',
@@ -121,17 +134,35 @@ CONFIG = dict(
     loggers = {
         'rogal': {
             'level': logging.DEBUG,
-            'handlers': ['console', ],
+            'handlers': [
+                # 'console',
+                'file',
+            ],
+            'propagate': False,
+        },
+        'rogal.utils.perf': {
+            'level': logging.DEBUG,
+            'handlers': [
+                'console',
+                'file',
+            ],
             'propagate': False,
         },
         'rogal.messages': {
             'level': logging.INFO,
-            'handlers': ['console', 'history', ],
+            'handlers': [
+                # 'console',
+                'file',
+                'history',
+            ],
             'propagate': False,
         },
         '': {
             'level': logging.INFO,
-            'handlers': ['console-verbose', ],
+            'handlers': [
+                # 'console-verbose',
+                'file-verbose',
+            ],
         },
     },
 )
