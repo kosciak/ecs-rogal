@@ -227,6 +227,8 @@ class TcodSDLInputWrapper(SDLInputWrapper):
 
 class TcodWrapper(IOWrapper):
 
+    ROOT_PANEL_CLS = TcodRootPanel
+
     def __init__(self,
         console_size,
         palette,
@@ -332,16 +334,10 @@ class TcodWrapper(IOWrapper):
         # NOTE: new_console returns console with order=="C"
         return self.context.new_console(*size)
 
-    def create_panel(self, size=None):
-        console = self.create_console(size)
-        return TcodRootPanel(console, self.palette)
-
-    def flush(self, console):
-        if isinstance(console, RootPanel):
-            console = console.console
+    def flush(self, panel):
         if self.is_initialized:
             # TODO: Check options and resizing behaviour
-            self.context.present(console)
+            self.context.present(panel.console)
 
     def init_joystick(self):
         # See: https://wiki.libsdl.org/SDL_JoystickOpen

@@ -1,6 +1,6 @@
 import collections
 
-from ..console import Console, RootPanel
+from ..console import RootPanel
 
 
 class InputWrapper:
@@ -10,7 +10,7 @@ class InputWrapper:
 
     def process_events_gen(self, events_gen):
         """Process events - update, filter, merge, etc."""
-        yield from events
+        yield from events_gen
 
     def get_events_gen(self, wait=None):
         """Get all pending events."""
@@ -31,9 +31,13 @@ class InputWrapper:
 
 class IOWrapper:
 
+    CONSOLE_CLS = None
+    ROOT_PANEL_CLS = RootPanel
+
     def __init__(self,
         console_size,
         palette,
+        *args, **kwargs,
     ):
         self.console_size = console_size
         self._palette = palette
@@ -56,16 +60,14 @@ class IOWrapper:
         raise NotImplementedError()
 
     def create_console(self, size=None):
-        # if not size:
-        #     return None
         size = size or self.console_size
-        return Console(size)
+        return self.CONSOLE_CLS(size)
 
     def create_panel(self, size=None):
         console = self.create_console(size)
-        return RootPanel(console, self.palette)
+        return self.ROOT_PANEL_CLS(console, self.palette)
 
-    def flush(self, console):
+    def flush(self, panel):
         """Show contents of given console on screen."""
         raise NotImplementedError()
 
@@ -88,13 +90,4 @@ class IOWrapper:
 
     def __repr__(self):
         return f'<{self.__class__.__name__}>'
-
-
-class MockWrapper(IOWrapper):
-
-    def flush(self, console):
-        if isinstance(console, RootPanel):
-            console = console.console
-        from . import ansi
-        ansi.show_console(console)
 

@@ -226,13 +226,23 @@ def show_color(color):
     print(f'{bg_rgb(*color.rgb)} {color.rgb} {reset()}')
 
 
-def show_console(console):
+def show_rgb_console(console):
+    prev_fg = None
+    prev_bg = None
     lines = []
-    for row in console.tiles_rgb:
+    for row in console.tiles:
         row_txt = []
         for ch, fg, bg in row:
-            row_txt.append(fg_rgb(*fg)+bg_rgb(*bg)+chr(ch)+reset())
+            # row_txt.append(fg_rgb(*fg)+bg_rgb(*bg)+chr(ch)+reset())
+            if prev_fg is None or not (fg == prev_fg).all():
+                row_txt.append(fg_rgb(*fg))
+                prev_fg = fg
+            if prev_bg is None or not (bg == prev_bg).all():
+                row_txt.append(bg_rgb(*bg))
+                prev_bg = bg
+            row_txt.append(chr(ch))
         lines.append(''.join(row_txt))
+    lines.append(reset())
     sys.stdout.write('\n'.join(lines))
     sys.stdout.flush()
 

@@ -4,7 +4,9 @@ import uuid
 
 from .geometry import Size
 
-from .wrappers import TcodWrapper
+from .wrappers.tcod import TcodWrapper
+from .wrappers.curses import CursesWrapper
+from .wrappers.ansi import ANSIWrapper
 
 from .rng import rng, generate_seed
 from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerator, BSPLevelGenerator
@@ -82,6 +84,8 @@ def run():
 
     # Initialize Wrapper
     ecs.resources.wrapper = TcodWrapper(
+    # ecs.resources.wrapper = CursesWrapper(
+    # ecs.resources.wrapper = ANSIWrapper(
         console_size=CONSOLE_SIZE,
         palette=ecs.resources.tileset.palette,
         tileset=ecs.resources.tileset.tilesheet,

@@ -57,13 +57,12 @@ class LayoutSytem(ConsoleSystem):
 
 class RenderingSystem(ConsoleSystem):
 
-    FPS = 35
+    FPS = 30
 
     def __init__(self, ecs):
         super().__init__(ecs)
 
         self.tileset = self.ecs.resources.tileset
-        self.default_colors = Colors(self.tileset.palette.fg, self.tileset.palette.bg)
 
         self._last_run = None
         self._fps = None
@@ -89,7 +88,7 @@ class RenderingSystem(ConsoleSystem):
 
     def render(self):
         # Clear panel
-        self.root.clear(self.default_colors)
+        self.root.clear()
 
         # Render all panels
         consoles = self.ecs.manage(components.Console)
@@ -103,7 +102,8 @@ class RenderingSystem(ConsoleSystem):
                 panel_renderer.renderer.render(console.panel)
 
         # Show rendered panel
-        self.wrapper.flush(self.root)
+        with perf.Perf(self.wrapper.flush):
+            self.wrapper.flush(self.root)
 
     def run(self):
         if not self.ecs.resources.current_player:

@@ -27,7 +27,7 @@ class WidgetsBuilder:
         self.ecs = ecs
 
         self.tileset = self.ecs.resources.tileset
-        self.palette = self.tileset.palette
+        self.palette = self.ecs.resources.wrapper.palette
         self.default_colors = Colors(self.palette.fg, self.palette.bg)
 
         self.window_frame = decorations.Frame(

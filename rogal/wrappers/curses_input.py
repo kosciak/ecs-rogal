@@ -286,6 +286,49 @@ def get_key(key, escaped=False):
     return Key(keycode)
 
 
+def parse_mouse_event(event):
+    # NOTE: mz is always 0
+    device_id, mx, my, mz, button_state = curses.getmouse()
+
+    # TODO: MouseButton + Modifers? curses.BUTTON_SHIFT, curses.BUTTON_ALT, curses.BUTTON_CTRL flags
+    modifiers = Modifier.NONE
+    if button_state & curses.BUTTON_CTRL:
+        modifiers |= Modifier.CTRL
+    if button_state & curses.BUTTON_ALT:
+        modifiers |= Modifier.ALT
+    if button_state & curses.BUTTON_SHIFT:
+        modifiers |= Modifier.SHIFT
+
+    # NOTE: if curses.mouseinterval > 0 - only *_CLICKED is emited (instead of *_PRESSED, *_RELEASED)
+    #       Otherwise separate *_PRESSED and *_RELEASED are emitted
+    if button_state & curses.BUTTON1_CLICKED:
+        yield events.MouseButtonPress(event, mx, my, MouseButton.LEFT)
+        yield events.MouseButtonUp(event, mx, my, MouseButton.LEFT)
+    if button_state & curses.BUTTON1_PRESSED:
+        yield events.MouseButtonPress(event, mx, my, MouseButton.LEFT)
+    if button_state & curses.BUTTON1_RELEASED:
+        yield events.MouseButtonUp(event, mx, my, MouseButton.LEFT)
+
+    if button_state & curses.BUTTON2_CLICKED:
+        yield events.MouseButtonPress(event, mx, my, MouseButton.MIDDLE)
+        yield events.MouseButtonUp(event, mx, my, MouseButton.MIDDLE)
+    if button_state & curses.BUTTON2_PRESSED:
+        yield events.MouseButtonPress(event, mx, my, MouseButton.MIDDLE)
+    if button_state & curses.BUTTON2_RELEASED:
+        yield events.MouseButtonUp(event, mx, my, MouseButton.MIDDLE)
+
+    if button_state & curses.BUTTON3_CLICKED:
+        yield events.MouseButtonPress(event, mx, my, MouseButton.RIGHT)
+        yield events.MouseButtonUp(event, mx, my, MouseButton.RIGHT)
+    if button_state & curses.BUTTON3_PRESSED:
+        yield events.MouseButtonPress(event, mx, my, MouseButton.RIGHT)
+    if button_state & curses.BUTTON3_RELEASED:
+        yield events.MouseButtonUp(event, mx, my, MouseButton.RIGHT)
+
+    # TODO: BUTTON*_DOUBLE_CLICKED
+    # TODO: MouseWheel events? WheelUp seems to be: BUTTON4_PRESSED and WheelDown: 0x200000
+
+
 def parse_event(event, escaped=False):
     if event == curses.ERR:
         # No event returned
@@ -296,43 +339,13 @@ def parse_event(event, escaped=False):
         return
 
     if event == curses.KEY_MOUSE:
-        # NOTE: mz is always 0
-        device_id, mx, my, mz, button_state = curses.getmouse()
-
-        # NOTE: if curses.mouseinterval > 0 - only *_CLICKED is emited (instead of *_PRESSED, *_RELEASED)
-        #       Otherwise separate *_PRESSED and *_RELEASED are emitted
-        if button_state & curses.BUTTON1_CLICKED:
-            yield events.MouseButtonPress(event, mx, my, MouseButton.LEFT)
-            yield events.MouseButtonUp(event, mx, my, MouseButton.LEFT)
-        if button_state & curses.BUTTON1_PRESSED:
-            yield events.MouseButtonPress(event, mx, my, MouseButton.LEFT)
-        if button_state & curses.BUTTON1_RELEASED:
-            yield events.MouseButtonUp(event, mx, my, MouseButton.LEFT)
-
-        if button_state & curses.BUTTON2_CLICKED:
-            yield events.MouseButtonPress(event, mx, my, MouseButton.MIDDLE)
-            yield events.MouseButtonUp(event, mx, my, MouseButton.MIDDLE)
-        if button_state & curses.BUTTON2_PRESSED:
-            yield events.MouseButtonPress(event, mx, my, MouseButton.MIDDLE)
-        if button_state & curses.BUTTON2_RELEASED:
-            yield events.MouseButtonUp(event, mx, my, MouseButton.MIDDLE)
-
-        if button_state & curses.BUTTON3_CLICKED:
-            yield events.MouseButtonPress(event, mx, my, MouseButton.RIGHT)
-            yield events.MouseButtonUp(event, mx, my, MouseButton.RIGHT)
-        if button_state & curses.BUTTON3_PRESSED:
-            yield events.MouseButtonPress(event, mx, my, MouseButton.RIGHT)
-        if button_state & curses.BUTTON3_RELEASED:
-            yield events.MouseButtonUp(event, mx, my, MouseButton.RIGHT)
-
-        # TODO: BUTTON*_DOUBLE_CLICKED
-        # TODO: MouseWheel events? WheelUp seems to be: BUTTON4_PRESSED and WheelDown: 0x200000
+        yield from parse_mouse_event(event)
         return
 
     key = get_key(event, escaped=escaped)
     if key:
         yield events.KeyPress(event, key)
-    if isinstance(event, str) and not curses.ascii.isctrl(event):
+    if isinstance(event, str) and not curses.ascii.isctrl(event) and not escaped:
         yield events.TextInput(event, event)
     if key:
         yield events.KeyUp(event, key)

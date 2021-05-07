@@ -102,19 +102,16 @@ def get_y(panel_height, height, align, padding=Padding.ZERO):
     return y
 
 
-# TODO: rename to RGBConsole
 class Console:
 
-    TILES_DTYPE = dtypes.CONSOLE_RGB_DT
-    DEFAULT_FG = RGB(255, 255, 255).rgb
-    DEFAULT_BG = RGB(0, 0, 0).rgb
+    TILES_DTYPE = None
+    DEFAULT_FG = None
+    DEFAULT_BG = None
 
     def __init__(self, size):
         size = Size(size.height, size.width)
         self.tiles = np.zeros(size, dtype=self.TILES_DTYPE, order="C")
-        self.ch[...] = DEFAULT_CH
-        self.fg[...] = self.DEFAULT_FG
-        self.bg[...] = self.DEFAULT_BG
+        self.tiles[...] = (DEFAULT_CH, self.DEFAULT_FG, self.DEFAULT_BG)
 
     @property
     def width(self):
@@ -135,6 +132,20 @@ class Console:
     @property
     def bg(self):
         return self.tiles['bg']
+
+
+class ConsoleRGB(Console):
+
+    TILES_DTYPE = dtypes.CONSOLE_RGB_DT
+    DEFAULT_FG = RGB(255, 255, 255).rgb
+    DEFAULT_BG = RGB(0, 0, 0).rgb
+
+
+class ConsoleIndexedColors(Console):
+
+    TILES_DTYPE = dtypes.TILES_INDEXED_COLORS_DT
+    DEFAULT_FG = -1
+    DEFAULT_BG = -1
 
 
 class TilesGrid(WithSizeMixin):
@@ -318,9 +329,17 @@ class RootPanel(Panel):
         self.palette = palette
         self.clear()
 
+    def get_fg_bg(self, colors):
+        fg = self.get_color(colors and colors.fg)
+        if fg is None:
+            fg = self.get_color(self.palette.fg)
+        bg = self.get_color(colors and colors.bg)
+        if bg is None:
+            bg = self.get_color(self.palette.bg)
+        return fg, bg
+
     def _empty_tile(self, colors):
-        fg = self.get_color(colors and colors.fg) or self.palette.fg
-        bg = self.get_color(colors and colors.bg) or self.palette.bg
+        fg, bg = self.get_fg_bg(colors)
         return Tile.create(DEFAULT_CH, fg=fg, bg=bg)
 
     def create_panel(self, position, size):
@@ -328,7 +347,6 @@ class RootPanel(Panel):
 
     @functools.lru_cache(maxsize=None)
     def get_color(self, color):
-        # TODO: move to Console.get_color(color, palette) ??
         if color is None:
             return None
         if isinstance(color, Color):
@@ -341,8 +359,7 @@ class RootPanel(Panel):
         return self.palette.get(color).rgb
 
     def clear(self, colors=None, *args, **kwargs):
-        fg = self.get_color(colors and colors.fg) or self.palette.fg.rgb
-        bg = self.get_color(colors and colors.bg) or self.palette.bg.rgb
+        fg, bg = self.get_fg_bg(colors)
         self.console.tiles[...] = (DEFAULT_CH, fg, bg)
 
     def _draw(self, ch, colors, position, size=None, *args, **kwargs):
@@ -411,8 +428,8 @@ class RootPanel(Panel):
             self.console.fg[i:i+width, j:j+height] = bg
             self.console.bg[i:i+width, j:j+height] = fg
         else:
-            fg = tuple(self.console.fg[i, j])
-            bg = tuple(self.console.bg[i, j])
+            fg = np.copy(self.console.fg[i, j])
+            bg = np.copy(self.console.bg[i, j])
             self.console.fg[i, j] = bg
             self.console.bg[i, j] = fg
 

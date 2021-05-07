@@ -92,7 +92,7 @@ class Tileset:
 
     def parse_revealed_fn(self, data):
         for name, value in data['revealed'].items():
-            return globals()[name](self.palette.get(value))
+            return globals()[name](value)
 
     def parse_tiles(self, data):
         tiles = {}

@@ -1,6 +1,9 @@
 import curses
+import functools
 import logging
 import os
+
+from ..console import ConsoleIndexedColors, RootPanel
 
 from .core import IOWrapper
 from .curses_input import CursesInputWrapper
@@ -8,10 +11,6 @@ from .curses_input import CursesInputWrapper
 
 log = logging.getLogger(__name__)
 
-
-# NOTE: Just some biolerplate code for initialisation / closing curses screen
-#       Main problem is explicit initialisation of all color pairs
-#       Would need to reverse check index of color in pallette, and init_pair() for each combination
 
 def dump_capabilities(window):
     capabilities = dict(
@@ -30,6 +29,19 @@ def dump_capabilities(window):
     for key, value in capabilities.items():
         f.write(f'{key} = {value}\n')
     f.close()
+
+
+class CursesRootPanel(RootPanel):
+
+    def __init__(self, window, console, palette):
+        super().__init__(console, palette)
+        self.window = window
+
+    @functools.lru_cache(maxsize=None)
+    def get_color(self, color):
+        if color is None:
+            return None
+        return self.palette.get(color)
 
 
 class ColorPairsManager:
@@ -61,6 +73,9 @@ class ColorPairsManager:
 
 class CursesWrapper(IOWrapper):
 
+    CONSOLE_CLS = ConsoleIndexedColors
+    ROOT_PANEL_CLS = CursesRootPanel
+
     def __init__(self,
         console_size,
         palette,
@@ -78,13 +93,19 @@ class CursesWrapper(IOWrapper):
         can_change_color = curses.can_change_color()
         rgb_factor = 1000 / 255
         palette = self._palette.invert()
-        # palette.fg = -1
-        # palette.bg = -1
+        if self._palette.fg in self._palette.colors:
+            palette.fg = self._palette.colors.index(self._palette.fg)
+        else:
+            palette.fg = -1
+        if self._palette.bg in self._palette.colors:
+            palette.bg = self._palette.colors.index(self._palette.bg)
+        else:
+            palette.bg = -1
         for i, color in enumerate(palette.colors):
             if can_change_color and i < max_colors:
                 rgb = color.to_rgb()
                 curses.init_color(i, round(rgb.r*rgb_factor), round(rgb.g*rgb_factor), round(rgb.b*rgb_factor))
-            # palette.colors[i] = i
+            palette.colors[i] = i
         return palette
 
     @property
@@ -113,6 +134,8 @@ class CursesWrapper(IOWrapper):
         window.scrollok(False)
         # Make getch() non blocking; consider curses.halfdelay()
         window.nodelay(True)
+        # Reduce cursor movement
+        window.leaveok(True)
         return window
 
     def initialize(self):
@@ -131,10 +154,16 @@ class CursesWrapper(IOWrapper):
         curses.raw()
         # No buffering on keyboard input
         curses.cbreak()
+        # Allow 8-bit characters input
+        curses.meta(True)
+
         # Set the mouse events to be reported
         curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
         # No interval for mouse clicks - separate BUTTONx_PRESSED / _RELEASED will be used!
         curses.mouseinterval(0)
+
+        # Hide cursor
+        curses.curs_set(0)
 
         # Initialize colors and set default console colors as color_pair(0)
         try:
@@ -145,13 +174,37 @@ class CursesWrapper(IOWrapper):
 
         self._screen = self.initialize_window(screen)
         self._input = CursesInputWrapper(self._screen)
-        dump_capabilities(self._screen)
+        # dump_capabilities(self._screen)
 
     @property
     def screen(self):
         return self._screen
 
-    def flush(self, console):
+    def create_panel(self, size=None):
+        console = self.create_console(size)
+        window = self.initialize_window(
+            curses.newwin(console.height, console.width)
+        )
+        return self.ROOT_PANEL_CLS(window, console, self.palette)
+
+    def flush(self, panel):
+        prev_fg = -1
+        prev_bg = -1
+        color_pair = self.color_pairs.get_pair(prev_fg, prev_bg)
+        y = 0
+        for row in panel.console.tiles:
+            panel.window.move(y, 0)
+            for ch, fg, bg in row:
+                if (not fg == prev_fg) or (not bg == prev_bg):
+                    color_pair = self.color_pairs.get_pair(fg, bg)
+                    panel.window.attrset(color_pair)
+                try:
+                    panel.window.addch(chr(ch))
+                except curses.error:
+                    # NOTE: Writing to last column & row moves cursor outside window and raises error
+                    pass
+            y += 1
+            panel.window.refresh()
         curses.doupdate()
 
     def close(self):

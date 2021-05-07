@@ -12,12 +12,19 @@ CONSOLE_RGB_DT = np.dtype({
 
 RGB_DT = np.dtype('3B')
 RGBA_DT = np.dtype('4B')
+INDEXED_COLOR_DT = np.dtype('i2')
 
 
-TILE_RGB_DT = np.dtype([
+TILES_RGB_DT = np.dtype([
     ('ch',      '<i4'),
     ('fg',      RGB_DT),
     ('bg',      RGB_DT),
+])
+
+TILES_INDEXED_COLORS_DT = np.dtype([
+    ('ch',      '<i4'),
+    ('fg',      INDEXED_COLOR_DT),
+    ('bg',      INDEXED_COLOR_DT),
 ])
 
 
