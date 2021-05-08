@@ -237,10 +237,9 @@ class TcodWrapper(IOWrapper):
         title=None,
         enable_joystick=False,
     ):
-        super().__init__(console_size=console_size, palette=palette)
+        super().__init__(console_size=console_size, palette=palette, title=title)
         self._tileset = tileset
         self.resizable = resizable
-        self.title=title
         self._context = None
         self.enable_joystick = enable_joystick
 

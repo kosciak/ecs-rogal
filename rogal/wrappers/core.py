@@ -37,8 +37,10 @@ class IOWrapper:
     def __init__(self,
         console_size,
         palette,
+        title=None,
         *args, **kwargs,
     ):
+        self.title = title
         self.console_size = console_size
         self._palette = palette
         self._input = None

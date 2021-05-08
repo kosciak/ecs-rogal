@@ -2,6 +2,9 @@ import curses
 import functools
 import logging
 import os
+import sys
+
+import numpy as np
 
 from ..console import ConsoleIndexedColors, RootPanel
 
@@ -59,6 +62,8 @@ class ColorPairsManager:
         self.color_pairs[color_pair] = next_pair_num
 
     def get_pair(self, fg, bg):
+        fg = int(fg)
+        bg = int(bg)
         color_pair = tuple(sorted([fg, bg]))
         pair_num = self.color_pairs.get(color_pair)
         if pair_num:
@@ -81,7 +86,7 @@ class CursesWrapper(IOWrapper):
         palette,
         *args, **kwargs,
     ):
-        super().__init__(console_size=console_size, palette=palette)
+        super().__init__(console_size=console_size, palette=palette, *args, **kwargs)
         self._indexed_palette = None
         self.color_pairs = ColorPairsManager()
         self._screen = None
@@ -142,6 +147,12 @@ class CursesWrapper(IOWrapper):
         if self.is_initialized:
             return
 
+        # Set terminal title
+        sys.stdout.write('\033[22;0t') # Save current title on stack
+        if self.title:
+            sys.stdout.write(f"\x1b]0;{self.title}\x07")
+        sys.stdout.flush()
+
         # Set ESC key delay
         self.__prev_escdelay = os.environ.get('ESCDELAY')
         os.environ['ESCDELAY'] = '25'
@@ -180,6 +191,9 @@ class CursesWrapper(IOWrapper):
     def screen(self):
         return self._screen
 
+    def get_size(self):
+        return self.screen.getmaxyx()
+
     def create_panel(self, size=None):
         console = self.create_console(size)
         window = self.initialize_window(
@@ -191,20 +205,17 @@ class CursesWrapper(IOWrapper):
         prev_fg = -1
         prev_bg = -1
         color_pair = self.color_pairs.get_pair(prev_fg, prev_bg)
-        y = 0
-        for row in panel.console.tiles:
-            panel.window.move(y, 0)
-            for ch, fg, bg in row:
-                if (not fg == prev_fg) or (not bg == prev_bg):
-                    color_pair = self.color_pairs.get_pair(fg, bg)
-                    panel.window.attrset(color_pair)
-                try:
-                    panel.window.addch(chr(ch))
-                except curses.error:
-                    # NOTE: Writing to last column & row moves cursor outside window and raises error
-                    pass
-            y += 1
-            panel.window.refresh()
+        panel.window.move(0, 0)
+        for ch, fg, bg in np.nditer([panel.console.ch, panel.console.fg, panel.console.bg]):
+            if (not fg == prev_fg) or (not bg == prev_bg):
+                color_pair = self.color_pairs.get_pair(fg, bg)
+                panel.window.attrset(color_pair)
+            try:
+                panel.window.addch(chr(ch))
+            except curses.error:
+                # NOTE: Writing to last column & row moves cursor outside window and raises error
+                pass
+        panel.window.refresh()
         curses.doupdate()
 
     def close(self):
@@ -219,5 +230,9 @@ class CursesWrapper(IOWrapper):
                 del os.environ['ESCDELAY']
                 if self.__prev_escdelay:
                     os.environ['ESCDELAY'] = self.__prev_escdelay
+
+            sys.stdout.write('\033[23;0t') # Restore previous title from stack
+            sys.stdout.flush()
+
             self._screen = None
 
