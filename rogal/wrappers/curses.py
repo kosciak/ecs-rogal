@@ -4,8 +4,6 @@ import logging
 import os
 import sys
 
-import numpy as np
-
 from ..console import ConsoleIndexedColors, RootPanel
 
 from .core import IOWrapper
@@ -62,8 +60,6 @@ class ColorPairsManager:
         self.color_pairs[color_pair] = next_pair_num
 
     def get_pair(self, fg, bg):
-        fg = int(fg)
-        bg = int(bg)
         color_pair = tuple(sorted([fg, bg]))
         pair_num = self.color_pairs.get(color_pair)
         if pair_num:
@@ -206,12 +202,12 @@ class CursesWrapper(IOWrapper):
         prev_bg = -1
         color_pair = self.color_pairs.get_pair(prev_fg, prev_bg)
         panel.window.move(0, 0)
-        for ch, fg, bg in np.nditer([panel.console.ch, panel.console.fg, panel.console.bg]):
+        for ch, fg, bg in panel.console.tiles_gen(encode_ch=chr):
             if (not fg == prev_fg) or (not bg == prev_bg):
                 color_pair = self.color_pairs.get_pair(fg, bg)
                 panel.window.attrset(color_pair)
             try:
-                panel.window.addch(chr(ch))
+                panel.window.addch(ch)
             except curses.error:
                 # NOTE: Writing to last column & row moves cursor outside window and raises error
                 pass

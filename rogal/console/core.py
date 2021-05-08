@@ -147,6 +147,10 @@ class ConsoleIndexedColors(Console):
     DEFAULT_FG = -1
     DEFAULT_BG = -1
 
+    def tiles_gen(self, encode_ch=int):
+        for tile in np.nditer(self.tiles, flags=['refs_ok']):
+            yield encode_ch(tile['ch']), int(tile['fg']), int(tile['bg'])
+
 
 class TilesGrid(WithSizeMixin):
 

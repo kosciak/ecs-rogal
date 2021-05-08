@@ -233,7 +233,6 @@ def show_rgb_console(console):
     for row in console.tiles:
         row_txt = []
         for ch, fg, bg in row:
-            # row_txt.append(fg_rgb(*fg)+bg_rgb(*bg)+chr(ch)+reset())
             if prev_fg is None or not (fg == prev_fg).all():
                 row_txt.append(fg_rgb(*fg))
                 prev_fg = fg
