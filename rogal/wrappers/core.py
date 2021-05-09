@@ -61,6 +61,9 @@ class IOWrapper:
     def initialize(self):
         raise NotImplementedError()
 
+    def terminate(self):
+        raise NotImplementedError()
+
     def create_console(self, size=None):
         size = size or self.console_size
         return self.CONSOLE_CLS(size)
@@ -85,7 +88,8 @@ class IOWrapper:
 
     def close(self):
         """Close and clean up all resources before exiting."""
-        return
+        if self.is_initialized:
+            self.terminate()
 
     def __exit__(self, *args):
         self.close()

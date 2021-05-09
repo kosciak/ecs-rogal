@@ -188,8 +188,8 @@ class TcodRootPanel(RootPanel):
         self.parent.tiles_rgb[self.x:self.x2, self.y:self.y2] = tiles_rgb
 
     def show(self):
-        from . import ansi
-        ansi.show_tcod_console(self.console)
+        from ..escape_seq import ansi
+        ansi.show_rgb_console(self.console)
 
 
 class TcodSDLInputWrapper(SDLInputWrapper):
@@ -259,6 +259,10 @@ class TcodWrapper(IOWrapper):
             self.init_joystick()
         self._context = context
         self._input = TcodSDLInputWrapper(self._context)
+
+    def terminate(self):
+        self.context.close()
+        self._context = None
 
     @property
     def context(self):
@@ -363,9 +367,4 @@ class TcodWrapper(IOWrapper):
         # See: https://wiki.libsdl.org/SDL_CreateSystemCursor
         cursor = sdl2.SDL_CreateSystemCursor(cursor_id)
         sdl2.SDL_SetCursor(cursor)
-
-    def close(self):
-        if self.is_initialized:
-            self.context.close()
-            self._context = None
 

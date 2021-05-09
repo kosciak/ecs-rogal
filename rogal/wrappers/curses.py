@@ -5,6 +5,7 @@ import os
 import sys
 
 from ..console import ConsoleIndexedColors, RootPanel
+from ..escape_seq import term
 
 from .core import IOWrapper
 from .curses_input import CursesInputWrapper
@@ -139,39 +140,17 @@ class CursesWrapper(IOWrapper):
         window.leaveok(True)
         return window
 
-    def initialize(self):
-        if self.is_initialized:
-            return
-
-        # Set terminal title
-        sys.stdout.write('\033[22;0t') # Save current title on stack
-        if self.title:
-            sys.stdout.write(f"\x1b]0;{self.title}\x07")
-        sys.stdout.flush()
-
-        # Set ESC key delay
+    def set_escdelay(self, delay):
         self.__prev_escdelay = os.environ.get('ESCDELAY')
-        os.environ['ESCDELAY'] = '25'
+        os.environ['ESCDELAY'] = str(delay)
 
-        screen = curses.initscr()
+    def restore_escdelay(self):
+        if 'ESCDELAY' in os.environ:
+            del os.environ['ESCDELAY']
+            if self.__prev_escdelay:
+                os.environ['ESCDELAY'] = self.__prev_escdelay
 
-        # Turn off echoing of keys
-        curses.noecho()
-        # Raw mode - this will catch ^q and ^s (but still not ^z and ^c)
-        curses.raw()
-        # No buffering on keyboard input
-        curses.cbreak()
-        # Allow 8-bit characters input
-        curses.meta(True)
-
-        # Set the mouse events to be reported
-        curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
-        # No interval for mouse clicks - separate BUTTONx_PRESSED / _RELEASED will be used!
-        curses.mouseinterval(0)
-
-        # Hide cursor
-        curses.curs_set(0)
-
+    def initialize_colors(self):
         # Initialize colors and set default console colors as color_pair(0)
         try:
             curses.start_color()
@@ -179,9 +158,88 @@ class CursesWrapper(IOWrapper):
         except:
             pass
 
-        self._screen = self.initialize_window(screen)
-        self._input = CursesInputWrapper(self._screen)
+    def initialize_screen(self):
+        self.set_escdelay(25) # NOTE: Must be called before initscr()!
+
+        screen = curses.initscr()
+
+        # Turn off echoing of keys
+        curses.noecho()
+
+        # Raw mode - this will catch ^q and ^s (but still not ^z and ^c)
+        curses.raw()
+        # No buffering on keyboard input
+        # curses.cbreak()
+
+        self.initialize_colors()
+
+        return self.initialize_window(screen)
+
+    def restore_screen(self):
+        self._screen.keypad(False)
+        curses.echo()
+        curses.noraw()
+        curses.nocbreak()
+        curses.endwin()
+
+        self.restore_escdelay()
+
+    def set_title(self, title):
+        sys.stdout.write(term.save_title())
+        if title:
+            sys.stdout.write(term.set_title(title))
+        sys.stdout.flush()
+
+    def restore_title(self):
+        sys.stdout.write(term.restore_title())
+        sys.stdout.flush()
+
+    def initialize_keyboard(self):
+        # Allow 8-bit characters input
+        curses.meta(True)
+
+    def initialize_mouse(self):
+        # Set the mouse events to be reported
+        curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
+        # No interval for mouse clicks - separate BUTTONx_PRESSED / _RELEASED will be used!
+        curses.mouseinterval(0)
+
+    def initialize_input(self):
+        self.initialize_keyboard()
+        self.initialize_mouse()
+        input = CursesInputWrapper(self._screen)
+        return input
+
+    def hide_cursor(self):
+        curses.curs_set(0)
+
+    def show_cursor(self):
+        curses.curs_set(2)
+
+    def initialize(self):
+        if self.is_initialized:
+            return
+        # Mouse support?
+        # See: https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
+        # NOTE: Seems to be messing with curses mouse support...
+        # sys.stdout.write('\033[?1000h')
+        # sys.stdout.write('\033[?1003h')
+        # sys.stdout.write('\033[?1015h')
+        # sys.stdout.write('\033[?1006h')
+
+        self.set_title(self.title)
+
+        self._screen = self.initialize_screen()
+        self._input = self.initialize_input()
+
+        self.hide_cursor()
         # dump_capabilities(self._screen)
+
+    def terminate(self):
+        # Cleanup all settings back to defaults
+        self.restore_screen()
+        self.restore_title()
+        self._screen = None
 
     @property
     def screen(self):
@@ -191,6 +249,7 @@ class CursesWrapper(IOWrapper):
         return self.screen.getmaxyx()
 
     def create_panel(self, size=None):
+        # TODO: Ensure terminal size is big enough!
         console = self.create_console(size)
         window = self.initialize_window(
             curses.newwin(console.height, console.width)
@@ -213,22 +272,4 @@ class CursesWrapper(IOWrapper):
                 pass
         panel.window.refresh()
         curses.doupdate()
-
-    def close(self):
-        if self.is_initialized:
-            # Cleanup all settings back to defaults
-            self._screen.keypad(False)
-            curses.echo()
-            curses.nocbreak()
-            curses.endwin()
-            # Set ESCDELAY back if it was altered
-            if 'ESCDELAY' in os.environ:
-                del os.environ['ESCDELAY']
-                if self.__prev_escdelay:
-                    os.environ['ESCDELAY'] = self.__prev_escdelay
-
-            sys.stdout.write('\033[23;0t') # Restore previous title from stack
-            sys.stdout.flush()
-
-            self._screen = None
 
