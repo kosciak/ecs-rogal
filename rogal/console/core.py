@@ -140,6 +140,11 @@ class ConsoleRGB(Console):
     DEFAULT_FG = RGB(255, 255, 255).rgb
     DEFAULT_BG = RGB(0, 0, 0).rgb
 
+    def tiles_gen(self, encode_ch=int):
+        for tile in np.nditer(self.tiles, flags=['refs_ok']):
+            # yield encode_ch(tile['ch']), int(tile['fg']), int(tile['bg'])
+            yield encode_ch(tile['ch']), tile['fg'], tile['bg']
+
 
 class ConsoleIndexedColors(Console):
 
