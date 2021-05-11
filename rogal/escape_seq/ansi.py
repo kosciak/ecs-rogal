@@ -1,6 +1,7 @@
 import sys
 
 from .core import EscapeSequence, csi
+from .term import CSI, SGR, ColorsMode, Color
 
 
 """Rudimentary ANSI support.
@@ -8,63 +9,6 @@ from .core import EscapeSequence, csi
 See: https://en.wikipedia.org/wiki/ANSI_escape_code
 
 """
-
-
-class CSI:
-    CUU = 'A'   # Cursor Up
-    CUD = 'B'   # Cursor Down
-    CUF = 'C'   # Cursor Forward
-    CUB = 'D'   # Cursor Back
-    CNL = 'E'   # Cursor Next Line
-    CPL = 'F'   # Cursor Previous Line
-    CHA = 'G'   # Cursor Horizontal Absolute
-    CUP = 'H'   # Cursor Position
-    ED  = 'J'   # Erase Display
-    EL  = 'K'   # Erase Line
-    SU  = 'S'   # Scroll Up
-    SD  = 'T'   # Scroll Down
-    HVP = 'f'   # Horizontal Vertical Position
-    SGR = 'm'   # Select Graphic Rendition / Set Graphic Rendition
-    DSR = '6n'  # Device Status Report
-
-
-class SGR_Attribute:
-    RESET = 0
-    BOLD = 1
-    DIM = 2
-    ITALIC = 3
-    UNDERLINED = 4
-    SLOW_BLINK = 5
-    RAPID_BLINK = 6
-    INVERT = 7
-    HIDE = 8
-    STRIKE = 9
-    FG_BASE = 30
-    SET_FG = 38
-    DEFAULT_FG = 39
-    BG_BASE = 40
-    SET_BG = 48
-    DEFAULT_BG = 49
-    OVERLINED = 53
-    FG_BRIGHT_BASE = 90
-    BG_BRIGHT_BASE = 100
-
-
-class ColorsMode:
-    COLORS_256 = 5
-    COLORS_RGB = 2
-
-
-class Color:
-    BLACK   = 0,
-    RED     = 1,
-    GREEN   = 2,
-    YELLOW  = 3,
-    BLUE    = 4,
-    MAGENTA = 5,
-    CYAN    = 6,
-    WHITE   = 7,
-
 
 
 def cursor_up(n=1):
@@ -102,69 +46,69 @@ def sgr(*parameters):
 
 
 def reset():
-    return sgr(SGR_Attribute.RESET)
+    return sgr(SGR.RESET)
 
 
 def bold():
-    return sgr(SGR_Attribute.BOLD)
+    return sgr(SGR.BOLD)
 
 def dim():
-    return sgr(SGR_Attribute.DIM)
+    return sgr(SGR.DIM)
 
 def italic():
-    return sgr(SGR_Attribute.ITALIC)
+    return sgr(SGR.ITALIC)
 
 def underlined():
-    return sgr(SGR_Attribute.UNDERLINED)
+    return sgr(SGR.UNDERLINED)
 
 def slow_blink():
-    return sgr(SGR_Attribute.SLOW_BLINK)
+    return sgr(SGR.SLOW_BLINK)
 
 def rapid_blink():
-    return sgr(SGR_Attribute.RAPID_BLINK)
+    return sgr(SGR.RAPID_BLINK)
 
 def inverted():
-    return sgr(SGR_Attribute.INVERT)
+    return sgr(SGR.INVERT)
 
 def hide():
-    return sgr(SGR_Attribute.HIDE)
+    return sgr(SGR.HIDE)
 
 def strike():
-    return sgr(SGR_Attribute.STRIKE)
+    return sgr(SGR.STRIKE)
 
 def overlined():
-    return sgr(SGR_Attribute.OVERLINED)
+    return sgr(SGR.OVERLINED)
 
 
 def fg(color):
-    return sgr(SGR_Attribute.FG_BASE+color%8)
+    return sgr(SGR.FG_BASE+color%8)
 
 def bg(color):
-    return sgr(SGR_Attribute.BG_BASE+color%8)
+    return sgr(SGR.BG_BASE+color%8)
 
 def fg_bright(color):
-    return sgr(SGR_Attribute.FG_BRIGHT_BASE+color%8)
+    return sgr(SGR.FG_BRIGHT_BASE+color%8)
 
 def bg_bright(color):
-    return sgr(SGR_Attribute.BG_BRIGHT_BASE+color%8)
+    return sgr(SGR.BG_BRIGHT_BASE+color%8)
 
 def fg_bold(color):
-    return sgr(SGR_Attribute.FG_BASE+color%8, SGR_Attribute.BOLD)
+    return sgr(SGR.FG_BASE+color%8, SGR.BOLD)
 
 def bg_bold(color):
-    return sgr(SGR_Attribute.FG_BASE+color%8, SGR_Attribute.BOLD)
+    return sgr(SGR.FG_BASE+color%8, SGR.BOLD)
 
 def fg_256(color):
-    return sgr(SGR_Attribute.SET_FG, ColorsMode.COLORS_256, color)
+    return sgr(SGR.SET_FG, ColorsMode.COLORS_256, color)
 
 def bg_256(color):
-    return sgr(SGR_Attribute.SET_BG, ColorsMode.COLORS_256, color)
+    return sgr(SGR.SET_BG, ColorsMode.COLORS_256, color)
 
 def fg_rgb(r, g, b):
-    return sgr(SGR_Attribute.SET_FG, ColorsMode.COLORS_RGB, r, g, b)
+    return sgr(SGR.SET_FG, ColorsMode.COLORS_RGB, r, g, b)
 
 def bg_rgb(r, g, b):
-    return sgr(SGR_Attribute.SET_BG, ColorsMode.COLORS_RGB, r, g, b)
+    return sgr(SGR.SET_BG, ColorsMode.COLORS_RGB, r, g, b)
 
 
 def color_256(fg, bg):

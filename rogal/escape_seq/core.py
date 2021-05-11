@@ -1,4 +1,6 @@
 
+SEPARATOR = ';' # NOTE: Some terminals also allows ':'
+
 class ControlChar:
     NUL = '\0'
     SOH = '\x01'
@@ -53,7 +55,17 @@ class EscapeSequence:
     PM  = f'{ControlChar.ESC}^'     # Privacy Message
     APC = f'{ControlChar.ESC}_'     # Application Program Command
 
+    DECSC = f'{ControlChar.ESC}7'   # Save Cursor
+    DECRC = f'{ControlChar.ESC}8'   # Restore Cursor
+
+    DECKPNM = f'{ControlChar.ESC}>' # Reset Application Keypad Mode
+    DECKPAM = f'{ControlChar.ESC}=' # Set Application Keypad Mode
+
 
 def csi(code, *parameters):
-    return '%s%s%s' % (EscapeSequence.CSI, ';'.join([f'{param}' for param in parameters]), code)
+    return '%s%s%s' % (EscapeSequence.CSI, SEPARATOR.join([f'{param}' for param in parameters]), code)
+
+
+def ocs(*parameters, terminator=EscapeSequence.ST):
+    return '%s%s%s' % (EscapeSequence.OCS, SEPARATOR.join([f'{param}' for param in parameters]), terminator)
 
