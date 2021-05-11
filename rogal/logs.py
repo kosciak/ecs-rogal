@@ -1,6 +1,7 @@
 import collections
 import logging
 import logging.config
+import os
 
 
 LOGS_HISTORY = collections.deque(maxlen=1000)
@@ -13,6 +14,10 @@ DEFAULT_LEVEL_COLORS = {
     logging.WARNING: 9, # RED (bright red)
     logging.CRITICAL: 11, # YELLOW (bright yellow)
 }
+
+
+LOG_FN = './logs/rogal.log'
+
 
 class ColorLogger(logging.Logger):
 
@@ -116,14 +121,14 @@ CONFIG = dict(
             'level': logging.DEBUG,
             'class': 'logging.FileHandler',
             'formatter': 'default',
-            'filename': 'rogal.log',
+            'filename': LOG_FN,
             'mode': 'w',
         },
         'file-verbose': {
             'level': logging.DEBUG,
             'class': 'logging.FileHandler',
             'formatter': 'verbose',
-            'filename': 'rogal.log',
+            'filename': LOG_FN,
         },
         'history': {
             'level': logging.INFO,
@@ -170,6 +175,7 @@ CONFIG = dict(
 
 def setup():
     """Setup logging configuration."""
+    os.makedirs(os.path.dirname(LOG_FN), exist_ok=True)
     logging.setLoggerClass(ColorLogger)
     logging.config.dictConfig(CONFIG)
 
