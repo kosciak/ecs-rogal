@@ -145,6 +145,9 @@ CURSES_KEYNAMES = {
     b'kpZRO':   (Keycode.KP_0, Modifier.NONE), # NOT sure about this one
     b'kpCMA':   (Keycode.KP_COMMA, Modifier.NONE), # NOT sure about this one
 
+    b'kUP':    (Keycode.UP, Modifier.SHIFT),
+    b'kDN':    (Keycode.DOWN, Modifier.SHIFT),
+
     b'kUP3':    (Keycode.UP, Modifier.ALT),
     b'kDN3':    (Keycode.DOWN, Modifier.ALT),
     b'kLFT3':   (Keycode.LEFT, Modifier.ALT),
@@ -204,9 +207,24 @@ CURSES_KEYNAMES = {
     b'kEND7':   (Keycode.END, Modifier.CTRL | Modifier.ALT),
     b'kPRV7':   (Keycode.PAGE_UP, Modifier.CTRL | Modifier.ALT),
     b'kNXT7':   (Keycode.PAGE_DOWN, Modifier.CTRL | Modifier.ALT),
+
+    b'kUP8':    (Keycode.UP, Modifier.CTRL | Modifier.ALT),
+    b'kDN8':    (Keycode.DOWN, Modifier.CTRL | Modifier.ALT),
+    b'kLFT8':   (Keycode.LEFT, Modifier.CTRL | Modifier.ALT),
+    b'kRIT8':   (Keycode.RIGHT, Modifier.CTRL | Modifier.ALT),
+
+    b'kIC8':    (Keycode.INSERT, Modifier.CTRL | Modifier.ALT | Modifier.SHIFT),
+    b'kDC8':    (Keycode.DELETE, Modifier.CTRL | Modifier.ALT | Modifier.SHIFT),
+    b'kHOM8':   (Keycode.HOME, Modifier.CTRL | Modifier.ALT | Modifier.SHIFT),
+    b'kEND8':   (Keycode.END, Modifier.CTRL | Modifier.ALT | Modifier.SHIFT),
+    b'kPRV8':   (Keycode.PAGE_UP, Modifier.CTRL | Modifier.ALT | Modifier.SHIFT),
+    b'kNXT8':   (Keycode.PAGE_DOWN, Modifier.CTRL | Modifier.ALT | Modifier.SHIFT),
+
 }
 
 
+# See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-PC-Style-Function-Keys
+# See: https://fossies.org/linux/rxvt/doc/rxvtRef.html#KeyCodes
 CURSES_ESCAPE_SEQUENCES = {
     'OP':   (Keycode.F1, Modifier.NONE),
     'OQ':   (Keycode.F2, Modifier.NONE),
@@ -279,6 +297,7 @@ def get_key(key, escaped=False):
     name = curses.keyname(key)
     keycode, modifiers = CURSES_KEYNAMES.get(name, (None, None))
     if keycode:
+        # log.warning('KEYNAME: %s - %s', key, name)
         return Key(keycode, modifiers=modifiers)
 
     # Not able to match to any other key

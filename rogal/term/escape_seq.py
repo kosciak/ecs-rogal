@@ -1,24 +1,80 @@
-import sys
-
-from .core import ControlChar, EscapeSequence, csi, ocs
-
 
 """Rudimentary (X)Term sequence codes support.
 
-See: /usr/share/doc/xterm/ctlseqs.txt
+Support is far from complete, included most basic ones, widely supported by terminals, that will come handy.
+It may be better idea to use terminfo capabilities instead of manually crafting escape codes from scratch.
+
 See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 See: http://www.xfree86.org/current/ctlseqs.html
+See: http://manpages.ubuntu.com/manpages/impish/en/man4/console_codes.4.html
 See: https://terminalguide.namepad.de/
 
-See: https://invisible-island.net/ncurses/terminfo.ti.html
-See: http://manpages.ubuntu.com/manpages/xenial/man5/terminfo.5.html
-
-Also:
-https://stackoverflow.com/questions/11023929/using-the-alternate-screen-in-a-bash-script
-https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
-?? https://domoticx.com/terminal-codes-ansivt100/
-
 """
+
+
+SEPARATOR = ';' # NOTE: Some terminals also allows ':'
+
+
+class ControlChar:
+    NUL = '\0'
+    SOH = '\x01'
+    STX = '\x02'
+    ETX = '\x03'
+    EOT = '\x04'
+    ENQ = '\x05'
+    ACK = '\x06'
+    BEL = '\a'
+    BS  = '\b'
+    HT  = '\t'
+    LF  = '\n'
+    VT  = '\v'
+    FF  = '\f'
+    CR  = '\r'
+    SO  = '\x0e'
+    SI  = '\x0f'
+    DLE = '\x10'
+    DC1 = '\x11'
+    DC2 = '\x12'
+    DC3 = '\x13'
+    DC4 = '\x14'
+    NAK = '\x15'
+    SYN = '\x16'
+    ETB = '\x17'
+    CAN = '\x18'
+    EM  = '\x19'
+    SUB = '\x1a'
+    ESC = '\x1b'
+    FS  = '\x1c'
+    GS  = '\x1d'
+    RS  = '\x1e'
+    US  = '\x1f'
+    SP  = ' '
+    DEL = '\x7f'
+
+
+class EscapeSequence:
+    IND = f'{ControlChar.ESC}D'     # Index
+    NEL = f'{ControlChar.ESC}E'     # Next Line
+    HTS = f'{ControlChar.ESC}H'     # Tab Set
+    RI  = f'{ControlChar.ESC}M'     # Reverse Index
+    SS2 = f'{ControlChar.ESC}N'     # Single Shift Two
+    SS3 = f'{ControlChar.ESC}O'     # Single Shift Three
+    DCS = f'{ControlChar.ESC}P'     # Device Control String
+    SPA = f'{ControlChar.ESC}V'     # Start of Guarded Area
+    EPA = f'{ControlChar.ESC}W'     # End of Guarded Area
+    SOS = f'{ControlChar.ESC}X'     # Start of String
+    CSI = f'{ControlChar.ESC}['     # Control Sequence Introducer
+    ST  = f'{ControlChar.ESC}\\'    # String Terminator
+    OCS = f'{ControlChar.ESC}]'     # Operating System Command
+    PM  = f'{ControlChar.ESC}^'     # Privacy Message
+    APC = f'{ControlChar.ESC}_'     # Application Program Command
+
+    DECSC = f'{ControlChar.ESC}7'   # Save Cursor
+    DECRC = f'{ControlChar.ESC}8'   # Restore Cursor
+
+    DECKPNM = f'{ControlChar.ESC}>' # Reset Application Keypad Mode
+    DECKPAM = f'{ControlChar.ESC}=' # Set Application Keypad Mode
+
 
 class CSI:
     # ANSI related
@@ -36,7 +92,8 @@ class CSI:
     SD  = 'T'   # Scroll Down
     HVP = 'f'   # Horizontal Vertical Position
     SGR = 'm'   # Select Graphic Rendition / Set Graphic Rendition
-    DSR = '6n'  # Device Status Report
+    DSR = '5n'  # Device Status Report
+    CPR = '6n'  # Cursor Postition Report
 
     # Other
     XTWINOPS    = 't'   # Window manipulation
@@ -44,6 +101,7 @@ class CSI:
     RM          = 'l'   # Reset Mode
     DECSET      = 'h'   # DEC Private Mode Set
     DECRST      = 'l'   # DEC Private Mode Reset
+    DECLL       = 'q'   # Set keyboard LEDs (0 - clear all, set: 1 - ScrollLock, 2 - NumLock, 3 - CapsLock)
 
 
 class SGR:
@@ -111,6 +169,10 @@ class TitleMode:
 
 
 class Mode:
+    DECCKM = '?1'       # When set, the cursor keys send an ESC O prefix, rather than ESC [
+
+    DECOM = '?6'        # hen set, cursor addressing is  relative  to  the  upper  left corner of the scrolling region
+
     DECTCEM = '?25'     # Show/Hide cursor
 
     DECNKM = '?66'      # Application Keypad Mode
@@ -138,42 +200,12 @@ class Mode:
     PIXEL_POSITION_MOUSE = '?1016'  # Enable SGR Mouse PixelMode
 
 
-
-def save_title(mode=TitleMode.ICON_AND_WINDOW):
-    return csi(CSI.XTWINOPS, XTWINOPS.SAVE_TITLE, mode)
-
-def restore_title(mode=TitleMode.ICON_AND_WINDOW):
-    return csi(CSI.XTWINOPS, XTWINOPS.RESTORE_TITLE, mode)
+def csi(code, *parameters):
+    """Build CSI sequence."""
+    return '%s%s%s' % (EscapeSequence.CSI, SEPARATOR.join([f'{param}' for param in parameters]), code)
 
 
-def set_private_mode(mode):
-    return csi(CSI.DECSET, mode)
-
-def reset_private_mode(mode):
-    return csi(CSI.DECRST, mode)
-
-
-def show_cursor():
-    return set_private_mode(Mode.DECTCEM)
-
-def hide_cursor():
-    return reset_private_mode(Mode.DECTCEM)
-
-
-def set_alternate_buffer():
-    return set_private_mode(Mode.ALTBUF_EXT)
-
-def reset_alternate_buffer():
-    return reset_private_mode(Mode.ALTBUF_EXT)
-
-
-def set_application_keypad_mode():
-    return set_private_mode(Mode.DECNKM)
-
-def reset_application_keypad_mode():
-    return reset_private_mode(Mode.DECNKM)
-
-
-def set_title(title, mode=TitleMode.ICON_AND_WINDOW):
-    return ocs(mode, title)
+def ocs(*parameters, terminator=EscapeSequence.ST):
+    """Build OCS sequence."""
+    return '%s%s%s' % (EscapeSequence.OCS, SEPARATOR.join([f'{param}' for param in parameters]), terminator)
 

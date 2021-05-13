@@ -188,7 +188,7 @@ class TcodRootPanel(RootPanel):
         self.parent.tiles_rgb[self.x:self.x2, self.y:self.y2] = tiles_rgb
 
     def show(self):
-        from ..escape_seq import ansi
+        from ..term import ansi
         ansi.show_rgb_console(self.console)
 
 

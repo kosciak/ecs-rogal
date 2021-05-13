@@ -1,7 +1,7 @@
 import sys
 
-from .core import EscapeSequence, csi
-from .term import CSI, SGR, ColorsMode, Color
+from .escape_seq import csi
+from .escape_seq import CSI, SGR, ColorsMode, Color
 
 
 """Rudimentary ANSI support.

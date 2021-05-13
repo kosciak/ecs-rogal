@@ -5,7 +5,7 @@ import os
 import sys
 
 from ..console import ConsoleIndexedColors, RootPanel
-from ..escape_seq import term
+from ..term import term_seq
 
 from .core import IOWrapper
 from .curses_input import CursesInputWrapper
@@ -87,7 +87,7 @@ class CursesWrapper(IOWrapper):
         self._indexed_palette = None
         self.color_pairs = ColorPairsManager()
         self._screen = None
-        self.__prev_esc_delay = None
+        self.__prev_escdelay = None
 
     def initialize_palette(self):
         self.initialize()
@@ -185,13 +185,13 @@ class CursesWrapper(IOWrapper):
         self.restore_escdelay()
 
     def set_title(self, title):
-        sys.stdout.write(term.save_title())
+        sys.stdout.write(term_seq.save_title())
         if title:
-            sys.stdout.write(term.set_title(title))
+            sys.stdout.write(term_seq.set_title(title))
         sys.stdout.flush()
 
     def restore_title(self):
-        sys.stdout.write(term.restore_title())
+        sys.stdout.write(term_seq.restore_title())
         sys.stdout.flush()
 
     def initialize_keyboard(self):
@@ -219,13 +219,6 @@ class CursesWrapper(IOWrapper):
     def initialize(self):
         if self.is_initialized:
             return
-        # Mouse support?
-        # See: https://stackoverflow.com/questions/5966903/how-to-get-mousemove-and-mouseclick-in-bash
-        # NOTE: Seems to be messing with curses mouse support...
-        # sys.stdout.write('\033[?1000h')
-        # sys.stdout.write('\033[?1003h')
-        # sys.stdout.write('\033[?1015h')
-        # sys.stdout.write('\033[?1006h')
 
         self.set_title(self.title)
 
