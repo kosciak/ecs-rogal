@@ -12,16 +12,16 @@ class InputWrapper:
         """Process events - update, filter, merge, etc."""
         yield from events_gen
 
-    def get_events_gen(self, wait=None):
+    def get_events_gen(self, timeout=None):
         """Get all pending events."""
         yield from ()
 
-    def events_gen(self, wait=None):
+    def events_gen(self, timeout=None):
         """Yield events."""
         while self._events_queue:
             yield self._events_queue.popleft()
 
-        events_gen = self.get_events_gen(wait)
+        events_gen = self.get_events_gen(timeout)
         processed_events_gen = self.process_events_gen(events_gen)
         self._events_queue.extend(processed_events_gen)
 

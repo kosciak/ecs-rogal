@@ -46,7 +46,7 @@ class InputFocusSystem(System):
 
 class EventsHandlersSystem(System):
 
-    WAIT = 1./60
+    TIMEOUT = 1./60
     MAX_REPEAT_RATE = 1./6
 
     INCLUDE_STATES = {
@@ -56,7 +56,7 @@ class EventsHandlersSystem(System):
     def __init__(self, ecs, repeat_rate=MAX_REPEAT_RATE):
         super().__init__(ecs)
         self.wrapper = self.ecs.resources.wrapper
-        self.wait = self.WAIT
+        self.timeout = self.TIMEOUT
 
         self.ecs.resources.keyboard_state = KeyboardState(max_repeat_rate=repeat_rate)
         self.keys = self.ecs.resources.keyboard_state
@@ -178,8 +178,8 @@ class EventsHandlersSystem(System):
         # NOTE: It is NOT checked if entity has ActsNow flag, as EventHandlers can be attached
         #       to any entity, not only to actors (for example to GUI elements)
         #       BUT there must be some ActsNow actor for system to be running!
-        for event in self.wrapper.events_gen(self.wait):
-            # log.debug(f'Event: {event}')
+        for event in self.wrapper.events_gen(self.timeout):
+            log.debug(f'Event: {event}')
             if event.type == EventType.QUIT:
                 self.on_quit(event)
             elif event.type == EventType.TEXT_INPUT:

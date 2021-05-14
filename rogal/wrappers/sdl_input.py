@@ -245,15 +245,12 @@ class SDLInputWrapper(InputWrapper):
                     event.key = event.key.replace(next_event.text)
             yield event
 
-    def get_events_gen(self, wait=None):
+    def get_events_gen(self, timeout=None):
         """Get all pending events."""
-        if wait is False:
-            events_gen = self.sdl2.get_events()
-        else:
-            # NOTE: wait==None will wait forever
-            if wait is True:
-                wait = None
-            events_gen = self.sdl2.wait_for_events(wait)
+        if timeout is not None:
+            timeout = int(timeout*1000)
+
+        events_gen = self.sdl2.wait_for_events(timeout)
         for event in events_gen:
             yield from parse_event(self.ffi, event)
 

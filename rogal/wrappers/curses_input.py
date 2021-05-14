@@ -407,19 +407,17 @@ class CursesInputWrapper(InputWrapper):
                 sequence.append(event)
         return sequence
 
-    def get_events_gen(self, wait=None):
+    def get_events_gen(self, timeout=None):
         # TODO: Needs some more testing... halfdelay vs nodelay vs notimeout vs timeout
-        if wait is False:
-            self.screen.nodelay(True)
-        elif wait is None or wait is True:
-            # NOTE: wait==None will wait forever
+        if timeout is None:
+            # NOTE: timeout==None will wait forever
             self.screen.nodelay(False)
         else:
             # Read: https://linux.die.net/man/3/nodelay
             # Not sure why all libraries use halfdelay, instead of timeout...
-            self.screen.nodelay(False)
-            timeout = min(int(wait*10), 255) or 1
-            curses.halfdelay(timeout)
+            self.screen.nodelay(True)
+            tenths = min(int(timeout*10), 255) or 1
+            curses.halfdelay(tenths)
             # self.screen.nodelay(True)
             # timeout = int(wait*1000)
             # self.screen.timeout(timeout)

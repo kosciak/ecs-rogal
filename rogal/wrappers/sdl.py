@@ -92,7 +92,6 @@ class SDL2:
         # See: https://wiki.libsdl.org/SDL_WaitEventTimeout
         if event is None:
             event = self.ffi.NULL
-        timeout = int(timeout*1000)
         return self.lib.SDL_WaitEventTimeout(event, timeout)
 
     def __getattr__(self, name):
