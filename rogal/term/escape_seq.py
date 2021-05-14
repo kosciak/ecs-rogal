@@ -169,9 +169,13 @@ class TitleMode:
 
 
 class Mode:
+    IRM = '4'           # Insert mode
+
     DECCKM = '?1'       # When set, the cursor keys send an ESC O prefix, rather than ESC [
 
-    DECOM = '?6'        # hen set, cursor addressing is  relative  to  the  upper  left corner of the scrolling region
+    DECOM = '?6'        # When set, cursor addressing is  relative  to  the  upper  left corner of the scrolling region
+
+    DECAWM = '?7'       # Wraparound mode
 
     DECTCEM = '?25'     # Show/Hide cursor
 

@@ -31,14 +31,12 @@ class TermInputWrapper(InputWrapper):
         self.key_sequences = get_key_sequences(self.terminfo)
 
     def get_sequence(self):
-        sequence = self.term.read_byte()
-        while self.term.is_readable(wait=False):
-            sequence += self.term.read_byte()
+        sequence = b''.join(self.term.read_bytes())
         return sequence
 
-    def get_events_gen(self, wait=None):
+    def get_events_gen(self, timeout=None):
         """Get all pending events."""
-        if self.term.is_readable(wait):
+        if self.term.is_readable(timeout):
             sequence = self.get_sequence()
             key = self.key_sequences.get(sequence)
             log.warning('INPUT: %s - %s', key or '???', sequence)
@@ -65,16 +63,15 @@ class ANSIWrapper(IOWrapper):
         self.term.fullscreen()
         self.term.keypad()
         self.term.hide_cursor()
+        self.term.report_focus()
         self.term.mouse_tracking()
         if self.title:
-            self.term.save_title()
             self.term.set_title(self.title)
         self._input = TermInputWrapper(self.term)
         self._is_initialized = True
 
     def terminate(self):
         self.term.close()
-        self.term.restore_title()
         self._is_initialized = False
 
     def create_console(self, size=None):

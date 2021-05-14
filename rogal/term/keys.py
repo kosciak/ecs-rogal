@@ -14,6 +14,8 @@ See: https://fossies.org/linux/rxvt/doc/rxvtRef.html#KeyCodes
 
 DEFAULT_KEY_SEQUENCES = {
     # PC-style Normal mode
+    b'\x08':   Capability.key_backspace,
+
     b'\x1b[A': Capability.key_up,
     b'\x1b[B': Capability.key_down,
     b'\x1b[C': Capability.key_right,
@@ -116,8 +118,8 @@ def get_key_sequences(terminfo):
     key_sequences.update(DEFAULT_KEY_SEQUENCES)
     for cap_name in STR_CAPABILITIES:
         if cap_name.startswith('k') and not cap_name.startswith('key_'):
-           value = terminfo.get_str(cap_name)
-           if value:
-                key_sequences[value] = cap_name
+           sequence = terminfo.get_str(cap_name)
+           if sequence:
+                key_sequences[sequence] = cap_name
     return key_sequences
 
