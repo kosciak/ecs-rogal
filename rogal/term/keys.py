@@ -201,4 +201,7 @@ class SequenceParser:
                 )
                 sequence = None
                 is_escaped = False
+        if is_escaped:
+            sequence = '\x1b'
+            yield KeySequence(sequence)
 
