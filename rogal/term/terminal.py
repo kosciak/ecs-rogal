@@ -14,9 +14,11 @@ from ..geometry import Size, WithSizeMixin
 from .capabilities import Capability
 from .terminfo import Terminfo
 from .escape_seq import Mode
+from .keys import SequenceParser
 from . import term_seq
 
 
+UNKNOWN_TERM = 'dumb'
 TRUECOLOR_TERM = {'truecolor', '24bit', }
 
 
@@ -32,7 +34,8 @@ class Terminal(WithSizeMixin):
         self._out_fd = self.output.fileno()
 
         self._encoding = locale.getpreferredencoding() or 'utf-8'
-        self._decoder = codecs.getincrementaldecoder(self._encoding)()
+        self._char_decoder = codecs.getincrementaldecoder(self._encoding)()
+        self._sequence_parser = None
 
         self._tty_state = self._get_tty_state(self._in_fd)
         self._exit_modes = {}
@@ -55,7 +58,7 @@ class Terminal(WithSizeMixin):
     @property
     def term(self):
         if self._term is None:
-            self._term = os.environ.get('TERM', 'dumb') or 'dumb'
+            self._term = os.environ.get('TERM', UNKNOWN_TERM) or UNKNOWN_TERM
         return self._term
 
     @property
@@ -83,6 +86,12 @@ class Terminal(WithSizeMixin):
             self._terminfo = Terminfo(self.term, self._out_fd)
         return self._terminfo
 
+    @property
+    def sequence_parser(self):
+        if self._sequence_parser is None:
+            self._sequence_parser = SequenceParser(self._terminfo, self._encoding)
+        return self._sequence_parser
+
     # Terminfo / capabilities
 
     # TODO: Consider renaming to tparm, and tput() does write and flush
@@ -92,7 +101,7 @@ class Terminal(WithSizeMixin):
         if not capability:
             return None
         sequence = self.terminfo.tparm(capability, *params)
-        return sequence.decode('utf-8')
+        return sequence.decode(self._encoding)
 
     # Low level TTY stuff 
 
@@ -128,10 +137,21 @@ class Terminal(WithSizeMixin):
 
     def read_char(self):
         for byte in self.read_bytes():
-            char = self._decoder.decode(byte)
+            char = self._char_decoder.decode(byte)
             if char:
                 return char
         return None
+
+    def read_chars(self):
+        for byte in self.read_bytes():
+            char = self._char_decoder.decode(byte)
+            if char:
+                yield char
+
+    def read_keys(self):
+        input_sequence = ''.join(self.read_chars())
+        for sequence in self.sequence_parser.parse(input_sequence):
+            yield sequence
 
     # Output handling
 
@@ -163,27 +183,33 @@ class Terminal(WithSizeMixin):
             self.exit_mode(mode, exit_seq)
 
     def fullscreen(self, enable=True):
-        mode = 'fullscreen'
+        mode = 'fullscreen' # smcup / rmcup
         enter_seq = self.tput(Capability.enter_ca_mode)
         exit_seq = self.tput(Capability.exit_ca_mode)
         self.change_mode(mode, enable, enter_seq, exit_seq)
 
     def keypad(self, enable=True):
-        mode = 'keypad'
+        mode = 'keypad' # smkx / rmkx
         enter_seq = self.tput(Capability.keypad_xmit)
         exit_seq = self.tput(Capability.keypad_local)
         self.change_mode(mode, enable, enter_seq, exit_seq)
 
+    def meta(self, enable=True):
+        mode = 'meta' # smm / rmm
+        enter_seq = self.tput(Capability.meta_on)
+        exit_seq = self.tput(Capability.meta_off)
+        self.change_mode(mode, enable, enter_seq, exit_seq)
+
     def hide_cursor(self, enable=True):
-        mode = 'hide_cursor'
+        mode = 'hide_cursor' # civis / cnorm
         enter_seq = self.tput(Capability.cursor_invisible)
         exit_seq = self.tput(Capability.cursor_normal)
         self.change_mode(mode, enable, enter_seq, exit_seq)
 
     def mouse_tracking(self, enable=True):
         mode = 'mouse_tracking'
-        # enter_seq = self.tput(Capability.XM, 1)
-        # exit_seq = self.tput(Capability.XM, 0)
+        # enter_seq = self.tput(Capability.xterm_mouse_mode, 1)
+        # exit_seq = self.tput(Capability.xterm_mouse_mode, 0)
 
         mouse_modes = [
             Mode.VT200_MOUSE,
@@ -203,6 +229,12 @@ class Terminal(WithSizeMixin):
         exit_seq = term_seq.reset_private_mode(Mode.FOCUS_EVENT_MOUSE)
         self.change_mode(mode, enable, enter_seq, exit_seq)
 
+    def bracketed_paste(self, enable=True):
+        mode = 'bracketed_paste'
+        enter_seq = term_seq.set_private_mode(Mode.BRACKETED_PASTE)
+        exit_seq = term_seq.reset_private_mode(Mode.BRACKETED_PASTE)
+        self.change_mode(mode, enable, enter_seq, exit_seq)
+
     def save_title(self):
         self.output.write(term_seq.save_title())
         self.output.flush()
@@ -210,7 +242,7 @@ class Terminal(WithSizeMixin):
     def set_title(self, title):
         self._exit_modes['set_title'] = term_seq.restore_title()
 
-        # TODO: first check if status line is available? self.terminfo.get(Capability.hs)
+        # TODO: first check if status line is available? self.terminfo.get(Capability.has_status_line)
         sequence = self.tput(Capability.TS)
         if not sequence:
             sequence = self.tput(Capability.to_status_line)
@@ -225,4 +257,10 @@ class Terminal(WithSizeMixin):
     def restore_title(self):
         self.output.write(term_seq.restore_title())
         self.output.flush()
+
+    def request_cursor(self):
+        # self.output.write(term_seq.csi(term_seq.CSI.CPR))
+        self.output.write(self.tput(Capability.cursor_request)) # Answer with Capability.u6 format
+        self.output.flush()
+        # TODO: Read cursor position from input
 

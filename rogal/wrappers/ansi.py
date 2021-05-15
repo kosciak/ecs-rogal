@@ -10,8 +10,6 @@ import tty
 
 from ..console import ConsoleRGB
 from ..term import ansi
-from ..term.terminfo import Terminfo
-from ..term.keys import get_key_sequences
 from ..term.terminal import Terminal
 
 from .core import IOWrapper, InputWrapper
@@ -27,19 +25,16 @@ class TermInputWrapper(InputWrapper):
     def __init__(self, term):
         super().__init__()
         self.term = term
-        self.terminfo = Terminfo()
-        self.key_sequences = get_key_sequences(self.terminfo)
-
-    def get_sequence(self):
-        sequence = b''.join(self.term.read_bytes())
-        return sequence
 
     def get_events_gen(self, timeout=None):
         """Get all pending events."""
         if self.term.is_readable(timeout):
-            sequence = self.get_sequence()
-            key = self.key_sequences.get(sequence)
-            log.warning('INPUT: %s - %s', key or '???', sequence)
+            for sequence in self.term.read_keys():
+                log.warning('INPUT: %s - %r %s',
+                            sequence.key or '???',
+                            sequence,
+                            sequence.is_escaped and '(escaped)' or '',
+                            )
             yield from ()
 
 
@@ -64,7 +59,7 @@ class ANSIWrapper(IOWrapper):
         self.term.keypad()
         self.term.hide_cursor()
         self.term.report_focus()
-        self.term.mouse_tracking()
+        # self.term.mouse_tracking()
         if self.title:
             self.term.set_title(self.title)
         self._input = TermInputWrapper(self.term)
@@ -81,4 +76,5 @@ class ANSIWrapper(IOWrapper):
         self.term.write(self.term.tput('clear'))
         ansi.show_rgb_console(panel.console)
         # sys.stdout.flush()
+        # self.term.request_cursor()
 

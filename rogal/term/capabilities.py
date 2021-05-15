@@ -535,6 +535,16 @@ for cap_name in USER_CAPABILITIES:
     Capability[cap_name] = cap_name
 
 
+ALIASES = AttrDict(
+    cursor_request =    Capability.u7,
+    cursor_report =     Capability.u6,
+    xterm_mouse_mode =  Capability.XM,
+    mouse_report =      Capability.xm,
+)
+for long_name, cap_name in ALIASES.items():
+    Capability[long_name] = cap_name
+
+
 '''
 Suffixes used to denote the modifiers of EXTENDED_KEY_DEFINITIONS:
     2       Shift

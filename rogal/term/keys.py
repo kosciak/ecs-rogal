@@ -1,3 +1,5 @@
+import re
+
 from .capabilities import STR_CAPABILITIES, Capability
 
 
@@ -113,13 +115,90 @@ DEFAULT_KEY_SEQUENCES = {
 }
 
 
-def get_key_sequences(terminfo):
-    key_sequences = {}
-    key_sequences.update(DEFAULT_KEY_SEQUENCES)
-    for cap_name in STR_CAPABILITIES:
-        if cap_name.startswith('k') and not cap_name.startswith('key_'):
-           sequence = terminfo.get_str(cap_name)
-           if sequence:
-                key_sequences[sequence] = cap_name
-    return key_sequences
+KEY_SEQ_PATTERNS = [
+    re.compile('\x1b\[[a-zA-Z]', re.ASCII),
+    re.compile('\x1bO[a-zA-Z]', re.ASCII),
+    re.compile('\x1b\?[a-zA-Z]', re.ASCII),
+    re.compile('\x1b\[[0-9]{1,2}[\^~@$]', re.ASCII),
+    re.compile('\x1b\[[0-9]{1,2};[0-9]{1,2}[\^~@$]', re.ASCII),
+    re.compile('\x1b\[[0-9]{1,2};[0-9]{1,2}[A-Z]', re.ASCII),
+    # TODO: kmouse, focus in/out, mouse events parsing?
+]
+
+
+class KeySequence(str):
+
+    def __new__(cls, sequence, *, key=None, is_escaped=False):
+        new = super().__new__(cls, sequence)
+        new.key = key # Capability name
+        new.is_escaped = is_escaped
+        return new
+
+
+class SequenceParser:
+
+    def __init__(self, terminfo, encoding):
+        self._terminfo = terminfo
+        self._encoding = encoding or 'utf-8'
+        self._key_sequences = None
+
+    @property
+    def key_sequences(self):
+        if self._key_sequences is None:
+           self._key_sequences = self.get_key_sequences()
+        return self._key_sequences
+
+    def get_key_sequences(self):
+        key_sequences = {}
+        key_sequences.update(DEFAULT_KEY_SEQUENCES)
+        for cap_name in STR_CAPABILITIES:
+            if cap_name.startswith('k') and not cap_name.startswith('key_'):
+                sequence = self._terminfo.get_str(cap_name)
+                if sequence:
+                    key_sequences[sequence.decode(self._encoding)] = cap_name
+        return key_sequences
+
+    def match(self, sequence):
+        match = None
+        for pattern in KEY_SEQ_PATTERNS:
+            match = pattern.match(sequence)
+            if match:
+                break
+        return match
+
+    def parse(self, input_sequence):
+        sequence = None
+        is_escaped = False
+        while input_sequence:
+            key = self.key_sequences.get(input_sequence)
+            if key:
+                # Direct hit, no need for further parsing
+                yield KeySequence(
+                    input_sequence,
+                    key=key,
+                    is_escaped=is_escaped
+                )
+                break
+
+            match = self.match(input_sequence)
+            if match:
+                sequence = input_sequence[0:match.end()]
+                input_sequence = input_sequence[match.end():]
+            else:
+                sequence = input_sequence[:1]
+                input_sequence = input_sequence[1:]
+                if sequence == '\x1b':
+                    if is_escaped:
+                        yield KeySequence(sequence)
+                    else:
+                        is_escaped = True
+                    sequence = None
+            if sequence:
+                yield KeySequence(
+                    sequence,
+                    key=self.key_sequences.get(sequence),
+                    is_escaped=is_escaped
+                )
+                sequence = None
+                is_escaped = False
 

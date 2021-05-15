@@ -203,6 +203,8 @@ class Mode:
     URXVT_EXT_MODE_MOUSE = '?1015'  # Enable urxvt Mouse Mode
     PIXEL_POSITION_MOUSE = '?1016'  # Enable SGR Mouse PixelMode
 
+    BRACKETED_PASTE = '?2004'       # Set bracketed paste mode
+
 
 def csi(code, *parameters):
     """Build CSI sequence."""
