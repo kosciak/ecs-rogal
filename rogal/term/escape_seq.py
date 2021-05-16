@@ -194,7 +194,7 @@ class Mode:
     BTN_EVENT_MOUSE = '?1002'       # Click and dragging tracking
     ANY_EVENT_MOUSE = '?1003'       # All motion tracking
 
-    FOCUS_EVENT_MOUSE = '?1004'     # Focus In/Out events
+    FOCUS_EVENT = '?1004'           # Focus In/Out events
 
     ALTERNATE_SCROLL = '?1007'      # Alternate Scroll Wheel
 

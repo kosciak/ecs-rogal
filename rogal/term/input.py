@@ -1,12 +1,13 @@
 import re
+import logging
 
 from .capabilities import STR_CAPABILITIES, Capability
 
 
-"""Support for keyboard related capabilities.
+log = logging.getLogger(__name__)
 
-Unfortunately not all key related capabilities that are supported by terminals are available in terminfo,
-that's why here is a list of default values for each capability.
+
+"""Input sequences parsing. Parse keys, mouse events, focus in/out events, cursor report, etc
 
 See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-PC-Style-Function-Keys
 See: https://fossies.org/linux/rxvt/doc/rxvtRef.html#KeyCodes
@@ -14,6 +15,8 @@ See: https://fossies.org/linux/rxvt/doc/rxvtRef.html#KeyCodes
 """
 
 
+# Unfortunately not all key related capabilities that are supported by terminals are available in terminfo,
+# that's why here is a list of default values for each capability.
 DEFAULT_KEY_SEQUENCES = {
     # PC-style Normal mode
     b'\x08':   Capability.key_backspace,
@@ -111,11 +114,16 @@ DEFAULT_KEY_SEQUENCES = {
 
     b'\x1b[6@': Capability.kNXT6,
     b'\x1b[5@': Capability.kPRV6,
-
 }
 
 
-KEY_SEQ_PATTERNS = [
+FOCUS_SEQUENCES = {
+    b'\x1b[I': Capability.focus_in,
+    b'\x1b[O': Capability.focus_out,
+}
+
+
+KEY_SEQUENCE_PATTERNS = [
     re.compile('\x1b\[[a-zA-Z]', re.ASCII),
     re.compile('\x1bO[a-zA-Z]', re.ASCII),
     re.compile('\x1b\?[a-zA-Z]', re.ASCII),
@@ -123,6 +131,19 @@ KEY_SEQ_PATTERNS = [
     re.compile('\x1b\[[0-9]{1,2};[0-9]{1,2}[\^~@$]', re.ASCII),
     re.compile('\x1b\[[0-9]{1,2};[0-9]{1,2}[A-Z]', re.ASCII),
     # TODO: kmouse, focus in/out, mouse events parsing?
+]
+
+
+MOUSE_REPORT_PATTERNS = [
+    # re.compile('\x1b[\[>]M(?P<btn>)(?P<column>)(?P<row>)(?P<state>)')
+    re.compile('\x1b[\[>]M(?P<btn>.)(?P<column>.{1,2})(?P<row>.{1,2})(?P<state>)'), # default or EXT_MODE_MOUSE
+    re.compile('\x1b\[<(?P<btn>[0-9]{1,3});(?P<column>[0-9]{1,4});(?P<row>[0-9]{1,4})(?P<state>[mM])', re.ASCII), # SGR_EXT_MODE_MOUSE
+    re.compile('\x1b\[(?P<btn>[0-9]{1,3});(?P<column>[0-9]{1,4});(?P<row>[0-9]{1,4})(?P<state>M)', re.ASCII),   # URXVT_EXT_MODE_MOUSE
+]
+
+
+CURSOR_REPORT_PATTERNS = [
+    re.compile('\x1b\[(?P<row>[0-9]{1,4});(?P<column>[0-9]{1,4})R', re.ASCII),
 ]
 
 
@@ -150,21 +171,41 @@ class SequenceParser:
 
     def get_key_sequences(self):
         key_sequences = {}
-        key_sequences.update(DEFAULT_KEY_SEQUENCES)
+
+        # First defaults
+        for sequence_mappings in [DEFAULT_KEY_SEQUENCES, FOCUS_SEQUENCES]:
+            for sequence, cap_name in sequence_mappings.items():
+                key_sequences[sequence.decode(self._encoding)] = cap_name
+
+        # Now check what is available in terminfo, and overwrite defaults if sequence in use is different
         for cap_name in STR_CAPABILITIES:
             if cap_name.startswith('k') and not cap_name.startswith('key_'):
                 sequence = self._terminfo.get_str(cap_name)
                 if sequence:
                     key_sequences[sequence.decode(self._encoding)] = cap_name
+
         return key_sequences
 
-    def match(self, sequence):
+    def match(self, sequence, patterns, key=None):
         match = None
-        for pattern in KEY_SEQ_PATTERNS:
+        for pattern in patterns:
             match = pattern.match(sequence)
             if match:
+                sequence = sequence[:match.end()]
+                key = key or self.key_sequences.get(sequence)
                 break
-        return match
+        if not match:
+           key = None
+        return match, key
+
+    def match_key(self, sequence):
+        return self.match(sequence, KEY_SEQUENCE_PATTERNS)
+
+    def match_mouse_report(self, sequence):
+        return self.match(sequence, MOUSE_REPORT_PATTERNS, Capability.mouse_report)
+
+    def match_cursor_report(self, sequence):
+        return self.match(sequence, CURSOR_REPORT_PATTERNS, Capability.cursor_report)
 
     def parse(self, input_sequence):
         sequence = None
@@ -178,29 +219,42 @@ class SequenceParser:
                     key=key,
                     is_escaped=is_escaped
                 )
+                is_escaped = False
                 break
 
-            match = self.match(input_sequence)
+            # Try pattern matching
+            match, key = self.match_cursor_report(input_sequence)
+            if not match:
+                match, key = self.match_key(input_sequence)
+            if not match:
+                match, key = self.match_mouse_report(input_sequence)
+
             if match:
-                sequence = input_sequence[0:match.end()]
+                sequence = input_sequence[:match.end()]
                 input_sequence = input_sequence[match.end():]
             else:
+                # Move one character forward
                 sequence = input_sequence[:1]
                 input_sequence = input_sequence[1:]
                 if sequence == '\x1b':
                     if is_escaped:
+                        # Already got '\x1b', yield it
                         yield KeySequence(sequence)
+                        is_escaped = False
                     else:
+                        # Mark next sequence as is_escaped
                         is_escaped = True
                     sequence = None
+
             if sequence:
                 yield KeySequence(
                     sequence,
-                    key=self.key_sequences.get(sequence),
+                    key=key or self.key_sequences.get(sequence),
                     is_escaped=is_escaped
                 )
                 sequence = None
                 is_escaped = False
+
         if is_escaped:
             sequence = '\x1b'
             yield KeySequence(sequence)

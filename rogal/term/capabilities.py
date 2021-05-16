@@ -515,7 +515,8 @@ for long_name, cap_name in PREDEFINED_STR_CAPABILITIES.items():
     Capability[cap_name] = cap_name
 
 
-USER_CAPABILITIES = [
+USER_DEFINED_CAPABILITIES = [
+# From user_caps
     'AX',       # terminal interprets SGR 39 and SGR 49 by resetting the foreground and background color to the default
     'E3',
     'RGB',
@@ -526,20 +527,30 @@ USER_CAPABILITIES = [
     'rmxx',     # Exit strikethrough mode
     'smxx',     # Enter strikethrough mode
 
+# Other
     'TS',       # prefered version of tsl
+
+    'focus_in',     # Emited by Focus In event
+    'focus_out',    # Emited by Focus Out event
 ]
-FLAG_CAPABILITIES.add(USER_CAPABILITIES[0])
-# TODO: What about USER_CAPABILITIES[1:4] ? str?
-STR_CAPABILITIES.update(USER_CAPABILITIES[5:])
-for cap_name in USER_CAPABILITIES:
+FLAG_CAPABILITIES.add(USER_DEFINED_CAPABILITIES[0])
+# TODO: What about USER_DEFINED_CAPABILITIES[1:4] ? str?
+STR_CAPABILITIES.update(USER_DEFINED_CAPABILITIES[5:])
+for cap_name in USER_DEFINED_CAPABILITIES:
     Capability[cap_name] = cap_name
 
 
+# Some more meaningful capabilities names
 ALIASES = AttrDict(
-    cursor_request =    Capability.u7,
-    cursor_report =     Capability.u6,
-    xterm_mouse_mode =  Capability.XM,
-    mouse_report =      Capability.xm,
+    enter_strikethrough     = Capability.smxx,
+    exit_strikethrough      = Capability.rmxx,
+
+    cursor_request          = Capability.u7,
+    cursor_report           = Capability.u6,
+
+    xterm_mouse_mode        = Capability.XM,
+    mouse_report            = Capability.xm,
+
 )
 for long_name, cap_name in ALIASES.items():
     Capability[long_name] = cap_name
@@ -557,6 +568,7 @@ Suffixes used to denote the modifiers of EXTENDED_KEY_DEFINITIONS:
     # NOTE: Meta-* omitted
 '''
 EXTENDED_KEY_DEFINITIONS = [
+    # NOTE:  Most of them already defined, left here for modifier variants
     'kDC',      # special form of kdch1 (delete character)
     'kDN',      # special form of kcud1 (cursor down)
     'kEND',     # special form of kend (End)

@@ -26,6 +26,10 @@ class Modifier(enum.IntFlag):
         return cls.__members__.get(name.upper())
 
 
+# Max Unicode codepoint: 0x10ffff
+# TODO: Maybe set keycodes of function keys to values above max unicode codepoint?
+#       This way we can easily map all single character keys, no matter what layout is used
+
 class Keycode(enum.IntEnum):
     UNKNOWN = 0
 

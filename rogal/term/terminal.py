@@ -1,7 +1,9 @@
 import codecs
+import collections
 import curses
 import functools
 import locale
+import logging
 import os
 import select
 import signal
@@ -14,8 +16,11 @@ from ..geometry import Size, WithSizeMixin
 from .capabilities import Capability
 from .terminfo import Terminfo
 from .escape_seq import Mode
-from .keys import SequenceParser
+from .input import SequenceParser
 from . import term_seq
+
+
+log = logging.getLogger(__name__)
 
 
 UNKNOWN_TERM = 'dumb'
@@ -33,16 +38,18 @@ class Terminal(WithSizeMixin):
         self.output = out_stream or sys.__stdout__
         self._out_fd = self.output.fileno()
 
+        self._terminfo = None
+
         self._encoding = locale.getpreferredencoding() or 'utf-8'
         self._char_decoder = codecs.getincrementaldecoder(self._encoding)()
         self._sequence_parser = None
+
+        # TODO: char or sequence input buffer
 
         self._tty_state = self._get_tty_state(self._in_fd)
         self._exit_modes = {}
 
         self._size = None
-
-        self._terminfo = None
 
         # TODO: add some on_resize hook registration?
         signal.signal(signal.SIGWINCH, self._resize_handler)
@@ -89,7 +96,7 @@ class Terminal(WithSizeMixin):
     @property
     def sequence_parser(self):
         if self._sequence_parser is None:
-            self._sequence_parser = SequenceParser(self._terminfo, self._encoding)
+            self._sequence_parser = SequenceParser(self.terminfo, self._encoding)
         return self._sequence_parser
 
     # Terminfo / capabilities
@@ -212,9 +219,12 @@ class Terminal(WithSizeMixin):
         # exit_seq = self.tput(Capability.xterm_mouse_mode, 0)
 
         mouse_modes = [
+            # Mode.X10_MOUSE,
             Mode.VT200_MOUSE,
             Mode.BTN_EVENT_MOUSE,
-            Mode.ANY_EVENT_MOUSE,
+            # Mode.ANY_EVENT_MOUSE,
+
+            # Mode.EXT_MODE_MOUSE,
             Mode.URXVT_EXT_MODE_MOUSE,
             Mode.SGR_EXT_MODE_MOUSE,
         ]
@@ -225,8 +235,8 @@ class Terminal(WithSizeMixin):
 
     def report_focus(self, enable=True):
         mode = 'report_focus'
-        enter_seq = term_seq.set_private_mode(Mode.FOCUS_EVENT_MOUSE)
-        exit_seq = term_seq.reset_private_mode(Mode.FOCUS_EVENT_MOUSE)
+        enter_seq = term_seq.set_private_mode(Mode.FOCUS_EVENT)
+        exit_seq = term_seq.reset_private_mode(Mode.FOCUS_EVENT)
         self.change_mode(mode, enable, enter_seq, exit_seq)
 
     def bracketed_paste(self, enable=True):
