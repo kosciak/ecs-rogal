@@ -43,8 +43,7 @@ class Terminal(WithSizeMixin):
         self._encoding = locale.getpreferredencoding() or 'utf-8'
         self._char_decoder = codecs.getincrementaldecoder(self._encoding)()
         self._sequence_parser = None
-
-        # TODO: char or sequence input buffer
+        self._sequence_buffer = collections.deque()
 
         self._tty_state = self._get_tty_state(self._in_fd)
         self._exit_modes = {}
@@ -124,7 +123,7 @@ class Terminal(WithSizeMixin):
     def raw(self):
         tty.setraw(self._in_fd, termios.TCSANOW)
 
-    # Input handling
+    # Input handling - from very low-level (reading single bytes) to parsed, and buffered sequences
 
     def is_readable(self, timeout=None):
         if timeout is None:
@@ -155,10 +154,27 @@ class Terminal(WithSizeMixin):
             if char:
                 yield char
 
-    def read_keys(self):
+    def read_sequences(self):
         input_sequence = ''.join(self.read_chars())
         for sequence in self.sequence_parser.parse(input_sequence):
             yield sequence
+
+    def get_sequences(self, timeout=None):
+        while self._sequence_buffer:
+            yield self._sequence_buffer.popleft()
+
+        if self.is_readable(timeout):
+            self._sequence_buffer.extend(self.read_sequences())
+
+        while self._sequence_buffer:
+            yield self._sequence_buffer.popleft()
+
+    def get_sequence(self, timeout=None):
+        for sequence in self.get_sequences(timeout):
+            return sequence
+
+    def unget_sequence(self, sequence):
+        self._sequence_buffer.append(sequence)
 
     # Output handling
 

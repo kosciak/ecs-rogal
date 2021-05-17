@@ -123,11 +123,17 @@ FOCUS_SEQUENCES = {
 }
 
 
+PASTE_SEQUENCES = {
+    b'\x1b[200~': Capability.paste_begin,
+    b'\x1b[201~': Capability.paste_finish,
+}
+
+
 KEY_SEQUENCE_PATTERNS = [
     re.compile('\x1b\[[a-zA-Z]', re.ASCII),
     re.compile('\x1bO[a-zA-Z]', re.ASCII),
     re.compile('\x1b\?[a-zA-Z]', re.ASCII),
-    re.compile('\x1b\[[0-9]{1,2}[\^~@$]', re.ASCII),
+    re.compile('\x1b\[[0-9]{1,3}[\^~@$]', re.ASCII),
     re.compile('\x1b\[[0-9]{1,2};[0-9]{1,2}[\^~@$]', re.ASCII),
     re.compile('\x1b\[[0-9]{1,2};[0-9]{1,2}[A-Z]', re.ASCII),
     # TODO: kmouse, focus in/out, mouse events parsing?
@@ -147,7 +153,7 @@ CURSOR_REPORT_PATTERNS = [
 ]
 
 
-class KeySequence(str):
+class Sequence(str):
 
     def __new__(cls, sequence, *, key=None, is_escaped=False):
         new = super().__new__(cls, sequence)
@@ -157,6 +163,12 @@ class KeySequence(str):
 
 
 class SequenceParser:
+
+    """Parse input sequence characters and yield Sequence.
+
+    Unlike decoder this parser assumes that whole available input sequence is passed in.
+
+    """
 
     def __init__(self, terminfo, encoding):
         self._terminfo = terminfo
@@ -173,7 +185,7 @@ class SequenceParser:
         key_sequences = {}
 
         # First defaults
-        for sequence_mappings in [DEFAULT_KEY_SEQUENCES, FOCUS_SEQUENCES]:
+        for sequence_mappings in [DEFAULT_KEY_SEQUENCES, FOCUS_SEQUENCES, PASTE_SEQUENCES]:
             for sequence, cap_name in sequence_mappings.items():
                 key_sequences[sequence.decode(self._encoding)] = cap_name
 
@@ -186,76 +198,80 @@ class SequenceParser:
 
         return key_sequences
 
-    def match(self, sequence, patterns, key=None):
-        match = None
+    def _match_patterns(self, characters, patterns):
         for pattern in patterns:
-            match = pattern.match(sequence)
+            match = pattern.match(characters)
             if match:
-                sequence = sequence[:match.end()]
-                key = key or self.key_sequences.get(sequence)
-                break
-        if not match:
-           key = None
-        return match, key
+                sequence = Sequence(characters[:match.end()])
+                return match, sequence
+        return None, None
 
-    def match_key(self, sequence):
-        return self.match(sequence, KEY_SEQUENCE_PATTERNS)
+    def match_key(self, characters):
+        match, sequence = self._match_patterns(characters, KEY_SEQUENCE_PATTERNS)
+        if match:
+            sequence.key = self.key_sequences.get(sequence)
+            characters = characters[match.end():]
+        return sequence, characters
 
-    def match_mouse_report(self, sequence):
-        return self.match(sequence, MOUSE_REPORT_PATTERNS, Capability.mouse_report)
+    def match_mouse_report(self, characters):
+        match, sequence = self._match_patterns(characters, MOUSE_REPORT_PATTERNS)
+        if match:
+            sequence.key = Capability.mouse_report
+            characters = characters[match.end():]
+            # TODO: Parse match.groups
+            # sequence.x = int(match.group('row')) -1
+            # sequence.y = int(match.group('column')) -1
+        return sequence, characters
 
-    def match_cursor_report(self, sequence):
-        return self.match(sequence, CURSOR_REPORT_PATTERNS, Capability.cursor_report)
+    def match_cursor_report(self, characters):
+        match, sequence = self._match_patterns(characters, CURSOR_REPORT_PATTERNS)
+        if match:
+            sequence.key = Capability.cursor_report
+            characters = characters[match.end():]
+            # TODO: Parse match.groups
+            sequence.x = int(match.group('row'))
+            sequence.y = int(match.group('column'))
+            if '%i' in self._terminfo.get_str(Capability.cursor_report):
+                sequence.x -= 1
+                sequence.y -= 1
+        return sequence, characters
 
-    def parse(self, input_sequence):
-        sequence = None
+    def match_key_sequence(self, characters):
+        key = self.key_sequences.get(characters)
+        if key:
+            return Sequence(characters, key=key), ''
+        return None, characters
+
+    def parse(self, characters):
         is_escaped = False
-        while input_sequence:
-            key = self.key_sequences.get(input_sequence)
-            if key:
-                # Direct hit, no need for further parsing
-                yield KeySequence(
-                    input_sequence,
-                    key=key,
-                    is_escaped=is_escaped
-                )
-                is_escaped = False
-                break
-
+        while characters:
+            # Direct hit, no need for further parsing
+            sequence, characters = self.match_key_sequence(characters)
             # Try pattern matching
-            match, key = self.match_cursor_report(input_sequence)
-            if not match:
-                match, key = self.match_key(input_sequence)
-            if not match:
-                match, key = self.match_mouse_report(input_sequence)
+            if not sequence:
+                sequence, characters = self.match_cursor_report(characters)
+            if not sequence:
+                sequence, characters = self.match_key(characters)
+            if not sequence:
+                sequence, characters = self.match_mouse_report(characters)
+            if not sequence:
+                # Just move one character forward
+                sequence = Sequence(characters[:1])
+                characters = characters[1:]
 
-            if match:
-                sequence = input_sequence[:match.end()]
-                input_sequence = input_sequence[match.end():]
-            else:
-                # Move one character forward
-                sequence = input_sequence[:1]
-                input_sequence = input_sequence[1:]
-                if sequence == '\x1b':
-                    if is_escaped:
-                        # Already got '\x1b', yield it
-                        yield KeySequence(sequence)
-                        is_escaped = False
-                    else:
-                        # Mark next sequence as is_escaped
-                        is_escaped = True
-                    sequence = None
+            if sequence == '\x1b':
+                if is_escaped:
+                    # Already got '\x1b', yield it
+                    yield sequence
+                else:
+                    # Mark next sequence as is_escaped
+                    is_escaped = True
+                continue
 
-            if sequence:
-                yield KeySequence(
-                    sequence,
-                    key=key or self.key_sequences.get(sequence),
-                    is_escaped=is_escaped
-                )
-                sequence = None
-                is_escaped = False
+            sequence.is_escaped = is_escaped
+            yield sequence
+            is_escaped = False
 
         if is_escaped:
-            sequence = '\x1b'
-            yield KeySequence(sequence)
+            yield Sequence('\x1b')
 

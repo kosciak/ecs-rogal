@@ -532,6 +532,9 @@ USER_DEFINED_CAPABILITIES = [
 
     'focus_in',     # Emited by Focus In event
     'focus_out',    # Emited by Focus Out event
+
+    'paste_begin',  # start of pasted sequence in bracketed paste mode
+    'paste_finish', # finish of pasted sequence in bracketed paste mode
 ]
 FLAG_CAPABILITIES.add(USER_DEFINED_CAPABILITIES[0])
 # TODO: What about USER_DEFINED_CAPABILITIES[1:4] ? str?

@@ -28,14 +28,13 @@ class TermInputWrapper(InputWrapper):
 
     def get_events_gen(self, timeout=None):
         """Get all pending events."""
-        if self.term.is_readable(timeout):
-            for sequence in self.term.read_keys():
-                log.warning('INPUT: %s - %r %s',
-                            sequence.key or '???',
-                            sequence,
-                            sequence.is_escaped and '(escaped)' or '',
-                            )
-            yield from ()
+        for sequence in self.term.get_sequences(timeout):
+            log.warning('INPUT: %s - %r %s',
+                        sequence.key or '???',
+                        sequence,
+                        sequence.is_escaped and '(escaped)' or '',
+                        )
+        yield from ()
 
 
 class ANSIWrapper(IOWrapper):
@@ -59,7 +58,8 @@ class ANSIWrapper(IOWrapper):
         self.term.keypad()
         self.term.hide_cursor()
         self.term.report_focus()
-        # self.term.mouse_tracking()
+        self.term.mouse_tracking()
+        self.term.bracketed_paste()
         if self.title:
             self.term.set_title(self.title)
         self._input = TermInputWrapper(self.term)
@@ -76,5 +76,4 @@ class ANSIWrapper(IOWrapper):
         self.term.write(self.term.tput('clear'))
         ansi.show_rgb_console(panel.console)
         # sys.stdout.flush()
-        # self.term.request_cursor()
 
