@@ -79,8 +79,8 @@ CURSES_KEYCODES = {
 
     curses.KEY_BTAB:    (Keycode.TAB, Modifier.SHIFT),
 
-    curses.KEY_SR:      (Keycode.UP, Modifier.SHIFT),
-    curses.KEY_SF:      (Keycode.DOWN, Modifier.SHIFT),
+    curses.KEY_SR:      (Keycode.UP, Modifier.SHIFT), # TODO: ???
+    curses.KEY_SF:      (Keycode.DOWN, Modifier.SHIFT), # TODO: ???
     curses.KEY_SLEFT:   (Keycode.LEFT, Modifier.SHIFT),
     curses.KEY_SRIGHT:  (Keycode.RIGHT, Modifier.SHIFT),
 
@@ -208,10 +208,10 @@ CURSES_KEYNAMES = {
     b'kPRV7':   (Keycode.PAGE_UP, Modifier.CTRL | Modifier.ALT),
     b'kNXT7':   (Keycode.PAGE_DOWN, Modifier.CTRL | Modifier.ALT),
 
-    b'kUP8':    (Keycode.UP, Modifier.CTRL | Modifier.ALT),
-    b'kDN8':    (Keycode.DOWN, Modifier.CTRL | Modifier.ALT),
-    b'kLFT8':   (Keycode.LEFT, Modifier.CTRL | Modifier.ALT),
-    b'kRIT8':   (Keycode.RIGHT, Modifier.CTRL | Modifier.ALT),
+    b'kUP8':    (Keycode.UP, Modifier.CTRL | Modifier.ALT | Modifier.SHIFT),
+    b'kDN8':    (Keycode.DOWN, Modifier.CTRL | Modifier.ALT | Modifier.SHIFT),
+    b'kLFT8':   (Keycode.LEFT, Modifier.CTRL | Modifier.ALT | Modifier.SHIFT),
+    b'kRIT8':   (Keycode.RIGHT, Modifier.CTRL | Modifier.ALT | Modifier.SHIFT),
 
     b'kIC8':    (Keycode.INSERT, Modifier.CTRL | Modifier.ALT | Modifier.SHIFT),
     b'kDC8':    (Keycode.DELETE, Modifier.CTRL | Modifier.ALT | Modifier.SHIFT),
@@ -248,8 +248,7 @@ CURSES_ESCAPE_SEQUENCES = {
     'Ok':   (Keycode.KP_PLUS, Modifier.NONE),
     'On':   (Keycode.KP_PERIOD, Modifier.NONE),
     'Ol':   (Keycode.KP_COMMA, Modifier.NONE), # NOT sure about this one
-
-    'OM':   (Keycode.ENTER, Modifier.NONE), # NOT sure about this one
+    'OM':   (Keycode.KP_ENTER, Modifier.NONE),
 
     # urxvt
     '[a':   (Keycode.UP, Modifier.SHIFT),

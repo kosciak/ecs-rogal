@@ -543,20 +543,36 @@ for cap_name in USER_DEFINED_CAPABILITIES:
     Capability[cap_name] = cap_name
 
 
-# Some more meaningful capabilities names
-ALIASES = AttrDict(
-    enter_strikethrough     = Capability.smxx,
-    exit_strikethrough      = Capability.rmxx,
+KEYPAD_KEY_DEFINITIONS = [
+    'kp0',
+    'kp1',
+    'kp2',
+    'kp3',
+    'kp4',
+    'kp5',
+    'kp6',
+    'kp7',
+    'kp8',
+    'kp9',
 
-    cursor_request          = Capability.u7,
-    cursor_report           = Capability.u6,
+    'ka2',
+    'kb1',
+    'kb3',
+    'kc2',
 
-    xterm_mouse_mode        = Capability.XM,
-    mouse_report            = Capability.xm,
+    'kpDIV',
+    'kpMUL',
+    'kpSUB',
+    'kpADD',
+    'kpDOT',
+    'kpZRO',
+    'kpCMA',
 
-)
-for long_name, cap_name in ALIASES.items():
-    Capability[long_name] = cap_name
+    'kpENT',
+]
+STR_CAPABILITIES.update(KEYPAD_KEY_DEFINITIONS)
+for cap_name in KEYPAD_KEY_DEFINITIONS:
+    Capability[cap_name] = cap_name
 
 
 '''
@@ -583,6 +599,16 @@ EXTENDED_KEY_DEFINITIONS = [
     'kUP',      # special form of kcuu1 (cursor-up)
 
     'kIC',      # special form of kich1 (insert character)
+
+    'kpDIV',
+    'kpMUL',
+    'kpSUB',
+    'kpADD',
+    'kpDOT',
+    'kpZRO',
+    'kpCMA',
+
+    'kpENT',
 ]
 STR_CAPABILITIES.update(EXTENDED_KEY_DEFINITIONS)
 for cap_name in EXTENDED_KEY_DEFINITIONS:
@@ -593,32 +619,23 @@ for cap_name in EXTENDED_KEY_DEFINITIONS:
         STR_CAPABILITIES.add(cap_mod_name)
 
 
-KEYPAD_KEY_DEFINITIONS = [
-    'kp0',
-    'kp1',
-    'kp2',
-    'kp3',
-    'kp4',
-    'kp5',
-    'kp6',
-    'kp7',
-    'kp8',
-    'kp9',
+# Some more meaningful capabilities names
+ALIASES = AttrDict(
+    enter_strikethrough     = Capability.smxx,
+    exit_strikethrough      = Capability.rmxx,
 
-    'ka2',
-    'kb1',
-    'kb3',
-    'kc2',
+    cursor_request          = Capability.u7,
+    cursor_report           = Capability.u6,
 
-    'kpDIV',
-    'kpMUL',
-    'kpSUB',
-    'kpADD',
-    'kpDOT',
-    'kpZRO',
-    'kpCMA',
-]
-STR_CAPABILITIES.update(KEYPAD_KEY_DEFINITIONS)
-for cap_name in KEYPAD_KEY_DEFINITIONS:
-    Capability[cap_name] = cap_name
+    xterm_mouse_mode        = Capability.XM,
+    mouse_report            = Capability.xm,
+
+    key_a2                  = Capability.ka2,
+    key_b1                  = Capability.kb1,
+    key_b2                  = Capability.kb3,
+    key_c2                  = Capability.kc2,
+
+)
+for long_name, cap_name in ALIASES.items():
+    Capability[long_name] = cap_name
 
