@@ -12,29 +12,11 @@ from ..console import ConsoleRGB
 from ..term import ansi
 from ..term.terminal import Terminal
 
-from .core import IOWrapper, InputWrapper
+from .core import IOWrapper
+from .term_input import TermInputWrapper
 
 
 log = logging.getLogger(__name__)
-
-
-class TermInputWrapper(InputWrapper):
-
-    # NOTE: Just proof-of-concept of raw terminal based input handling
-
-    def __init__(self, term):
-        super().__init__()
-        self.term = term
-
-    def get_events_gen(self, timeout=None):
-        """Get all pending events."""
-        for sequence in self.term.get_sequences(timeout):
-            log.warning('INPUT: %s - %r %s',
-                        sequence.key or '???',
-                        sequence,
-                        sequence.is_escaped and '(escaped)' or '',
-                        )
-        yield from ()
 
 
 class ANSIWrapper(IOWrapper):
@@ -53,7 +35,8 @@ class ANSIWrapper(IOWrapper):
         return self._is_initialized
 
     def initialize(self):
-        self.term.cbreak()
+        # self.term.cbreak()
+        self.term.raw()
         self.term.fullscreen()
         self.term.keypad()
         self.term.hide_cursor()
@@ -95,7 +78,8 @@ class ANSIWrapper(IOWrapper):
                 line = []
                 column = 0
 
-        self.term.write('\n'.join(lines))
+        # NOTE: in raw mode \r\n MUST be used, in cbreak mode \n is enough
+        self.term.write('\r\n'.join(lines))
         self.term.write(self.term.normal())
         self.term.flush()
 

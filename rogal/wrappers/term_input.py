@@ -1,9 +1,40 @@
+import functools
+import logging
+
+from ..term.escape_seq import ControlChar
 from ..term.capabilities import Capability
 
+from .. import events
 from ..events.keys import Key, Keycode, Modifier
 
+from .core import InputWrapper
 
-KEY_CAPABILITIES = {
+
+log = logging.getLogger(__name__)
+
+
+FOCUS_CHANGE = {
+    Capability.focus_in,
+    Capability.focus_out,
+}
+
+
+MOUSE_REPORT = Capability.mouse_report
+
+
+SEQUENCE_KEYCODES = {
+    ControlChar.BS:     (Keycode.BACKSPACE, Modifier.NONE),
+    ControlChar.HT:     (Keycode.TAB, Modifier.NONE),
+    ControlChar.CR:     (Keycode.ENTER, Modifier.NONE),
+    ControlChar.LF:     (Keycode.ENTER, Modifier.NONE),
+    ControlChar.ESC:    (Keycode.ESC, Modifier.NONE),
+    ControlChar.SP:     (Keycode.SPACE, Modifier.NONE),
+    # ControlChar.DEL:    (Keycode.DELETE, Modifier.NONE),
+    ControlChar.DEL:    (Keycode.BACKSPACE, Modifier.NONE),
+}
+
+
+KEY_KEYCODES = {
     Capability.key_f1:      (Keycode.F1, Modifier.NONE),
     Capability.key_f2:      (Keycode.F2, Modifier.NONE),
     Capability.key_f3:      (Keycode.F3, Modifier.NONE),
@@ -278,7 +309,6 @@ NOTE: Mappings from curses.has_key
     _curses.KEY_F62: 'kf62',
     _curses.KEY_F63: 'kf63',
 
-
     _curses.KEY_BEG: 'kbeg',
     _curses.KEY_CANCEL: 'kcan',
     _curses.KEY_CATAB: 'ktbc',
@@ -300,10 +330,8 @@ NOTE: Mappings from curses.has_key
     _curses.KEY_MARK: 'kmrk',
     _curses.KEY_MESSAGE: 'kmsg',
     _curses.KEY_MOVE: 'kmov',
-    _curses.KEY_NEXT: 'knxt',
     _curses.KEY_OPEN: 'kopn',
     _curses.KEY_OPTIONS: 'kopt',
-    _curses.KEY_PREVIOUS: 'kprv',
     _curses.KEY_PRINT: 'kprt',
     _curses.KEY_REDO: 'krdo',
     _curses.KEY_REFERENCE: 'kref',
@@ -338,3 +366,62 @@ NOTE: Mappings from curses.has_key
     _curses.KEY_UNDO: 'kund',
 
 '''
+
+def get_key(sequence):
+    keycode, modifiers = SEQUENCE_KEYCODES.get(sequence, (None, None))
+    if keycode:
+        return Key(keycode, modifiers, alt=sequence.is_escaped)
+
+    keycode, modifiers = KEY_KEYCODES.get(sequence.key, (None, None))
+    if keycode:
+        return Key(keycode, modifiers, alt=sequence.is_escaped)
+
+    if len(sequence) > 1:
+        # TODO: Some unrecognized sequence
+        return
+
+    keycode = ord(sequence)
+
+    # Keys with CTRL
+    if keycode < 32:
+        keycode = ord(chr(keycode+64).lower())
+        return Key(keycode, ctrl=True, alt=sequence.is_escaped)
+
+    if keycode < 127:
+        return Key(keycode, alt=sequence.is_escaped)
+
+
+def parse_sequence(sequence):
+    if sequence.key in FOCUS_CHANGE:
+        # TODO: yield Focus In/Out events
+        return
+
+    if sequence.key == MOUSE_REPORT:
+        # TODO: get_mouse(sequence)
+        return
+
+    key = get_key(sequence)
+    if key:
+        yield events.KeyPress(sequence, key)
+    if len(sequence) == 1 and ord(sequence) >= 127:
+        yield events.TextInput(sequence, sequence)
+    if key:
+        yield events.KeyUp(sequence, key)
+
+
+class TermInputWrapper(InputWrapper):
+
+    def __init__(self, term):
+        super().__init__()
+        self.term = term
+
+    def get_events_gen(self, timeout=None):
+        """Get all pending events."""
+        for sequence in self.term.get_sequences(timeout):
+            log.debug('INPUT: %s - %r %s',
+                      sequence.key or '???',
+                      sequence,
+                      sequence.is_escaped and '(escaped)' or '',
+                     )
+            yield from parse_sequence(sequence)
+
