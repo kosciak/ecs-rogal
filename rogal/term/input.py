@@ -287,7 +287,7 @@ class SequenceParser:
             # TODO: Parse match.groups
             sequence.x = int(match.group('row'))
             sequence.y = int(match.group('column'))
-            if '%i' in self._terminfo.get_str(Capability.cursor_report):
+            if b'%i' in self._terminfo.get_str(Capability.cursor_report):
                 sequence.x -= 1
                 sequence.y -= 1
         return sequence, characters

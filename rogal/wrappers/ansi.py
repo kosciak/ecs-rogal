@@ -73,7 +73,29 @@ class ANSIWrapper(IOWrapper):
         return super().create_console(self.console_size)
 
     def flush(self, panel):
-        self.term.write(self.term.tput('clear'))
-        ansi.show_rgb_console(panel.console)
-        # sys.stdout.flush()
+        self.term.write(self.term.clear())
+
+        columns = panel.console.width
+        prev_fg = None
+        prev_bg = None
+        lines = []
+        line = []
+        column = 0
+        for ch, fg, bg in panel.console.tiles_gen(encode_ch=chr):
+            column += 1
+            if prev_fg is None or not (fg == prev_fg).all():
+                line.append(self.term.fg_rgb(*fg))
+                prev_fg = fg
+            if prev_bg is None or not (bg == prev_bg).all():
+                line.append(self.term.bg_rgb(*bg))
+                prev_bg = bg
+            line.append(ch)
+            if column >= columns:
+                lines.append(''.join(line))
+                line = []
+                column = 0
+
+        self.term.write('\n'.join(lines))
+        self.term.write(self.term.normal())
+        self.term.flush()
 

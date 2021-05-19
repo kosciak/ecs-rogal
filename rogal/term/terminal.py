@@ -11,12 +11,13 @@ import sys
 import termios
 import tty
 
-from ..geometry import Size, WithSizeMixin
+from ..geometry import Position, Size, WithSizeMixin
 
 from .capabilities import Capability
 from .terminfo import Terminfo
 from .escape_seq import Mode
 from .input import SequenceParser
+from . import ansi
 from . import term_seq
 
 
@@ -44,6 +45,7 @@ class Terminal(WithSizeMixin):
         self._char_decoder = codecs.getincrementaldecoder(self._encoding)()
         self._sequence_parser = None
         self._sequence_buffer = collections.deque()
+        self._unget_buffer = collections.deque()
 
         self._tty_state = self._get_tty_state(self._in_fd)
         self._exit_modes = {}
@@ -100,16 +102,15 @@ class Terminal(WithSizeMixin):
 
     # Terminfo / capabilities
 
-    # TODO: Consider renaming to tparm, and tput() does write and flush
     @functools.lru_cache(maxsize=1024)
     def tput(self, cap_name, *params):
         capability = self.terminfo.get(cap_name)
         if not capability:
-            return None
+            return '' # Capability not supported
         sequence = self.terminfo.tparm(capability, *params)
         return sequence.decode(self._encoding)
 
-    # Low level TTY stuff 
+    # Low level TTY state and mode
 
     def _get_tty_state(self, fd):
         return termios.tcgetattr(fd)
@@ -129,7 +130,7 @@ class Terminal(WithSizeMixin):
         if timeout is None:
             readable, _, _ = select.select([self._in_fd, ], [], [])
         else:
-            readable, _, _ = select.select([self._in_fd, ], [], [], timeout)
+            readable, _, _ = select.select([self._in_fd, ], [], [], timeout or 0)
         return self._in_fd in readable
 
     def read_byte(self):
@@ -160,6 +161,9 @@ class Terminal(WithSizeMixin):
             yield sequence
 
     def get_sequences(self, timeout=None):
+        self._sequence_buffer.extendleft(self._unget_buffer)
+        self._unget_buffer.clear()
+
         while self._sequence_buffer:
             yield self._sequence_buffer.popleft()
 
@@ -174,14 +178,16 @@ class Terminal(WithSizeMixin):
             return sequence
 
     def unget_sequence(self, sequence):
-        self._sequence_buffer.append(sequence)
+        self._unget_buffer.append(sequence)
 
     # Output handling
 
     def write(self, text):
         self.output.write(text)
 
-    def flush(self):
+    def flush(self, text=None):
+        if text:
+            self.output.write(text)
         self.output.flush()
 
     # Modes manipulation
@@ -190,14 +196,12 @@ class Terminal(WithSizeMixin):
         if exit_seq:
             self._exit_modes[mode] = exit_seq
         if enter_seq:
-            self.output.write(enter_seq)
-            self.output.flush()
+            self.flush(enter_seq)
 
     def exit_mode(self, mode, exit_seq):
         self._exit_modes.pop(mode, None)
         if exit_seq:
-            self.output.write(exit_seq)
-            self.output.flush()
+            self.flush(exit_seq)
 
     def change_mode(self, mode, enable, enter_seq, exit_seq):
         if enable:
@@ -262,8 +266,8 @@ class Terminal(WithSizeMixin):
         self.change_mode(mode, enable, enter_seq, exit_seq)
 
     def save_title(self):
-        self.output.write(term_seq.save_title())
-        self.output.flush()
+        sequence = term_seq.save_title()
+        self.flush(sequence)
 
     def set_title(self, title):
         self._exit_modes['set_title'] = term_seq.restore_title()
@@ -275,18 +279,143 @@ class Terminal(WithSizeMixin):
         if sequence:
             sequence += title
             sequence += self.tput(Capability.from_status_line)
-            self.output.write(sequence)
         else:
-            self.output.write(term_seq.set_title(title))
-        self.output.flush()
+            sequence = term_seq.set_title(title)
+        self.flush(sequence)
 
     def restore_title(self):
         self.output.write(term_seq.restore_title())
         self.output.flush()
 
+    # Cursor manipulation
+
     def request_cursor(self):
         # self.output.write(term_seq.csi(term_seq.CSI.CPR))
-        self.output.write(self.tput(Capability.cursor_request)) # Answer with Capability.u6 format
-        self.output.flush()
-        # TODO: Read cursor position from input
+        sequence = self.tput(Capability.cursor_request)
+        self.flush(sequence) # Answer with Capability.u6 format
+
+    def cursor_position(self):
+        self.request_cursor()
+        # NOTE: This assumes we are in cbreak or raw TTY mode!
+        while self.is_readable(None):
+            # Just keep trying until cursor_report shows up
+            for sequence in self.read_sequences():
+                if sequence.key != Capability.cursor_report:
+                    self._sequence_buffer.append(sequence)
+                else:
+                    return Position(sequence.x, sequence.y)
+
+    def cursor_move(self, x, y):
+        sequence = self.tput(Capability.cursor_address, y, x)
+        return sequence
+
+    def cursor_up(self, y=None):
+        if y == None:
+            sequence = self.tput(Capability.cursor_up)
+        else:
+            sequence = self.tput(Capability.parm_up_cursor, y)
+        return sequence
+
+    def cursor_down(self, y=None):
+        if y == None:
+            sequence = self.tput(Capability.cursor_down)
+        else:
+            sequence = self.tput(Capability.parm_down_cursor, y)
+        return sequence
+
+    def cursor_left(self, x=None):
+        if x == None:
+            sequence = self.tput(Capability.cursor_left)
+        else:
+            sequence = self.tput(Capability.parm_left_cursor, x)
+        return sequence
+
+    def cursor_left(self, x=None):
+        if x == None:
+            sequence = self.tput(Capability.cursor_right)
+        else:
+            sequence = self.tput(Capability.parm_right_cursor, x)
+        return sequence
+
+    def cursor_home(self):
+        sequence = self.tput(Capability.cursor_home)
+        if not sequence:
+            sequence = self.cursor_move(0, 0)
+        return sequence
+
+    def clear(self):
+        sequence = self.tput(Capability.clear_screen)
+        # if not sequence:
+        #     sequence = self.cursor_home() + self.tput(Capability.clr_eos)
+        return sequence
+
+    # Colors
+
+    def init_color(self, index, color):
+        sequence = self.tput(Capability.init_color, *color.rgb)
+        return sequence
+
+    def bg_rgb(self, r, g, b):
+        sequence = ansi.bg_rgb(r, g, b)
+        return sequence
+
+    def fg_rgb(self, r, g, b):
+        sequence = ansi.fg_rgb(r, g, b)
+        return sequence
+
+    def fg(self, color):
+        sequence = self.tput(Capability.set_a_foreground, color)
+        if not sequence:
+            sequence = self.tput(Capability.set_foreground, color)
+        return sequence
+
+    def bg(self, color):
+        sequence = self.tput(Capability.set_a_background, color)
+        if not sequence:
+            sequence = self.tput(Capability.set_background, color)
+        return sequence
+
+    # SGR Attributes
+
+    def bold(self):
+        sequence = self.tput(Capability.enter_bold_mode)
+        return sequence
+
+    def dim(self):
+        sequence = self.tput(Capability.enter_dim_mode)
+        return sequence
+
+    def italics(self):
+        sequence = self.tput(Capability.enter_italics_mode)
+        return sequence
+
+    def strikethrough(self):
+        sequence = self.tput(Capability.enter_strikethrough_mode)
+        return sequence
+
+    def standout(self):
+        sequence = self.tput(Capability.enter_standout_mode)
+        return sequence
+
+    def reverse(self):
+        sequence = self.tput(Capability.enter_reverse_mode)
+        return sequence
+
+    def underline(self):
+        sequence = self.tput(Capability.enter_underline_mode)
+        return sequence
+
+    def invisible(self):
+        sequence = self.tput(Capability.enter_secure_mode)
+        return sequence
+
+    def blink(self):
+        sequence = self.tput(Capability.enter_blink_mode)
+        return sequence
+
+    # Reset colors and attributes
+
+    def normal(self):
+        sequence = self.tput(Capability.exit_attribute_mode)
+        return sequence
 

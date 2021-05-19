@@ -168,6 +168,8 @@ class TitleMode:
     WINDOW = 2
 
 
+# For VT100 reference of DEC* modes
+# See: https://vt100.net/docs/vt510-rm/contents.html
 class Mode:
     IRM = '4'           # Insert mode
 

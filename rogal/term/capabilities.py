@@ -621,8 +621,8 @@ for cap_name in EXTENDED_KEY_DEFINITIONS:
 
 # Some more meaningful capabilities names
 ALIASES = AttrDict(
-    enter_strikethrough     = Capability.smxx,
-    exit_strikethrough      = Capability.rmxx,
+    enter_strikethrough_mode     = Capability.smxx,
+    exit_strikethrough_mode      = Capability.rmxx,
 
     cursor_request          = Capability.u7,
     cursor_report           = Capability.u6,
