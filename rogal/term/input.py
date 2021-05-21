@@ -1,6 +1,8 @@
 import re
 import logging
 
+from ..geometry import Position
+
 from .capabilities import STR_CAPABILITIES, Capability
 
 
@@ -196,11 +198,15 @@ KEY_SEQUENCE_PATTERNS = [
 ]
 
 
+EXT_MOUSE_REPORT = re.compile('\x1b[\[>]M(?P<btn>.)(?P<column>.)(?P<row>.)(?P<state>)', re.ASCII)
+SGR_MOUSE_REPORT = re.compile('\x1b\[<(?P<btn>[0-9]{1,3});(?P<column>[0-9]{1,4});(?P<row>[0-9]{1,4})(?P<state>[mM])', re.ASCII)
+RXVT_MOUSE_REPORT = re.compile('\x1b\[(?P<btn>[0-9]{1,3});(?P<column>[0-9]{1,4});(?P<row>[0-9]{1,4})(?P<state>M)', re.ASCII)
+
 MOUSE_REPORT_PATTERNS = [
     # re.compile('\x1b[\[>]M(?P<btn>)(?P<column>)(?P<row>)(?P<state>)')
-    re.compile('\x1b[\[>]M(?P<btn>.)(?P<column>.{1,2})(?P<row>.{1,2})(?P<state>)'), # default or EXT_MODE_MOUSE
-    re.compile('\x1b\[<(?P<btn>[0-9]{1,3});(?P<column>[0-9]{1,4});(?P<row>[0-9]{1,4})(?P<state>[mM])', re.ASCII), # SGR_EXT_MODE_MOUSE
-    re.compile('\x1b\[(?P<btn>[0-9]{1,3});(?P<column>[0-9]{1,4});(?P<row>[0-9]{1,4})(?P<state>M)', re.ASCII),   # URXVT_EXT_MODE_MOUSE
+    SGR_MOUSE_REPORT,
+    RXVT_MOUSE_REPORT,
+    # EXT_MOUSE_REPORT, # NOTE: Do NOT use it as returned values confueses utf-8 decoder...
 ]
 
 
@@ -269,14 +275,23 @@ class SequenceParser:
             characters = characters[match.end():]
         return sequence, characters
 
+    def _parse_position(self, match):
+        return Position(
+            int(match.group('column'))-1,
+            int(match.group('row'))-1,
+        )
+
     def match_mouse_report(self, characters):
         match, sequence = self._match_patterns(characters, MOUSE_REPORT_PATTERNS)
         if match:
             sequence.key = Capability.mouse_report
             characters = characters[match.end():]
             # TODO: Parse match.groups
-            # sequence.x = int(match.group('row')) -1
-            # sequence.y = int(match.group('column')) -1
+            sequence.position = self._parse_position(match)
+            sequence.btn = int(match.group('btn'))
+            if match.re == RXVT_MOUSE_REPORT:
+                sequence.btn -= 32
+            sequence.state = match.group('state')
         return sequence, characters
 
     def match_cursor_report(self, characters):
@@ -284,12 +299,7 @@ class SequenceParser:
         if match:
             sequence.key = Capability.cursor_report
             characters = characters[match.end():]
-            # TODO: Parse match.groups
-            sequence.x = int(match.group('row'))
-            sequence.y = int(match.group('column'))
-            if b'%i' in self._terminfo.get_str(Capability.cursor_report):
-                sequence.x -= 1
-                sequence.y -= 1
+            sequence.position = self._parse_position(match)
         return sequence, characters
 
     def match_key_sequence(self, characters):

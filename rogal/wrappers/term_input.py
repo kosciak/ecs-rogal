@@ -6,6 +6,7 @@ from ..term.capabilities import Capability
 
 from .. import events
 from ..events.keys import Key, Keycode, Modifier
+from ..events.mouse import MouseButton
 
 from .core import InputWrapper
 
@@ -391,13 +392,96 @@ def get_key(sequence):
         return Key(keycode, alt=sequence.is_escaped)
 
 
+'''
+sequence.btn flags:
+0 - MouseButton.LEFT,
+1 - MouseButton.MIDDLE,
+2 - MouseButton.RIGHT,
+3 - None,
+
+4 - Modifier.SHIFT,
+8 - Modifier.ALT,
+16 - Modifier.CTRL,
+
+32 - motion
+
+64 - Scroll UP
+65 - Scroll DOWN
+66 - Scroll LEFT
+67 - Scroll RIGHT
+
+[rxvt]
+68 - BACK
+69 - FORWARD
+[xterm]
+128 - BACK
+129 - FORWARD
+
+'''
+
+MOUSE_BUTTON = {
+    0:      MouseButton.LEFT,
+    1:      MouseButton.MIDDLE,
+    2:      MouseButton.RIGHT,
+    3:      None,
+    68:     MouseButton.X1,
+    69:     MouseButton.X2,
+    128:    MouseButton.X1,
+    129:    MouseButton.X2,
+}
+
+MOUSE_WHEEL_VECTOR = {
+    64: (0, 1),
+    65: (0, -1),
+    66: (1, 0),
+    67: (-1, 0),
+}
+
+STATE_PRESSED = 'M'
+STATE_RELEASED = 'm'
+
+def get_mouse_events(sequence):
+    # log.error('MOUSE btn: %s, state=%s, position=%s', sequence.btn, sequence.state, sequence.position)
+
+    if sequence.btn & 64:
+        vector = MOUSE_WHEEL_VECTOR.get(sequence.btn, (0, 0))
+        if any(vector) and sequence.state == STATE_PRESSED:
+            # NOTE: horizontal mouse wheel generates both press and release!
+            yield events.MouseWheel(sequence, *vector)
+            return
+
+    button_id = 0
+    button_id += sequence.btn & 1
+    button_id += sequence.btn & 2
+    # button_id += sequence.btn & 64
+    button_id += sequence.btn & 128
+    button = MOUSE_BUTTON.get(button_id)
+
+    if sequence.btn & 32:
+        buttons = []
+        if button:
+            buttons.append(button)
+        vector = (0, 0) # TODO: !!!
+        yield events.MouseMotion(sequence, *sequence.position, *vector, buttons)
+        return
+
+    if button and sequence.state == STATE_PRESSED:
+        yield events.MouseButtonPress(sequence, *sequence.position, button)
+    elif button and sequence.state == STATE_RELEASED:
+        yield events.MouseButtonUp(sequence, *sequence.position, button)
+
+    # TODO: motion vector(dx, dy)
+    # TODO: rxvt: has btn=3 and no state for button release
+    # TODO: rxvt: X1, X2 buttons
+
+
 def parse_sequence(sequence):
     if sequence.key in FOCUS_CHANGE:
         # TODO: yield Focus In/Out events
         return
 
     if sequence.key == MOUSE_REPORT:
-        # TODO: get_mouse(sequence)
+        yield from get_mouse_events(sequence)
         return
 
     key = get_key(sequence)
@@ -414,6 +498,7 @@ class TermInputWrapper(InputWrapper):
     def __init__(self, term):
         super().__init__()
         self.term = term
+        # TODO: register SIGWINCH signal and add Window resize event to buffer
 
     def get_events_gen(self, timeout=None):
         """Get all pending events."""

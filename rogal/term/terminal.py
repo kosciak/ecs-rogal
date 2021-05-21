@@ -241,10 +241,10 @@ class Terminal(WithSizeMixin):
         mouse_modes = [
             # Mode.X10_MOUSE,
             Mode.VT200_MOUSE,
-            Mode.BTN_EVENT_MOUSE,
+            # Mode.BTN_EVENT_MOUSE,
             # Mode.ANY_EVENT_MOUSE,
 
-            # Mode.EXT_MODE_MOUSE,
+            # NOTE: Do NOT use Mode.EXT_MOUSE_REPORT
             Mode.URXVT_EXT_MODE_MOUSE,
             Mode.SGR_EXT_MODE_MOUSE,
         ]

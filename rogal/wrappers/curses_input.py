@@ -5,8 +5,8 @@ import functools
 import signal
 
 from .. import events
-from ..events.mouse import MouseButton
 from ..events.keys import Key, Keycode, Modifier
+from ..events.mouse import MouseButton
 
 from .core import InputWrapper
 
@@ -342,6 +342,8 @@ def parse_mouse_event(event):
         yield events.MouseButtonPress(event, mx, my, MouseButton.RIGHT)
     if button_state & curses.BUTTON3_RELEASED:
         yield events.MouseButtonUp(event, mx, my, MouseButton.RIGHT)
+
+    # NOTE: No mouse movement is tracked...
 
     # TODO: BUTTON*_DOUBLE_CLICKED
     # TODO: MouseWheel events? WheelUp seems to be: BUTTON4_PRESSED and WheelDown: 0x200000
