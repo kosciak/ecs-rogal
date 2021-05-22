@@ -72,6 +72,17 @@ SDL_KEYCODES = {
     SDL_Keycode.SDLK_KP_PERIOD: Keycode.KP_PERIOD,
     SDL_Keycode.SDLK_KP_COMMA: Keycode.KP_COMMA,
     SDL_Keycode.SDLK_KP_CLEAR: Keycode.KP_CLEAR,
+
+    SDL_Keycode.SDLK_LSHIFT: Keycode.SHIFT_LEFT,
+    SDL_Keycode.SDLK_LCTRL: Keycode.CTRL_LEFT,
+    SDL_Keycode.SDLK_LALT: Keycode.ALT_LEFT,
+    SDL_Keycode.SDLK_LGUI: Keycode.GUI_LEFT,
+    SDL_Keycode.SDLK_RSHIFT: Keycode.SHIFT_RIGHT,
+    SDL_Keycode.SDLK_RCTRL: Keycode.CTRL_RIGHT,
+    SDL_Keycode.SDLK_RALT: Keycode.ALT_RIGHT,
+    SDL_Keycode.SDLK_RGUI: Keycode.GUI_RIGHT,
+
+    SDL_Keycode.SDLK_MENU: Keycode.MENU,
 }
 
 
@@ -247,7 +258,12 @@ class SDLInputWrapper(InputWrapper):
                     next_event = events[i+1]
                     if not next_event.type == EventType.TEXT_INPUT:
                         continue
-                    event.key = event.key.replace(next_event.text)
+                    if not event.key.is_keypad:
+                        event.key = event.key.replace(next_event.text)
+
+                # Clear modifiers for modifiers keys
+                if event.key.is_modifier:
+                    event.key = Key(event.key.keycode)
             yield event
 
     def get_events_gen(self, timeout=None):

@@ -137,6 +137,18 @@ class Keycode(enum.IntEnum):
     KP_COMMA = 0xff2c
     KP_CLEAR = 0xff20 # Keypad Clear key (on Mac?)
 
+    # As returned by xev
+    SHIFT_LEFT = 0xffe1
+    SHIFT_RIGHT = 0xffe2
+    CTRL_LEFT = 0xffe3
+    CTRL_RIGHT = 0xffe4
+    ALT_LEFT = 0xffe9
+    ALT_RIGHT = 0xfe03 # ISO_Level3_Shift
+    GUI_LEFT = 0xffeb
+    GUI_RIGHT = 0xffec # Arbitrary value as I don't have right GUI
+
+    MENU = 0xff67
+
     @classmethod
     def get(cls, name):
         return cls.__members__.get(name.upper())
@@ -161,6 +173,22 @@ class Key(collections.namedtuple(
         if gui:
             modifiers |= Modifier.GUI
         return super().__new__(cls, keycode, modifiers)
+
+    @property
+    def is_keypad(self):
+        return self.keycode.name.startswith('KP_')
+
+    @property
+    def is_modifier(self):
+        if self.keycode.name.startswith('SHIFT_'):
+            return True
+        if self.keycode.name.startswith('CTRL_'):
+            return True
+        if self.keycode.name.startswith('ALT_'):
+            return True
+        if self.keycode.name.startswith('GUI_'):
+            return True
+        return False
 
     def replace(self, keycode):
         if keycode in ASCII_CHARS:
