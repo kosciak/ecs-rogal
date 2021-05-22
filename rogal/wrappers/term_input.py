@@ -368,6 +368,7 @@ NOTE: Mappings from curses.has_key
 
 '''
 
+@functools.lru_cache(maxsize=None)
 def get_key(sequence):
     keycode, modifiers = SEQUENCE_KEYCODES.get(sequence, (None, None))
     if keycode:
@@ -419,6 +420,13 @@ sequence.btn flags:
 
 '''
 
+MOUSE_WHEEL_VECTOR = {
+    64: (0, 1),
+    65: (0, -1),
+    66: (1, 0),
+    67: (-1, 0),
+}
+
 MOUSE_BUTTON = {
     0:      MouseButton.LEFT,
     1:      MouseButton.MIDDLE,
@@ -430,15 +438,14 @@ MOUSE_BUTTON = {
     129:    MouseButton.X2,
 }
 
-MOUSE_WHEEL_VECTOR = {
-    64: (0, 1),
-    65: (0, -1),
-    66: (1, 0),
-    67: (-1, 0),
-}
+# NOTE: Well... 4 messes up with SHIFT modifier flag, but needs to be added for rxvt X1, X2 buttons to work
+MOUSE_BUTTON_FLAGS = [1, 2, 4, 64, 128, ]
 
 STATE_PRESSED = 'M'
 STATE_RELEASED = 'm'
+
+MOUSE_MOTION_FLAG = 32
+
 
 def get_mouse_events(sequence):
     # log.error('MOUSE btn: %s, state=%s, position=%s', sequence.btn, sequence.state, sequence.position)
@@ -451,13 +458,11 @@ def get_mouse_events(sequence):
             return
 
     button_id = 0
-    button_id += sequence.btn & 1
-    button_id += sequence.btn & 2
-    # button_id += sequence.btn & 64
-    button_id += sequence.btn & 128
+    for flag in MOUSE_BUTTON_FLAGS:
+        button_id += sequence.btn & flag
     button = MOUSE_BUTTON.get(button_id)
 
-    if sequence.btn & 32:
+    if sequence.btn & MOUSE_MOTION_FLAG:
         buttons = []
         if button:
             buttons.append(button)
@@ -472,7 +477,6 @@ def get_mouse_events(sequence):
 
     # TODO: motion vector(dx, dy)
     # TODO: rxvt: has btn=3 and no state for button release
-    # TODO: rxvt: X1, X2 buttons
 
 
 def parse_sequence(sequence):

@@ -16,7 +16,6 @@ from .sdl_const import (
 )
 
 
-
 SDL_KEYCODES = {
     SDL_Keycode.SDLK_ESCAPE: Keycode.ESCAPE,
 
