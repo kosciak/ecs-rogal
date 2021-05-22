@@ -11,7 +11,7 @@ import sys
 import termios
 import tty
 
-from ..geometry import Position, Size, WithSizeMixin
+from ..geometry import Size, WithSizeMixin
 
 from .capabilities import Capability
 from .terminfo import Terminfo
@@ -61,6 +61,17 @@ class Terminal(WithSizeMixin):
         self.output.flush()
         self._set_tty_state(self._in_fd, self._tty_state)
 
+    def dump_term_info(self):
+        fn = f'{self.term}.info.txt'
+        with open(fn, 'w') as f:
+            f.write(f'TERM={self.term}\n')
+            f.write(f'COLORTERM={os.environ.get("COLORTERM")}\n')
+            f.write(f'COLORS_NUM={self.colors_num}\n')
+
+            supported_capabilities = self.terminfo.list_all()
+            for capability in sorted(supported_capabilities.keys()):
+                f.write(f'{capability}={supported_capabilities[capability]}\n')
+
     # Properties
 
     @property
@@ -71,11 +82,11 @@ class Terminal(WithSizeMixin):
 
     @property
     def colors_num(self):
-        if self._colors is None:
+        if self._colors_num is None:
             if os.environ.get('COLORTERM') in TRUECOLOR_TERM:
                 self._colors_num = 256*256*256
             else:
-                self._colors_num = self.terminfo.get_flag('colors')
+                self._colors_num = self.terminfo.get_num('colors')
         return self._colors_num
 
     @property
@@ -303,7 +314,7 @@ class Terminal(WithSizeMixin):
                 if sequence.key != Capability.cursor_report:
                     self._sequence_buffer.append(sequence)
                 else:
-                    return Position(sequence.x, sequence.y)
+                    return sequence.position
 
     def cursor_move(self, x, y):
         sequence = self.tput(Capability.cursor_address, y, x)
