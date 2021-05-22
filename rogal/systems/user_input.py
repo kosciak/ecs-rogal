@@ -6,7 +6,7 @@ from ..ecs import System
 from ..ecs.run_state import RunState
 
 from ..events import EventType
-from ..events.keys import KeyboardState
+from ..events.keyboard import KeyboardState
 from ..events.mouse import MouseState
 
 from ..utils import perf

@@ -15,8 +15,8 @@ log = logging.getLogger(__name__)
 
 
 FOCUS_CHANGE = {
-    Capability.focus_in,
-    Capability.focus_out,
+    Capability.focus_in: events.FocusIn,
+    Capability.focus_out: events.FocusOut,
 }
 
 
@@ -477,7 +477,7 @@ def get_mouse_events(sequence):
 
 def parse_sequence(sequence):
     if sequence.key in FOCUS_CHANGE:
-        # TODO: yield Focus In/Out events
+        yield FOCUS_CHANGE[sequence.key](sequence)
         return
 
     if sequence.key == MOUSE_REPORT:

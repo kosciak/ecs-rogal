@@ -106,7 +106,12 @@ def parse_quit_event(ffi, event):
 def parse_window_event(ffi, event):
     event_id = event.window.event
     # TODO: WindowEvent subclasses based on event_id?
-    yield events.WindowEvent(event, event_id)
+    if event_id == SDL_WindowEventID.SDL_WINDOWEVENT_TAKE_FOCUS:
+        yield events.FocusIn(event)
+    elif event_id == SDL_WindowEventID.SDL_WINDOWEVENT_FOCUS_LOST:
+        yield events.FocusOut(event)
+    else:
+        yield events.WindowEvent(event, event_id)
 
 
 def parse_keyboard_event(ffi, event):
