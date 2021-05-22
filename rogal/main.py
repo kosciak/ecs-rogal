@@ -51,7 +51,14 @@ SEED = None
 # SEED = uuid.UUID("6779231d-89c3-43be-93b2-41f9212f2848")
 
 
-def run():
+WRAPPERS = {
+    'tcod': TcodWrapper,
+    'curses': CursesWrapper,
+    'ansi': ANSIWrapper,
+}
+
+
+def run(wrapper):
     # Generate seed and init RNG
     seed = SEED or generate_seed()
     rng.seed(seed, dump='rng')
@@ -83,9 +90,8 @@ def run():
     #     level, starting_position = level_generator.generate(depth=depth)
 
     # Initialize Wrapper
-    ecs.resources.wrapper = TcodWrapper(
-    # ecs.resources.wrapper = CursesWrapper(
-    # ecs.resources.wrapper = ANSIWrapper(
+    wrapper_cls = WRAPPERS[wrapper]
+    ecs.resources.wrapper = wrapper_cls(
         console_size=CONSOLE_SIZE,
         palette=ecs.resources.tileset.palette,
         tileset=ecs.resources.tileset.tilesheet,
