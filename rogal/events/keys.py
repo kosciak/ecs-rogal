@@ -154,6 +154,40 @@ class Keycode(enum.IntEnum):
         return cls.__members__.get(name.upper())
 
 
+KEYPAD_KEYCODES = {
+    Keycode.KP_0,
+    Keycode.KP_1,
+    Keycode.KP_2,
+    Keycode.KP_3,
+    Keycode.KP_4,
+    Keycode.KP_5,
+    Keycode.KP_6,
+    Keycode.KP_7,
+    Keycode.KP_8,
+    Keycode.KP_9,
+    Keycode.KP_DIVIDE,
+    Keycode.KP_MULTIPLY,
+    Keycode.KP_MINUS,
+    Keycode.KP_PLUS,
+    Keycode.KP_ENTER,
+    Keycode.KP_PERIOD,
+    Keycode.KP_COMMA,
+    Keycode.KP_CLEAR,
+}
+
+
+MODIFIERS_KEYCODES = {
+    Keycode.SHIFT_LEFT,
+    Keycode.CTRL_LEFT,
+    Keycode.ALT_LEFT,
+    Keycode.GUI_LEFT,
+    Keycode.SHIFT_RIGHT,
+    Keycode.CTRL_RIGHT,
+    Keycode.ALT_RIGHT,
+    Keycode.GUI_RIGHT,
+}
+
+
 class Key(collections.namedtuple(
     'Key', [
         'keycode',
@@ -176,19 +210,11 @@ class Key(collections.namedtuple(
 
     @property
     def is_keypad(self):
-        return self.keycode.name.startswith('KP_')
+        return self.keycode in KEYPAD_KEYCODES
 
     @property
     def is_modifier(self):
-        if self.keycode.name.startswith('SHIFT_'):
-            return True
-        if self.keycode.name.startswith('CTRL_'):
-            return True
-        if self.keycode.name.startswith('ALT_'):
-            return True
-        if self.keycode.name.startswith('GUI_'):
-            return True
-        return False
+        return self.keycode in MODIFIERS_KEYCODES
 
     def replace(self, keycode):
         if keycode in ASCII_CHARS:
