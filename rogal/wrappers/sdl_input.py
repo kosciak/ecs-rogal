@@ -5,7 +5,7 @@ from .. import events
 from ..events.core import EventType
 from ..events.keys import Key, Keycode
 from ..events.keyboard import ReapetedKeyPressLimiter
-from ..events.mouse import MouseButton
+from ..events.mouse import MouseButton, MouseMotionFilter, MouseButtonClickProcessor
 
 from .core import InputWrapper
 
@@ -252,7 +252,14 @@ class SDLInputWrapper(InputWrapper):
             ReapetedKeyPressLimiter(
                 clear_on_key_up=True,
             ),
+
+            self.process_mouse_position,
+            MouseMotionFilter(),
+            MouseButtonClickProcessor(),
         ])
+
+    def process_mouse_position(self, events_gen):
+        yield from events_gen
 
     def process_modifier_keys(self, events_gen):
         # Clear modifiers value for Shift, Ctrl, Alt, GUI keys

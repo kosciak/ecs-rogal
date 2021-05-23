@@ -41,7 +41,8 @@ class ReapetedKeyPressLimiter:
             if event.type == EventType.KEY_UP:
                 if self.clear_on_key_up:
                     self._last_valid_press.pop(event.key.keycode, None)
-                else:
+                    is_event_repeated = False
+                if is_event_repeated:
                     continue
 
             if event.type == EventType.TEXT_INPUT:

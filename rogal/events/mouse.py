@@ -19,7 +19,6 @@ class MouseState:
         self.position = None
         self.prev_position = None
         self.press_positions = {}
-        self._clicks = set()
 
     @property
     def pressed_buttons(self):
@@ -28,26 +27,53 @@ class MouseState:
     def drag_start(self, button):
         return self.press_positions.get(button)
 
-    def is_click(self, button):
-        # TODO: Add click interval? So click only if interval between press and up is < X miliseconds
-        return button in self._clicks
-
     def update(self, motion_event=None, press_event=None, up_event=None):
         if motion_event:
             self.prev_position = self.position
             self.position = motion_event.position
-            if motion_event.motion:
-                self._clicks.clear()
         if press_event:
             if self.position is None:
                 self.position = press_event.position
             self.press_positions[press_event.button] = press_event.position
-            self._clicks.add(press_event.button)
         if up_event:
             if self.position is None:
                 self.position = up_event.position
             self.press_positions.pop(up_event.button, None)
-            self._clicks.discard(up_event.button)
+
+
+class MouseMotionFilter:
+
+    def __call__(self, events_gen):
+        for event in events_gen:
+            if event.type == EventType.MOUSE_MOTION:
+                if not event.motion:
+                    continue
+
+            yield event
+
+
+class MouseButtonClickProcessor:
+
+    def __init__(self):
+        self.press_positions = {}
+
+    def __call__(self, events_gen):
+        for event in events_gen:
+            if event.type == EventType.MOUSE_BUTTON_PRESS:
+                self.press_positions[event.button] = event.position
+
+            if event.type == EventType.MOUSE_MOTION:
+                if event.motion:
+                    self.press_positions.clear()
+
+            if event.type == EventType.MOUSE_BUTTON_UP:
+                if event.position == self.press_positions.get(event.button):
+                    event.clicks = 1
+                else:
+                    event.clicks = 0
+                self.press_positions.pop(event.button, None)
+
+            yield event
 
 
 class MouseMotion(Event):
@@ -91,7 +117,7 @@ class MouseMotion(Event):
 class MouseButtonEvent(Event):
     __slots__ = ('position', 'pixel_position', 'button', 'clicks', )
 
-    def __init__(self, source, x, y, button, clicks=1):
+    def __init__(self, source, x, y, button, clicks=0):
         super().__init__(source)
         self.position = Position(x, y)
         self.pixel_position = Position.ZERO
@@ -118,6 +144,10 @@ class MouseButtonUp(MouseButtonEvent):
     __slots__ = ()
 
     type = EventType.MOUSE_BUTTON_UP
+
+    @property
+    def is_click(self):
+        return self.clicks > 0
 
 
 class MouseWheel(Event):

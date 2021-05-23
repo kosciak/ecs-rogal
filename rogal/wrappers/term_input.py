@@ -7,7 +7,7 @@ from ..term.capabilities import Capability
 from .. import events
 from ..events.keys import Key, Keycode, Modifier
 from ..events.keyboard import ReapetedKeyPressLimiter
-from ..events.mouse import MouseButton
+from ..events.mouse import MouseButton, MouseButtonClickProcessor
 
 from .core import InputWrapper
 
@@ -492,7 +492,7 @@ def parse_sequence(sequence):
     key = get_key(sequence)
     if key:
         yield events.KeyPress(sequence, key)
-    if len(sequence) == 1 and ord(sequence) >= 127:
+    if len(sequence) == 1 and ord(sequence) >= 32:
         yield events.TextInput(sequence, sequence)
     if key:
         yield events.KeyUp(sequence, key)
@@ -509,6 +509,7 @@ class TermInputWrapper(InputWrapper):
             ReapetedKeyPressLimiter(
                 clear_on_key_up=False,
             ),
+            MouseButtonClickProcessor(),
         ])
 
     def get_events_gen(self, timeout=None):

@@ -143,10 +143,7 @@ class EventsHandlersSystem(System):
 
     def on_mouse_click(self, event):
         # Fire OnMouseClick if button was pressed and released without moving
-        if not self.mouse.is_click(event.button):
-            # Position changed between button press and up
-            return
-        # TODO: Press, show button, release -> click is registered!
+        # TODO: Press, show button, release -> click is registered! WHAT this even mean?!?
         self.on_mouse_over_event(event, components.OnMouseClick)
 
     def on_mouse_motion(self, event):
@@ -189,7 +186,8 @@ class EventsHandlersSystem(System):
                 self.mouse.update(press_event=event)
                 self.on_mouse_press(event)
             elif event.type == EventType.MOUSE_BUTTON_UP:
-                self.on_mouse_click(event)
+                if event.is_click:
+                    self.on_mouse_click(event)
                 self.on_mouse_up(event)
                 self.mouse.update(up_event=event)
             elif event.type == EventType.MOUSE_MOTION:
