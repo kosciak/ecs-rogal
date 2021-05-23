@@ -197,7 +197,10 @@ class TcodSDLInputWrapper(SDLInputWrapper):
     def __init__(self, context):
         super().__init__(sdl2=sdl2)
         self.context = context
-        self.events_processors.append(self.process_mouse_position)
+
+        self.events_processors.extend([
+            self.process_mouse_position,
+        ])
 
     def update_mouse_event(self, event):
         pixel_position = event.position

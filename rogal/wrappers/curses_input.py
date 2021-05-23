@@ -6,6 +6,7 @@ import signal
 
 from .. import events
 from ..events.keys import Key, Keycode, Modifier
+from ..events.keyboard import ReapetedKeyPressLimiter
 from ..events.mouse import MouseButton
 
 from .core import InputWrapper
@@ -376,6 +377,12 @@ class CursesInputWrapper(InputWrapper):
     def __init__(self, screen):
         super().__init__()
         self.screen = screen
+
+        self.events_processors.extend([
+            ReapetedKeyPressLimiter(
+                clear_on_key_up=False,
+            ),
+        ])
 
         # Catch ^c
         signal.signal(signal.SIGINT, self._signal_handler)

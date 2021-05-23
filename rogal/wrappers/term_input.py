@@ -6,6 +6,7 @@ from ..term.capabilities import Capability
 
 from .. import events
 from ..events.keys import Key, Keycode, Modifier
+from ..events.keyboard import ReapetedKeyPressLimiter
 from ..events.mouse import MouseButton
 
 from .core import InputWrapper
@@ -503,6 +504,12 @@ class TermInputWrapper(InputWrapper):
         super().__init__()
         self.term = term
         # TODO: register SIGWINCH signal and add Window resize event to buffer
+
+        self.events_processors.extend([
+            ReapetedKeyPressLimiter(
+                clear_on_key_up=False,
+            ),
+        ])
 
     def get_events_gen(self, timeout=None):
         """Get all pending events."""

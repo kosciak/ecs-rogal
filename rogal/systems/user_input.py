@@ -47,18 +47,17 @@ class InputFocusSystem(System):
 class EventsHandlersSystem(System):
 
     TIMEOUT = 1./60
-    MAX_REPEAT_RATE = 1./6
 
     INCLUDE_STATES = {
         RunState.WAITING_FOR_INPUT,
     }
 
-    def __init__(self, ecs, repeat_rate=MAX_REPEAT_RATE):
+    def __init__(self, ecs):
         super().__init__(ecs)
         self.wrapper = self.ecs.resources.wrapper
         self.timeout = self.TIMEOUT
 
-        self.ecs.resources.keyboard_state = KeyboardState(max_repeat_rate=repeat_rate)
+        self.ecs.resources.keyboard_state = KeyboardState()
         self.keys = self.ecs.resources.keyboard_state
 
         self.mouse_in_entities = set()
@@ -101,9 +100,6 @@ class EventsHandlersSystem(System):
             self.handle_event(event, entity, handlers)
 
     def on_key_press(self, event):
-        if event.repeat and not self.keys.is_valid_press(event.key):
-            return
-
         event_handlers = self.get_valid_handlers(components.OnKeyPress)
         for entity, handlers in event_handlers:
             self.handle_event(event, entity, handlers)

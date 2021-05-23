@@ -4,6 +4,7 @@ import functools
 from .. import events
 from ..events.core import EventType
 from ..events.keys import Key, Keycode
+from ..events.keyboard import ReapetedKeyPressLimiter
 from ..events.mouse import MouseButton
 
 from .core import InputWrapper
@@ -244,9 +245,13 @@ class SDLInputWrapper(InputWrapper):
         super().__init__()
         self.sdl2 = sdl2
         self.ffi = cffi.FFI()
+
         self.events_processors.extend([
-            self.process_key_press,
+            self.process_key_press_update,
             self.process_modifier_keys,
+            ReapetedKeyPressLimiter(
+                clear_on_key_up=True,
+            ),
         ])
 
     def process_modifier_keys(self, events_gen):
@@ -257,7 +262,7 @@ class SDLInputWrapper(InputWrapper):
                     event.key = Key(event.key.keycode)
             yield event
 
-    def process_key_press(self, events_gen):
+    def process_key_press_update(self, events_gen):
         events = list(events_gen)
         for i, event in enumerate(events):
             if event.type == EventType.KEY_PRESS:
