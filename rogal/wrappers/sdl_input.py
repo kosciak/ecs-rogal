@@ -244,9 +244,20 @@ class SDLInputWrapper(InputWrapper):
         super().__init__()
         self.sdl2 = sdl2
         self.ffi = cffi.FFI()
+        self.events_processors.extend([
+            self.process_key_press,
+            self.process_modifier_keys,
+        ])
 
-    def process_events_gen(self, events_gen):
-        """Process events - update, filter, merge, etc."""
+    def process_modifier_keys(self, events_gen):
+        # Clear modifiers value for Shift, Ctrl, Alt, GUI keys
+        for event in events_gen:
+            if event.type == EventType.KEY_PRESS:
+                if event.key.is_modifier:
+                    event.key = Key(event.key.keycode)
+            yield event
+
+    def process_key_press(self, events_gen):
         events = list(events_gen)
         for i, event in enumerate(events):
             if event.type == EventType.KEY_PRESS:
@@ -259,10 +270,6 @@ class SDLInputWrapper(InputWrapper):
                         continue
                     if not event.key.is_keypad:
                         event.key = event.key.replace(next_event.text)
-
-                # Clear modifiers for modifiers keys
-                if event.key.is_modifier:
-                    event.key = Key(event.key.keycode)
             yield event
 
     def get_events_gen(self, timeout=None):

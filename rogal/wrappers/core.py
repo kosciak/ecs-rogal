@@ -7,9 +7,12 @@ class InputWrapper:
 
     def __init__(self):
         self._events_queue = collections.deque()
+        self.events_processors = []
 
-    def process_events_gen(self, events_gen):
+    def process_events(self, events_gen):
         """Process events - update, filter, merge, etc."""
+        for events_processor in self.events_processors:
+            events_gen = events_processor(events_gen)
         yield from events_gen
 
     def get_events_gen(self, timeout=None):
@@ -22,8 +25,9 @@ class InputWrapper:
             yield self._events_queue.popleft()
 
         events_gen = self.get_events_gen(timeout)
-        processed_events_gen = self.process_events_gen(events_gen)
-        self._events_queue.extend(processed_events_gen)
+        self._events_queue.extend(
+            self.process_events(events_gen)
+        )
 
         while self._events_queue:
             yield self._events_queue.popleft()

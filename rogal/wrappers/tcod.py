@@ -197,6 +197,7 @@ class TcodSDLInputWrapper(SDLInputWrapper):
     def __init__(self, context):
         super().__init__(sdl2=sdl2)
         self.context = context
+        self.events_processors.append(self.process_mouse_position)
 
     def update_mouse_event(self, event):
         pixel_position = event.position
@@ -215,11 +216,8 @@ class TcodSDLInputWrapper(SDLInputWrapper):
 
         return event
 
-    def process_events_gen(self, events_gen):
-        """Process events - update, filter, merge, etc."""
-        events_gen = super().process_events_gen(events_gen)
-        for i, event in enumerate(events_gen):
-            # TODO: Intercept WINDOW RESIZE and update self.console_size?
+    def process_mouse_position(self, events_gen):
+        for event in events_gen:
             if event.type in MOUSE_EVENT_TYPES:
                 event = self.update_mouse_event(event)
             yield event
