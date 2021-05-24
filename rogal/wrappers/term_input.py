@@ -1,13 +1,16 @@
 import functools
 import logging
 
+from ..geometry import Vector
+
 from ..term.escape_seq import ControlChar
 from ..term.capabilities import Capability
 
 from .. import events
+from ..events import EventType
 from ..events.keys import Key, Keycode, Modifier
 from ..events.keyboard import ReapetedKeyPressLimiter
-from ..events.mouse import MouseButton, MouseButtonClickProcessor
+from ..events.mouse import MouseButton, MouseButtonClickProcessor, MouseMotionFilter
 
 from .core import InputWrapper
 
@@ -498,6 +501,33 @@ def parse_sequence(sequence):
         yield events.KeyUp(sequence, key)
 
 
+class MouseMotionUpdater:
+
+    MOUSE_EVENT_TYPES = {
+        EventType.MOUSE_BUTTON_PRESS,
+        EventType.MOUSE_BUTTON_UP,
+        EventType.MOUSE_MOTION,
+    }
+
+    def __init__(self):
+        self.prev_position = None
+
+    def __call__(self, events_gen):
+        for event in events_gen:
+            if event.type == EventType.MOUSE_MOTION:
+                if self.prev_position is not None:
+                    event.motion = Vector(
+                        event.position.x - self.prev_position.x,
+                        event.position.y - self.prev_position.y,
+                    )
+
+            if event.type in self.MOUSE_EVENT_TYPES:
+                if not self.prev_position == event.position:
+                    self.prev_position = event.position
+
+            yield event
+
+
 class TermInputWrapper(InputWrapper):
 
     def __init__(self, term):
@@ -509,6 +539,8 @@ class TermInputWrapper(InputWrapper):
             ReapetedKeyPressLimiter(
                 clear_on_key_up=False,
             ),
+            MouseMotionUpdater(),
+            MouseMotionFilter(),
             MouseButtonClickProcessor(),
         ])
 
