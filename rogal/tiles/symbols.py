@@ -2,102 +2,188 @@ from .core import Glyph
 
 
 class Symbol:
-    NONE = Glyph(0)
-    EMPTY = Glyph(0)
+    NONE = Glyph(0x0000)
+    EMPTY = Glyph(0x0000)
 
     # Single line walls:
-    HLINE = Glyph(9472)            # ─
-    VLINE = Glyph(9474)            # │
-    NE = Glyph(9488)               # ┐
-    SE = Glyph(9496)               # ┘
-    NW = Glyph(9484)               # ┌
-    SW = Glyph(9492)               # └
+    HLINE = Glyph(0x2500)          # ─
+    VLINE = Glyph(0x2502)          # │
+    NE = Glyph(0x2510)             # ┐
+    SE = Glyph(0x2518)             # ┘
+    NW = Glyph(0x250c)             # ┌
+    SW = Glyph(0x2514)             # └
 
     # Single line vertical/horizontal junctions (T junctions):
-    TEES = Glyph(9516)             # ┬
-    TEEW = Glyph(9508)             # ┤
-    TEEE = Glyph(9500)             # ├
-    TEEN = Glyph(9524)             # ┴
+    TEES = Glyph(0x252c)           # ┬
+    TEEW = Glyph(0x2524)           # ┤
+    TEEE = Glyph(0x251c)           # ├
+    TEEN = Glyph(0x2534)           # ┴
 
     # Cross-junction between two single line walls:
-    CROSS = Glyph(9532)            # ┼
+    CROSS = Glyph(0x253c)          # ┼
 
     # Double lines walls:
-    DHLINE = Glyph(9552)           # ═
-    DVLINE = Glyph(9553)           # ║
-    DNE = Glyph(9559)              # ╗
-    DSE = Glyph(9565)              # ╝
-    DNW = Glyph(9556)              # ╔
-    DSW = Glyph(9562)              # ╚
+    DHLINE = Glyph(0x2550)         # ═
+    DVLINE = Glyph(0x2551)         # ║
+    DNE = Glyph(0x2557)            # ╗
+    DSE = Glyph(0x255d)            # ╝
+    DNW = Glyph(0x2554)            # ╔
+    DSW = Glyph(0x255a)            # ╚
 
     # Double line vertical/horizontal junctions (T junctions):
-    DTEES = Glyph(9574)            # ╦
-    DTEEW = Glyph(9571)            # ╣
-    DTEEE = Glyph(9568)            # ╠
-    DTEEN = Glyph(9577)            # ╩
+    DTEES = Glyph(0x2566)          # ╦
+    DTEEW = Glyph(0x2563)          # ╣
+    DTEEE = Glyph(0x2560)          # ╠
+    DTEEN = Glyph(0x2569)          # ╩
 
     # Cross-junction between two single line walls:
-    DCROSS = Glyph(9580)           # ╬
+    DCROSS = Glyph(0x256c)         # ╬
 
     # Single line horizontal / double line vertical
-    SDNE = Glyph(9558)             # ╖
-    SDSE = Glyph(9564)             # ╜
-    SDNW = Glyph(9555)             # ╓
-    SDSW = Glyph(9561)             # ╙
+    SDNE = Glyph(0x2556)           # ╖
+    SDSE = Glyph(0x255c)           # ╜
+    SDNW = Glyph(0x2553)           # ╓
+    SDSW = Glyph(0x2559)           # ╙
 
-    SDTEES = Glyph(9573)           # ╥
-    SDTEEW = Glyph(9570)           # ╢
-    SDTEEE = Glyph(9567)           # ╟
-    SDTEEN = Glyph(9576)           # ╨
+    SDTEES = Glyph(0x2565)         # ╥
+    SDTEEW = Glyph(0x2562)         # ╢
+    SDTEEE = Glyph(0x255f)         # ╟
+    SDTEEN = Glyph(0x2568)         # ╨
 
-    SDCROSS = Glyph(9579)          # ╫
+    SDCROSS = Glyph(0x256b)        # ╫
 
     # Double line horizontal / single line vertical
-    DSNE = Glyph(9557)             # ╕
-    DSSE = Glyph(9563)             # ╛
-    DSNW = Glyph(9554)             # ╒
-    DSSW = Glyph(9560)             # ╘
+    DSNE = Glyph(0x2555)           # ╕
+    DSSE = Glyph(0x255b)           # ╛
+    DSNW = Glyph(0x2552)           # ╒
+    DSSW = Glyph(0x2558)           # ╘
 
-    DSTEES = Glyph(9572)           # ╤
-    DSTEEW = Glyph(9569)           # ╡
-    DSTEEE = Glyph(9566)           # ╞
-    DSTEEN = Glyph(9575)           # ╧
+    DSTEES = Glyph(0x2564)         # ╤
+    DSTEEW = Glyph(0x2561)         # ╡
+    DSTEEE = Glyph(0x255e)         # ╞
+    DSTEEN = Glyph(0x2567)         # ╧
 
-    DSCROSS = Glyph(9578)          # ╪
+    DSCROSS = Glyph(0x256a)        # ╪
 
     # Block characters:
-    BLOCK1 = Glyph(9617)           # ░
-    BLOCK2 = Glyph(9618)           # ▒
-    BLOCK3 = Glyph(9619)           # ▓
-    BLOCK4 = Glyph(9608)           # █
-    FULL_BLOCK = Glyph(9608)       # █
+    BLOCK1 = Glyph(0x2591)         # ░
+    BLOCK2 = Glyph(0x2592)         # ▒
+    BLOCK3 = Glyph(0x2593)         # ▓
+    BLOCK4 = Glyph(0x2588)         # █
+    FULL_BLOCK = Glyph(0x2588)     # █
 
     # Arrows:
-    ARROW_N = Glyph(8593)          # ↑
-    ARROW_S = Glyph(8595)          # ↓
-    ARROW_E = Glyph(8594)          # →
-    ARROW_W = Glyph(8592)          # ←
+    ARROW_N = Glyph(0x2191)        # ↑
+    ARROW_S = Glyph(0x2193)        # ↓
+    ARROW_E = Glyph(0x2192)        # →
+    ARROW_W = Glyph(0x2190)        # ←
 
     # Arrows without tail:
-    ARROW2_N = Glyph(9650)         # ▲
-    ARROW2_S = Glyph(9660)         # ▼
-    ARROW2_E = Glyph(9658)         # ►
-    ARROW2_W = Glyph(9668)         # ◄
+    ARROW2_N = Glyph(0x25b2)       # ▲
+    ARROW2_S = Glyph(0x25bc)       # ▼
+    ARROW2_E = Glyph(0x25ba)       # ►
+    ARROW2_W = Glyph(0x25c4)       # ◄
 
     # Double arrows:
-    ARROW_H = Glyph(8596)          # ↔
-    DARROW_H = Glyph(8596)         # ↔
-    ARROW_V = Glyph(8597)          # ↕
-    DARROW_V = Glyph(8597)         # ↕
+    ARROW_H = Glyph(0x2194)        # ↔
+    DARROW_H = Glyph(0x2194)       # ↔
+    ARROW_V = Glyph(0x2195)        # ↕
+    DARROW_V = Glyph(0x2195)       # ↕
 
     # GUI stuff:
-    # TODO: Some tilesets might have different glyphs, not matchin original CP437 charset
-    CHECKBOX_UNSET = Glyph(945)    # α
-    CHECKBOX_SET = Glyph(223)      # ß
-    RADIO_UNSET = Glyph(9675)      # ○
-    RADIO_SET = Glyph(9689)        # ◙
+    CHECKBOX_UNSET = Glyph(0x2610) # ☐
+    CHECKBOX_SET = Glyph(0x2611)   # ☑
+    RADIO_UNSET = Glyph(0x25cb)    # ○
+    RADIO_SET = Glyph(0x25c9)      # ◉
 
     # Sub-pixel resolution kit:
+    # NOTE: Present in original CP437 character set
+    HALFBLOCK_S = Glyph(0x2584)    # ▄
+    HALFBLOCK_W = Glyph(0x258c)    # ▌
+    HALFBLOCK_E = Glyph(0x2590)    # ▐
+    HALFBLOCK_N = Glyph(0x2580)    # ▀
+
+    # NOTE: Used by console.draw_semigraphics() method even though not all present in CP437 tileset!
+    # NOTE: All present in TCOD characterset
+    SEMIGRAPH_S = Glyph(0x2584)    # ▄
+    SEMIGRAPH_W = Glyph(0x258c)    # ▌
+    SEMIGRAPH_E = Glyph(0x2590)    # ▐
+    SEMIGRAPH_N = Glyph(0x2580)    # ▀
+
+    SEMIGRAPH_NW = Glyph(0x2598)   # ▘
+    SEMIGRAPH_NE = Glyph(0x259d)   # ▝
+    SEMIGRAPH_SE = Glyph(0x2597)   # ▗
+    SEMIGRAPH_SW = Glyph(0x2596)   # ▖
+
+    SEMIGRAPH_DIAG = Glyph(0x259a) # ▚
+
+    # Miscellaneous characters:
+    SMILY = Glyph(0x263a)          # ☺
+    SMILY_INV = Glyph(0x263b)      # ☻
+    SMILIE = Glyph(0x263a)         # ☺
+    SMILIE_INV = Glyph(0x263b)     # ☻
+
+    HEART = Glyph(0x2665)          # ♥
+    DIAMOND = Glyph(0x2666)        # ♦
+    CLUB = Glyph(0x2663)           # ♣
+    SPADE = Glyph(0x2660)          # ♠
+
+    BULLET = Glyph(0x2022)         # •
+    BULLET_INV = Glyph(0x25d8)     # ◘
+
+    CIRCLE = Glyph(0x25cb)         # ○
+    CIRCLE_INV = Glyph(0x25d9)     # ◙
+
+    MALE = Glyph(0x2642)           # ♂
+    FEMALE = Glyph(0x2640)         # ♀
+
+    NOTE = Glyph(0x266a)           # ♪
+    NOTE_DOUBLE = Glyph(0x266b)    # ♫
+
+    LIGHT = Glyph(0x263c)          # ☼
+
+    QUESTION_INV = Glyph(0x00bf)   # ¿
+    EXCLAM_INV = Glyph(0x00a1)     # ¡
+    EXCLAM_DOUBLE = Glyph(0x203c)  # ‼
+    PILCROW = Glyph(0x00b6)        # ¶
+    SECTION = Glyph(0x00a7)        # §
+    POUND = Glyph(163)             # £
+    MULTIPLICATION = Glyph(8359)   # ₧
+    FUNCTION = Glyph(402)          # ƒ
+
+    LAQUO = Glyph(0x00ab)          # «
+    RAQUO = Glyph(0x00bb)          # »
+
+    HALF = Glyph(0x00bd)           # ½
+    ONE_QUARTER = Glyph(0x00bc)    # ¼
+
+    GRADE = Glyph(0x00b0)          # °
+    DIVISION = Glyph(0x00f7)       # ÷
+    POW2 = Glyph(0x00b2)           # ²
+    TRIPLE_BAR = Glyph(0x2229)     # ≡
+    PLUS_MINUS = Glyph(0x00b1)     # ±
+    GREATER_EQUAL = Glyph(0x2265)  # ≥
+    LESS_EQUAL = Glyph(0x2264)     # ≤
+    APPROXIMATION = Glyph(0x2248)  # ≈
+
+    DOT_OPERATOR = Glyph(0x2219)   # ∙
+    MIDDLE_DOT = Glyph(0x00b7)     # ·
+
+    BULLET_SQUARE = Glyph(0x25a0)  # ■
+
+    @classmethod
+    def get(cls, name):
+        if not isinstance(name, str):
+            return name
+        return getattr(cls, name, name)
+
+
+class SymbolExtra(Symbol):
+
+    # GUI stuff:
+    CHECKBOX_UNSET = Glyph(945)    # α
+    CHECKBOX_SET = Glyph(223)      # ß
+
     # NOTE: original CP437 characters / replaced by SUBP_* in some tilesets
     SUBP_NW = Glyph(915)           # Γ / ▘
     SUBP_NE = Glyph(960)           # π / ▝
@@ -106,76 +192,6 @@ class Symbol:
     SUBP_DIAG = Glyph(181)         # µ / ▚
     SUBP_E = Glyph(964)            # τ / ▐
     SUBP_SW = Glyph(934)           # Φ / ▖
-
-    # NOTE: Present in original CP437 character set
-    HALFBLOCK_S = Glyph(9604)      # ▄
-    HALFBLOCK_W = Glyph(9612)      # ▌
-    HALFBLOCK_E = Glyph(9616)      # ▐
-    HALFBLOCK_N = Glyph(9600)      # ▀
-
-    # NOTE: Used by console.draw_semigraphics() method even though not all present in CP437 tileset!
-    # NOTE: All present in TCOD characterset
-    SEMIGRAPH_NW = Glyph(9624)     # ▘
-    SEMIGRAPH_NE = Glyph(9629)     # ▝
-    SEMIGRAPH_N = Glyph(9600)      # ▀
-    SEMIGRAPH_SE = Glyph(9623)     # ▗
-    SEMIGRAPH_DIAG = Glyph(9626)   # ▚
-    SEMIGRAPH_E = Glyph(9616)      # ▐
-    SEMIGRAPH_SW = Glyph(9622)     # ▖
-
-    # Miscellaneous characters:
-    SMILY = Glyph(9786)            # ☺
-    SMILY_INV = Glyph(9787)        # ☻
-    SMILIE = Glyph(9786)           # ☺
-    SMILIE_INV = Glyph(9787)       # ☻
-
-    HEART = Glyph(9829)            # ♥
-    DIAMOND = Glyph(9830)          # ♦
-    CLUB = Glyph(9827)             # ♣
-    SPADE = Glyph(9824)            # ♠
-
-    BULLET = Glyph(8226)           # •
-    BULLET_INV = Glyph(9688)       # ◘
-
-    CIRCLE = Glyph(9675)           # ○
-    CIRCLE_INV = Glyph(9689)       # ◙
-
-    MALE = Glyph(9794)             # ♂
-    FEMALE = Glyph(9792)           # ♀
-
-    NOTE = Glyph(9834)             # ♪
-    NOTE_DOUBLE = Glyph(9835)      # ♫
-
-    LIGHT = Glyph(9788)            # ☼
-
-    QUESTION_INV = Glyph(191)      # ¿
-    EXCLAM_INV = Glyph(161)        # ¡
-    EXCLAM_DOUBLE = Glyph(8252)    # ‼
-    PILCROW = Glyph(182)           # ¶
-    SECTION = Glyph(167)           # §
-    POUND = Glyph(163)             # £
-    MULTIPLICATION = Glyph(8359)   # ₧
-    FUNCTION = Glyph(402)          # ƒ
-
-    LAQUO = Glyph(171)             # «
-    RAQUO = Glyph(187)             # »
-
-    HALF = Glyph(189)              # ½
-    ONE_QUARTER = Glyph(188)       # ¼
-
-    GRADE = Glyph(176)             # °
-    DIVISION = Glyph(247)          # ÷
-    POW2 = Glyph(178)              # ²
-    TRIPLE_BAR = Glyph(8801)       # ≡
-    PLUS_MINUS = Glyph(171)        # ±
-    GREATER_EQUAL = Glyph(8805)    # ≥
-    LESS_EQUAL = Glyph(8804)       # ≤
-    APPROXIMATION = Glyph(247)     # ≈
-
-    DOT_OPERATOR = Glyph(8729)     # ∙
-    MIDDLE_DOT = Glyph(183)        # ·
-
-    BULLET_SQUARE = Glyph(9632)    # ■
 
     # NOTE: These might not be consistent among all tilesets!
     RESERVED = Glyph(8976)         # ⌐
@@ -187,12 +203,6 @@ class Symbol:
     UMLAUT = Glyph(8729)           # ∙
     POW1 = Glyph(8730)             # √
     POW3 = Glyph(8319)             # ⁿ
-
-    @classmethod
-    def get(cls, name):
-        if not isinstance(name, str):
-            return name
-        return getattr(cls, name, name)
 
 
 def show_charmap(charmap, columns=16):
