@@ -7,6 +7,8 @@ from tcod.loader import ffi, lib
 from ..console import DEFAULT_CH, Align, RootPanel
 from ..events import EventType
 
+from ..utils import fonts
+
 from .core import IOWrapper
 
 from . import sdl
@@ -311,9 +313,20 @@ class TcodWrapper(IOWrapper):
         # TODO: Need some fallback for missing glyphs
         return tileset
 
+    def load_ttf_font(self, font):
+        ttf = fonts.TrueTypeFont(font.path)
+        ttf.set_char_size(font.size)
+        tileset = tcod.tileset.Tileset(*ttf.pixel_size)
+        for code_point in font.charmap:
+            tile = ttf.get_tile(code_point)
+            if tile is not None:
+                tileset.set_tile(code_point, tile)
+        return tileset
+
     def load_tileset(self, tileset):
         if tileset.path.endswith('.ttf'):
-            return self.load_truetype_font(tileset)
+            # return self.load_truetype_font(tileset)
+            return self.load_ttf_font(tileset)
         else:
             return self.load_tilesheet(tileset)
 

@@ -11,8 +11,8 @@ FONTS_DIR = os.path.join(ASSETS_DIR, 'fonts')
 class TrueTypeFont(collections.namedtuple(
     'TrueTypeFont', [
         'path',
-        'width',
-        'height',
+        'size',
+        'charmap',
     ])):
 
     __slots__ = ()
@@ -45,8 +45,9 @@ TERMINAL_12x12_CP = Tilesheet(
 
 
 # Looks BAD... :(
-DEJA_VU_SANS_MONO_12x12_TTF = TrueTypeFont(
+DEJA_VU_SANS_MONO_11_TTF = TrueTypeFont(
     '/usr/share/fonts/dejavu-sans-mono-fonts/DejaVuSansMono.ttf',
-    12,
-    12,
+    # '/usr/share/fonts/google-droid-sans-mono-fonts/DroidSansMono.ttf',
+    11,
+    charsets.CP437,
 )
