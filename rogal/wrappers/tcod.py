@@ -7,7 +7,8 @@ from tcod.loader import ffi, lib
 from ..console import DEFAULT_CH, Align, RootPanel
 from ..events import EventType
 
-from ..utils import fonts
+from ..tiles.fonts import TrueTypeFont
+from ..tiles.dynamic import DynamicTiles
 
 from .core import IOWrapper
 
@@ -314,13 +315,21 @@ class TcodWrapper(IOWrapper):
         return tileset
 
     def load_ttf_font(self, font):
-        ttf = fonts.TrueTypeFont(font.path)
+        ttf = TrueTypeFont(font.path)
         ttf.set_char_size(font.size)
-        tileset = tcod.tileset.Tileset(*ttf.pixel_size)
+        tile_size = ttf.pixel_size
+
+        dynamic = DynamicTiles()
+
+        tileset = tcod.tileset.Tileset(*tile_size)
         for code_point in font.charmap:
-            tile = ttf.get_tile(code_point)
+            tile = ttf.get_tile(code_point, tile_size)
             if tile is not None:
                 tileset.set_tile(code_point, tile)
+            tile = dynamic.get_tile(code_point, tile_size)
+            if tile is not None:
+                tileset.set_tile(code_point, tile)
+
         return tileset
 
     def load_tileset(self, tileset):

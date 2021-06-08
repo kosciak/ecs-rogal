@@ -437,8 +437,8 @@ class RootPanel(Panel):
             self.console.fg[i:i+width, j:j+height] = bg
             self.console.bg[i:i+width, j:j+height] = fg
         else:
-            fg = np.copy(self.console.fg[i, j])
-            bg = np.copy(self.console.bg[i, j])
+            fg = self.console.fg[i, j].copy()
+            bg = self.console.bg[i, j].copy()
             self.console.fg[i, j] = bg
             self.console.bg[i, j] = fg
 

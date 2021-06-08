@@ -421,3 +421,10 @@ TCOD = [
     0x0000, # 
 ]
 
+
+# TODO Unicode blocks
+UNICODE_ARROWS = range(0x2190, 0x21ff+1)
+UNICODE_BOX_DRAWING = range(0x2500, 0x257f+1)
+UNICODE_BOX_ELEMENTS = range(0x2580, 0x259f+1)
+UNICODE_GEOMETRIC_SHAPES = range(0x25a0, 0x25ff+1)
+

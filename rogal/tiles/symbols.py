@@ -1,5 +1,6 @@
 from .core import Glyph
 
+# TODO: Add other unicode symbols, sort by block
 
 class Symbol:
     NONE = Glyph(0x0000)
