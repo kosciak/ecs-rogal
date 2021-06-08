@@ -8,7 +8,7 @@ from ..console import DEFAULT_CH, Align, RootPanel
 from ..events import EventType
 
 from ..tiles.fonts import TrueTypeFont
-from ..tiles.dynamic import DynamicTiles
+from ..tiles.box_drawing import BoxDrawingTiles
 
 from .core import IOWrapper
 
@@ -319,14 +319,14 @@ class TcodWrapper(IOWrapper):
         ttf.set_char_size(font.size)
         tile_size = ttf.pixel_size
 
-        dynamic = DynamicTiles()
+        box_drawing = BoxDrawingTiles()
 
         tileset = tcod.tileset.Tileset(*tile_size)
         for code_point in font.charmap:
             tile = ttf.get_tile(code_point, tile_size)
             if tile is not None:
                 tileset.set_tile(code_point, tile)
-            tile = dynamic.get_tile(code_point, tile_size)
+            tile = box_drawing.get_tile(code_point, tile_size)
             if tile is not None:
                 tileset.set_tile(code_point, tile)
 
