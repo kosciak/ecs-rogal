@@ -8,7 +8,8 @@ from ..console import DEFAULT_CH, Align, RootPanel
 from ..events import EventType
 
 from ..tiles.fonts import TrueTypeFont
-from ..tiles.box_drawing import BoxDrawingTiles
+from ..tiles.box_drawing import BoxDrawing
+from ..tiles.box_elements import BoxElements
 
 from .core import IOWrapper
 
@@ -319,15 +320,20 @@ class TcodWrapper(IOWrapper):
         ttf.set_char_size(font.size)
         tile_size = ttf.pixel_size
 
-        box_drawing = BoxDrawingTiles()
+        tiles_sources = [
+            ttf,
+            BoxDrawing(),
+            BoxElements(),
+        ]
 
         tileset = tcod.tileset.Tileset(*tile_size)
         for code_point in font.charmap:
-            tile = ttf.get_tile(code_point, tile_size)
-            if tile is not None:
-                tileset.set_tile(code_point, tile)
-            tile = box_drawing.get_tile(code_point, tile_size)
-            if tile is not None:
+            for source in tiles_sources:
+                if not source.has_code_point(code_point):
+                    continue
+                tile = source.get_tile(code_point, tile_size)
+                if tile is None:
+                    continue
                 tileset.set_tile(code_point, tile)
 
         return tileset

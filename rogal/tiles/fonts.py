@@ -26,10 +26,12 @@ class TrueTypeFont:
     # TODO: Set hinting, loading flags
 
     def has_char(self, char):
-        if not isinstance(char, str):
-            char = chr(char)
         char_index = self.face.get_char_index(char)
         return char_index != 0
+
+    def has_code_point(self, code_point):
+        char = chr(code_point)
+        return self.has_char(char)
 
     def load_char(self, char):
         if not isinstance(char, str):
@@ -61,7 +63,7 @@ class TrueTypeFont:
         return self._pixel_size
 
     def get_tile(self, code_point, tile_size):
-        if not self.has_char(code_point):
+        if not self.has_code_point(code_point):
             return None
 
         self.load_char(code_point)

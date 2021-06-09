@@ -1,5 +1,5 @@
 import collections
-from enum import Enum, IntFlag
+from enum import IntFlag
 
 import numpy as np
 
@@ -11,75 +11,14 @@ class Line(IntFlag):
     WIDE = SINGLE | DOUBLE
 
 
-class Box(collections.namedtuple(
+Box = collections.namedtuple(
     'Box', [
-        'top_line',
-        'right_line',
-        'bottom_line',
-        'left_line',
-        'center_pixels',
-    ])):
-
-    __slots__ = ()
-
-    def _line_pixels(self, line, pixel_width=1):
-        pixels = []
-
-        if line & Line.DOUBLE:
-            pixels.extend([255, ]*pixel_width)
-        else:
-            pixels.extend([0, ]*pixel_width)
-
-        if line & Line.SINGLE:
-            pixels.extend([255, ]*pixel_width)
-        else:
-            pixels.extend([0, ]*pixel_width)
-
-        if line & Line.DOUBLE:
-            pixels.extend([255, ]*pixel_width)
-        else:
-            pixels.extend([0, ]*pixel_width)
-
-        return pixels
-
-    def _horizontal(self, line, pixel_width=1):
-        return self._line_pixels(line, pixel_width)
-
-    def _vertical(self, line, pixel_width=1):
-        return np.reshape(
-            self._line_pixels(line, pixel_width),
-            (3*pixel_width, 1)
-        )
-
-    def top(self, pixel_width=1):
-        return self._vertical(self.top_line, pixel_width)
-
-    def right(self, pixel_width=1):
-        return self._horizontal(self.right_line, pixel_width)
-
-    def bottom(self, pixel_width=1):
-        return self._vertical(self.bottom_line, pixel_width)
-
-    def left(self, pixel_width=1):
-        return self._horizontal(self.left_line, pixel_width)
-
-    def center(self, pixel_width=1):
-        pixels = []
-        for i in range(pixel_width):
-            for p in self.center_pixels[0:3]:
-                pixels.extend([p and 255 or 0, ]*pixel_width)
-        for i in range(pixel_width):
-            for p in self.center_pixels[3:6]:
-                pixels.extend([p and 255 or 0, ]*pixel_width)
-        for i in range(pixel_width):
-            for p in self.center_pixels[6:9]:
-                pixels.extend([p and 255 or 0, ]*pixel_width)
-
-        return  np.reshape(
-            pixels,
-            (3*pixel_width, 3*pixel_width)
-        ).transpose()
-
+        'top',
+        'right',
+        'bottom',
+        'left',
+        'center', # 3x3 pixels in center, tried generating from Lines, but it was a mess...
+    ])
 
 # See: https://en.wikipedia.org/wiki/Box_Drawing_(Unicode_block)
 BOXES = {
@@ -297,12 +236,64 @@ BOXES = {
         [1, 1, 1, 0, 1, 0, 1, 1, 1]
     ),
 
+    # TODO: Rest of the Unicode block, or at least single / wide, wide / single
+
 }
 
 
-class DynamicTiles:
+class BoxDrawing:
 
-    def get_box_tile(self, code_point, tile_size):
+    def _line_pixels(self, line, pixel_width=1):
+        pixels = []
+
+        if line & Line.DOUBLE:
+            pixels.extend([255, ]*pixel_width)
+        else:
+            pixels.extend([0, ]*pixel_width)
+
+        if line & Line.SINGLE:
+            pixels.extend([255, ]*pixel_width)
+        else:
+            pixels.extend([0, ]*pixel_width)
+
+        if line & Line.DOUBLE:
+            pixels.extend([255, ]*pixel_width)
+        else:
+            pixels.extend([0, ]*pixel_width)
+
+        return pixels
+
+    def horizontal(self, line, pixel_width=1):
+        return self._line_pixels(line, pixel_width)
+
+    def vertical(self, line, pixel_width=1):
+        return np.reshape(
+            self._line_pixels(line, pixel_width),
+            (3*pixel_width, 1)
+        )
+
+    def center(self, box, pixel_width=1):
+        pixels = []
+
+        for i in range(pixel_width):
+            for e in box.center[0:3]:
+                pixels.extend([e and 255 or 0, ]*pixel_width)
+        for i in range(pixel_width):
+            for e in box.center[3:6]:
+                pixels.extend([e and 255 or 0, ]*pixel_width)
+        for i in range(pixel_width):
+            for e in box.center[6:9]:
+                pixels.extend([e and 255 or 0, ]*pixel_width)
+
+        return  np.reshape(
+            pixels,
+            (3*pixel_width, 3*pixel_width)
+        ).transpose()
+
+    def has_code_point(self, code_point):
+        return code_point in BOXES
+
+    def get_tile(self, code_point, tile_size):
         box = BOXES.get(code_point)
         if not box:
             return None
@@ -316,20 +307,16 @@ class DynamicTiles:
         if tile.shape[1] > 18:
             pixel_width += 1
         line_width = 3 * pixel_width
-        first_half = line_width//2
-        second_half = line_width - line_width//2
+        first = line_width//2
+        second = line_width - line_width//2
 
-        tile[:half_x, half_y-first_half:half_y+second_half] = box.left(pixel_width)
-        tile[half_x:, half_y-first_half:half_y+second_half] = box.right(pixel_width)
+        tile[:half_x, half_y-first:half_y+second] = self.horizontal(box.left, pixel_width)
+        tile[half_x:, half_y-first:half_y+second] = self.horizontal(box.right, pixel_width)
 
-        tile[half_x-first_half:half_x+second_half, :half_y] = box.top(pixel_width)
-        tile[half_x-first_half:half_x+second_half, half_y:] = box.bottom(pixel_width)
+        tile[half_x-first:half_x+second, :half_y] = self.vertical(box.top, pixel_width)
+        tile[half_x-first:half_x+second, half_y:] = self.vertical(box.bottom, pixel_width)
 
-        tile[half_x-first_half:half_x+second_half, half_y-first_half:half_y+second_half] = box.center(pixel_width)
+        tile[half_x-first:half_x+second, half_y-first:half_y+second] = self.center(box, pixel_width)
 
         return tile.transpose()
-
-
-    def get_tile(self, code_point, tile_size):
-        return self.get_box_tile(code_point, tile_size)
 

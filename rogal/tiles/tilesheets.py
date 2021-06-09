@@ -48,6 +48,7 @@ TERMINAL_12x12_CP = Tilesheet(
 DEJA_VU_SANS_MONO_11_TTF = TrueTypeFont(
     '/usr/share/fonts/dejavu-sans-mono-fonts/DejaVuSansMono.ttf',
     # '/usr/share/fonts/google-droid-sans-mono-fonts/DroidSansMono.ttf',
+    # '/usr/share/fonts/gdouros-symbola/Symbola.ttf',
     11,
     charsets.CP437,
 )

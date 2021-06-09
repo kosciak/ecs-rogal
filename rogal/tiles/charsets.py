@@ -1,3 +1,11 @@
+class UnicodeBlock(tuple):
+
+    __slots__ = ()
+
+    def __new__(cls, start, end):
+        return super().__new__(cls, range(start, end+1))
+
+
 CP437 = [
     0x0000, # 
     0x263a, # ☺
@@ -423,8 +431,13 @@ TCOD = [
 
 
 # TODO Unicode blocks
-UNICODE_ARROWS = range(0x2190, 0x21ff+1)
-UNICODE_BOX_DRAWING = range(0x2500, 0x257f+1)
-UNICODE_BOX_ELEMENTS = range(0x2580, 0x259f+1)
-UNICODE_GEOMETRIC_SHAPES = range(0x25a0, 0x25ff+1)
+UNICODE_BASIC_LATIN =       UnicodeBlock(0x0000, 0x007f)
+
+UNICODE_ARROWS =            UnicodeBlock(0x2190, 0x21ff)
+
+UNICODE_BOX_DRAWING =       UnicodeBlock(0x2500, 0x257f)
+UNICODE_BOX_ELEMENTS =      UnicodeBlock(0x2580, 0x259f)
+UNICODE_GEOMETRIC_SHAPES =  UnicodeBlock(0x25a0, 0x25ff)
+UNICODE_MISC_SYMBOLS =      UnicodeBlock(0x2600, 0x26ff)
+UNICODE_DINGBATS =          UnicodeBlock(0x2700, 0x27bf)
 
