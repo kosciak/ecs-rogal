@@ -42,7 +42,7 @@ SPLITS = {
 }
 
 
-SHADES = {
+SOLID_SHADES = {
     0x2591: 0.25,
     0x2592: 0.5,
     0x2593: 0.75,
@@ -63,7 +63,7 @@ QUADRANTS = {
 }
 
 
-class BoxElements:
+class BlockElements:
 
     def get_split_tile(self, code_point, tile_size):
         split = SPLITS.get(code_point)
@@ -84,7 +84,7 @@ class BoxElements:
         return tile.transpose()
 
     def get_shade_tile(self, code_point, tile_size):
-        shade_value = SHADES.get(code_point)
+        shade_value = SOLID_SHADES.get(code_point)
         if not shade_value:
             return None
 
@@ -114,7 +114,7 @@ class BoxElements:
     def has_code_point(self, code_point):
         if code_point in SPLITS:
             return True
-        if code_point in SHADES:
+        if code_point in SOLID_SHADES:
             return True
         if code_point in QUADRANTS:
             return True

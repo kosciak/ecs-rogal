@@ -1,4 +1,5 @@
 import logging
+import string
 
 import freetype
 
@@ -14,15 +15,39 @@ class TrueTypeFont:
 
     DPI = 96
 
-    def __init__(self, path):
+    def __init__(self, path, size):
         self.face = freetype.Face(path)
         self._pixel_size = None
+        self._is_monospace = None
+        if isinstance(size, Size):
+            self.set_pixel_size(size)
+        else:
+            self.set_char_size(size)
 
     def set_char_size(self, size, dpi=DPI):
         self.face.set_char_size(0, size*64, hres=dpi, vres=dpi)
         self._pixel_size = None
 
-    # TODO: Set pixel size
+    def set_pixel_size(self, size):
+        min_char_size = 1
+        max_char_size = 96
+        guess_char_size = size.height
+        correct_char_size = None
+
+        while correct_char_size is None:
+            self.set_char_size(guess_char_size)
+            pixel_size = self.pixel_size
+            if pixel_size.width > size.width or pixel_size.height > size.height:
+                print(f'{guess_char_size} {pixel_size} too big! - {min_char_size} - {max_char_size}')
+                max_char_size = guess_char_size
+            elif pixel_size.width <= size.width and pixel_size.height <= size.height:
+                print(f'{guess_char_size} {pixel_size} too small! - {min_char_size} - {max_char_size}')
+                if guess_char_size == max_char_size or guess_char_size == min_char_size:
+                    correct_char_size = guess_char_size
+                    break
+                min_char_size = guess_char_size
+            guess_char_size = (min_char_size + max_char_size) // 2
+
     # TODO: Set hinting, loading flags
 
     def has_char(self, char):
@@ -41,21 +66,27 @@ class TrueTypeFont:
 
     @property
     def is_monospace(self):
-        dot = self.load_char('.')
-        dot_width = self.face.glyph.advance.x//64
-        at = self.load_char('@')
-        at_width = self.face.glyph.advance.x//64
-        return dot_width == at_width
+        # NOTE: Size MUST be set first for this to work!
+        if self._is_monospace is None:
+            dot = self.load_char('.')
+            dot_width = self.face.glyph.advance.x//64
+            at = self.load_char('@')
+            at_width = self.face.glyph.advance.x//64
+            self._is_monospace = dot_width == at_width
+        return self._is_monospace
 
     @property
     def pixel_size(self):
         if self._pixel_size is None:
-            # TODO: !!! First seems to be better, but cuts off '_' if on last line
+            # NOTE: face.height might be lower than ascender + descender and last line (like in "_") might be cut off
             # height = self.face.size.height//64
             height = self.face.size.ascender//64 - self.face.size.descender//64
             widths = []
-            # for char in ['@', '_', 'W']:
-            for char in ['@', ]:
+            if self.is_monospace:
+                reference_chars = ['@', ]
+            else:
+                reference_chars = string.ascii_uppercase
+            for char in reference_chars:
                 self.load_char(char)
                 widths.append(self.face.glyph.metrics.width//64)
             width = max(widths)
@@ -65,6 +96,8 @@ class TrueTypeFont:
     def get_tile(self, code_point, tile_size):
         if not self.has_code_point(code_point):
             return None
+
+        pixel_size = self.pixel_size
 
         self.load_char(code_point)
         bitmap = self.face.glyph.bitmap
@@ -88,20 +121,23 @@ class TrueTypeFont:
             offset_y = self.face.glyph.bitmap_top - self.face.size.ascender//64
             bitmap_array = bitmap_array[:, offset_y:]
 
-        left = self.face.glyph.bitmap_left + offset_x
+        if self.is_monospace:
+            left = self.face.glyph.bitmap_left + offset_x
+        else:
+            left = max(0, (pixel_size.width - self.face.glyph.metrics.width//64)//2 + offset_x)
         top = self.face.size.ascender//64 - self.face.glyph.bitmap_top + offset_y
+
+        left += max(0, tile_size.width-pixel_size.width) // 2
+        top += max(0, tile_size.height-pixel_size.height) // 2
 
         tile = np.zeros(tile_size, dtype=np.uint8, order="F")
 
-        # TODO: center bitmap_array if tile > bitmap_array
-
         # if bitmap_array.shape[0]+left > tile.shape[0]:
-        #     print('Too wide!', chr(char))
+        #     print('Too wide!', chr(code_point))
         # if bitmap_array.shape[1]+top > tile.shape[1]:
-        #     print('Too tall!', chr(char))
+        #     print('Too tall!', chr(code_point))
         bitmap_array = bitmap_array[:tile.shape[0]-left, :tile.shape[1]-top]
 
-        # print(chr(char), tile.shape, bitmap_array.shape, (left, top))
         tile[left:left+bitmap_array.shape[0], top:top+bitmap_array.shape[1] ] = bitmap_array
 
         return tile.transpose()

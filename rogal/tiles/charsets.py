@@ -430,8 +430,10 @@ TCOD = [
 ]
 
 
-# TODO Unicode blocks
+# Unicode blocks - just some interesting blocks that might come handy
 UNICODE_BASIC_LATIN =       UnicodeBlock(0x0000, 0x007f)
+
+UNICODE_CURRENCY_SYMBOLS =  UnicodeBlock(0x20a0, 0x20cf)
 
 UNICODE_ARROWS =            UnicodeBlock(0x2190, 0x21ff)
 
@@ -440,4 +442,6 @@ UNICODE_BOX_ELEMENTS =      UnicodeBlock(0x2580, 0x259f)
 UNICODE_GEOMETRIC_SHAPES =  UnicodeBlock(0x25a0, 0x25ff)
 UNICODE_MISC_SYMBOLS =      UnicodeBlock(0x2600, 0x26ff)
 UNICODE_DINGBATS =          UnicodeBlock(0x2700, 0x27bf)
+
+UNICODE_BRAILLE_PATTERNS =  UnicodeBlock(0x2800, 0x28ff)
 

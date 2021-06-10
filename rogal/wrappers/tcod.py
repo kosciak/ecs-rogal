@@ -4,12 +4,14 @@ import logging
 import tcod
 from tcod.loader import ffi, lib
 
+from ..geometry import Size
+
 from ..console import DEFAULT_CH, Align, RootPanel
 from ..events import EventType
 
 from ..tiles.fonts import TrueTypeFont
 from ..tiles.box_drawing import BoxDrawing
-from ..tiles.box_elements import BoxElements
+from ..tiles.block_elements import BlockElements
 
 from .core import IOWrapper
 
@@ -273,7 +275,7 @@ class TcodWrapper(IOWrapper):
 
     def load_tilesheet(self, tilesheet):
         return tcod.tileset.load_tilesheet(
-            tilesheet.path, tilesheet.columns, tilesheet.rows, tilesheet.charmap)
+            tilesheet.path, tilesheet.columns, tilesheet.rows, tilesheet.charset)
 
     def load_truetype_font_obsolete(self, truetype_font):
         return tcod.tileset.load_truetype_font(
@@ -316,18 +318,20 @@ class TcodWrapper(IOWrapper):
         return tileset
 
     def load_ttf_font(self, font):
-        ttf = TrueTypeFont(font.path)
-        ttf.set_char_size(font.size)
+        ttf = TrueTypeFont(font.path, font.size)
         tile_size = ttf.pixel_size
+
+#         tile_size = Size(13, 18)
+#         ttf = TrueTypeFont(font.path, tile_size)
 
         tiles_sources = [
             ttf,
             BoxDrawing(),
-            BoxElements(),
+            BlockElements(),
         ]
 
         tileset = tcod.tileset.Tileset(*tile_size)
-        for code_point in font.charmap:
+        for code_point in font.charset:
             for source in tiles_sources:
                 if not source.has_code_point(code_point):
                     continue

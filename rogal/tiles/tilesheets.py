@@ -12,7 +12,7 @@ class TrueTypeFont(collections.namedtuple(
     'TrueTypeFont', [
         'path',
         'size',
-        'charmap',
+        'charset',
     ])):
 
     __slots__ = ()
@@ -23,7 +23,7 @@ class Tilesheet(collections.namedtuple(
         'path',
         'columns',
         'rows',
-        'charmap',
+        'charset',
     ])):
 
     __slots__ = ()
@@ -46,9 +46,11 @@ TERMINAL_12x12_CP = Tilesheet(
 
 # Looks BAD... :(
 DEJA_VU_SANS_MONO_11_TTF = TrueTypeFont(
-    '/usr/share/fonts/dejavu-sans-mono-fonts/DejaVuSansMono.ttf',
+    # '/usr/share/fonts/dejavu-sans-mono-fonts/DejaVuSansMono.ttf',
+    # '/usr/share/fonts/dejavu-sans-mono-fonts/DejaVuSansMono-Bold.ttf',
     # '/usr/share/fonts/google-droid-sans-mono-fonts/DroidSansMono.ttf',
-    # '/usr/share/fonts/gdouros-symbola/Symbola.ttf',
+    '/usr/share/fonts/gdouros-symbola/Symbola.ttf',
+    # '/home/kosciak/.local/share/fonts/comic-sans-ms_[pl.allfont.net].ttf',
     11,
     charsets.CP437,
 )
