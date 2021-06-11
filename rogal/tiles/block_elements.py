@@ -124,7 +124,7 @@ class BlockElements:
         if code_point in SPLITS:
             return self.get_split_tile(code_point, tile_size)
 
-        if code_point in SHADES:
+        if code_point in SOLID_SHADES:
             return self.get_shade_tile(code_point, tile_size)
 
         if code_point in QUADRANTS:
