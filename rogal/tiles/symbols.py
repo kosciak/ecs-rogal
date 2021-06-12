@@ -206,20 +206,22 @@ class SymbolExtra(Symbol):
     POW3 = Glyph(8319)             # ⁿ
 
 
-def show_charmap(charmap, columns=16):
-    elements = []
-    for ch in charmap:
-        element = chr(ch)
-        elements.append(element)
-        if len(elements) == columns:
-            print(' '.join(elements))
-            elements = []
-    if elements:
-        print(' '.join(elements))
+def show_charset(*charsets, columns=16):
+    characters = []
+    for charset in charsets:
+        for code_point in charset:
+            char = chr(code_point or 32)
+            characters.append(char)
+            if len(characters) == columns:
+                print(' '.join(characters))
+                characters = []
+
+    if characters:
+        print(' '.join(characters))
 
 
 """
-CP437 charmap:
+CP437 charset:
   ☺ ☻ ♥ ♦ ♣ ♠ • ◘ ○ ◙ ♂ ♀ ♪ ♫ ☼
 ► ◄ ↕ ‼ ¶ § ▬ ↨ ↑ ↓ → ← ∟ ↔ ▲ ▼
   ! " # $ % & ' ( ) * + , - . /
@@ -237,7 +239,7 @@ p q r s t u v w x y z { | } ~
 α ß Γ π Σ σ µ τ Φ Θ Ω δ ∞ φ ε ∩
 ≡ ± ≥ ≤ ⌠ ⌡ ÷ ≈ ° ∙ · √ ⁿ ² ■ 
 
-TCOD charmap:
+TCOD charset:
   ! " # $ % & ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ?
 @ [ \ ] ^ _ ` { | } ~ ░ ▒ ▓ │ ─ ┼ ┤ ┴ ├ ┬ └ ┌ ┐ ┘ ▘ ▝ ▀ ▖ ▚ ▐ ▗
 ↑ ↓ ← → ▲ ▼ ◄ ► ↕ ↔ ☐ ☑ ○ ◉ ║ ═ ╬ ╣ ╩ ╠ ╦ ╚ ╔ ╗ ╝

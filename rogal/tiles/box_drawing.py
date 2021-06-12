@@ -236,6 +236,118 @@ BOXES = {
         [1, 1, 1, 0, 1, 0, 1, 1, 1]
     ),
 
+    # Single line horizontal / wide line vertical
+    0x250e: Box(
+        Line.NONE, Line.SINGLE, Line.WIDE, Line.NONE,
+        [0, 0, 0, 1, 1, 1, 1, 1, 1]
+    ),
+    0x2512: Box(
+        Line.NONE, Line.NONE, Line.WIDE, Line.SINGLE,
+        [0, 0, 0, 1, 1, 1, 1, 1, 1]
+    ),
+    0x2516: Box(
+        Line.WIDE, Line.SINGLE, Line.NONE, Line.NONE,
+        [1, 1, 1, 1, 1, 1, 0, 0, 0]
+    ),
+    0x251a: Box(
+        Line.WIDE, Line.NONE, Line.NONE, Line.SINGLE,
+        [1, 1, 1, 1, 1, 1, 0, 0, 0]
+    ),
+    0x2520: Box(
+        Line.WIDE, Line.SINGLE, Line.WIDE, Line.NONE,
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ),
+    0x2528: Box(
+        Line.WIDE, Line.NONE, Line.WIDE, Line.SINGLE,
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ),
+    0x2530: Box(
+        Line.NONE, Line.SINGLE, Line.WIDE, Line.SINGLE,
+        [0, 0, 0, 1, 1, 1, 1, 1, 1]
+    ),
+    0x2538: Box(
+        Line.WIDE, Line.SINGLE, Line.NONE, Line.SINGLE,
+        [1, 1, 1, 1, 1, 1, 0, 0, 0]
+    ),
+    0x2542: Box(
+        Line.WIDE, Line.SINGLE, Line.WIDE, Line.SINGLE,
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ),
+
+    # Wide line horizontal / single line vertical
+    0x250d: Box(
+        Line.NONE, Line.WIDE, Line.SINGLE, Line.NONE,
+        [0, 1, 1, 0, 1, 1, 0, 1, 1]
+    ),
+    0x2511: Box(
+        Line.NONE, Line.NONE, Line.SINGLE, Line.WIDE,
+        [1, 1, 0, 0, 1, 1, 1, 1, 0]
+    ),
+    0x2515: Box(
+        Line.SINGLE, Line.WIDE, Line.NONE, Line.NONE,
+        [0, 1, 1, 0, 1, 1, 0, 1, 1]
+    ),
+    0x2519: Box(
+        Line.SINGLE, Line.NONE, Line.NONE, Line.WIDE,
+        [1, 1, 0, 1, 1, 0, 1, 1, 0]
+    ),
+    0x251d: Box(
+        Line.SINGLE, Line.WIDE, Line.SINGLE, Line.NONE,
+        [0, 1, 1, 0, 1, 1, 0, 1, 1]
+    ),
+    0x2525: Box(
+        Line.SINGLE, Line.NONE, Line.SINGLE, Line.WIDE,
+        [1, 1, 0, 1, 1, 0, 1, 1, 0]
+    ),
+    0x252f: Box(
+        Line.NONE, Line.WIDE, Line.SINGLE, Line.WIDE,
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ),
+    0x2537: Box(
+        Line.SINGLE, Line.WIDE, Line.NONE, Line.WIDE,
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ),
+    0x253f: Box(
+        Line.SINGLE, Line.WIDE, Line.SINGLE, Line.WIDE,
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ),
+
+    # Single ends
+    0x2574: Box(
+        Line.NONE, Line.NONE, Line.NONE, Line.SINGLE,
+        [0, 0, 0, 1, 1, 0, 0, 0, 0]
+    ),
+    0x2575: Box(
+        Line.SINGLE, Line.NONE, Line.NONE, Line.NONE,
+        [0, 1, 0, 0, 1, 0, 0, 0, 0]
+    ),
+    0x2576: Box(
+        Line.NONE, Line.SINGLE, Line.NONE, Line.NONE,
+        [0, 0, 0, 0, 1, 1, 0, 0, 0]
+    ),
+    0x2577: Box(
+        Line.NONE, Line.NONE, Line.SINGLE, Line.NONE,
+        [0, 0, 0, 0, 1, 0, 0, 1, 0]
+    ),
+
+    # Wide ends
+    0x2578: Box(
+        Line.NONE, Line.NONE, Line.NONE, Line.WIDE,
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ),
+    0x2579: Box(
+        Line.WIDE, Line.NONE, Line.NONE, Line.NONE,
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ),
+    0x257a: Box(
+        Line.NONE, Line.WIDE, Line.NONE, Line.NONE,
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ),
+    0x257b: Box(
+        Line.NONE, Line.NONE, Line.WIDE, Line.NONE,
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ),
+
     # TODO: Rest of the Unicode block, or at least single / wide, wide / single
 
 }
