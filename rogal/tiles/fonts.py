@@ -25,7 +25,7 @@ class TrueTypeFont:
             self.set_char_size(size)
 
     def set_char_size(self, size, dpi=DPI):
-        self.face.set_char_size(0, size*64, hres=dpi, vres=dpi)
+        self.face.set_char_size(0, int(size*64), hres=dpi, vres=dpi)
         self._pixel_size = None
 
     def set_pixel_size(self, size):
