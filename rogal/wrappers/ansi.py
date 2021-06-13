@@ -29,6 +29,7 @@ class ANSIWrapper(IOWrapper):
         super().__init__(*args, **kwargs)
         self._is_initialized = False
         self.term = Terminal()
+        self._prev_tiles = None
 
     @property
     def is_initialized(self):
@@ -55,31 +56,43 @@ class ANSIWrapper(IOWrapper):
     def create_console(self, size=None):
         return super().create_console(self.console_size)
 
-    def flush(self, panel):
-        self.term.write(self.term.clear())
+    def render_whole(self, panel):
+        out = []
+        out.append(self.term.clear())
 
-        columns = panel.console.width
         prev_fg = None
         prev_bg = None
-        lines = []
-        line = []
-        column = 0
-        for ch, fg, bg in panel.console.tiles_gen(encode_ch=chr):
-            column += 1
+        for x, y, ch, fg, bg in panel.console.tiles_gen(encode_ch=chr):
+            if x == 0:
+                out.append(self.term.cursor_move(x, y))
             if prev_fg is None or not (fg == prev_fg).all():
-                line.append(self.term.fg_rgb(*fg))
+                out.append(self.term.fg_rgb(*fg))
                 prev_fg = fg
             if prev_bg is None or not (bg == prev_bg).all():
-                line.append(self.term.bg_rgb(*bg))
+                out.append(self.term.bg_rgb(*bg))
                 prev_bg = bg
-            line.append(ch)
-            if column >= columns:
-                lines.append(''.join(line))
-                line = []
-                column = 0
+            out.append(ch)
 
-        # NOTE: in raw mode \r\n MUST be used, in cbreak mode \n is enough
-        self.term.write('\r\n'.join(lines))
+        return out
+
+    def render_diff(self, panel):
+        out = []
+        for x, y, ch, fg, bg in panel.console.tiles_diff_gen(self._prev_tiles, encode_ch=chr):
+            out.append(self.term.cursor_move(x, y))
+            out.append(self.term.fg_rgb(*fg))
+            out.append(self.term.bg_rgb(*bg))
+            out.append(ch)
+        return out
+
+    def flush(self, panel):
+        if self._prev_tiles is None or not self._prev_tiles.shape == panel.console.tiles.shape:
+            out = self.render_whole(panel)
+        else:
+            out = self.render_diff(panel)
+
+        self.term.write(''.join(out))
         self.term.write(self.term.normal())
         self.term.flush()
+
+        self._prev_tiles = panel.console.tiles.copy()
 

@@ -133,17 +133,32 @@ class Console:
     def bg(self):
         return self.tiles['bg']
 
+    def encode_tile_data(self, tile, encode_ch):
+        return encode_ch(tile['ch']), tile['fg'], tile['bg']
+
+    def tiles_gen(self, encode_ch=int):
+        tiles = np.nditer(self.tiles, flags=['refs_ok', 'multi_index', ])
+        for tile in tiles:
+            # yield encode_ch(tile['ch']), int(tile['fg']), int(tile['bg'])
+            y, x = tiles.multi_index
+            yield x, y, *self.encode_tile_data(tile, encode_ch)
+
+    def tiles_diff_gen(self, other, encode_ch=int):
+        if other is None or not self.tiles.shape == other.shape:
+            yield from self.tiles_gen(encode_ch)
+            return
+
+        diff = self.tiles != other
+        for x, y in np.nditer(diff.nonzero(), flags=['zerosize_ok', ]):
+            tile = self.tiles[x, y]
+            yield int(y), int(x), *self.encode_tile_data(tile, encode_ch)
+
 
 class ConsoleRGB(Console):
 
     TILES_DTYPE = dtypes.CONSOLE_RGB_DT
     DEFAULT_FG = RGB(255, 255, 255).rgb
     DEFAULT_BG = RGB(0, 0, 0).rgb
-
-    def tiles_gen(self, encode_ch=int):
-        for tile in np.nditer(self.tiles, flags=['refs_ok']):
-            # yield encode_ch(tile['ch']), int(tile['fg']), int(tile['bg'])
-            yield encode_ch(tile['ch']), tile['fg'], tile['bg']
 
 
 class ConsoleIndexedColors(Console):
@@ -152,9 +167,8 @@ class ConsoleIndexedColors(Console):
     DEFAULT_FG = -1
     DEFAULT_BG = -1
 
-    def tiles_gen(self, encode_ch=int):
-        for tile in np.nditer(self.tiles, flags=['refs_ok']):
-            yield encode_ch(tile['ch']), int(tile['fg']), int(tile['bg'])
+    def encode_tile_data(self, tile, encode_ch):
+        return encode_ch(tile['ch']), int(tile['fg']), int(tile['bg'])
 
 
 class TilesGrid(WithSizeMixin):
