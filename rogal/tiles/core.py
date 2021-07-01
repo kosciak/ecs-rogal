@@ -40,6 +40,9 @@ class Glyph(int):
     def char(self):
         return chr(self)
 
+    def __str__(self):
+        return self.char
+
     def __repr__(self):
         return f'<Glyph {self:d} = "{self.char}">'
 

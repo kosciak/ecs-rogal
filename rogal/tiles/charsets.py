@@ -1,4 +1,21 @@
-class UnicodeBlock(tuple):
+from .core import Glyph
+
+
+class Charset(tuple):
+
+    def __new__(cls, code_points):
+        return super().__new__(
+            cls,
+            (Glyph(code_point) for code_point in code_points)
+        )
+
+    def __contain__(self, code_point):
+        if isinstance(code_point, str):
+            code_point = ord(code_point)
+        return code_point in self
+
+
+class UnicodeBlock(Charset):
 
     __slots__ = ()
 
@@ -6,7 +23,9 @@ class UnicodeBlock(tuple):
         return super().__new__(cls, range(start, end+1))
 
 
-CP437 = [
+
+# TODO: Move to data/charsets.yaml
+CP437 = Charset([
     0x0000, # 
     0x263a, # ☺
     0x263b, # ☻
@@ -263,10 +282,10 @@ CP437 = [
     0x00b2, # ²
     0x25a0, # ■
     0x00a0, #  
-]
+])
 
 
-TCOD = [
+TCOD = Charset([
     0x0020, #  
     0x0021, # !
     0x0022, # "
@@ -427,7 +446,7 @@ TCOD = [
     0x0000, # 
     0x0000, # 
     0x0000, # 
-]
+])
 
 
 # Unicode blocks - just some interesting blocks that might come handy
