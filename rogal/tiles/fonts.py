@@ -13,6 +13,8 @@ log = logging.getLogger(__name__)
 
 class TrueTypeFont:
 
+    """True Type Font loader."""
+
     DPI = 96
 
     def __init__(self, path, size):

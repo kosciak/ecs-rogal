@@ -318,11 +318,11 @@ class TcodWrapper(IOWrapper):
         return tileset
 
     def load_ttf_font(self, font):
-        ttf = TrueTypeFont(font.path, font.size)
-        tile_size = ttf.pixel_size
+        # ttf = TrueTypeFont(font.path, font.size)
+        # tile_size = ttf.pixel_size
 
-#         tile_size = Size(13, 18)
-#         ttf = TrueTypeFont(font.path, tile_size)
+        tile_size = Size(13, 18)
+        ttf = TrueTypeFont(font.path, tile_size)
 
         tiles_sources = [
             ttf,

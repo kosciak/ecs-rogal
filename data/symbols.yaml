@@ -1,0 +1,204 @@
+# Empty tile
+NONE            : 0x0000
+EMPTY           : 0x0000
+
+# Single line walls, T junctions, and cross
+HLINE           : 0x2500 # ─
+VLINE           : 0x2502 # │
+NE              : 0x2510 # ┐
+SE              : 0x2518 # ┘
+NW              : 0x250c # ┌
+SW              : 0x2514 # └
+TEES            : 0x252c # ┬
+TEEW            : 0x2524 # ┤
+TEEE            : 0x251c # ├
+TEEN            : 0x2534 # ┴
+CROSS           : 0x253c # ┼
+
+# Double lines walls
+DHLINE          : 0x2550 # ═
+DVLINE          : 0x2551 # ║
+DNE             : 0x2557 # ╗
+DSE             : 0x255d # ╝
+DNW             : 0x2554 # ╔
+DSW             : 0x255a # ╚
+DTEES           : 0x2566 # ╦
+DTEEW           : 0x2563 # ╣
+DTEEE           : 0x2560 # ╠
+DTEEN           : 0x2569 # ╩
+DCROSS          : 0x256c # ╬
+
+# Wide line walls
+WHLINE          : 0x2501 # ━
+WVLINE          : 0x2503 # ┃
+WNE             : 0x2513 # ┓
+WSE             : 0x251b # ┛
+WNW             : 0x250f # ┏
+WSW             : 0x2517 # ┗
+WTEES           : 0x2533 # ┳
+WTEEW           : 0x252b # ┫
+WTEEE           : 0x2523 # ┣
+WTEEN           : 0x253b # ┻
+WCROSS          : 0x254b # ╋
+
+# Single line horizontal / double line vertical
+SDNE            : 0x2556 # ╖
+SDSE            : 0x255c # ╜
+SDNW            : 0x2553 # ╓
+SDSW            : 0x2559 # ╙
+SDTEES          : 0x2565 # ╥
+SDTEEW          : 0x2562 # ╢
+SDTEEE          : 0x255f # ╟
+SDTEEN          : 0x2568 # ╨
+SDCROSS         : 0x256b # ╫
+
+# Double line horizontal / single line vertical
+DSNE            : 0x2555 # ╕
+DSSE            : 0x255b # ╛
+DSNW            : 0x2552 # ╒
+DSSW            : 0x2558 # ╘
+DSTEES          : 0x2564 # ╤
+DSTEEW          : 0x2561 # ╡
+DSTEEE          : 0x255e # ╞
+DSTEEN          : 0x2567 # ╧
+DSCROSS         : 0x256a # ╪
+
+# Single line horizontal / wide line vertical
+SWNE            : 0x2512 # ┒
+SWSE            : 0x251a # ┚
+SWNW            : 0x250e # ┎
+SWSW            : 0x2516 # ┖
+SWTEES          : 0x2530 # ┰
+SWTEEW          : 0x2528 # ┨
+SWTEEE          : 0x2520 # ┠
+SWTEEN          : 0x2538 # ┸
+SWCROSS         : 0x2542 # ╂
+
+# Wide line horizontal / single line vertical
+WSNE            : 0x2511 # ┑
+WSSE            : 0x2519 # ┙
+WSNW            : 0x250d # ┍
+WSSW            : 0x2515 # ┕
+WSTEES          : 0x252f # ┯
+WSTEEW          : 0x2525 # ┥
+WSTEEE          : 0x251d # ┝
+WSTEEN          : 0x2537 # ┷
+WSCROSS         : 0x253f # ┿
+
+END_W           : 0x2574 # ╴
+END_N           : 0x2575 # ╵
+END_E           : 0x2576 # ╶
+END_S           : 0x2577 # ╷
+
+WEND_W          : 0x2578 # ╸
+WEND_N          : 0x2579 # ╹
+WEND_E          : 0x257a # ╺
+WEND_S          : 0x257b # ╻
+
+# Block characters
+BLOCK1          : 0x2591 # ░
+BLOCK2          : 0x2592 # ▒
+BLOCK3          : 0x2593 # ▓
+BLOCK4          : 0x2588 # █
+FULL_BLOCK      : 0x2588 # █
+
+# Arrows
+ARROW_N         : 0x2191 # ↑
+ARROW_S         : 0x2193 # ↓
+ARROW_E         : 0x2192 # →
+ARROW_W         : 0x2190 # ←
+
+# Arrows without tail
+ARROW2_N        : 0x25b2 # ▲
+ARROW2_S        : 0x25bc # ▼
+ARROW2_E        : 0x25ba # ►
+ARROW2_W        : 0x25c4 # ◄
+
+# Double arrows
+ARROW_H         : 0x2194 # ↔
+DARROW_H        : 0x2194 # ↔
+ARROW_V         : 0x2195 # ↕
+DARROW_V        : 0x2195 # ↕
+
+# GUI stuff
+CHECKBOX_UNSET  : 0x2610 # ☐
+CHECKBOX_SET    : 0x2611 # ☑
+RADIO_UNSET     : 0x25cb # ○
+RADIO_SET       : 0x25c9 # ◉
+
+# Sub-pixel resolution kit
+# NOTE: Present in original CP437 character set
+HALFBLOCK_S     : 0x2584 # ▄
+HALFBLOCK_W     : 0x258c # ▌
+HALFBLOCK_E     : 0x2590 # ▐
+HALFBLOCK_N     : 0x2580 # ▀
+
+# NOTE: Used by console.draw_semigraphics( method even though not all present in CP437 tileset!
+# NOTE: All present in TCOD characterset
+SEMIGRAPH_S     : 0x2584 # ▄
+SEMIGRAPH_W     : 0x258c # ▌
+SEMIGRAPH_E     : 0x2590 # ▐
+SEMIGRAPH_N     : 0x2580 # ▀
+
+SEMIGRAPH_NW    : 0x2598 # ▘
+SEMIGRAPH_NE    : 0x259d # ▝
+SEMIGRAPH_SE    : 0x2597 # ▗
+SEMIGRAPH_SW    : 0x2596 # ▖
+
+SEMIGRAPH_DIAG  : 0x259a # ▚
+
+# Miscellaneous characters
+SMILY           : 0x263a # ☺
+SMILY_INV       : 0x263b # ☻
+SMILIE          : 0x263a # ☺
+SMILIE_INV      : 0x263b # ☻
+
+# Card suits
+HEART           : 0x2665 # ♥
+DIAMOND         : 0x2666 # ♦
+CLUB            : 0x2663 # ♣
+SPADE           : 0x2660 # ♠
+
+BULLET          : 0x2022 # •
+BULLET_INV      : 0x25d8 # ◘
+
+CIRCLE          : 0x25cb # ○
+CIRCLE_INV      : 0x25d9 # ◙
+
+MALE            : 0x2642 # ♂
+FEMALE          : 0x2640 # ♀
+
+NOTE            : 0x266a # ♪
+NOTE_DOUBLE     : 0x266b # ♫
+
+LIGHT           : 0x263c # ☼
+
+QUESTION_INV    : 0x00bf # ¿
+EXCLAM_INV      : 0x00a1 # ¡
+EXCLAM_DOUBLE   : 0x203c # ‼
+PILCROW         : 0x00b6 # ¶
+SECTION         : 0x00a7 # §
+POUND           : 0x00a3 # £
+MULTIPLICATION  : 0x20a6 # ₧
+FUNCTION        : 0x0192 # ƒ
+
+LAQUO           : 0x00ab # «
+RAQUO           : 0x00bb # »
+
+HALF            : 0x00bd # ½
+ONE_QUARTER     : 0x00bc # ¼
+
+GRADE           : 0x00b0 # °
+DIVISION        : 0x00f7 # ÷
+POW2            : 0x00b2 # ²
+TRIPLE_BAR      : 0x2229 # ≡
+PLUS_MINUS      : 0x00b1 # ±
+GREATER_EQUAL   : 0x2265 # ≥
+LESS_EQUAL      : 0x2264 # ≤
+APPROXIMATION   : 0x2248 # ≈
+
+DOT_OPERATOR    : 0x2219 # ∙
+MIDDLE_DOT      : 0x00b7 # ·
+
+BULLET_SQUARE   : 0x25a0 # ■
+
