@@ -1,7 +1,7 @@
 # Renderable tiles data
 
 tilesheet: TERMINAL_12x12_CP
-# tilesheet: DEJA_VU_SANS_MONO_12x12_TTF
+# tilesheet: DEJA_VU_SANS_MONO_11_TTF
 
 palette: rogal.colors.x11.TANGO_DARK
 
@@ -75,6 +75,24 @@ bitmasks:
     - DTEEN      # N  +W+E
     - DTEES      #   S+W+E
     - DCROSS     # N+S+W+E
+
+  WALLS_WLINE:
+    - BULLET_SQUARE
+    - WVLINE     # N
+    - WVLINE     #   S
+    - WVLINE     # N+S
+    - WHLINE     #     W
+    - WSE        # N  +W
+    - WNE        # S  +W
+    - WTEEW      # N+S+W
+    - WHLINE     #       E
+    - WSW        # N    +E
+    - WNW        #   S  +E
+    - WTEEE      # N+S  +E
+    - WHLINE     #     W+E
+    - WTEEN      # N  +W+E
+    - WTEES      #   S+W+E
+    - WCROSS     # N+S+W+E
 
 
 decorations:
