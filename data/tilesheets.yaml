@@ -1,0 +1,13 @@
+DEJA_VU_SANS_MONO_11_TTF:
+  path: 'assets/fonts/dejavu10x10_gs_tc.png'
+  columns: 32
+  rows: 8
+  charset: TCOD
+
+
+TERMINAL_12x12_CP:
+  path: 'assets/fonts/terminal12x12_gs_ro.png'
+  columns: 16
+  rows: 16
+  charset: CP437
+

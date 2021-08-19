@@ -5,7 +5,8 @@ import numpy as np
 
 from . import logs
 
-from . import bitmask
+from .data import Bitmasks
+from .bitmask import bitmask_walls
 from . import components
 from .geometry import Position, WithPositionMixin, Size, Rectangle
 from .tiles import RenderOrder, Colors, Tile
@@ -47,7 +48,7 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
         self.show_boundaries = show_boundaries
 
         self.walls_terrain_type = terrain.Type.WALL
-        self.bitmasked_walls = self.tileset.bitmasks.WALLS_DLINE
+        self.bitmasked_walls = Bitmasks.WALLS_DLINE
 
     @property
     def position(self):
@@ -99,7 +100,7 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
         walls_mask = self.spatial.terrain_type(level_id, terrain_type)
         walls_mask = self.get_covered(walls_mask, coverage)
         # NOTE: We don't want bitmasking to spoil not revealed terrain!
-        return bitmask.bitmask_walls(walls_mask, revealed)
+        return bitmask_walls(walls_mask, revealed)
 
     def draw_boundaries(self, panel, level_size):
         """Draw BOUNDARIES of the level."""

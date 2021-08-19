@@ -2,8 +2,6 @@ import enum
 
 import numpy as np
 
-from .tiles import Symbol
-
 
 """
 # Bitmasking / bitshifting

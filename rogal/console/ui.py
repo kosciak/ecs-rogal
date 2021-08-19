@@ -2,6 +2,7 @@ import string
 
 from .. import components
 
+from ..data import Decorations
 from ..geometry import Size
 from ..tiles import Colors
 
@@ -26,23 +27,22 @@ class WidgetsBuilder:
     def __init__(self, ecs):
         self.ecs = ecs
 
-        self.tileset = self.ecs.resources.tileset
         self.palette = self.ecs.resources.wrapper.palette
         self.default_colors = Colors(self.palette.fg, self.palette.bg)
 
         self.window_frame = decorations.Frame(
-            *self.tileset.decorations.DSLINE,
+            *Decorations.DSLINE,
             colors=None,
         )
 
         self.title_frame = decorations.Frame(
-            *self.tileset.decorations.MINIMAL_DSLINE,
+            *Decorations.MINIMAL_DSLINE,
             colors=None,
         )
         self.title_align = Align.TOP_CENTER
 
         self.button_frame = decorations.Frame(
-            *self.tileset.decorations.LINE,
+            *Decorations.LINE,
             colors=None,
         )
         self.button_width = 8

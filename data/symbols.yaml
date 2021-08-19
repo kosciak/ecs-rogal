@@ -147,6 +147,15 @@ SEMIGRAPH_SW    : 0x2596 # ▖
 
 SEMIGRAPH_DIAG  : 0x259a # ▚
 
+# NOTE: original CP437 characters / replaced by SUBP_* in some tilesets
+SUBP_NW:    915 # Γ / ▘
+SUBP_NE:    960 # π / ▝
+SUBP_N:     931 # Σ / ▀
+SUBP_SE:    963 # σ / ▗
+SUBP_DIAG:  181 # µ / ▚
+SUBP_E:     964 # τ / ▐
+SUBP_SW:    934 # Φ / ▖
+
 # Miscellaneous characters
 SMILY           : 0x263a # ☺
 SMILY_INV       : 0x263b # ☻

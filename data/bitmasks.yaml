@@ -1,0 +1,54 @@
+WALLS_LINE:
+  - RADIO_UNSET
+  - VLINE      # N
+  - VLINE      #   S
+  - VLINE      # N+S
+  - HLINE      #     W
+  - SE         # N  +W
+  - NE         # S  +W
+  - TEEW       # N+S+W
+  - HLINE      #       E
+  - SW         # N    +E
+  - NW         #   S  +E
+  - TEEE       # N+S  +E
+  - HLINE      #     W+E
+  - TEEN       # N  +W+E
+  - TEES       #   S+W+E
+  - CROSS      # N+S+W+E
+
+WALLS_DLINE:
+  - BULLET_SQUARE
+  - DVLINE     # N
+  - DVLINE     #   S
+  - DVLINE     # N+S
+  - DHLINE     #     W
+  - DSE        # N  +W
+  - DNE        # S  +W
+  - DTEEW      # N+S+W
+  - DHLINE     #       E
+  - DSW        # N    +E
+  - DNW        #   S  +E
+  - DTEEE      # N+S  +E
+  - DHLINE     #     W+E
+  - DTEEN      # N  +W+E
+  - DTEES      #   S+W+E
+  - DCROSS     # N+S+W+E
+
+WALLS_WLINE:
+  - BULLET_SQUARE
+  - WVLINE     # N
+  - WVLINE     #   S
+  - WVLINE     # N+S
+  - WHLINE     #     W
+  - WSE        # N  +W
+  - WNE        # S  +W
+  - WTEEW      # N+S+W
+  - WHLINE     #       E
+  - WSW        # N    +E
+  - WNW        #   S  +E
+  - WTEEE      # N+S  +E
+  - WHLINE     #     W+E
+  - WTEEN      # N  +W+E
+  - WTEES      #   S+W+E
+  - WCROSS     # N+S+W+E
+

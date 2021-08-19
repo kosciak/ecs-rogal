@@ -8,6 +8,9 @@ from .wrappers.tcod import TcodWrapper
 from .wrappers.curses import CursesWrapper
 from .wrappers.ansi import ANSIWrapper
 
+from .data import register_data
+from .data import Charsets
+
 from .rng import rng, generate_seed
 from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerator, BSPLevelGenerator
 from .procgen.dungeons import StaticLevel
@@ -26,12 +29,20 @@ from . import render
 
 
 log = logging.getLogger(__name__)
+msg_log = logging.getLogger('rogal.messages')
 
 
 ENTITIES_DATA_FN = 'entities.yaml'
 TILESET_DATA_FN = 'tiles.yaml'
 KEY_BINDINGS_DATA_FN = 'keys.yaml'
 
+register_data(
+    charsets='charsets.yaml',
+    symbols='symbols.yaml',
+    bitmasks='bitmasks.yaml',
+    decorations='decorations.yaml',
+    tilesheets='tilesheets.yaml',
+)
 
 CONSOLE_SIZE = Size(80, 48)
 #CONSOLE_SIZE = Size(80, 60)
@@ -140,6 +151,15 @@ def run(wrapper):
         systems.console.RenderingSystem(ecs),
     ]:
         ecs.register(system)
+
+    row = []
+    for char in Charsets.CP437:
+        if char == 0x7f:
+            char = 32
+        row.append(chr(char or 32))
+        if len(row) >= 16*2:
+            msg_log.info(''.join(row))
+            row = []
 
     with ecs.resources.wrapper:
         ecs.run()
