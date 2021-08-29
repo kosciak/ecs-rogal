@@ -1,3 +1,7 @@
+#
+# Names for interesting and commonly used symbols
+#
+
 # Empty tile
 NONE            : 0x0000
 EMPTY           : 0x0000

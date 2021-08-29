@@ -1,3 +1,7 @@
+#
+# List of symbols for window decorations
+#
+
 NONE: []
 
 BLOCK1: [BLOCK1, BLOCK1, BLOCK1, BLOCK1]

@@ -9,7 +9,6 @@ from .wrappers.curses import CursesWrapper
 from .wrappers.ansi import ANSIWrapper
 
 from .data import register_data
-from .data import Charsets
 
 from .rng import rng, generate_seed
 from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerator, BSPLevelGenerator
@@ -38,6 +37,7 @@ KEY_BINDINGS_DATA_FN = 'keys.yaml'
 
 register_data(
     charsets='charsets.yaml',
+    unicode_blocks='unicode_blocks.yaml',
     symbols='symbols.yaml',
     bitmasks='bitmasks.yaml',
     decorations='decorations.yaml',
@@ -67,6 +67,17 @@ WRAPPERS = {
     'curses': CursesWrapper,
     'ansi': ANSIWrapper,
 }
+
+
+def print_charset(charset):
+    row = []
+    for char in charset:
+        if char == 0x7f:
+            char = 32
+        row.append(chr(char or 32))
+        if len(row) >= 16*2:
+            msg_log.info(''.join(row))
+            row = []
 
 
 def run(wrapper):
@@ -152,14 +163,9 @@ def run(wrapper):
     ]:
         ecs.register(system)
 
-    row = []
-    for char in Charsets.CP437:
-        if char == 0x7f:
-            char = 32
-        row.append(chr(char or 32))
-        if len(row) >= 16*2:
-            msg_log.info(''.join(row))
-            row = []
+    # from .data import UnicodeBlocks
+    from .data import Charsets
+    print_charset(Charsets.CP437)
 
     with ecs.resources.wrapper:
         ecs.run()

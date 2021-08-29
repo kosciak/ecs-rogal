@@ -1,0 +1,41 @@
+#
+# Unicode blocks with interesting glyphs, that might come handy
+# NOTE: from code point, to code point, both are inclusive!
+#
+
+BASIC_LATIN:
+  from: 0x0000
+  to: 0x007f
+
+CURRENCY_SYMBOLS:
+  from: 0x20a0
+  to: 0x20cf
+
+ARROWS:
+  from: 0x2190
+  to: 0x21ff
+
+BOX_DRAWING:
+  from: 0x2500
+  to: 0x257f
+
+BLOCK_ELEMENTS:
+  from: 0x2580
+  to: 0x259f
+
+GEOMETRIC_SHAPES:
+  from: 0x25a0
+  to: 0x25ff
+
+MISC_SYMBOLS:
+  from: 0x2600
+  to: 0x26ff
+
+DINGBATS:
+  from: 0x2700
+  to: 0x27bf
+
+BRAILLE_PATTERNS:
+  from: 0x2800
+  to: 0x28ff
+

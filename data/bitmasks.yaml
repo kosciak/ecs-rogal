@@ -1,3 +1,7 @@
+#
+# List of symbols for bitmasking
+#
+
 WALLS_LINE:
   - RADIO_UNSET
   - VLINE      # N

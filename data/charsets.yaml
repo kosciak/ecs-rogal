@@ -1,3 +1,7 @@
+#
+# Charsets - lists of unicode code points
+#
+
 CP437: [
     0x0000, # 
     0x263a, # ☺
