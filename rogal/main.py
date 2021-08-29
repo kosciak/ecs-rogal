@@ -42,6 +42,14 @@ register_data(
     bitmasks='bitmasks.yaml',
     decorations='decorations.yaml',
     tilesheets='tilesheets.yaml',
+    colors=[
+        'colors/x11.colors.yaml',
+        'colors/web.colors.yaml',
+    ],
+    color_names=[
+        'colors/x11.names.yaml',
+        'colors/web.names.yaml',
+    ],
 )
 
 CONSOLE_SIZE = Size(80, 48)
