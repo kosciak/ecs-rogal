@@ -1,0 +1,57 @@
+CGA: 
+  name: 'CGA'
+  fg: '#FFFFFF'
+  bg: '#000000'
+  colors:
+    - CGA
+  color_names: 
+    - X11System
+
+
+X11_DARK: 
+  name: 'X11 Dark'
+  fg: WHITE
+  bg: BLACK
+  colors:
+    - X11
+  color_names: 
+    - X11System
+    - X11Extended
+    - X11Greyscale
+
+X11_LIGHT: 
+  name: 'X11 Light'
+  fg: BLACK
+  bg: WHITE
+  colors:
+    - X11
+  color_names: 
+    - X11System
+    - X11Extended
+    - X11Greyscale
+
+
+TANGO_DARK: 
+  name: 'Tango Dark'
+  fg: BASE_WHITE
+  bg: BLACK
+  colors:
+    - TANGO
+    - X11
+  color_names: 
+    - X11System
+    - X11Extended
+    - X11Greyscale
+
+TANGO_LIGHT: 
+  name: 'Tango Light'
+  fg: BLACK
+  bg: WHITE
+  colors:
+    - TANGO
+    - X11
+  color_names: 
+    - X11System
+    - X11Extended
+    - X11Greyscale
+

@@ -3,7 +3,7 @@
 tilesheet: TERMINAL_12x12_CP
 # tilesheet: DEJA_VU_SANS_MONO_11_TTF
 
-palette: rogal.colors.x11.TANGO_DARK
+palette: TANGO_DARK
 
 revealed:
   ReplaceForeground: BRIGHT_BLACK

@@ -5,7 +5,3 @@ from .core import (
 
 from .palette import ColorMap, ColorPalette
 
-from . import x11
-from . import web
-#from . import tcod
-

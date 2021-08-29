@@ -45,11 +45,14 @@ register_data(
     colors=[
         'colors/x11.colors.yaml',
         'colors/web.colors.yaml',
+        'colors/cga.colors.yaml',
+        'colors/tango.colors.yaml',
     ],
     color_names=[
         'colors/x11.names.yaml',
         'colors/web.names.yaml',
     ],
+    color_palettes='colors/color_palettes.yaml',
 )
 
 CONSOLE_SIZE = Size(80, 48)

@@ -2,7 +2,7 @@ import collections
 import importlib
 
 from ..collections.attrdict import AttrDict
-from ..data import Symbols, Tilesheets
+from ..data import Symbols, Tilesheets, ColorPalettes
 
 from .core import Tile
 
@@ -68,10 +68,7 @@ class Tileset:
 
     def parse_palette(self, data):
         name = data['palette']
-        module_name, sep, palette_name = name.rpartition('.')
-        module = importlib.import_module(module_name)
-        palette = getattr(module, palette_name)
-        return palette
+        return ColorPalettes.get(name)
 
     def parse_revealed_fn(self, data):
         for name, value in data['revealed'].items():
