@@ -2,12 +2,11 @@ from ..tiles.charsets import Charset, UnicodeBlock
 
 
 def parse_charset(data):
-    return Charset(data)
-
-
-def parse_unicode_block(data):
-    return UnicodeBlock(
-        data['from'],
-        data['to']
-    )
+    if 'code_points' in data:
+        return Charset(data['code_points'])
+    elif 'from' in data and 'to' in data:
+        return UnicodeBlock(
+            data['from'],
+            data['to']
+        )
 

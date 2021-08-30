@@ -1,13 +1,13 @@
+from ..data_loaders import DataLoader
+
 from .core import Data
-from .charsets import parse_charset, parse_unicode_block
+from .charsets import parse_charset
 from .symbols import parse_symbol, SymbolsListParser
 from .tilesheets import TilesheetParser
 from .colors import parse_colors, parse_color_names, ColorPaletteParser
 
 
 Charsets = Data(parse_charset)
-
-UnicodeBlocks = Data(parse_unicode_block)
 
 Symbols = Data(parse_symbol)
 
@@ -26,7 +26,6 @@ ColorPalettes = Data(ColorPaletteParser(Colors, ColorNames))
 
 DATA = {
     'Charsets': Charsets,
-    'UnicodeBlocks': UnicodeBlocks,
     'Symbols': Symbols,
     'Bitmasks': Bitmasks,
     'Decorations': Decorations,
@@ -38,6 +37,11 @@ DATA = {
 
 
 def register_data(**kwargs):
+    if 'data' in kwargs:
+        data = kwargs.pop('data')
+        loader = DataLoader(data)
+        kwargs.update(loader.load())
+
     for name, loader in kwargs.items():
         name = name.title().replace('_', '')
         data = DATA.get(name)

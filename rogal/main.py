@@ -35,25 +35,7 @@ ENTITIES_DATA_FN = 'entities.yaml'
 TILESET_DATA_FN = 'tiles.yaml'
 KEY_BINDINGS_DATA_FN = 'keys.yaml'
 
-register_data(
-    charsets='charsets.yaml',
-    unicode_blocks='unicode_blocks.yaml',
-    symbols='symbols.yaml',
-    bitmasks='bitmasks.yaml',
-    decorations='decorations.yaml',
-    tilesheets='tilesheets.yaml',
-    colors=[
-        'colors/x11.colors.yaml',
-        'colors/web.colors.yaml',
-        'colors/cga.colors.yaml',
-        'colors/tango.colors.yaml',
-    ],
-    color_names=[
-        'colors/x11.names.yaml',
-        'colors/web.names.yaml',
-    ],
-    color_palettes='colors/color_palettes.yaml',
-)
+register_data(data='data.yaml')
 
 CONSOLE_SIZE = Size(80, 48)
 #CONSOLE_SIZE = Size(80, 60)

@@ -2,7 +2,8 @@
 # Charsets - lists of unicode code points
 #
 
-CP437: [
+CP437: 
+  code_points: [
     0x0000, # 
     0x263a, # ☺
     0x263b, # ☻
@@ -262,7 +263,8 @@ CP437: [
 ]
 
 
-TCOD: [
+TCOD: 
+  code_points: [
     0x0020, #  
     0x0021, # !
     0x0022, # "
