@@ -2,6 +2,8 @@ import collections
 
 import numpy as np
 
+from .tiles_source import TilesSource
+
 
 Split = collections.namedtuple(
     'Split', [
@@ -63,7 +65,15 @@ QUADRANTS = {
 }
 
 
-class BlockElements:
+class BlockElements(TilesSource):
+
+    def __init__(self, charset=None):
+        if not charset:
+            charset = []
+            charset.extend(SPLITS.keys())
+            charset.extend(SOLID_SHADES.keys())
+            charset.extend(QUADRANTS.keys())
+        super().__init__(charset)
 
     def get_split_tile(self, code_point, tile_size):
         split = SPLITS.get(code_point)
@@ -110,15 +120,6 @@ class BlockElements:
         tile[half_x:, half_y:] = quadrant.lower_right and 255 or 0
 
         return tile.transpose()
-
-    def has_code_point(self, code_point):
-        if code_point in SPLITS:
-            return True
-        if code_point in SOLID_SHADES:
-            return True
-        if code_point in QUADRANTS:
-            return True
-        return False
 
     def get_tile(self, code_point, tile_size):
         if code_point in SPLITS:

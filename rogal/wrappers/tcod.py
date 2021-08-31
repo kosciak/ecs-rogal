@@ -1,4 +1,3 @@
-import functools
 import logging
 
 import tcod
@@ -81,19 +80,19 @@ class TcodRootPanel(RootPanel):
 
     def _put_char(self, x, y, ch, *args, **kwargs):
         """tcod.Console.put_char(
-            x: int, y: int, 
-            ch: int, 
+            x: int, y: int,
+            ch: int,
             bg_blend: int = 13)
         """
         return self.console.put_char(x, y, ch, *args, **kwargs)
 
     def _print(self, x, y, text, fg=None, bg=None, *args, **kwargs):
         """tcod.Cosole.print(
-            x: int, y: int, 
-            string: str, 
-            fg: Optional[Tuple[int, int, int]] = None, 
-            bg: Optional[Tuple[int, int, int]] = None, 
-            bg_blend: int = 1, 
+            x: int, y: int,
+            string: str,
+            fg: Optional[Tuple[int, int, int]] = None,
+            bg: Optional[Tuple[int, int, int]] = None,
+            bg_blend: int = 1,
             alignment: int = 0)
         """
         return self.console.print(
@@ -101,12 +100,12 @@ class TcodRootPanel(RootPanel):
 
     def _print_box(self, x, y, width, height, text, fg=None, bg=None, *args, **kwargs):
         """tcod.Console.print_box(
-            x: int, y: int, 
-            width: int, height: int, 
-            string: str, 
-            fg: Optional[Tuple[int, int, int]] = None, 
-            bg: Optional[Tuple[int, int, int]] = None, 
-            bg_blend: int = 1, 
+            x: int, y: int,
+            width: int, height: int,
+            string: str,
+            fg: Optional[Tuple[int, int, int]] = None,
+            bg: Optional[Tuple[int, int, int]] = None,
+            bg_blend: int = 1,
             alignment: int = 0)-> int
         """
         return self.console.print_box(
@@ -114,8 +113,8 @@ class TcodRootPanel(RootPanel):
 
     def _get_height_rect(self, x, y, width, height, text, *args, **kwargs):
         """tcod.Console.get_height_rect(
-            x: int, y: int, 
-            width: int, height: int, 
+            x: int, y: int,
+            width: int, height: int,
             string: str)-> int
         """
         return self.console.get_height_rect(
@@ -123,11 +122,11 @@ class TcodRootPanel(RootPanel):
 
     def _draw_rect(self, x, y, width, height, ch, fg=None, bg=None, *args, **kwargs):
         """tcod.Console.draw_rect(
-            x: int, y: int, 
-            width: int, height: int, 
-            ch: int, 
-            fg: Optional[Tuple[int, int, int]] = None, 
-            bg: Optional[Tuple[int, int, int]] = None, 
+            x: int, y: int,
+            width: int, height: int,
+            ch: int,
+            fg: Optional[Tuple[int, int, int]] = None,
+            bg: Optional[Tuple[int, int, int]] = None,
             bg_blend: int = 1)
         """
         return self.console.draw_rect(
@@ -135,12 +134,12 @@ class TcodRootPanel(RootPanel):
 
     def _draw_frame(self, x, y, width, height, title=None, clear=True, fg=None, bg=None, *args, **kwargs):
         """tcod.Console.draw_frame(
-            x: int, y: int, 
-            width: int, height: int, 
-            title: str = '', 
-            clear: bool = True, 
-            fg: Optional[Tuple[int, int, int]] = None, 
-            bg: Optional[Tuple[int, int, int]] = None, 
+            x: int, y: int,
+            width: int, height: int,
+            title: str = '',
+            clear: bool = True,
+            fg: Optional[Tuple[int, int, int]] = None,
+            bg: Optional[Tuple[int, int, int]] = None,
             bg_blend: int = 1)
         """
         title = title or ''
@@ -149,28 +148,28 @@ class TcodRootPanel(RootPanel):
 
     def _draw_semigraphics(self, pixels, x, y, *args, **kwargs):
         """tcod.Console.draw_semigraphics(
-            pixels: Any, 
-            x: int = 0, 
+            pixels: Any,
+            x: int = 0,
             y: int = 0)
         """
         return self.console.get_height_rect(pixels, x, y, *args, **kwargs)
 
     def _clear(self, ch=None, fg=None, bg=None, *args, **kwargs):
         """tcod.Console.clear(
-            ch: int = 32, 
-            fg: Tuple[int, int, int] = Ellipsis, 
+            ch: int = 32,
+            fg: Tuple[int, int, int] = Ellipsis,
             bg: Tuple[int, int, int] = Ellipsis)
         """
         ch = ch or DEFAULT_CH
         return self.console.clear(ch, fg=fg, bg=bg, *args, **kwargs)
 
     # blit(
-    #   dest: tcod.console.Console, 
-    #   dest_x: int = 0, dest_y: int = 0, 
-    #   src_x: int = 0, src_y: int = 0, 
-    #   width: int = 0, height: int = 0, 
-    #   fg_alpha: float = 1.0, 
-    #   bg_alpha: float = 1.0, 
+    #   dest: tcod.console.Console,
+    #   dest_x: int = 0, dest_y: int = 0,
+    #   src_x: int = 0, src_y: int = 0,
+    #   width: int = 0, height: int = 0,
+    #   fg_alpha: float = 1.0,
+    #   bg_alpha: float = 1.0,
     #   key_color: Optional[Tuple[int, int, int]] = None)
 
     # TODO: Direct access to console.tiles, console.tiles_rgb fragments
@@ -318,11 +317,11 @@ class TcodWrapper(IOWrapper):
         return tileset
 
     def load_ttf_font(self, font):
-        # ttf = TrueTypeFont(font.path, font.size)
+        # ttf = TrueTypeFont(font.path, font.size, charset=font.charset)
         # tile_size = ttf.pixel_size
 
         tile_size = Size(13, 18)
-        ttf = TrueTypeFont(font.path, tile_size)
+        ttf = TrueTypeFont(font.path, tile_size, charset=font.charset)
 
         tiles_sources = [
             ttf,
@@ -331,11 +330,8 @@ class TcodWrapper(IOWrapper):
         ]
 
         tileset = tcod.tileset.Tileset(*tile_size)
-        for code_point in font.charset:
-            for source in tiles_sources:
-                if not source.has_code_point(code_point):
-                    continue
-                tile = source.get_tile(code_point, tile_size)
+        for source in tiles_sources:
+            for code_point, tile in source.tiles_gen(tile_size):
                 if tile is None:
                     continue
                 tileset.set_tile(code_point, tile)

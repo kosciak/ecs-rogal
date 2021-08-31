@@ -1,6 +1,7 @@
 #
 # Unicode blocks with interesting glyphs, that might come handy
 # NOTE: from code point, to code point, both are inclusive!
+# See: https://en.wikipedia.org/wiki/Unicode_block
 #
 
 BASIC_LATIN:

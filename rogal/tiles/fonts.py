@@ -7,18 +7,29 @@ import numpy as np
 
 from ..geometry import Size
 
+from .tiles_source import TilesSource
+
 
 log = logging.getLogger(__name__)
 
 
-class TrueTypeFont:
+class TrueTypeFont(TilesSource):
 
     """True Type Font loader."""
 
-    DPI = 96
+    DEFAULT_DPI = 96
+    MONOSPACE_REFERENCE_CHARS = ['@', ]
+    PROPORTIONAL_REFERENCE_CHARS = string.ascii_uppercase
 
-    def __init__(self, path, size):
+    def __init__(self, path, size, charset=None):
         self.face = freetype.Face(path)
+        if charset is None:
+            charset = [
+                code_point for (code_point, char_index)
+                in self.face.get_chars()
+                if char_index
+            ]
+        super().__init__(charset)
         self._pixel_size = None
         self._is_monospace = None
         if isinstance(size, Size):
@@ -26,7 +37,7 @@ class TrueTypeFont:
         else:
             self.set_char_size(size)
 
-    def set_char_size(self, size, dpi=DPI):
+    def set_char_size(self, size, dpi=DEFAULT_DPI):
         self.face.set_char_size(0, int(size*64), hres=dpi, vres=dpi)
         self._pixel_size = None
 
@@ -78,17 +89,20 @@ class TrueTypeFont:
         return self._is_monospace
 
     @property
+    def _reference_chars(self):
+        if self.is_monospace:
+            return self.MONOSPACE_REFERENCE_CHARS
+        else:
+            return self.PROPORTIONAL_REFERENCE_CHARS
+
+    @property
     def pixel_size(self):
         if self._pixel_size is None:
             # NOTE: face.height might be lower than ascender + descender and last line (like in "_") might be cut off
             # height = self.face.size.height//64
             height = self.face.size.ascender//64 - self.face.size.descender//64
             widths = []
-            if self.is_monospace:
-                reference_chars = ['@', ]
-            else:
-                reference_chars = string.ascii_uppercase
-            for char in reference_chars:
+            for char in self._reference_chars:
                 self.load_char(char)
                 widths.append(self.face.glyph.metrics.width//64)
             width = max(widths)
