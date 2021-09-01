@@ -15,8 +15,8 @@ bitmasks:
 decorations:
   - 'decorations.yaml'
 
-tilesheets:
-  - 'tilesheets.yaml'
+tiles_sources:
+  - 'tiles_sources.yaml'
 
 colors:
   - 'colors/x11.colors.yaml'

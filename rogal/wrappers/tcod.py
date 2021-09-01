@@ -8,9 +8,8 @@ from ..geometry import Size
 from ..console import DEFAULT_CH, Align, RootPanel
 from ..events import EventType
 
-from ..tiles.fonts import TrueTypeFont
-from ..tiles.box_drawing import BoxDrawing
-from ..tiles.block_elements import BlockElements
+from ..tiles_sources.box_drawing import BoxDrawing
+from ..tiles_sources.block_elements import BlockElements
 
 from .core import IOWrapper
 
@@ -316,12 +315,10 @@ class TcodWrapper(IOWrapper):
         # TODO: Need some fallback for missing glyphs
         return tileset
 
-    def load_ttf_font(self, font):
-        # ttf = TrueTypeFont(font.path, font.size, charset=font.charset)
-        # tile_size = ttf.pixel_size
-
-        tile_size = Size(13, 18)
-        ttf = TrueTypeFont(font.path, tile_size, charset=font.charset)
+    def load_ttf_font(self, ttf):
+        # tile_size = Size(13, 18)
+        # ttf.set_size(tile_size)
+        tile_size = ttf.pixel_size
 
         tiles_sources = [
             ttf,

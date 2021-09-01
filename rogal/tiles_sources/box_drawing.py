@@ -3,7 +3,7 @@ from enum import IntFlag
 
 import numpy as np
 
-from .tiles_source import TilesSource
+from .core import TilesSource
 
 
 class Line(IntFlag):

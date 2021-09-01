@@ -1,7 +1,8 @@
-from ..tiles.tilesheets import Tilesheet, TrueTypeFont
+from ..tiles_sources.tilesheets import Tilesheet
+from ..tiles_sources.fonts import TrueTypeFont
 
 
-class TilesheetParser:
+class TilesSourcesParser:
 
     def __init__(self, charsets):
         self.charsets = charsets

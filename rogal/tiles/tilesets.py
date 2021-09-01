@@ -2,7 +2,7 @@ import collections
 import importlib
 
 from ..collections.attrdict import AttrDict
-from ..data import Symbols, Tilesheets, ColorPalettes
+from ..data import Symbols, TilesSources, ColorPalettes
 
 from .core import Tile
 
@@ -63,7 +63,7 @@ class Tileset:
 
     def parse_tilesheet(self, data):
         name = data['tilesheet']
-        tilesheet = Tilesheets.get(name)
+        tilesheet = TilesSources.get(name)
         return tilesheet
 
     def parse_palette(self, data):

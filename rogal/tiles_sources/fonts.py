@@ -7,7 +7,7 @@ import numpy as np
 
 from ..geometry import Size
 
-from .tiles_source import TilesSource
+from .core import TilesSource
 
 
 log = logging.getLogger(__name__)
@@ -15,13 +15,14 @@ log = logging.getLogger(__name__)
 
 class TrueTypeFont(TilesSource):
 
-    """True Type Font loader."""
+    """Generate tiles from True Type Font."""
 
     DEFAULT_DPI = 96
     MONOSPACE_REFERENCE_CHARS = ['@', ]
     PROPORTIONAL_REFERENCE_CHARS = string.ascii_uppercase
 
     def __init__(self, path, size, charset=None):
+        self.path = path
         self.face = freetype.Face(path)
         if charset is None:
             charset = [
@@ -32,10 +33,7 @@ class TrueTypeFont(TilesSource):
         super().__init__(charset)
         self._pixel_size = None
         self._is_monospace = None
-        if isinstance(size, Size):
-            self.set_pixel_size(size)
-        else:
-            self.set_char_size(size)
+        self.set_size(size)
 
     def set_char_size(self, size, dpi=DEFAULT_DPI):
         self.face.set_char_size(0, int(size*64), hres=dpi, vres=dpi)
@@ -60,6 +58,12 @@ class TrueTypeFont(TilesSource):
                     break
                 min_char_size = guess_char_size
             guess_char_size = (min_char_size + max_char_size) // 2
+
+    def set_size(self, size):
+        if isinstance(size, Size):
+            self.set_pixel_size(size)
+        else:
+            self.set_char_size(size)
 
     # TODO: Set hinting, loading flags
 

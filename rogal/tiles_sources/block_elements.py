@@ -2,7 +2,7 @@ import collections
 
 import numpy as np
 
-from .tiles_source import TilesSource
+from .core import TilesSource
 
 
 Split = collections.namedtuple(

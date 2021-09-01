@@ -3,7 +3,7 @@ from ..data_loaders import DataLoader
 from .core import Data
 from .charsets import parse_charset
 from .symbols import parse_symbol, SymbolsListParser
-from .tilesheets import TilesheetParser
+from .tiles_sources import TilesSourcesParser
 from .colors import parse_colors, parse_color_names, ColorPaletteParser
 
 
@@ -15,7 +15,7 @@ Bitmasks = Data(SymbolsListParser(Symbols))
 
 Decorations = Data(SymbolsListParser(Symbols))
 
-Tilesheets = Data(TilesheetParser(Charsets))
+TilesSources = Data(TilesSourcesParser(Charsets))
 
 Colors = Data(parse_colors)
 
@@ -29,7 +29,7 @@ DATA = {
     'Symbols': Symbols,
     'Bitmasks': Bitmasks,
     'Decorations': Decorations,
-    'Tilesheets': Tilesheets,
+    'TilesSources': TilesSources,
     'Colors': Colors,
     'ColorNames': ColorNames,
     'ColorPalettes': ColorPalettes,
