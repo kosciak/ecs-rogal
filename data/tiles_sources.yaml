@@ -1,3 +1,9 @@
+# 
+# Tiles sources
+#
+
+# Tilesheets
+
 DEJA_VU_10_TCOD:
   tilesheet: 'assets/fonts/dejavu10x10_gs_tc.png'
   columns: 32
@@ -12,8 +18,22 @@ TERMINAL_12x12_CP437:
   charset: CP437
 
 
+# TTF fonts
+
 DEJA_VU_SANS_MONO_11_TTF:
   ttf: '/usr/share/fonts/dejavu-sans-mono-fonts/DejaVuSansMono.ttf'
-  size: 11
+  # size: 11
+  size: [13, 18]
   charset: CP437
+
+
+# Tiles generators
+
+BLOCK_ELEMENTS_GENERATOR:
+  generator: BlockElements
+  charset: BLOCK_ELEMENTS
+
+BOX_DRAWING_GENERATOR:
+  generator: BoxDrawing
+  charset: BOX_DRAWING
 

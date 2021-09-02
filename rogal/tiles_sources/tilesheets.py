@@ -11,3 +11,5 @@ class Tilesheet(collections.namedtuple(
 
     __slots__ = ()
 
+    is_tilesheet = True
+

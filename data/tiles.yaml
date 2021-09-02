@@ -1,8 +1,11 @@
 # Renderable tiles data
 
-tilesheet: TERMINAL_12x12_CP437
-# tilesheet: DEJA_VU_10_TCOD
-# tilesheet: DEJA_VU_SANS_MONO_11_TTF
+tiles_sources:
+  # - TERMINAL_12x12_CP437
+  # - DEJA_VU_10_TCOD
+  - DEJA_VU_SANS_MONO_11_TTF
+  - BOX_DRAWING_GENERATOR
+  - BLOCK_ELEMENTS_GENERATOR
 
 palette: TANGO_DARK
 

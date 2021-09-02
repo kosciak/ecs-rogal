@@ -1,5 +1,9 @@
+from ..geometry import Size
+
 from ..tiles_sources.tilesheets import Tilesheet
 from ..tiles_sources.fonts import TrueTypeFont
+from ..tiles_sources.block_elements import BlockElements
+from ..tiles_sources.box_drawing import BoxDrawing
 
 
 class TilesSourcesParser:
@@ -16,9 +20,20 @@ class TilesSourcesParser:
                 self.charsets.get(data['charset']),
             )
         if 'ttf' in data:
+            size = data['size']
+            if isinstance(size, (tuple, list)):
+                size = Size(*size)
             return TrueTypeFont(
                 data['ttf'],
-                data['size'],
+                size,
+                self.charsets.get(data['charset']),
+            )
+        if data.get('generator') == 'BlockElements':
+            return BlockElements(
+                self.charsets.get(data['charset']),
+            )
+        if data.get('generator') == 'BoxDrawing':
+            return BoxDrawing(
                 self.charsets.get(data['charset']),
             )
 

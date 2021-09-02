@@ -1,6 +1,9 @@
 class TilesSource:
 
+    is_tilesheet = False
+
     def __init__(self, charset):
+        self.path = None
         self.charset = charset
 
     def has_code_point(self, code_point):

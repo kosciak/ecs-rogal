@@ -109,7 +109,7 @@ def run(wrapper):
     ecs.resources.wrapper = wrapper_cls(
         console_size=CONSOLE_SIZE,
         palette=ecs.resources.tileset.palette,
-        tileset=ecs.resources.tileset.tilesheet,
+        tiles_sources=ecs.resources.tileset.tiles_sources,
         resizable=False,
         title='Rogal test'
     )

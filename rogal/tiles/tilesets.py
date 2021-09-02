@@ -28,17 +28,17 @@ class Tileset:
 
     def __init__(self, loader):
         self.loader = loader
-        self._tilesheet = None
+        self._tiles_sources = None
         self._palette = None
         self._revealed_fn = None
         self._tiles = {}
 
     @property
-    def tilesheet(self):
-        if self._tilesheet is None:
+    def tiles_sources(self):
+        if self._tiles_sources is None:
             data = self.loader.load()
             self.parse_data(data)
-        return self._tilesheet
+        return self._tiles_sources
 
     @property
     def palette(self):
@@ -61,10 +61,11 @@ class Tileset:
             self.parse_data(data)
         return self._revealed_fn
 
-    def parse_tilesheet(self, data):
-        name = data['tilesheet']
-        tilesheet = TilesSources.get(name)
-        return tilesheet
+    def parse_tiles_sources(self, data):
+        tiles_sources = []
+        for name in data['tiles_sources']:
+            tiles_sources.append(TilesSources.get(name))
+        return tiles_sources
 
     def parse_palette(self, data):
         name = data['palette']
@@ -89,7 +90,7 @@ class Tileset:
         return tiles
 
     def parse_data(self, data):
-        self._tilesheet = self.parse_tilesheet(data)
+        self._tiles_sources = self.parse_tiles_sources(data)
         self._palette = self.parse_palette(data)
         self._revealed_fn = self.parse_revealed_fn(data)
         self._tiles = self.parse_tiles(data)

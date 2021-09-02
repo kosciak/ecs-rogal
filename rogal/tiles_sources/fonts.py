@@ -25,15 +25,20 @@ class TrueTypeFont(TilesSource):
         self.path = path
         self.face = freetype.Face(path)
         if charset is None:
-            charset = [
-                code_point for (code_point, char_index)
-                in self.face.get_chars()
-                if char_index
-            ]
+            charset = self.get_ttf_charset()
         super().__init__(charset)
-        self._pixel_size = None
         self._is_monospace = None
+        self._tile_size = None
+        self._pixel_size = None
         self.set_size(size)
+
+    def get_ttf_charset(self):
+        charset = [
+            code_point for (code_point, char_index)
+            in self.face.get_chars()
+            if char_index
+        ]
+        return charset
 
     def set_char_size(self, size, dpi=DEFAULT_DPI):
         self.face.set_char_size(0, int(size*64), hres=dpi, vres=dpi)
@@ -61,8 +66,10 @@ class TrueTypeFont(TilesSource):
 
     def set_size(self, size):
         if isinstance(size, Size):
+            self._tile_size = size
             self.set_pixel_size(size)
         else:
+            self._tile_size = None
             self.set_char_size(size)
 
     # TODO: Set hinting, loading flags
@@ -112,6 +119,13 @@ class TrueTypeFont(TilesSource):
             width = max(widths)
             self._pixel_size = Size(width, height)
         return self._pixel_size
+
+    @property
+    def tile_size(self):
+        if self._tile_size:
+            return self._tile_size
+        else:
+            return self.pixel_size
 
     def get_tile(self, code_point, tile_size):
         if not self.has_code_point(code_point):

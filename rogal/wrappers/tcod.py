@@ -226,6 +226,44 @@ class TcodSDLInputWrapper(SDLInputWrapper):
             yield event
 
 
+class TilesLoader:
+
+    def __init__(self, tiles_sources):
+        self.tiles_sources = tiles_sources
+        self.tileset = None
+
+    @property
+    def tile_size(self):
+        if self.tileset:
+            return Size(self.tileset.tile_width, self.tileset.tile_height)
+
+    def create_tileset(self, tile_size):
+        tileset = tcod.tileset.Tileset(*tile_size)
+        return tileset
+
+    def load_tilesheet(self, tilesheet):
+        return tcod.tileset.load_tilesheet(
+            tilesheet.path, tilesheet.columns, tilesheet.rows, tilesheet.charset)
+
+    def load_tiles_gen(self, tiles_source):
+        for code_point, tile in tiles_source.tiles_gen(self.tile_size):
+            if tile is None:
+                continue
+            self.tileset.set_tile(code_point, tile)
+        return self.tileset
+
+    def load(self):
+        for tiles_source in self.tiles_sources:
+            if tiles_source.is_tilesheet:
+                # TODO: Combining multiple tilesheets
+                self.tileset = self.load_tilesheet(tiles_source)
+                continue
+            if not self.tileset:
+                self.tileset = self.create_tileset(tiles_source.tile_size)
+            self.load_tiles_gen(tiles_source)
+        return self.tileset
+
+
 class TcodWrapper(IOWrapper):
 
     ROOT_PANEL_CLS = TcodRootPanel
@@ -233,15 +271,15 @@ class TcodWrapper(IOWrapper):
     def __init__(self,
         console_size,
         palette,
-        tileset,
+        tiles_sources,
         resizable=False,
         title=None,
         enable_joystick=False,
     ):
         super().__init__(console_size=console_size, palette=palette, title=title)
-        self._tileset = tileset
-        self.resizable = resizable
         self._context = None
+        self.tiles_loader = TilesLoader(tiles_sources)
+        self.resizable = resizable
         self.enable_joystick = enable_joystick
 
     @property
@@ -253,7 +291,7 @@ class TcodWrapper(IOWrapper):
             columns=self.console_size.width,
             rows=self.console_size.height,
             title=self.title,
-            tileset=self.tileset,
+            tileset=self.tiles_loader.load(),
             sdl_window_flags=self.resizable and tcod.context.SDL_WINDOW_RESIZABLE
         )
         if self.enable_joystick:
@@ -270,88 +308,6 @@ class TcodWrapper(IOWrapper):
         if not self.is_initialized:
             self.initialize()
         return self._context
-
-    def load_tilesheet(self, tilesheet):
-        return tcod.tileset.load_tilesheet(
-            tilesheet.path, tilesheet.columns, tilesheet.rows, tilesheet.charset)
-
-    def load_truetype_font_obsolete(self, truetype_font):
-        return tcod.tileset.load_truetype_font(
-            truetype_font.path, truetype_font.width, truetype_font.height)
-
-    def load_truetype_font(self, font):
-        # See: Check: https://github.com/libtcod/python-tcod/blob/develop/examples/ttf.py
-        #       For improved support for TTF fonts
-        import freetype
-        import numpy as np
-
-        ttf = freetype.Face(font.path)
-        ttf.set_pixel_sizes(font.width, font.height)
-        tileset = tcod.tileset.Tileset(font.width, font.height)
-        for codepoint, glyph_index in ttf.get_chars():
-            ttf.load_glyph(glyph_index)
-            bitmap = ttf.glyph.bitmap
-            assert bitmap.pixel_mode == freetype.FT_PIXEL_MODE_GRAY
-            bitmap_array = np.asarray(bitmap.buffer).reshape(
-                (bitmap.width, bitmap.rows), order="F"
-            )
-            if bitmap_array.size == 0:
-                continue  # Skip blank glyphs.
-            output_image = np.zeros((font.width, font.height), dtype=np.uint8, order="F")
-            out_slice = output_image
-
-            # Adjust the position to center this glyph on the tile.
-            # TODO: Seems to be messing up box drawing chars...
-            left = (font.width - bitmap.width) // 2
-            top = font.height - ttf.glyph.bitmap_top + ttf.size.descender // 64
-
-            # `max` is used because I was too lazy to properly slice the array.
-            out_slice = out_slice[max(0, left) :, max(0, top) :]
-            out_slice[
-                : bitmap_array.shape[0], : bitmap_array.shape[1]
-            ] = bitmap_array[: out_slice.shape[0], : out_slice.shape[1]]
-
-            tileset.set_tile(codepoint, output_image.transpose())
-        # TODO: Need some fallback for missing glyphs
-        return tileset
-
-    def load_ttf_font(self, ttf):
-        # tile_size = Size(13, 18)
-        # ttf.set_size(tile_size)
-        tile_size = ttf.pixel_size
-
-        tiles_sources = [
-            ttf,
-            BoxDrawing(),
-            BlockElements(),
-        ]
-
-        tileset = tcod.tileset.Tileset(*tile_size)
-        for source in tiles_sources:
-            for code_point, tile in source.tiles_gen(tile_size):
-                if tile is None:
-                    continue
-                tileset.set_tile(code_point, tile)
-
-        return tileset
-
-    def load_tileset(self, tileset):
-        if tileset.path.endswith('.ttf'):
-            # return self.load_truetype_font(tileset)
-            return self.load_ttf_font(tileset)
-        else:
-            return self.load_tilesheet(tileset)
-
-    @property
-    def tileset(self):
-        return self.load_tileset(self._tileset)
-
-    @tileset.setter
-    def tileset(self, tileset):
-        self._tileset = tileset
-        if self.is_initialized:
-            tileset = self.load_tileset(self._tileset)
-            self.context.change_tileset(tileset)
 
     def create_console(self, size=None):
         # TODO: Check options and resizing behaviour
