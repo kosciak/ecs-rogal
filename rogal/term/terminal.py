@@ -316,8 +316,13 @@ class Terminal(WithSizeMixin):
                 else:
                     return sequence.position
 
-    def cursor_move(self, x, y):
-        sequence = self.tput(Capability.cursor_address, y, x)
+    def cursor_move(self, x=None, y=None):
+        if x is not None and y is not None:
+            sequence = self.tput(Capability.cursor_address, y, x)
+        elif x is not None:
+            sequence = self.tput(Capability.column_address, x)
+        elif y is not None:
+            sequence = self.tput(Capability.row_address, y)
         return sequence
 
     def cursor_up(self, y=None):
@@ -341,7 +346,7 @@ class Terminal(WithSizeMixin):
             sequence = self.tput(Capability.parm_left_cursor, x)
         return sequence
 
-    def cursor_left(self, x=None):
+    def cursor_right(self, x=None):
         if x == None:
             sequence = self.tput(Capability.cursor_right)
         else:
@@ -353,6 +358,8 @@ class Terminal(WithSizeMixin):
         if not sequence:
             sequence = self.cursor_move(0, 0)
         return sequence
+
+    # Screen
 
     def clear(self):
         sequence = self.tput(Capability.clear_screen)
