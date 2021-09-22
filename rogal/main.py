@@ -1,4 +1,3 @@
-import functools
 import logging
 import uuid
 
@@ -6,7 +5,7 @@ from .geometry import Size
 
 from .wrappers.tcod import TcodWrapper
 from .wrappers.curses import CursesWrapper
-from .wrappers.ansi import ANSIWrapper
+from .wrappers.term import TermWrapper
 
 from .data import register_data
 
@@ -58,7 +57,7 @@ SEED = None
 WRAPPERS = {
     'tcod': TcodWrapper,
     'curses': CursesWrapper,
-    'ansi': ANSIWrapper,
+    'term': TermWrapper,
 }
 
 

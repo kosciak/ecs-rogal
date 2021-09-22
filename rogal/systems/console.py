@@ -102,8 +102,8 @@ class RenderingSystem(ConsoleSystem):
                 panel_renderer.renderer.render(console.panel)
 
         # Show rendered panel
-        with perf.Perf(self.wrapper.flush):
-            self.wrapper.flush(self.root)
+        with perf.Perf(self.wrapper.render):
+            self.wrapper.render(self.root)
 
     def run(self):
         if not self.ecs.resources.current_player:

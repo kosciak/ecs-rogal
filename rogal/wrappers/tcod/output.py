@@ -1,36 +1,13 @@
 import logging
 
-import tcod
-from tcod.loader import ffi, lib
+from ...console import DEFAULT_CH, Align, RootPanel
 
-from ..geometry import Size
-
-from ..console import DEFAULT_CH, Align, RootPanel
-from ..events import EventType
-
-from ..tiles_sources.box_drawing import BoxDrawing
-from ..tiles_sources.block_elements import BlockElements
-
-from .core import IOWrapper
-
-from . import sdl
-from .sdl_input import SDLInputWrapper
+from ..core import OutputWrapper
 
 
 log = logging.getLogger(__name__)
 
 
-sdl2 = sdl.SDL2(ffi, lib)
-
-
-MOUSE_EVENT_TYPES = {
-    EventType.MOUSE_MOTION,
-    EventType.MOUSE_BUTTON_PRESS,
-    EventType.MOUSE_BUTTON_UP,
-}
-
-
-# TODO: Move to tcod_display?
 class TcodRootPanel(RootPanel):
 
     def __str__(self):
@@ -196,153 +173,19 @@ class TcodRootPanel(RootPanel):
         ansi.show_rgb_console(self.console)
 
 
-class TcodSDLInputWrapper(SDLInputWrapper):
-
-    def __init__(self, context):
-        super().__init__(sdl2=sdl2)
-        self.context = context
-
-    def update_mouse_event(self, event):
-        pixel_position = event.position
-        x, y = self.context.pixel_to_tile(*pixel_position)
-        event.set_position(x, y)
-        event.set_pixel_position(*pixel_position)
-
-        if event.type == EventType.MOUSE_MOTION:
-            pixel_motion = event.motion
-            prev_position = event.pixel_position.moved_from(pixel_motion)
-            prev_x, prev_y = self.context.pixel_to_tile(*prev_position)
-            dx = event.position.x - prev_x
-            dy = event.position.y - prev_y
-            event.set_motion(dx, dy)
-            event.set_pixel_motion(*pixel_motion)
-
-        return event
-
-    def process_mouse_position(self, events_gen):
-        for event in events_gen:
-            if event.type in MOUSE_EVENT_TYPES:
-                event = self.update_mouse_event(event)
-            yield event
-
-
-class TilesLoader:
-
-    def __init__(self, tiles_sources):
-        self.tiles_sources = tiles_sources
-        self.tileset = None
-
-    @property
-    def tile_size(self):
-        if self.tileset:
-            return Size(self.tileset.tile_width, self.tileset.tile_height)
-
-    def create_tileset(self, tile_size):
-        tileset = tcod.tileset.Tileset(*tile_size)
-        return tileset
-
-    def load_tilesheet(self, tilesheet):
-        return tcod.tileset.load_tilesheet(
-            tilesheet.path, tilesheet.columns, tilesheet.rows, tilesheet.charset)
-
-    def load_tiles_gen(self, tiles_source):
-        for code_point, tile in tiles_source.tiles_gen(self.tile_size):
-            if tile is None:
-                continue
-            self.tileset.set_tile(code_point, tile)
-        return self.tileset
-
-    def load(self):
-        for tiles_source in self.tiles_sources:
-            if tiles_source.is_tilesheet:
-                # TODO: Combining multiple tilesheets
-                self.tileset = self.load_tilesheet(tiles_source)
-                continue
-            if not self.tileset:
-                self.tileset = self.create_tileset(tiles_source.tile_size)
-            self.load_tiles_gen(tiles_source)
-        return self.tileset
-
-
-class TcodWrapper(IOWrapper):
+class TcodOutputWrapper(OutputWrapper):
 
     ROOT_PANEL_CLS = TcodRootPanel
 
-    def __init__(self,
-        console_size,
-        palette,
-        tiles_sources,
-        resizable=False,
-        title=None,
-        enable_joystick=False,
-    ):
-        super().__init__(console_size=console_size, palette=palette, title=title)
-        self._context = None
-        self.tiles_loader = TilesLoader(tiles_sources)
-        self.resizable = resizable
-        self.enable_joystick = enable_joystick
+    def __init__(self, context):
+        self.context = context
 
-    @property
-    def is_initialized(self):
-        return self._context is not None
-
-    def initialize(self):
-        context = tcod.context.new(
-            columns=self.console_size.width,
-            rows=self.console_size.height,
-            title=self.title,
-            tileset=self.tiles_loader.load(),
-            sdl_window_flags=self.resizable and tcod.context.SDL_WINDOW_RESIZABLE
-        )
-        if self.enable_joystick:
-            self.init_joystick()
-        self._context = context
-        self._input = TcodSDLInputWrapper(self._context)
-
-    def terminate(self):
-        self.context.close()
-        self._context = None
-
-    @property
-    def context(self):
-        if not self.is_initialized:
-            self.initialize()
-        return self._context
-
-    def create_console(self, size=None):
+    def create_console(self, size):
         # TODO: Check options and resizing behaviour
-        size = size or self.console_size
         # NOTE: new_console returns console with order=="C"
         return self.context.new_console(*size)
 
-    def flush(self, panel):
-        if self.is_initialized:
-            # TODO: Check options and resizing behaviour
-            self.context.present(panel.console)
-
-    def init_joystick(self):
-        # See: https://wiki.libsdl.org/SDL_JoystickOpen
-        log.debug('Initializing joystick...')
-        sdl2.SDL_InitSubSystem(sdl.SDL_SubSystem.SDL_INIT_JOYSTICK)
-        joysticks_num = sdl2.SDL_NumJoysticks()
-        log.debug(f'Found {joysticks_num} joysticks')
-        if not joysticks_num:
-            return
-        joystick_id = 0
-        log.debug(f'Opening joystick: {joystick_id}')
-        joystick = sdl2.SDL_JoystickOpen(joystick_id)
-        if not joystick:
-            log.error(f'Failed to open joystick: {joystick_id}')
-            return
-        name = sdl2.SDL_JoystickNameForIndex(joystick_id)
-        axes_num = sdl2.SDL_JoystickNumAxes(joystick)
-        buttons_num = sdl2.SDL_JoystickNumButtons(joystick)
-        balls_num = sdl2.SDL_JoystickNumBalls(joystick)
-        hats_num = sdl2.SDL_JoystickNumHats(joystick)
-        log.info(f'Joystick: {joystick_id} - name: {name}, axes: {axes_num}, buttons: {buttons_num}, balls: {balls_num}, hats: {hats_num}')
-
-    def set_system_cursor(self, cursor_id=sdl.SDL_SystemCursor.SDL_SYSTEM_CURSOR_ARROW):
-        # See: https://wiki.libsdl.org/SDL_CreateSystemCursor
-        cursor = sdl2.SDL_CreateSystemCursor(cursor_id)
-        sdl2.SDL_SetCursor(cursor)
+    def render(self, panel):
+        # TODO: Check options and resizing behaviour
+        self.context.present(panel.console)
 

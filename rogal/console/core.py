@@ -139,7 +139,6 @@ class Console:
     def tiles_gen(self, encode_ch=int):
         tiles = np.nditer(self.tiles, flags=['refs_ok', 'multi_index', ])
         for tile in tiles:
-            # yield encode_ch(tile['ch']), int(tile['fg']), int(tile['bg'])
             y, x = tiles.multi_index
             yield x, y, *self.encode_tile_data(tile, encode_ch)
 
@@ -149,9 +148,11 @@ class Console:
             return
 
         diff = self.tiles != other
-        for x, y in np.nditer(diff.nonzero(), flags=['zerosize_ok', ]):
+        # for x, y in np.nditer(diff.nonzero(), flags=['zerosize_ok', ]):
+        for x, y in np.transpose(diff.nonzero()):
             tile = self.tiles[x, y]
-            yield int(y), int(x), *self.encode_tile_data(tile, encode_ch)
+            # yield int(y), int(x), *self.encode_tile_data(tile, encode_ch)
+            yield y, x, *self.encode_tile_data(tile, encode_ch)
 
 
 class ConsoleRGB(Console):
@@ -349,7 +350,7 @@ class RootPanel(Panel):
     def __init__(self, console, palette):
         super().__init__(self, Position.ZERO, Size(console.width, console.height))
         self.console = console
-        self.palette = palette
+        self.palette = palette # TODO: This shouldn't be here...
         self.clear()
 
     def get_fg_bg(self, colors):

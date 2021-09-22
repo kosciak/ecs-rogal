@@ -4,12 +4,12 @@ import logging
 import functools
 import signal
 
-from .. import events
-from ..events.keys import Key, Keycode, Modifier
-from ..events.keyboard import ReapetedKeyPressLimiter
-from ..events.mouse import MouseButton
+from ... import events
+from ...events.keys import Key, Keycode, Modifier
+from ...events.keyboard import ReapetedKeyPressLimiter
+from ...events.mouse import MouseButton, MouseButtonClickProcessor
 
-from .core import InputWrapper
+from ..core import InputWrapper
 
 
 log = logging.getLogger(__name__)
@@ -377,17 +377,30 @@ class CursesInputWrapper(InputWrapper):
     def __init__(self, screen):
         super().__init__()
         self.screen = screen
+        self.initialize_keyboard()
+        self.initialize_mouse()
 
         self.events_processors.extend([
             ReapetedKeyPressLimiter(
                 clear_on_key_up=False,
             ),
+            MouseButtonClickProcessor(),
         ])
 
         # Catch ^c
         signal.signal(signal.SIGINT, self._signal_handler)
         # Catch ^z - doesn't seem to work properly...
         # signal.signal(signal.SIGTSTP, self._signal_handler)
+
+    def initialize_keyboard(self):
+        # Allow 8-bit characters input
+        curses.meta(True)
+
+    def initialize_mouse(self):
+        # Set the mouse events to be reported
+        curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
+        # No interval for mouse clicks - separate BUTTONx_PRESSED / _RELEASED will be used!
+        curses.mouseinterval(0)
 
     def _signal_handler(self, signal_no, frame):
         if signal_no == signal.SIGINT:

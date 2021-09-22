@@ -33,10 +33,24 @@ class InputWrapper:
             yield self._events_queue.popleft()
 
 
-class IOWrapper:
+class OutputWrapper:
 
     CONSOLE_CLS = None
     ROOT_PANEL_CLS = RootPanel
+
+    def create_console(self, size):
+        return self.CONSOLE_CLS(size)
+
+    def create_panel(self, size, palette):
+        console = self.create_console(size)
+        return self.ROOT_PANEL_CLS(console, palette)
+
+    def render(self, panel):
+        """Show contents of given panel on screen."""
+        raise NotImplementedError()
+
+
+class IOWrapper:
 
     def __init__(self,
         console_size,
@@ -48,6 +62,7 @@ class IOWrapper:
         self.console_size = console_size
         self._palette = palette
         self._input = None
+        self._output = None
 
     @property
     def palette(self):
@@ -68,17 +83,14 @@ class IOWrapper:
     def terminate(self):
         raise NotImplementedError()
 
-    def create_console(self, size=None):
-        size = size or self.console_size
-        return self.CONSOLE_CLS(size)
-
     def create_panel(self, size=None):
-        console = self.create_console(size)
-        return self.ROOT_PANEL_CLS(console, self.palette)
+        return self._output.create_panel(size or self.console_size, self.palette)
 
-    def flush(self, panel):
-        """Show contents of given console on screen."""
-        raise NotImplementedError()
+    def render(self, panel):
+        """Render contents of given panel on screen."""
+        if not self.is_initialized:
+            self.initialize()
+        self._output.render(panel)
 
     def events_gen(self, wait=None):
         """Yield events."""

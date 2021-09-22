@@ -1,5 +1,5 @@
 
-from .sdl_const import (
+from .const import (
     SDL_SubSystem,
     SDL_EventType,
     SDL_WindowEventID,

@@ -1,60 +1,20 @@
 import logging
-import time
-import os
-import sys
 
-# NOTE: Only on *NIX!
-import select
-import termios
-import tty
+from ...console import ConsoleRGB
 
-from ..console import ConsoleRGB
-from ..term import ansi
-from ..term.terminal import Terminal
-
-from .core import IOWrapper
-from .term_input import TermInputWrapper
+from ..core import OutputWrapper
 
 
 log = logging.getLogger(__name__)
 
 
-class ANSIWrapper(IOWrapper):
-
-    # NOTE: Just proof-of-concept of ansi based Console rendering
+class TermOutputWrapper(OutputWrapper):
 
     CONSOLE_CLS = ConsoleRGB
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._is_initialized = False
-        self.term = Terminal()
+    def __init__(self, term):
+        self.term = term
         self._prev_tiles = None
-
-    @property
-    def is_initialized(self):
-        return self._is_initialized
-
-    def initialize(self):
-        # self.term.cbreak()
-        self.term.raw()
-        self.term.fullscreen()
-        self.term.keypad()
-        self.term.hide_cursor()
-        self.term.report_focus()
-        self.term.mouse_tracking()
-        self.term.bracketed_paste()
-        if self.title:
-            self.term.set_title(self.title)
-        self._input = TermInputWrapper(self.term)
-        self._is_initialized = True
-
-    def terminate(self):
-        self.term.close()
-        self._is_initialized = False
-
-    def create_console(self, size=None):
-        return super().create_console(self.console_size)
 
     def render_whole(self, panel):
         out = []
@@ -84,7 +44,7 @@ class ANSIWrapper(IOWrapper):
             out.append(ch)
         return out
 
-    def flush(self, panel):
+    def render(self, panel):
         if self._prev_tiles is None or not self._prev_tiles.shape == panel.console.tiles.shape:
             out = self.render_whole(panel)
         else:

@@ -1,14 +1,14 @@
 import curses
-import functools
 import logging
 import os
 import sys
 
-from ..console import ConsoleIndexedColors, RootPanel
-from ..term import term_seq
+from ...term import term_seq
 
-from .core import IOWrapper
-from .curses_input import CursesInputWrapper
+from ..core import IOWrapper
+
+from .input import CursesInputWrapper
+from .output import CursesOutputWrapper
 
 
 log = logging.getLogger(__name__)
@@ -33,50 +33,7 @@ def dump_capabilities(window):
     f.close()
 
 
-class CursesRootPanel(RootPanel):
-
-    def __init__(self, window, console, palette):
-        super().__init__(console, palette)
-        self.window = window
-
-    @functools.lru_cache(maxsize=None)
-    def get_color(self, color):
-        if color is None:
-            return None
-        return self.palette.get(color)
-
-
-class ColorPairsManager:
-
-    MAX_PAIR_NUMS = 256
-
-    def __init__(self):
-        self.color_pairs = {}
-
-    def set_pair(self, color_pair):
-        next_pair_num = len(self.color_pairs) + 1 # NOTE: pair 0 is (-1, -1)
-        if next_pair_num > self.MAX_PAIR_NUMS:
-            raise ValueError(f'Max color pairs number exceeded! {next_pair_num}')
-        curses.init_pair(next_pair_num, color_pair[0], color_pair[1])
-        self.color_pairs[color_pair] = next_pair_num
-
-    def get_pair(self, fg, bg):
-        color_pair = tuple(sorted([fg, bg]))
-        pair_num = self.color_pairs.get(color_pair)
-        if pair_num:
-            if color_pair[0] == fg:
-                return curses.color_pair(pair_num)
-            else:
-                return curses.color_pair(pair_num) | curses.A_REVERSE
-
-        self.set_pair(color_pair)
-        return self.get_pair(fg, bg)
-
-
 class CursesWrapper(IOWrapper):
-
-    CONSOLE_CLS = ConsoleIndexedColors
-    ROOT_PANEL_CLS = CursesRootPanel
 
     def __init__(self,
         console_size,
@@ -85,7 +42,6 @@ class CursesWrapper(IOWrapper):
     ):
         super().__init__(console_size=console_size, palette=palette, *args, **kwargs)
         self._indexed_palette = None
-        self.color_pairs = ColorPairsManager()
         self._screen = None
         self.__prev_escdelay = None
 
@@ -194,22 +150,6 @@ class CursesWrapper(IOWrapper):
         sys.stdout.write(term_seq.restore_title())
         sys.stdout.flush()
 
-    def initialize_keyboard(self):
-        # Allow 8-bit characters input
-        curses.meta(True)
-
-    def initialize_mouse(self):
-        # Set the mouse events to be reported
-        curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
-        # No interval for mouse clicks - separate BUTTONx_PRESSED / _RELEASED will be used!
-        curses.mouseinterval(0)
-
-    def initialize_input(self):
-        self.initialize_keyboard()
-        self.initialize_mouse()
-        input = CursesInputWrapper(self._screen)
-        return input
-
     def hide_cursor(self):
         curses.curs_set(0)
 
@@ -220,10 +160,13 @@ class CursesWrapper(IOWrapper):
         if self.is_initialized:
             return
 
-        self.set_title(self.title)
+        if self.title:
+            self.set_title(self.title)
 
         self._screen = self.initialize_screen()
-        self._input = self.initialize_input()
+
+        self._input = CursesInputWrapper(self.screen)
+        self._output = CursesOutputWrapper()
 
         self.hide_cursor()
         # dump_capabilities(self._screen)
@@ -238,31 +181,13 @@ class CursesWrapper(IOWrapper):
     def screen(self):
         return self._screen
 
+    def create_panel(self, size=None):
+        size = size or self.console_size
+        window = self.initialize_window(
+            curses.newwin(size.height, size.width)
+        )
+        return self._output.create_panel(window, size, self.palette)
+
     def get_size(self):
         return self.screen.getmaxyx()
-
-    def create_panel(self, size=None):
-        # TODO: Ensure terminal size is big enough!
-        console = self.create_console(size)
-        window = self.initialize_window(
-            curses.newwin(console.height, console.width)
-        )
-        return self.ROOT_PANEL_CLS(window, console, self.palette)
-
-    def flush(self, panel):
-        prev_fg = -1
-        prev_bg = -1
-        color_pair = self.color_pairs.get_pair(prev_fg, prev_bg)
-        panel.window.move(0, 0)
-        for ch, fg, bg in panel.console.tiles_gen(encode_ch=chr):
-            if (not fg == prev_fg) or (not bg == prev_bg):
-                color_pair = self.color_pairs.get_pair(fg, bg)
-                panel.window.attrset(color_pair)
-            try:
-                panel.window.addch(ch)
-            except curses.error:
-                # NOTE: Writing to last column & row moves cursor outside window and raises error
-                pass
-        panel.window.refresh()
-        curses.doupdate()
 

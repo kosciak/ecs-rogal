@@ -1,15 +1,15 @@
 import cffi
 import functools
 
-from .. import events
-from ..events.core import EventType
-from ..events.keys import Key, Keycode
-from ..events.keyboard import ReapetedKeyPressLimiter
-from ..events.mouse import MouseButton, MouseMotionFilter, MouseButtonClickProcessor
+from ... import events
+from ...events.core import EventType
+from ...events.keys import Key, Keycode
+from ...events.keyboard import ReapetedKeyPressLimiter
+from ...events.mouse import MouseButton, MouseMotionFilter, MouseButtonClickProcessor
 
-from .core import InputWrapper
+from ..core import InputWrapper
 
-from .sdl_const import (
+from .const import (
     SDL_EventType,
     SDL_WindowEventID,
     SDL_Keycode, SDL_Keymod,

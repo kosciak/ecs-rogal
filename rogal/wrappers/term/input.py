@@ -1,18 +1,18 @@
 import functools
 import logging
 
-from ..geometry import Vector
+from ...geometry import Vector
 
-from ..term.escape_seq import ControlChar
-from ..term.capabilities import Capability
+from ...term.escape_seq import ControlChar
+from ...term.capabilities import Capability
 
-from .. import events
-from ..events import EventType
-from ..events.keys import Key, Keycode, Modifier
-from ..events.keyboard import ReapetedKeyPressLimiter
-from ..events.mouse import MouseButton, MouseButtonClickProcessor, MouseMotionFilter
+from ... import events
+from ...events import EventType
+from ...events.keys import Key, Keycode, Modifier
+from ...events.keyboard import ReapetedKeyPressLimiter
+from ...events.mouse import MouseButton, MouseButtonClickProcessor, MouseMotionFilter
 
-from .core import InputWrapper
+from ..core import InputWrapper
 
 
 log = logging.getLogger(__name__)
@@ -533,6 +533,7 @@ class TermInputWrapper(InputWrapper):
     def __init__(self, term):
         super().__init__()
         self.term = term
+        self.term.mouse_tracking(True)
         # TODO: register SIGWINCH signal and add Window resize event to buffer
 
         self.events_processors.extend([
