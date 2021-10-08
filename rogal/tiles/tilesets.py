@@ -9,8 +9,8 @@ from .core import Tile
 
 class ReplaceForeground:
 
-    def __init__(self, fg):
-        self.fg = fg
+    def __init__(self, palette, fg):
+        self.fg = palette.get(fg)
 
     def __call__(self, tile):
         return Tile.create(tile.ch, fg=self.fg, bg=tile.bg)
@@ -73,7 +73,7 @@ class Tileset:
 
     def parse_revealed_fn(self, data):
         for name, value in data['revealed'].items():
-            return globals()[name](value)
+            return globals()[name](self.palette, value)
 
     def parse_tiles(self, data):
         tiles = {}
@@ -83,7 +83,13 @@ class Tileset:
             else:
                 ch, fg = values
                 bg = None
-            visible = Tile.create(Symbols.get(ch, ch), fg, bg)
+            visible = Tile.create(
+                Symbols.get(ch, ch),
+                self.palette.get(fg),
+                self.palette.get(bg),
+            )
+            # TODO: Only name, and visible color should be stored, revealed or any other effect should be don
+            #       on map rendering level
             revealed = self.revealed_fn(visible) # TODO: Don't like it... It assumes it will work with Color
             tile = RenderableTile(name, visible, revealed)
             tiles[name] = tile

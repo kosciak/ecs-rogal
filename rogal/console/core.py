@@ -380,6 +380,7 @@ class RootPanel(Panel):
                 return color
             else:
                 return color[:3]
+        # NOTE: logs.DEFAULT_LEVEL_COLORS use numbers as colors!
         return self.palette.get(color).rgb
 
     def clear(self, colors=None, *args, **kwargs):

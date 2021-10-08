@@ -27,7 +27,7 @@ class TermWrapper(IOWrapper):
         term.raw()
         term.fullscreen(True)
         term.keypad(True)
-        # term.meta(True) # ???
+        term.meta(True) # NOTE: Not sure if needed (might be on by default?)
         term.report_focus(True)
         term.bracketed_paste(True)
         term.hide_cursor()

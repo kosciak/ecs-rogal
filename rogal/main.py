@@ -119,14 +119,28 @@ def run(wrapper):
     # Register systems
     # NOTE: Systems are run in order they were registered
     for system in [
+        # Core engine related systems
+        systems.user_input.InputFocusSystem(ecs),
+        systems.user_input.EventsHandlersSystem(ecs),
+
+        systems.real_time.TTLSystem(ecs),
+
+        systems.run_state.UpdateStateSystem(ecs),
+
+        systems.gui.DestroyUIWidgetsSystem(ecs),
+        systems.gui.CreateUIWidgetsSystem(ecs),
+
+        systems.console.LayoutSytem(ecs),
+        systems.console.RenderingSystem(ecs),
+
+        systems.commands.QuitSystem(ecs),
+
         # Game related systems
+        # TODO: level_generator(s) should be in ecs.resources!
         systems.levels.LevelsSystem(ecs, level_generator),
 
         systems.actions.ActionsQueueSystem(ecs),
         systems.actions.TakeActionsSystem(ecs),
-
-        systems.user_input.InputFocusSystem(ecs),
-        systems.user_input.EventsHandlersSystem(ecs),
 
         systems.actions.MeleeCombatSystem(ecs),
         systems.actions.RestingSystem(ecs),
@@ -141,17 +155,6 @@ def run(wrapper):
 
         systems.actions.ActionsPerformedSystem(ecs),
 
-        # Core engine related systems
-        systems.commands.QuitSystem(ecs),
-
-        systems.real_time.TTLSystem(ecs),
-
-        systems.run_state.UpdateStateSystem(ecs),
-
-        systems.gui.DestroyUIWidgetsSystem(ecs),
-        systems.gui.CreateUIWidgetsSystem(ecs),
-        systems.console.LayoutSytem(ecs),
-        systems.console.RenderingSystem(ecs),
     ]:
         ecs.register(system)
 

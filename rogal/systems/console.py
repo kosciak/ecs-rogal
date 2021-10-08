@@ -46,13 +46,13 @@ class LayoutSytem(ConsoleSystem):
         if not widgets:
             return
         ui_manager = self.ecs.resources.ui_manager
-        panels = self.ecs.manage(components.Console)
+        consoles = self.ecs.manage(components.Console)
         for widget, content in widgets:
-            panel = panels.get(widget)
-            if panel is None:
+            console = consoles.get(widget)
+            if console is None:
                 content.layout(ui_manager, widget, panel=self.root, z_order=0)
             else:
-                content.layout_content(ui_manager, widget, panel=panel.panel, z_order=panel.z_order)
+                content.layout_content(ui_manager, widget, panel=console.panel, z_order=console.z_order)
 
 
 class RenderingSystem(ConsoleSystem):

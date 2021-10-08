@@ -27,6 +27,9 @@ class Data:
             self._load()
         return self._data.get(key, default)
 
+    # TODO: Some kind of get_or_parse() so we don't need to declare everything by name, 
+    #       and just use data structure instead
+
     def __getattr__(self, key):
         if self._data is None:
             self._load()

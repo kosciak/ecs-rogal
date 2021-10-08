@@ -76,27 +76,35 @@ class MouseButtonClickProcessor:
             yield event
 
 
-class MouseMotion(Event):
+class MouseEvent(Event):
+    __slots__ = ('position', 'pixel_position', )
+
+    def __init__(self, source, x, y):
+        super().__init__(source)
+        self.position = Position(x, y)
+        self.pixel_position = Position.ZERO
+
+    def set_position(self, x, y):
+        self.position = Position(x, y)
+
+    def set_pixel_position(self, x, y):
+        self.pixel_position = Position(x, y)
+
+
+class MouseMotion(MouseEvent):
     __slots__ = ('position', 'motion', 'pixel_position', 'pixel_motion', 'buttons', )
 
     type = EventType.MOUSE_MOTION
 
     def __init__(self, source, x, y, dx, dy, buttons):
-        super().__init__(source)
-        self.position = Position(x, y)
+        super().__init__(source, x, y)
         self.motion = Vector(dx, dy)
-        self.pixel_position = Position.ZERO
         self.pixel_motion = Vector.ZERO
         self.buttons = buttons
-
-    def set_position(self, x, y):
-        self.position = Position(x, y)
+        # TODO: modifiers
 
     def set_motion(self, dx, dy):
         self.motion = Vector(dx, dy)
-
-    def set_pixel_position(self, x, y):
-        self.pixel_position = Position(x, y)
 
     def set_pixel_motion(self, dx, dy):
         self.pixel_motion = Vector(dx, dy)
@@ -114,21 +122,14 @@ class MouseMotion(Event):
         return f'<{self.__class__.__name__} position={self.position}, motion={self.motion}, buttons={buttons}>'
 
 
-class MouseButtonEvent(Event):
+class MouseButtonEvent(MouseEvent):
     __slots__ = ('position', 'pixel_position', 'button', 'clicks', )
 
     def __init__(self, source, x, y, button, clicks=0):
-        super().__init__(source)
-        self.position = Position(x, y)
-        self.pixel_position = Position.ZERO
+        super().__init__(source, x, y)
         self.button = button
         self.clicks = clicks
-
-    def set_position(self, x, y):
-        self.position = Position(x, y)
-
-    def set_pixel_position(self, x, y):
-        self.pixel_position = Position(x, y)
+        # TODO: modifiers
 
     def __repr__(self):
         return f'<{self.__class__.__name__} position={self.position}, button={self.button.name}, clicks={self.clicks}>'

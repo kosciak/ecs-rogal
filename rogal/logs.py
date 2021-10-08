@@ -7,6 +7,7 @@ import os
 LOGS_HISTORY = collections.deque(maxlen=1000)
 
 
+# TODO: Use palette and/or define colors in yaml files instead of here!
 DEFAULT_LEVEL_COLORS = {
     logging.DEBUG: 8, # GREY (bright black)
     logging.INFO: None, # Use default FG color

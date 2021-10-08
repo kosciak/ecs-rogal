@@ -12,6 +12,7 @@ class EventType:
 
     FOCUS_IN = 'focus_in'
     FOCUS_OUT = 'focus_out'
+
     WINDOW_RESIZED = 'window_resized'
     WINDOW_OTHER = 'window' # TODO: Split by event ID
 
@@ -37,10 +38,10 @@ class Event:
     type = None
     repeat = False
 
-    def __init__(self, source):
+    def __init__(self, source, timestamp=None):
         # Original event source (for example original SDL event)
         self._source = source
-        self.timestamp = time.time()
+        self.timestamp = timestamp or time.time()
 
     def __repr__(self):
         return f'<{self.__class__.__name__}>'

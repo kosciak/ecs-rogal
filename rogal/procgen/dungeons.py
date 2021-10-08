@@ -126,7 +126,7 @@ class EntitiesSpawningGenerator(Generator):
 
 class DoorsEverywhereEntitiesSpawningGenerator(EntitiesSpawningGenerator):
 
-    def generate_doors(self, level, corridors):
+    def generate_doors(self, level, corridors, populated=False):
         for corridor in corridors:
             for position in corridor.allowed_doors:
                 self.spawn_closed_door(level, position)

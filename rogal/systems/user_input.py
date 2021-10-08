@@ -14,6 +14,14 @@ from ..utils import perf
 
 log = logging.getLogger(__name__)
 
+'''
+TODO:
+- keyboard input focus and mouse input focus should be separate
+- only single "thing" can have keyboard focus
+- but multiple ones (if not overlapping) can have mouse focus
+- mouse wheel should work only for widgets that are hovered
+
+'''
 
 class InputFocusSystem(System):
 
@@ -60,11 +68,20 @@ class EventsHandlersSystem(System):
         self.ecs.resources.keyboard_state = KeyboardState()
         self.keys = self.ecs.resources.keyboard_state
 
-        self.mouse_in_entities = set()
+        self.mouse_over_entities = set()
         self.ecs.resources.mouse_state = MouseState()
         self.mouse = self.ecs.resources.mouse_state
 
-    def get_valid_handlers(self, handlers_component):
+        self.widgets_per_position = {}
+
+    def handle_event(self, event, entity, handlers):
+        value = None
+        for handler, callback in handlers:
+            value = handler.handle(event)
+            if value is not None:
+                callback(entity, value)
+
+    def get_handlers_with_focus(self, handlers_component):
         event_handlers = self.ecs.manage(handlers_component)
         if not event_handlers:
             return []
@@ -75,61 +92,63 @@ class EventsHandlersSystem(System):
         ]
         return valid_handlers
 
-    def get_valid_panel_handlers(self, handlers_component):
-        event_handlers = self.ecs.manage(handlers_component)
-        if not event_handlers:
-            return []
+    def get_widgets_per_position(self):
+        import numpy as np
+        root_panel = self.ecs.resources.root_panel
+        if not root_panel:
+            return {}
+        positions = np.zeros(root_panel.size, dtype="object", order="C")
+        widgets = self.ecs.manage(components.UIWidget)
         consoles = self.ecs.manage(components.Console)
-        has_focus = self.ecs.manage(components.HasInputFocus)
-        valid_handlers = [
-            [entity, console, handlers] for entity, with_focus, console, handlers
-            in self.ecs.join(event_handlers.entities, has_focus, consoles, event_handlers)
-        ]
-        return valid_handlers
+        # NOTE: Use only UIWidgets, we don't want renderers that might have higher z_order to mask widgets
+        for widget, console in sorted(self.ecs.join(widgets.entities, consoles), key=lambda e: e[1].z_order):
+            positions[console.panel.x:console.panel.x2, console.panel.y:console.panel.y2] = widget
+        return positions
 
-    def handle_event(self, event, entity, handlers):
-        value = None
-        for handler, callback in handlers:
-            value = handler.handle(event)
-            if value is not None:
-                callback(entity, value)
+    def get_parents_gen(self, entity):
+        parents = self.ecs.manage(components.ParentUIWidget)
+        while entity:
+            yield entity
+            entity = parents.get(entity)
+
+    def get_handlers_over_position(self, handlers_component, position):
+        consoles = self.ecs.manage(components.Console)
+        event_handlers = self.ecs.manage(handlers_component)
+
+        entity = self.widgets_per_postion[position]
+        for entity in self.get_parents_gen(entity):
+            if entity in event_handlers:
+                yield [entity, consoles.get(entity), event_handlers.get(entity)]
 
     def on_text_input(self, event):
-        event_handlers = self.get_valid_handlers(components.OnTextInput)
+        event_handlers = self.get_handlers_with_focus(components.OnTextInput)
         for entity, handlers in event_handlers:
             self.handle_event(event, entity, handlers)
 
     def on_key_press(self, event):
-        event_handlers = self.get_valid_handlers(components.OnKeyPress)
+        event_handlers = self.get_handlers_with_focus(components.OnKeyPress)
         for entity, handlers in event_handlers:
             self.handle_event(event, entity, handlers)
 
     def on_mouse_over_event(self, event, handlers_component):
-        for entity, console, handlers in self.get_valid_panel_handlers(handlers_component):
-            if not event.position in console.panel:
-                continue
-            self.mouse_in_entities.add(entity)
+        for entity, console, handlers in self.get_handlers_over_position(handlers_component, event.position):
+            self.mouse_over_entities.add(entity)
             # TODO: Need to pass: event.position.offset(console.panel.position)
             #       So event_handler will get position relative to panel
             # print(event.position.offset(console.panel.position))
             self.handle_event(event, entity, handlers)
 
     def on_mouse_in_event(self, event, handlers_component):
-        self.mouse_in_entities.intersection_update(self.ecs.entities)
-        for entity, console, handlers in self.get_valid_panel_handlers(handlers_component):
-            if not event.position in console.panel:
-                continue
-            if entity in self.mouse_in_entities and \
+        for entity, console, handlers in self.get_handlers_over_position(handlers_component, event.position):
+            if entity in self.mouse_over_entities and \
                self.mouse.prev_position and self.mouse.prev_position in console.panel:
                 # cursor did not enter, just moved over
                 continue
-            self.mouse_in_entities.add(entity)
+            self.mouse_over_entities.add(entity)
             self.handle_event(event, entity, handlers)
 
     def on_mouse_out_event(self, event, handlers_component):
-        for entity, console, handlers in self.get_valid_panel_handlers(handlers_component):
-            if not event.prev_position in console.panel:
-                continue
+        for entity, console, handlers in self.get_handlers_over_position(handlers_component, event.prev_position):
             if event.position in console.panel:
                 # cursor did not leave, just moved over
                 continue
@@ -147,13 +166,18 @@ class EventsHandlersSystem(System):
         self.on_mouse_over_event(event, components.OnMouseClick)
 
     def on_mouse_motion(self, event):
+        # Removing obsolete entities
+        self.mouse_over_entities.intersection_update(self.ecs.entities)
+
         self.on_mouse_in_event(event, components.OnMouseIn)
         self.on_mouse_over_event(event, components.OnMouseOver)
         # TODO: For OnMouseOut to be 100% accurate we would need to process mouse leaving (game) window
         self.on_mouse_out_event(event, components.OnMouseOut)
 
     def on_mouse_wheel(self, event):
-        event_handlers = self.get_valid_handlers(components.OnMouseWheel)
+        # TODO: Wheel should work only OVER element
+        #       BUT! We don't have mouse position associated with wheel event!
+        event_handlers = self.get_handlers_with_focus(components.OnMouseWheel)
         for entity, handlers in event_handlers:
             self.handle_event(event, entity, handlers)
 
@@ -166,6 +190,10 @@ class EventsHandlersSystem(System):
         acts_now = self.ecs.manage(components.ActsNow)
         if not acts_now:
             return
+
+        # Update widgets positions
+        # TODO: Consider moving into separate system, and store in resources
+        self.widgets_per_postion = self.get_widgets_per_position()
 
         # Get valid events and pass them to all entities with appopriate EventHandlers
         # NOTE: It is NOT checked if entity has ActsNow flag, as EventHandlers can be attached

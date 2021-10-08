@@ -166,6 +166,7 @@ class TextInput(EventHandler):
 class TextEdit(KeyPressHandler):
 
     def handle(self, event):
+        # TODO: return values should be an enum!
         if event.key in self.key_bindings.text_edit.CLEAR:
             return 'CLEAR'
         elif event.key in self.key_bindings.text_edit.BACKSPACE:
