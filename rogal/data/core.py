@@ -1,12 +1,13 @@
 from ..collections.attrdict import AttrDict
-from ..data_loaders import DataLoader
+
+from .loaders import DataLoader
 
 
 class Data:
 
     def __init__(self, parse, *loaders):
         self._data = None
-        self.parse = parse
+        self._parse = parse
         self.loaders = list(loaders)
 
     def register(self, loader):
@@ -27,8 +28,11 @@ class Data:
             self._load()
         return self._data.get(key, default)
 
-    # TODO: Some kind of get_or_parse() so we don't need to declare everything by name, 
-    #       and just use data structure instead
+    def parse(self, data):
+        # If it's a name just return data, parse otherwise
+        if isinstance(data, str) and data in self._data:
+            return self.get(data)
+        return self._parse(data)
 
     def __getattr__(self, key):
         if self._data is None:

@@ -3,6 +3,10 @@ from .core import Glyph
 
 class Charset(tuple):
 
+    """Sequence of Glyphs."""
+
+    __slots__ = ()
+
     def __new__(cls, code_points):
         return super().__new__(
             cls,

@@ -26,14 +26,14 @@ class TilesSourcesParser:
             return TrueTypeFont(
                 data['ttf'],
                 size,
-                self.charsets.get(data['charset']),
+                self.charsets.parse(data['charset']),
             )
         if data.get('generator') == 'BlockElements':
             return BlockElements(
-                self.charsets.get(data['charset']),
+                self.charsets.parse(data['charset']),
             )
         if data.get('generator') == 'BoxDrawing':
             return BoxDrawing(
-                self.charsets.get(data['charset']),
+                self.charsets.parse(data['charset']),
             )
 

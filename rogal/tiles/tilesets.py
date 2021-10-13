@@ -2,7 +2,7 @@ import collections
 import importlib
 
 from ..collections.attrdict import AttrDict
-from ..data import Symbols, TilesSources, ColorPalettes
+from ..data import Glyphs, TilesSources, ColorPalettes
 
 from .core import Tile
 
@@ -84,7 +84,7 @@ class Tileset:
                 ch, fg = values
                 bg = None
             visible = Tile.create(
-                Symbols.get(ch, ch),
+                Glyphs.get(ch, ch),
                 self.palette.get(fg),
                 self.palette.get(bg),
             )

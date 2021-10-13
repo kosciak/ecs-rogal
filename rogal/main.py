@@ -15,7 +15,7 @@ from .procgen.dungeons import StaticLevel
 
 from . import components
 from .console import ui
-from .data_loaders import DataLoader
+from .data.loaders import DataLoader
 from .ecs import ECS
 from .entities_spawner import EntitiesSpawner
 from .events.keys import KeyBindings

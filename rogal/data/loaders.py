@@ -3,7 +3,7 @@ import os.path
 
 import yaml
 
-from . import rng
+from .. import rng
 
 
 log = logging.getLogger(__name__)

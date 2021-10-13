@@ -2,12 +2,12 @@
 # Data files setup
 #
 
+glyphs:
+  - 'symbols.yaml'
+
 charsets:
   - 'charsets.yaml'
   - 'unicode_blocks.yaml'
-
-symbols:
-  - 'symbols.yaml'
 
 bitmasks:
   - 'bitmasks.yaml'
