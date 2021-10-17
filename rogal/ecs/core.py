@@ -245,7 +245,7 @@ class SystemsManager:
             with perf.Perf(system.run):
                 system.run()
             systems.append(system)
-        # log.debug(f'systems.run({self.run_state.name}): {systems}')
+        log.debug(f'systems.run({self.run_state.name}): {systems}')
 
         # Change run_state AFTER running all systems
         if self.next_run_state:
@@ -285,6 +285,9 @@ class ECS:
     @run_state.setter
     def run_state(self, run_state):
         self._systems.next_run_state = run_state
+
+    def set_run_state(self, run_state):
+        self.run_state = run_state
 
     def create(self, *components, entity_id=None):
         """Create Entity with given components."""

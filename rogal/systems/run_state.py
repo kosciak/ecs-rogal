@@ -15,30 +15,37 @@ class UpdateStateSystem(System):
     def run(self):
         animations = self.ecs.manage(components.Animation)
         if animations:
-            self.ecs.run_state = RunState.ANIMATIONS
-            return
+            return self.ecs.set_run_state(RunState.ANIMATIONS)
 
+        # TODO: Need more convenient way of getting out of WAITING_FOR_INPUT state
+        # has_input_focus = self.ecs.manage(components.HasInputFocus)
+        has_input_focus = self.ecs.manage(components.OnKeyPress)
+        if has_input_focus:
+            return self.ecs.set_run_state(RunState.WAITING_FOR_INPUT)
+
+        actions_queue = self.ecs.manage(components.WaitsForAction)
+        # TODO: All state changes below are valid only if actions_queue is ready
+        # TODO: If no actions_queue set WAITING_FOR_INPUT?
+
+        # TODO: How to trigger PRE_RUN state (after creating player / loading a game?)
         if self.ecs.run_state == RunState.PRE_RUN:
-            self.ecs.run_state = RunState.TICKING
-            return
-
-        if self.ecs.run_state == RunState.PERFOM_ACTIONS:
-            self.ecs.run_state = RunState.TICKING
-            return
+            return self.ecs.set_run_state(RunState.TICKING)
 
         acts_now = self.ecs.manage(components.ActsNow)
         if self.ecs.run_state == RunState.TICKING:
+            # Keep ticking until something is ready to take action
             if acts_now:
-                self.ecs.run_state = RunState.WAITING_FOR_ACTIONS
+                return self.ecs.set_run_state(RunState.WAITING_FOR_ACTIONS)
             return
 
-        on_key_press = self.ecs.manage(components.OnKeyPress)
-        # TODO: Check other EventHandlers components
-        # TODO: OR! set WaitingForInput to some entity
-        if acts_now and on_key_press:
-            self.ecs.run_state = RunState.WAITING_FOR_INPUT
-        elif acts_now:
-            self.ecs.run_state = RunState.WAITING_FOR_ACTIONS
-        else:
-            self.ecs.run_state = RunState.PERFOM_ACTIONS
+        if self.ecs.run_state == RunState.WAITING_FOR_ACTIONS and not acts_now:
+            # All actions taken, perform them
+            return self.ecs.set_run_state(RunState.PERFOM_ACTIONS)
+
+        if self.ecs.run_state == RunState.PERFOM_ACTIONS:
+            # Back to ticking
+            return self.ecs.set_run_state(RunState.TICKING)
+
+        # Back to waiting for action from any other state
+        return self.ecs.set_run_state(RunState.WAITING_FOR_ACTIONS)
 

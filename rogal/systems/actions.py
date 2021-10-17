@@ -14,28 +14,34 @@ msg_log = logging.getLogger('rogal.messages')
 """Systems running ecs."""
 
 
+'''
+TODO:
+- instead of checking if entity is player just stack messages on log with source entity (and maybe target)
+  then log renderer should be able to filter out what it wants (for example only player related messages)
+  this way it would be possible to easily debug other entites as well, not only player
+
+'''
+
+
 class ActionsQueueSystem(System):
 
     INCLUDE_STATES = {
         RunState.TICKING,
     }
 
-    def update_acts_now(self):
+    def run(self):
         acts_now = self.ecs.manage(components.ActsNow)
-        waiting_queue = self.ecs.manage(components.WaitsForAction)
+        actions_queue = self.ecs.manage(components.WaitsForAction)
 
         # Clear previous ActsNow flags
         acts_now.clear()
 
-        for entity, waits in waiting_queue:
+        for entity, wait_time in actions_queue:
             # Decrease wait time
-            waits -= 1
-            if waits <= 0:
+            wait_time -= 1
+            if wait_time <= 0:
                 # No more waiting, time for some action!
                 acts_now.insert(entity)
-
-    def run(self):
-        self.update_acts_now()
 
 
 class TakeActionsSystem(System):
