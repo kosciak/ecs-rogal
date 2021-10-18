@@ -1,6 +1,7 @@
 import logging
 
 from . import components
+from .ecs.run_state import RunState
 from .events import handlers
 from . import gui
 from .rng import rng
@@ -27,6 +28,7 @@ class TakeActionHandler:
         return movement_speed.get(actor) or ACTION_COST
 
     def action_taken(self, actor):
+        # TODO: Should be done in TakeAction system!
         acts_now = self.ecs.manage(components.ActsNow)
         acts_now.remove(actor)
 
@@ -37,6 +39,7 @@ class TakeActionHandler:
         manager = self.ecs.manage(action)
         manager.insert(actor, *args, **kwargs)
         if action_cost:
+            # TODO: Should be done in TakeAction system?!
             self.waiting_queue.insert(actor, action_cost)
         self.action_taken(actor)
 
@@ -82,10 +85,12 @@ class PlayerInput(TakeActionHandler):
     def action_taken(self, actor):
         super().action_taken(actor)
         self.remove_event_handlers(actor)
+        self.ecs.set_run_state(RunState.TAKE_ACTIONS)
 
     def take_action(self, actor):
         self.ecs.resources.current_player = actor
         self.set_event_handlers(actor)
+        self.ecs.set_run_state(RunState.WAIT_FOR_INPUT)
 
     def try_direction(self, actor, direction):
         locations = self.ecs.manage(components.Location)

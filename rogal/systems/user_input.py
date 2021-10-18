@@ -25,6 +25,10 @@ TODO:
 
 class InputFocusSystem(System):
 
+    INCLUDE_STATES = {
+        RunState.WAIT_FOR_INPUT,
+    }
+
     def run(self):
         input_focus = self.ecs.manage(components.InputFocus)
         grab_focus = self.ecs.manage(components.GrabInputFocus)
@@ -55,9 +59,10 @@ class InputFocusSystem(System):
 class EventsHandlersSystem(System):
 
     TIMEOUT = 1./60
+    # TIMEOUT = 10
 
     INCLUDE_STATES = {
-        RunState.WAITING_FOR_INPUT,
+        RunState.WAIT_FOR_INPUT,
     }
 
     def __init__(self, ecs):
@@ -187,10 +192,6 @@ class EventsHandlersSystem(System):
         )
 
     def run(self):
-        acts_now = self.ecs.manage(components.ActsNow)
-        if not acts_now:
-            return
-
         # Update widgets positions
         # TODO: Consider moving into separate system, and store in resources
         self.widgets_per_postion = self.get_widgets_per_position()

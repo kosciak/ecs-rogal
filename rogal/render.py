@@ -227,7 +227,6 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
                     panel.draw(tile, render_position)
 
     def render(self, panel, actor=None, location=None):
-        position = None
         fov = None
         seen = None
         actor = actor or self.ecs.resources.current_player
@@ -236,8 +235,9 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
             viewsheds = self.ecs.manage(components.Viewshed)
             location = locations.get(actor)
             fov = viewsheds.get(actor).fov
-        if location:
-            position = location.position
+        if not location:
+            return
+        position = location.position
         level = self.spatial.get_level(location.level_id)
 
         if fov is None:

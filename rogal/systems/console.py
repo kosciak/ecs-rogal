@@ -33,6 +33,11 @@ class ConsoleSystem(System):
 
 class LayoutSytem(ConsoleSystem):
 
+#     INCLUDE_STATES = {
+#         RunState.WAIT_FOR_INPUT,
+#         RunState.RENDER,
+#     }
+
     def get_widgets_to_update(self):
         widgets = self.ecs.manage(components.UIWidget)
         to_update = [
@@ -57,34 +62,12 @@ class LayoutSytem(ConsoleSystem):
 
 class RenderingSystem(ConsoleSystem):
 
-    FPS = 30
+    INCLUDE_STATES = {
+        RunState.RENDER,
+    }
 
     def __init__(self, ecs):
         super().__init__(ecs)
-
-        self.tileset = self.ecs.resources.tileset
-
-        self._last_run = None
-        self._fps = None
-        self.frame = None
-        self.fps = self.FPS
-
-    @property
-    def fps(self):
-        return self._fps
-
-    @fps.setter
-    def fps(self, fps):
-        self._fps = fps
-        self.frame = 1./self._fps
-
-    def should_run(self, state):
-        now = time.time()
-        if self._last_run and now - self._last_run < self.frame:
-            # Do NOT render more often than once a frame
-            return False
-        self._last_run = now
-        return True
 
     def render(self):
         # Clear panel
@@ -106,9 +89,6 @@ class RenderingSystem(ConsoleSystem):
             self.wrapper.render(self.root)
 
     def run(self):
-        if not self.ecs.resources.current_player:
-            return False
-
         self.render()
         return True
 

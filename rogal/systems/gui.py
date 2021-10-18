@@ -12,8 +12,14 @@ log = logging.getLogger(__name__)
 
 class CreateUIWidgetsSystem(System):
 
+    # INCLUDE_STATES = {
+    #     RunState.WAIT_FOR_INPUT,
+    #     RunState.RENDER,
+    # }
+
     def init_windows(self):
         self.ecs.create(components.CreateUIWidget('IN_GAME'))
+        # self.ecs.create(components.CreateUIWidget('MAIN_MENU'))
 
     def create_windows(self):
         to_create = self.ecs.manage(components.CreateUIWidget)
@@ -37,6 +43,11 @@ class CreateUIWidgetsSystem(System):
 
 
 class DestroyUIWidgetsSystem(System):
+
+#     INCLUDE_STATES = {
+#         RunState.WAIT_FOR_INPUT,
+#         RunState.RENDER,
+#     }
 
     def get_children(self, parents):
         parent_windows = self.ecs.manage(components.ParentUIWidget)

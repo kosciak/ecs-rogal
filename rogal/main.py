@@ -125,7 +125,9 @@ def run(wrapper):
 
         systems.real_time.TTLSystem(ecs),
 
-        systems.run_state.UpdateStateSystem(ecs),
+        systems.run_state.ActionsLoopStateSystem(ecs),
+        systems.run_state.RenderStateSystem(ecs),
+        systems.run_state.AnimationsStateSystem(ecs),
 
         systems.gui.DestroyUIWidgetsSystem(ecs),
         systems.gui.CreateUIWidgetsSystem(ecs),

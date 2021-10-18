@@ -47,7 +47,7 @@ class ActionsQueueSystem(System):
 class TakeActionsSystem(System):
 
     INCLUDE_STATES = {
-        RunState.WAITING_FOR_ACTIONS,
+        RunState.TAKE_ACTIONS,
     }
 
     def run(self):

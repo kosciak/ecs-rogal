@@ -58,7 +58,7 @@ class InvalidateViewshedsSystem(System):
 class RevealLevelSystem(System):
 
     INCLUDE_STATES = {
-        RunState.WAITING_FOR_INPUT,
+        RunState.WAIT_FOR_INPUT,
         # RunState.PERFOM_ACTIONS,
     }
 

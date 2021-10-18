@@ -13,8 +13,8 @@ log = logging.getLogger(__name__)
 class QuitSystem(System):
 
     INCLUDE_STATES = {
-        RunState.WAITING_FOR_ACTIONS,
-        RunState.WAITING_FOR_INPUT,
+        RunState.WAIT_FOR_INPUT,
+        RunState.TAKE_ACTIONS,
         RunState.PERFOM_ACTIONS,
     }
 

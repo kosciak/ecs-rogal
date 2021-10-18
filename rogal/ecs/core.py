@@ -230,7 +230,7 @@ class SystemsManager:
 
     def __init__(self):
         self.systems = []
-        self.run_state = RunState.PRE_RUN
+        self.run_state = RunState.PRE_RUN # TODO: RENDER or WAIT_FOR_INPUT
         self.next_run_state = None
 
     def register(self, system):
@@ -287,7 +287,12 @@ class ECS:
         self._systems.next_run_state = run_state
 
     def set_run_state(self, run_state):
+        log.warning('set_run_state() -> %s', run_state)
         self.run_state = run_state
+
+    @property
+    def next_state(self):
+        return self._systems.next_run_state
 
     def create(self, *components, entity_id=None):
         """Create Entity with given components."""
