@@ -481,28 +481,30 @@ BOXES = {
     # Wide ends
     0x2578: Box(
         Line.NONE, Line.NONE, Line.NONE, Line.WIDE,
-        [1, 1, 1,
-         1, 1, 1,
-         1, 1, 1]
+        [1, 1, 0,
+         1, 1, 0,
+         1, 1, 0]
     ),
     0x2579: Box(
         Line.WIDE, Line.NONE, Line.NONE, Line.NONE,
         [1, 1, 1,
          1, 1, 1,
-         1, 1, 1]
+         0, 0, 0]
     ),
     0x257a: Box(
         Line.NONE, Line.WIDE, Line.NONE, Line.NONE,
-        [1, 1, 1,
-         1, 1, 1,
-         1, 1, 1]
+        [0, 1, 1,
+         0, 1, 1,
+         0, 1, 1]
     ),
     0x257b: Box(
         Line.NONE, Line.NONE, Line.WIDE, Line.NONE,
-        [1, 1, 1,
+        [0, 0, 0,
          1, 1, 1,
          1, 1, 1]
     ),
+
+    # NOTE: There are no characters for Double ends
 
     # TODO: Rest of the Unicode block, or at least single / wide, wide / single
 
