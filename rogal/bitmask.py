@@ -11,7 +11,7 @@ Technique used to alter tile appearance depending on it's neighbours.
 ## Cardinal bitmasking
 
 Bitmask values for cardinal directions:
-- NORT  = 1
+- NORTH = 1
 - SOUTH = 2
 - WEST  = 4
 - EAST  = 8
@@ -60,14 +60,26 @@ Similar to cardinal, but use diagonal directions. Bitmask values:
 
 ## Walls bitmasking
 
-
 **PROBLEM:** For tees (7, 11, 13, 14) and crossing (15) we don't want to draw perpendicular connector
 if there are walls on positions marked with "x" as it creates ugly artifacts:
 
-  ┌┬┬┬┬┐
-  └┴┴┴┴┘
+ ┌┬┬┬┬┐
+ └┴┴┴┴┘
 
 That's why we use diagonal bitmasking to fix it
+
+
+## Adjecent / Parallel walls and false corners
+
+Unknown tiles COULD be walls so we shouldn't use corners -> check cardinals and diagonals
+
+┌──┐?
+└──┘?
+
+Fix all inconsistences like below, where corner tries to meet straight line
+
+┌─────
+└──┘??
 
 
 """
@@ -107,6 +119,11 @@ class Diagonal(enum.IntFlag):
 def is_set(check, bits):
     """Return True if all bits are set."""
     return check & bits == bits
+
+
+def is_not_set(check, bits):
+    """Return True if all bits are not set."""
+    return check & bits == 0
 
 
 def get_cardinals(shape, padded):
@@ -157,12 +174,15 @@ def bitmask_8bit(array, pad_value=None):
 
 def bitmask_walls(walls, revealed=None):
     """Return 4-bit bitmask for walls neighbours."""
+    revealed_walls = walls & revealed
+
     # First revealed walls, we are sure these are walls
-    shape, padded = shape_padded(walls & revealed)
+    shape, padded = shape_padded(revealed_walls)
     cardinals = get_cardinals(shape, padded)
     diagonals = get_diagonals(shape, padded)
 
     bitmask = cardinals.copy()
+
     # Tees to straight lines
     bitmask ^= (is_set(cardinals, Cardinal.WEN) & is_set(diagonals, Diagonal.N)) << 0
     bitmask ^= (is_set(cardinals, Cardinal.WES) & is_set(diagonals, Diagonal.S)) << 1
@@ -170,26 +190,28 @@ def bitmask_walls(walls, revealed=None):
     bitmask ^= (is_set(cardinals, Cardinal.NSE) & is_set(diagonals, Diagonal.E)) << 3
 
     # Now let's assume that what is not yet revealed might be wall as well
-    shape, padded = shape_padded((walls & revealed) | ~revealed, pad_value=True)
-    cardinals = bitmask.copy()
+    shape, padded = shape_padded(revealed_walls | ~revealed, pad_value=True)
+    cardinals = get_cardinals(shape, padded)
     diagonals = get_diagonals(shape, padded)
 
+    # Fix invalid corners of parallel walls
+    # It's enough to fix only one side, second one will be fixed later by continuation on both sideds check
+    bitmask ^= ((bitmask == Cardinal.SW) & is_set(cardinals, Cardinal.NS) & is_set(diagonals, Diagonal.SW)) << 2
+    bitmask ^= ((bitmask == Cardinal.NW) & is_set(cardinals, Cardinal.NS) & is_set(diagonals, Diagonal.NW)) << 2
+    bitmask ^= ((bitmask == Cardinal.NW) & is_set(cardinals, Cardinal.WE) & is_set(diagonals, Diagonal.NW)) << 0
+    bitmask ^= ((bitmask == Cardinal.NE) & is_set(cardinals, Cardinal.WE) & is_set(diagonals, Diagonal.NE)) << 0
+
     # Tees to straight lines
-    bitmask ^= (is_set(cardinals, Cardinal.WEN) & is_set(diagonals, Diagonal.N)) << 0
-    bitmask ^= (is_set(cardinals, Cardinal.WES) & is_set(diagonals, Diagonal.S)) << 1
-    bitmask ^= (is_set(cardinals, Cardinal.NSW) & is_set(diagonals, Diagonal.W)) << 2
-    bitmask ^= (is_set(cardinals, Cardinal.NSE) & is_set(diagonals, Diagonal.E)) << 3
-
-    # Next step will mess crosses up...
-    crosses = cardinals == Cardinal.NSWE
-
-    cardinals = get_cardinals(shape, padded)
+    bitmask ^= (is_set(bitmask, Cardinal.WEN) & is_set(diagonals, Diagonal.N)) << 0
+    bitmask ^= (is_set(bitmask, Cardinal.WES) & is_set(diagonals, Diagonal.S)) << 1
+    bitmask ^= (is_set(bitmask, Cardinal.NSW) & is_set(diagonals, Diagonal.W)) << 2
+    bitmask ^= (is_set(bitmask, Cardinal.NSE) & is_set(diagonals, Diagonal.E)) << 3
 
     # Tees to corners NOTE: Breaks crosses, need to fix them later!
-    bitmask_nsw = is_set(bitmask, Cardinal.NSW)
-    bitmask_nse = is_set(bitmask, Cardinal.NSE)
-    bitmask_wen = is_set(bitmask, Cardinal.WEN)
-    bitmask_wes = is_set(bitmask, Cardinal.WES)
+    bitmask_nsw = bitmask == Cardinal.NSW
+    bitmask_nse = bitmask == Cardinal.NSE
+    bitmask_wen = bitmask == Cardinal.WEN
+    bitmask_wes = bitmask == Cardinal.WES
 
     cardinals_ne = is_set(cardinals, Cardinal.NE)
     cardinals_nw = is_set(cardinals, Cardinal.NW)
@@ -214,7 +236,18 @@ def bitmask_walls(walls, revealed=None):
     bitmask ^= (bitmask_wes & cardinals_nw & diagonals_sw) << 2
 
     # Fix crosses!
-    bitmask[crosses] = Cardinal.NSWE
+    # bitmask[crosses] = Cardinal.NSWE
+
+    # Remove invalid corners on adjecent walls (no continuation on both sides)
+    not_n = np.pad(is_not_set(bitmask, Cardinal.N), 1, constant_values=False)
+    not_s = np.pad(is_not_set(bitmask, Cardinal.S), 1, constant_values=False)
+    not_w = np.pad(is_not_set(bitmask, Cardinal.W), 1, constant_values=False)
+    not_e = np.pad(is_not_set(bitmask, Cardinal.E), 1, constant_values=False)
+
+    bitmask ^= (not_s[ 1:-1,  :-2] & is_set(bitmask, Cardinal.N)) << 0
+    bitmask ^= (not_n[ 1:-1, 2:  ] & is_set(bitmask, Cardinal.S)) << 1
+    bitmask ^= (not_e[  :-2, 1:-1] & is_set(bitmask, Cardinal.W)) << 2
+    bitmask ^= (not_w[ 2:  , 1:-1] & is_set(bitmask, Cardinal.E)) << 3
 
     return bitmask
 

@@ -48,7 +48,8 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
         self.show_boundaries = show_boundaries
 
         self.walls_terrain_type = terrain.Type.WALL
-        self.bitmasked_walls = Bitmasks.WALLS_DLINE
+        # self.bitmasked_walls = Bitmasks.WALLS_DLINE
+        self.bitmasked_walls = Bitmasks.WALLS_WLINE_ENDS
 
     @property
     def position(self):

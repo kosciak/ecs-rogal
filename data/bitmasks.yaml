@@ -20,6 +20,24 @@ WALLS_LINE:
   - TEES       #   S+W+E
   - CROSS      # N+S+W+E
 
+WALLS_LINE_ENDS:
+  - RADIO_UNSET
+  - END_N      # N
+  - END_S      #   S
+  - VLINE      # N+S
+  - END_W      #     W
+  - SE         # N  +W
+  - NE         # S  +W
+  - TEEW       # N+S+W
+  - END_E      #       E
+  - SW         # N    +E
+  - NW         #   S  +E
+  - TEEE       # N+S  +E
+  - HLINE      #     W+E
+  - TEEN       # N  +W+E
+  - TEES       #   S+W+E
+  - CROSS      # N+S+W+E
+
 WALLS_DLINE:
   - BULLET_SQUARE
   - DVLINE     # N
@@ -38,7 +56,7 @@ WALLS_DLINE:
   - DTEES      #   S+W+E
   - DCROSS     # N+S+W+E
 
-WALLS_WLINE:
+WALLS_WLINE_ENDS:
   - BULLET_SQUARE
   - WVLINE     # N
   - WVLINE     #   S
@@ -48,6 +66,24 @@ WALLS_WLINE:
   - WNE        # S  +W
   - WTEEW      # N+S+W
   - WHLINE     #       E
+  - WSW        # N    +E
+  - WNW        #   S  +E
+  - WTEEE      # N+S  +E
+  - WHLINE     #     W+E
+  - WTEEN      # N  +W+E
+  - WTEES      #   S+W+E
+  - WCROSS     # N+S+W+E
+
+WALLS_WLINE_ENDS:
+  - BULLET_SQUARE
+  - WEND_N     # N
+  - WEND_S     #   S
+  - WVLINE     # N+S
+  - WEND_W     #     W
+  - WSE        # N  +W
+  - WNE        # S  +W
+  - WTEEW      # N+S+W
+  - WEND_E     #       E
   - WSW        # N    +E
   - WNW        #   S  +E
   - WTEEE      # N+S  +E
