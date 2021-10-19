@@ -27,24 +27,33 @@ class TakeActionHandler:
         movement_speed = self.ecs.manage(components.MovementSpeed)
         return movement_speed.get(actor) or ACTION_COST
 
-    def action_taken(self, actor):
-        # TODO: Should be done in TakeAction system!
+    def get_action_cost(self, actor, action):
+        if action == components.WantsToMove:
+            return self.get_movement_cost(actor)
+        if action == components.WantsToRest:
+            return self.get_movement_cost(actor)
+        if action == components.WantsToRevealLevel:
+            return 0
+        return ACTION_COST
+
+    def insert_action(self, actor, action, *args, **kwargs):
+        if action:
+            manager = self.ecs.manage(action)
+            manager.insert(actor, *args, **kwargs)
+
+        # NOTE: Would be better to have it in system, but not sure how to pass action_cost...
         acts_now = self.ecs.manage(components.ActsNow)
         acts_now.remove(actor)
 
-    def insert_action(self, actor, action, *args, action_cost=ACTION_COST, **kwargs):
-        if action is None or action is False:
-            return
-        # TODO: Some generic get_action_cost(actor, action)
-        manager = self.ecs.manage(action)
-        manager.insert(actor, *args, **kwargs)
-        if action_cost:
-            # TODO: Should be done in TakeAction system?!
-            self.waiting_queue.insert(actor, action_cost)
-        self.action_taken(actor)
+        # TODO: Move it to systems performing actions?!
+        actions_queue = self.ecs.manage(components.WaitsForAction)
+        action_cost = self.get_action_cost(actor, action)
+        actions_queue.insert(actor, action_cost)
+
+        return action_cost
 
     def take_action(self, actor, *args, **kwargs):
-        """Return True if action is taken."""
+        """Return action_cost if action is taken."""
         return
 
 
@@ -74,7 +83,6 @@ class PlayerInput(TakeActionHandler):
             self.try_change_level
         )
 
-
     def set_event_handlers(self, actor):
         self.ecs.manage(components.OnKeyPress).insert(actor, self.on_key_press)
         self.ecs.manage(components.GrabInputFocus).insert(actor)
@@ -82,10 +90,10 @@ class PlayerInput(TakeActionHandler):
     def remove_event_handlers(self, actor):
         self.ecs.manage(components.OnKeyPress).remove(actor)
 
-    def action_taken(self, actor):
-        super().action_taken(actor)
+    def insert_action(self, actor, action, *args, **kwargs):
         self.remove_event_handlers(actor)
         self.ecs.set_run_state(RunState.TAKE_ACTIONS)
+        return super().insert_action(actor, action, *args, **kwargs)
 
     def take_action(self, actor):
         self.ecs.resources.current_player = actor
@@ -98,8 +106,7 @@ class PlayerInput(TakeActionHandler):
         location = locations.get(actor)
         exits = self.spatial.get_exits(location)
         if direction in exits:
-            action_cost = self.get_movement_cost(actor)
-            return self.insert_action(actor, components.WantsToMove, direction, action_cost=action_cost)
+            return self.insert_action(actor, components.WantsToMove, direction)
 
         target_position = location.position.move(direction)
         target_entities = self.spatial.get_entities(location, target_position)
@@ -141,7 +148,7 @@ class PlayerInput(TakeActionHandler):
             prev_index = max(0, current_index-1)
             level_id = level_ids[prev_index]
 
-        self.insert_action(actor, components.WantsToChangeLevel, level_id)
+        return self.insert_action(actor, components.WantsToChangeLevel, level_id)
 
     def try_action(self, actor, action):
         if action is components.WantsToRevealLevel:
@@ -192,17 +199,17 @@ class AI(TakeActionHandler):
         exits = self.spatial.get_exits(location)
         if exits:
             direction = rng.choice(list(exits))
-            action_cost = self.get_movement_cost(actor)
-            self.insert_action(actor, components.WantsToMove, direction, action_cost=action_cost)
+            return self.insert_action(actor, components.WantsToMove, direction)
+        else:
+            return self.insert_action(actor, components.WantsToRest)
 
-        return True
-
-    def take_action(self, actor, skip_if_not_seen=False, *args, **kwargs):
+    def take_action(self, actor, skip_if_not_seen=True, *args, **kwargs):
         if skip_if_not_seen and not self.is_seen_by_player(actor):
-            # Not in player viewshed, skip turn
-            action_cost = self.get_movement_cost(actor)
-            self.waiting_queue.insert(actor, action_cost)
-            return True
+            # Not in player viewshed, skip turn (but not rest!)
+            return self.insert_action(actor, None)
 
         return self.random_direction_move(actor)
+
+
+# TODO: SpectatorInput - just wait between turns for non player UI to work
 
