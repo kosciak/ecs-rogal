@@ -179,8 +179,7 @@ class OperateSystem(System):
 class ActionsPerformedSystem(System):
 
     INCLUDE_STATES = {
-        RunState.PRE_RUN,
-        RunState.PERFOM_ACTIONS,
+        RunState.ACTIONS_PERFORMED,
     }
 
     def run(self):

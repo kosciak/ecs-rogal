@@ -120,7 +120,12 @@ class EventsHandlersSystem(System):
         consoles = self.ecs.manage(components.Console)
         event_handlers = self.ecs.manage(handlers_component)
 
-        entity = self.widgets_per_postion[position]
+        # NOTE: On terminal position might be outside root console!
+        max_x, max_y = self.widgets_per_position.shape
+        if position.x >= max_x or position.y >= max_y:
+            return
+
+        entity = self.widgets_per_position[position]
         for entity in self.get_parents_gen(entity):
             if entity in event_handlers:
                 yield [entity, consoles.get(entity), event_handlers.get(entity)]
@@ -194,7 +199,7 @@ class EventsHandlersSystem(System):
     def run(self):
         # Update widgets positions
         # TODO: Consider moving into separate system, and store in resources
-        self.widgets_per_postion = self.get_widgets_per_position()
+        self.widgets_per_position = self.get_widgets_per_position()
 
         # Get valid events and pass them to all entities with appopriate EventHandlers
         # NOTE: It is NOT checked if entity has ActsNow flag, as EventHandlers can be attached

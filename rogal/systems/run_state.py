@@ -96,6 +96,7 @@ class ActionsLoopStateSystem(System):
         RunState.TICKING,
         RunState.TAKE_ACTIONS,
         RunState.PERFOM_ACTIONS,
+        RunState.ACTIONS_PERFORMED,
     }
 
     def run(self):
@@ -112,6 +113,10 @@ class ActionsLoopStateSystem(System):
             return self.ecs.set_run_state(RunState.PERFOM_ACTIONS)
 
         if self.ecs.run_state == RunState.PERFOM_ACTIONS:
-            # Actions performed, back to ticking
+            # All actions performed
+            return self.ecs.set_run_state(RunState.ACTIONS_PERFORMED)
+
+        if self.ecs.run_state == RunState.ACTIONS_PERFORMED:
+            # Back to ticking
             return self.ecs.set_run_state(RunState.TICKING)
 

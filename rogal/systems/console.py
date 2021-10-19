@@ -33,10 +33,10 @@ class ConsoleSystem(System):
 
 class LayoutSytem(ConsoleSystem):
 
-#     INCLUDE_STATES = {
-#         RunState.WAIT_FOR_INPUT,
-#         RunState.RENDER,
-#     }
+    INCLUDE_STATES = {
+        RunState.PRE_RUN, # TODO: Not sure why it MUST be enabled during PRE_RUN...
+        RunState.RENDER,
+    }
 
     def get_widgets_to_update(self):
         widgets = self.ecs.manage(components.UIWidget)

@@ -135,8 +135,8 @@ class VisibilitySystem(System):
 
             # This! This is the part that is very costly
             visible_entities = EntitiesSet()
-            visible_entities.update(*[entities for entities in 
-                                      [self.spatial.get_entities(location, position) 
+            visible_entities.update(*[entities for entities in
+                                      [self.spatial.get_entities(location, position)
                                        for position in viewshed.positions]])
             spotted_entities = EntitiesSet(visible_entities - viewshed.entities)
             viewshed.entities = visible_entities
