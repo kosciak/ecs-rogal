@@ -60,6 +60,10 @@ Similar to cardinal, but use diagonal directions. Bitmask values:
 
 ## Walls bitmasking
 
+Main issue is NOT to spoil the layout of unrevealed areas!
+We don't want to show what is on the other side of the wall if it wasn't yet seen by the player.
+
+
 **PROBLEM:** For tees (7, 11, 13, 14) and crossing (15) we don't want to draw perpendicular connector
 if there are walls on positions marked with "x" as it creates ugly artifacts:
 
@@ -207,7 +211,7 @@ def bitmask_walls(walls, revealed=None):
     bitmask ^= (is_set(bitmask, Cardinal.NSW) & is_set(diagonals, Diagonal.W)) << 2
     bitmask ^= (is_set(bitmask, Cardinal.NSE) & is_set(diagonals, Diagonal.E)) << 3
 
-    # Tees to corners NOTE: Breaks crosses, need to fix them later!
+    # Tees to corners
     bitmask_nsw = bitmask == Cardinal.NSW
     bitmask_nse = bitmask == Cardinal.NSE
     bitmask_wen = bitmask == Cardinal.WEN
@@ -235,9 +239,6 @@ def bitmask_walls(walls, revealed=None):
     bitmask ^= (bitmask_wes & cardinals_ne & diagonals_se) << 3
     bitmask ^= (bitmask_wes & cardinals_nw & diagonals_sw) << 2
 
-    # Fix crosses!
-    # bitmask[crosses] = Cardinal.NSWE
-
     # Remove invalid corners on adjecent walls (no continuation on both sides)
     not_n = np.pad(is_not_set(bitmask, Cardinal.N), 1, constant_values=False)
     not_s = np.pad(is_not_set(bitmask, Cardinal.S), 1, constant_values=False)
@@ -248,6 +249,25 @@ def bitmask_walls(walls, revealed=None):
     bitmask ^= (not_n[ 1:-1, 2:  ] & is_set(bitmask, Cardinal.S)) << 1
     bitmask ^= (not_e[  :-2, 1:-1] & is_set(bitmask, Cardinal.W)) << 2
     bitmask ^= (not_w[ 2:  , 1:-1] & is_set(bitmask, Cardinal.E)) << 3
+
+    # Singles (walls with no adjecent walls don't look good, make them horizontal or vertical,
+    # depending from which side they are visible
+    # NOTE: This will mess up with pillars, so maybe declare them as such, not as WALL
+    no_adjecent_walls = bitmask == Cardinal.NONE
+    # bitmask[no_adjecent_walls & is_not_set(cardinals, Cardinal.N)] = Cardinal.WE
+    # bitmask[no_adjecent_walls & is_not_set(cardinals, Cardinal.S)] = Cardinal.WE
+    # bitmask[no_adjecent_walls & is_not_set(cardinals, Cardinal.W)] = Cardinal.NS
+    # bitmask[no_adjecent_walls & is_not_set(cardinals, Cardinal.E)] = Cardinal.NS
+    # bitmask[no_adjecent_walls] = Cardinal.NSWE
+    # bitmask ^= (no_adjecent_walls & is_not_set(cardinals, Cardinal.N)) << 0
+    # bitmask ^= (no_adjecent_walls & is_not_set(cardinals, Cardinal.S)) << 1
+    # bitmask ^= (no_adjecent_walls & is_not_set(cardinals, Cardinal.W)) << 2
+    # bitmask ^= (no_adjecent_walls & is_not_set(cardinals, Cardinal.E)) << 3
+    # for cardinal in [
+    #     Cardinal.N, Cardinal.S, Cardinal.W, Cardinal.E,
+    #     # Cardinal.NW, Cardinal.NE, Cardinal.SW, Cardinal.SE,
+    # ]:
+    #     bitmask[(no_adjecent_walls & (cardinals == cardinal))] = cardinal
 
     return bitmask
 

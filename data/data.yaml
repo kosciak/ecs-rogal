@@ -18,7 +18,7 @@ decorations:
 tiles_sources:
   - 'tiles_sources.yaml'
 
-colors:
+colors_lists:
   - 'colors/x11.colors.yaml'
   - 'colors/web.colors.yaml'
   - 'colors/cga.colors.yaml'

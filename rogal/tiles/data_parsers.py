@@ -1,5 +1,5 @@
-from ..tiles.core import Glyph
-from ..tiles.charsets import Charset, UnicodeBlock
+from .core import Glyph
+from .charsets import Charset, UnicodeBlock
 
 
 def parse_glyph(data):

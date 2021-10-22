@@ -1,9 +1,22 @@
 from ..collections.attrdict import AttrDict
-from ..colors import HEX, ColorPalette
+
+from .core import RGB, HSV, HEX
+from .palette import ColorPalette
 
 
-def parse_colors(data):
-    colors = [HEX(color) for color in data]
+def parse_color(data):
+    if data.startswith('#'):
+        return HEX(data)
+    for key in ['rgb', 'RGB']:
+        if key in data:
+            return RGB(data[key])
+    for key in ['hsv', 'HSV']:
+        if key in data:
+            return RGB(data[key])
+
+
+def parse_colors_list(data):
+    colors = [parse_color(color) for color in data]
     return colors
 
 
@@ -14,19 +27,20 @@ def parse_color_names(data):
 
 class ColorPaletteParser:
 
-    def __init__(self, colors, color_names):
-        self.colors = colors
+    def __init__(self, colors_lists, color_names):
+        self.colors_lists = colors_lists
         self.color_names = color_names
 
-    def parse_color(self, color, colors, color_names):
-        if color.startswith('#'):
-            return HEX(color)
-        return colors[color_names[color]]
+    def parse_color(self, data, colors, color_names):
+        color = parse_color(data)
+        if not color:
+            color = colors[color_names[data]]
+        return color
 
     def __call__(self, data):
         colors = []
         for name in data['colors']:
-            colors.extend(self.colors.get(name)[len(colors):])
+            colors.extend(self.colors_lists.get(name)[len(colors):])
 
         color_names = AttrDict()
         for name in data['color_names']:

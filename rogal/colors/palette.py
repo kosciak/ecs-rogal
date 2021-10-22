@@ -1,4 +1,44 @@
 
+class ColorPalette:
+
+    def __init__(self, name, fg, bg, colors, color_names=None):
+        self.name = name
+        self.fg = fg
+        self.bg = bg
+        #self.cursor_fg = None
+        #self.cursor_bg = None
+        self.colors = colors
+        self.color_names = color_names
+
+    def __len__(self):
+        return len(self.colors)
+
+    def get(self, key):
+        if key is None:
+            return None
+        if isinstance(key, str) and self.color_names:
+            key = self.color_names.get(key.upper())
+        return self.colors[key]
+
+    def __getattr__(self, key):
+        return self.get(key)
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def invert(self, name=None):
+        return ColorPalette(
+            name or self.name,
+            self.bg,
+            self.fg,
+            self.colors[:],
+            color_names=self.color_names
+        )
+
+    def __repr__(self):
+        return f'<ColorPalette name="{self.name}">'
+
+
 class ColorMap:
 
     """ColorMap consisting of list of Colors."""
@@ -36,46 +76,4 @@ class ColorMap:
         for color in color_min.to_rgb().gradient(color_max, steps=steps):
             colors.append(color.to_rgb())
         return ColorMap(colors)
-
-
-class ColorNames:
-
-    @classmethod
-    def get(cls, name):
-        return getattr(cls, name)
-
-
-class ColorPalette:
-
-    def __init__(self, name, fg, bg, colors, color_names=None):
-        self.name = name
-        self.fg = fg
-        self.bg = bg
-        #self.cursor_fg = None
-        #self.cursor_bg = None
-        self.colors = colors
-        self.color_names = color_names
-
-    def __len__(self):
-        return len(self.colors)
-
-    def get(self, key):
-        if isinstance(key, str) and self.color_names:
-            key = self.color_names.get(key)
-        if key is None:
-            return None
-        return self.colors[key]
-
-    def __getattr__(self, key):
-        return self.get(key)
-
-    def __getitem__(self, key):
-        return self.get(key)
-
-    def invert(self, name=None):
-        return ColorPalette(name or self.name, self.bg, self.fg, self.colors[:], color_names=self.color_names)
-
-    def __repr__(self):
-        return f'<ColorPalette name="{self.name}">'
-
 

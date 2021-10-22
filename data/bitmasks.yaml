@@ -56,7 +56,7 @@ WALLS_DLINE:
   - DTEES      #   S+W+E
   - DCROSS     # N+S+W+E
 
-WALLS_WLINE_ENDS:
+WALLS_WLINE:
   - BULLET_SQUARE
   - WVLINE     # N
   - WVLINE     #   S
