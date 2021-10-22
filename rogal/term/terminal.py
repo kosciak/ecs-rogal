@@ -306,15 +306,18 @@ class Terminal(WithSizeMixin):
         self.flush(sequence) # Answer with Capability.u6 format
 
     def cursor_position(self):
+        tty_state = self._get_tty_state(self._in_fd)
+        self.cbreak() # NOTE: We need to be in cbreak or raw TTY mode to work!
         self.request_cursor()
-        # NOTE: This assumes we are in cbreak or raw TTY mode!
         while self.is_readable(None):
             # Just keep trying until cursor_report shows up
             for sequence in self.read_sequences():
                 if sequence.key != Capability.cursor_report:
                     self._sequence_buffer.append(sequence)
                 else:
+                    self._set_tty_state(self._in_fd, tty_state)
                     return sequence.position
+        self._set_tty_state(self._in_fd, tty_state)
 
     def cursor_move(self, x=None, y=None):
         if x is not None and y is not None:
