@@ -148,26 +148,6 @@ class TcodRootPanel(RootPanel):
     #   bg_alpha: float = 1.0,
     #   key_color: Optional[Tuple[int, int, int]] = None)
 
-    # TODO: Direct access to console.tiles, console.tiles_rgb fragments
-    # NOTE: you can acces bg, fg, chr as tiles_rgb['bg'], tiles_rgb['fg'], tiles['ch']
-
-    @property
-    def tiles(self):
-        """Translate coordinates relative to self, to coordinates relative to root."""
-        return self.parent.tiles[self.x:self.x2, self.y:self.y2]
-
-    @tiles.setter
-    def tiles(self, tiles):
-        self.parent.tiles[self.x:self.x2, self.y:self.y2] = tiles
-
-    @property
-    def tiles_rgb(self):
-        return self.parent.tiles_rgb[self.x:self.x2, self.y:self.y2]
-
-    @tiles_rgb.setter
-    def tiles_rgb(self, tiles_rgb):
-        self.parent.tiles_rgb[self.x:self.x2, self.y:self.y2] = tiles_rgb
-
     def show(self):
         from ..term import ansi
         ansi.show_rgb_console(self.console)
