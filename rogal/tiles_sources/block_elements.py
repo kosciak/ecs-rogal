@@ -22,46 +22,46 @@ Quadrant = collections.namedtuple(
 # See: https://en.wikipedia.org/wiki/Block_Elements
 
 SPLITS = {
-    0x2580: Split(False, 0.0, 0.5),
-    0x2581: Split(False, 0.875, 1.0),
-    0x2582: Split(False, 0.75, 1.0),
-    0x2583: Split(False, 0.625, 1.0),
-    0x2584: Split(False, 0.5, 1.0),
-    0x2585: Split(False, 0.375, 1.0),
-    0x2586: Split(False, 0.25, 1.0),
-    0x2587: Split(False, 0.125, 1.0),
-    0x2588: Split(True, 0.0, 1.0),
-    0x2589: Split(True, 0.0, 0.875),
-    0x258a: Split(True, 0.0, 0.75),
-    0x258b: Split(True, 0.0, 0.625),
-    0x258c: Split(True, 0.0, 0.5),
-    0x258d: Split(True, 0.0, 0.375),
-    0x258e: Split(True, 0.0, 0.25),
-    0x258f: Split(True, 0.0, 0.125),
-    0x2590: Split(True, 0.5, 1.0),
-    0x2594: Split(False, 0.0, 0.5),
-    0x2595: Split(True, 0.875, 1.0),
+    0x2580: Split(False, 0.0, 0.5),     # ▀
+    0x2581: Split(False, 0.875, 1.0),   # ▁
+    0x2582: Split(False, 0.75, 1.0),    # ▂
+    0x2583: Split(False, 0.625, 1.0),   # ▃
+    0x2584: Split(False, 0.5, 1.0),     # ▄
+    0x2585: Split(False, 0.375, 1.0),   # ▅
+    0x2586: Split(False, 0.25, 1.0),    # ▆
+    0x2587: Split(False, 0.125, 1.0),   # ▇
+    0x2588: Split(True, 0.0, 1.0),      # █
+    0x2589: Split(True, 0.0, 0.875),    # ▉
+    0x258a: Split(True, 0.0, 0.75),     # ▊
+    0x258b: Split(True, 0.0, 0.625),    # ▋
+    0x258c: Split(True, 0.0, 0.5),      # ▌
+    0x258d: Split(True, 0.0, 0.375),    # ▍
+    0x258e: Split(True, 0.0, 0.25),     # ▎
+    0x258f: Split(True, 0.0, 0.125),    # ▏
+    0x2590: Split(True, 0.5, 1.0),      # ▐
+    0x2594: Split(False, 0.0, 0.5),     # ▔
+    0x2595: Split(True, 0.875, 1.0),    # ▕
 }
 
 
 SOLID_SHADES = {
-    0x2591: 0.25,
-    0x2592: 0.5,
-    0x2593: 0.75,
+    0x2591: 0.25,   # ░
+    0x2592: 0.5,    # ▒
+    0x2593: 0.75,   # ▓
 }
 
 
 QUADRANTS = {
-    0x2596: Quadrant(False, False, True, False),
-    0x2597: Quadrant(False, False, False, True),
-    0x2598: Quadrant(True, False, False, False),
-    0x2599: Quadrant(True, False, True, True),
-    0x259a: Quadrant(True, False, False, True),
-    0x259b: Quadrant(True, True, True, False),
-    0x259c: Quadrant(True, True, False, True),
-    0x259d: Quadrant(False, True, False, False),
-    0x259e: Quadrant(False, True, True, False),
-    0x259f: Quadrant(False, True, True, True),
+    0x2596: Quadrant(False, False, True, False),    # ▖
+    0x2597: Quadrant(False, False, False, True),    # ▗
+    0x2598: Quadrant(True, False, False, False),    # ▘
+    0x2599: Quadrant(True, False, True, True),      # ▙
+    0x259a: Quadrant(True, False, False, True),     # ▚
+    0x259b: Quadrant(True, True, True, False),      # ▚
+    0x259c: Quadrant(True, True, False, True),      # ▜
+    0x259d: Quadrant(False, True, False, False),    # ▝
+    0x259e: Quadrant(False, True, True, False),     # ▞
+    0x259f: Quadrant(False, True, True, True),      # ▟
 }
 
 
