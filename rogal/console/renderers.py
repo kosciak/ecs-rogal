@@ -1,5 +1,3 @@
-import time
-
 from .core import Position
 from .toolkit import Renderer
 
@@ -10,7 +8,7 @@ class ClearPanel(Renderer):
         super().__init__(*args, **kwargs)
         self.colors = colors
 
-    def render(self, panel):
+    def render(self, panel, timestamp):
         panel.clear(self.colors)
 
 
@@ -20,7 +18,7 @@ class PaintPanel(Renderer):
         super().__init__(*args, **kwargs)
         self.colors = colors
 
-    def render(self, panel):
+    def render(self, panel, timestamp):
         panel.paint(self.colors, Position.ZERO, panel.size)
 
 
@@ -29,7 +27,7 @@ class PaintPanel(Renderer):
 
 class InvertColors(Renderer):
 
-    def render(self, panel):
+    def render(self, panel, timestamp):
         panel.invert(Position.ZERO, panel.size)
 
 
@@ -43,11 +41,12 @@ class Blinking(Renderer):
         self._renderer = renderer
         self.rate = rate // 2
 
-    def render(self, panel):
+    def render(self, panel, timestamp):
         # TODO: blinking MUST be synchronized (during a frame) between ALL renderers!
         #       Maybe should be done on System level? NOT calling render if Blinking component present?
         # rate < 0 should mean inverted blinking
-        if int((time.time()*1000) / self.rate) % 2 == 0:
+        # if int((timestamp*1000) / self.rate) % 2 == 0:
+        if timestamp // self.rate % 2 == 0:
             return
-        return self._renderer.render(panel)
+        return self._renderer.render(panel, timestamp)
 

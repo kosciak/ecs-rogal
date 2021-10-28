@@ -52,7 +52,7 @@ class RenderStateSystem(System):
     @fps.setter
     def fps(self, fps):
         self._fps = fps
-        self.frame = 1./self._fps
+        self.frame = 1e9 // self._fps
 
     def should_render(self, timestamp):
         if self._last_run and timestamp - self._last_run < self.frame:
@@ -64,7 +64,7 @@ class RenderStateSystem(System):
         if self.ecs.run_state == RunState.RENDER:
             return self.ecs.set_run_state(self.next_state)
 
-        now = time.time()
+        now = time.monotonic_ns()
         if self.should_render(now):
             self._last_run = now
             self.next_state = self.ecs.next_state or self.ecs.run_state

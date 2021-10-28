@@ -76,13 +76,16 @@ class RenderingSystem(ConsoleSystem):
         # Render all panels
         consoles = self.ecs.manage(components.Console)
         panel_renderers = self.ecs.manage(components.PanelRenderer)
+        # NOTE: Using monotonic timestamp in miliseconds as render timestamp, 
+        #       this way all effects depending on time (blinking, fading, etc)
+        #       are going to be synchronized
+        timestamp = time.monotonic_ns() // 1e6
         for console, panel_renderer in sorted(
             self.ecs.join(consoles, panel_renderers),
             key=itemgetter(0)
         ):
             with perf.Perf(panel_renderer.renderer.render):
-                # TODO: pass timestamp / self._last_run to synchronize blinking / effects?
-                panel_renderer.renderer.render(console.panel)
+                panel_renderer.renderer.render(console.panel, timestamp)
 
         # Show rendered panel
         with perf.Perf(self.wrapper.render):

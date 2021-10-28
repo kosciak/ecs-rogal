@@ -350,7 +350,10 @@ class RootPanel(Panel):
     def __init__(self, console, palette):
         super().__init__(self, Position.ZERO, Size(console.width, console.height))
         self.console = console
-        self.palette = palette # TODO: This shouldn't be here...
+        # TODO: This shouldn't be here...
+        #       OR... maybe it should? Swapping palette in single place instead of
+        #       recalculating all colors used? Maybe store palette in ecs.resources?
+        self.palette = palette
         self.clear()
 
     def get_fg_bg(self, colors):

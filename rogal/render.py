@@ -227,7 +227,7 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
                 else:
                     panel.draw(tile, render_position)
 
-    def render(self, panel, actor=None, location=None):
+    def render(self, panel, timestamp, actor=None, location=None):
         fov = None
         seen = None
         actor = actor or self.ecs.resources.current_player
@@ -274,7 +274,7 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
 
 class MessageLog(toolkit.Renderer, toolkit.UIElement):
 
-    def render(self, panel):
+    def render(self, panel, timestamp):
         """Render logging records."""
         for offset, msg in enumerate(reversed(logs.LOGS_HISTORY), start=1):
             if offset > panel.height:

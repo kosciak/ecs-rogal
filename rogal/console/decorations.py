@@ -112,7 +112,7 @@ class Frame(toolkit.Renderer, toolkit.UIElement):
             Size(panel.width-self.extents.width, panel.height-self.extents.height)
         )
 
-    def render(self, panel):
+    def render(self, panel, timestamp):
         panel.draw(self.top, Position(1, 0), Size(panel.width-2, 1))
         panel.draw(self.bottom, Position(1, panel.height-1), Size(panel.width-2, 1))
         panel.draw(self.left, Position(0, 1), Size(1, panel.height-2))

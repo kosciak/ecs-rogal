@@ -84,6 +84,7 @@ class Widget(UIElement):
 
     def get_size(self, panel):
         """Return widget's size based on available panel space."""
+        # TODO: Allow float values? width = .75, height = .5 of panel size?
         size = Size(
             self.width or panel.width,
             self.height or panel.height,
@@ -128,7 +129,7 @@ class Renderer:
         super().__init__(*args, **kwargs)
         self.renderer = self
 
-    def render(self, panel):
+    def render(self, panel, timestamp):
         raise NotImplementedError()
 
 

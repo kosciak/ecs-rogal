@@ -22,7 +22,7 @@ class Cursor(toolkit.Renderer, toolkit.UIElement):
     def move(self, vector):
         self.position = self.position.move(vector)
 
-    def render(self, panel):
+    def render(self, panel, timestamp):
         if self.glyph:
             panel.print(self.glyph.char, self.position, colors=self.colors)
         elif self.colors:
@@ -51,7 +51,7 @@ class Text(toolkit.Renderer, toolkit.Widget):
     def height(self):
         return self.txt_size.height
 
-    def render(self, panel):
+    def render(self, panel, timestamp):
         if self.colors:
             panel.clear(self.colors)
         position = panel.get_align_position(self.txt_size, self.align)
