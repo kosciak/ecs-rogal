@@ -15,7 +15,7 @@ def parse_color(data):
             return RGB(data[key])
 
 
-def parse_colors_list(data):
+def parse_color_list(data):
     colors = [parse_color(color) for color in data]
     return colors
 
@@ -27,8 +27,8 @@ def parse_color_names(data):
 
 class ColorPaletteParser:
 
-    def __init__(self, colors_lists, color_names):
-        self.colors_lists = colors_lists
+    def __init__(self, color_lists, color_names):
+        self.color_lists = color_lists
         self.color_names = color_names
 
     def parse_color(self, data, colors, color_names):
@@ -40,7 +40,7 @@ class ColorPaletteParser:
     def __call__(self, data):
         colors = []
         for name in data['colors']:
-            colors.extend(self.colors_lists.get(name)[len(colors):])
+            colors.extend(self.color_lists.get(name)[len(colors):])
 
         color_names = AttrDict()
         for name in data['color_names']:
