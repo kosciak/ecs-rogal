@@ -14,7 +14,7 @@ from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerat
 from .procgen.dungeons import StaticLevel
 
 from . import components
-from .console import ui
+from .console.manager import UIManager
 from .data.loaders import DataLoader
 from .ecs import ECS
 from .entities_spawner import EntitiesSpawner
@@ -52,6 +52,7 @@ SEED = None
 # SEED = uuid.UUID("9996ca9c-a64b-4963-a42b-4566036aa067") # Lower part bitmasking...
 # SEED = uuid.UUID("40e5d1ea-0c1b-43c6-acd5-b561798a3a49")
 # SEED = uuid.UUID("6779231d-89c3-43be-93b2-41f9212f2848")
+SEED = uuid.UUID('5829028d-61c1-4e8d-ac96-26236d1fd6a1')
 
 
 WRAPPERS = {
@@ -114,7 +115,7 @@ def run(wrapper):
     )
 
     # Console UI manager
-    ecs.resources.ui_manager = ui.UIManager(ecs)
+    ecs.resources.ui_manager = UIManager(ecs)
 
     # Register systems
     # NOTE: Systems are run in order they were registered
