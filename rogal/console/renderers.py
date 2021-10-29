@@ -31,22 +31,40 @@ class InvertColors(Renderer):
         panel.invert(Position.ZERO, panel.size)
 
 
+class MultiFrameRenderer(Renderer):
+
+    def __init__(self, rate):
+        super().__init__()
+        self._frames_num = None
+        self.rate = int(rate) # How long whole animations take in miliseconds
+
+    def get_frames_num(self):
+        return 1
+
+    @property
+    def frames_num(self):
+        if self._frames_num is None:
+            self._frames_num = self.get_frames_num()
+        return self._frames_num
+
+    def get_frame(self, timestamp):
+        return timestamp // (self.rate // self.frames_num) % self.frames_num
+
+
 # TODO: RenderEffect?
-class Blinking(Renderer):
+class Blinking(MultiFrameRenderer):
 
     BLINK_RATE = 1200
 
     def __init__(self, renderer, rate=BLINK_RATE):
-        super().__init__()
+        super().__init__(rate)
         self._renderer = renderer
-        self.rate = rate // 2
+
+    def get_frames_num(self):
+        return 2
 
     def render(self, panel, timestamp):
-        # TODO: blinking MUST be synchronized (during a frame) between ALL renderers!
-        #       Maybe should be done on System level? NOT calling render if Blinking component present?
-        # rate < 0 should mean inverted blinking
-        # if int((timestamp*1000) / self.rate) % 2 == 0:
-        if timestamp // self.rate % 2 == 0:
-            return
-        return self._renderer.render(panel, timestamp)
+        frame = self.get_frame(timestamp)
+        if frame:
+            self._renderer.render(panel, timestamp)
 

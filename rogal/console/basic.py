@@ -40,11 +40,11 @@ class Text(toolkit.Renderer, toolkit.Widget):
         self.colors = colors
 
         lines = self.txt.splitlines() or ['', ]
+        # TODO: Use: textwrap.wrap(line, width)
         self.txt_size = Size(
             max(len(line) for line in lines),
             len(lines)
         )
-        #     max(width or 0, self.txt_size.width),
         super().__init__(width=width is None and self.txt_size.width or width, align=align)
 
     @property
