@@ -111,7 +111,7 @@ class EventsHandlersSystem(System):
         return positions
 
     def get_parents_gen(self, entity):
-        parents = self.ecs.manage(components.ParentUIWidget)
+        parents = self.ecs.manage(components.ParentUIElement)
         while entity:
             yield entity
             entity = parents.get(entity)

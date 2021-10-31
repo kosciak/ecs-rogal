@@ -10,7 +10,7 @@ from ..utils import perf
 log = logging.getLogger(__name__)
 
 
-class CreateUIWidgetsSystem(System):
+class CreateUIElementsSystem(System):
 
     INCLUDE_STATES = {
         RunState.PRE_RUN,
@@ -18,11 +18,11 @@ class CreateUIWidgetsSystem(System):
     }
 
     def init_windows(self):
-        self.ecs.create(components.CreateUIWidget('IN_GAME'))
-        # self.ecs.create(components.CreateUIWidget('MAIN_MENU'))
+        self.ecs.create(components.CreateUIElement('IN_GAME'))
+        # self.ecs.create(components.CreateUIElement('MAIN_MENU'))
 
     def create_windows(self):
-        to_create = self.ecs.manage(components.CreateUIWidget)
+        to_create = self.ecs.manage(components.CreateUIElement)
         if not to_create:
             return
 
@@ -42,24 +42,24 @@ class CreateUIWidgetsSystem(System):
         self.create_windows()
 
 
-class DestroyUIWidgetsSystem(System):
+class DestroyUIElementsSystem(System):
 
     INCLUDE_STATES = {
         RunState.RENDER,
     }
 
     def get_children(self, parents):
-        parent_windows = self.ecs.manage(components.ParentUIWidget)
+        parent_elements = self.ecs.manage(components.ParentUIElement)
         children = set()
-        for entity, parent in parent_windows:
+        for element, parent in parent_elements:
             if parent in parents:
-                children.add(entity)
+                children.add(element)
         if children:
             children.update(self.get_children(children))
         return children
 
     def run(self):
-        to_destroy = self.ecs.manage(components.DestroyUIWidget)
+        to_destroy = self.ecs.manage(components.DestroyUIElement)
         if to_destroy:
             parents = set(to_destroy.entities)
             self.ecs.remove(*parents)
@@ -67,7 +67,7 @@ class DestroyUIWidgetsSystem(System):
             self.ecs.remove(*children)
         to_destroy.clear()
 
-        to_destroy = self.ecs.manage(components.DestroyUIWidgetChildren)
+        to_destroy = self.ecs.manage(components.DestroyUIElementContent)
         if to_destroy:
             children = self.get_children(to_destroy.entities)
             self.ecs.remove(*children)

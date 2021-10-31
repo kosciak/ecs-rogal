@@ -30,14 +30,14 @@ class Widget:
     def colors(self, colors):
         self.renderer.colors = colors
 
-    def layout(self, manager, widget, panel, z_order):
+    def layout(self, manager, element, panel, z_order):
         self.manager = manager
-        self.element = widget
+        self.element = element
         manager.insert(
-            widget,
+            element,
             ui_widget=self,
         )
-        return super().layout(manager, widget, panel, z_order)
+        return super().layout(manager, element, panel, z_order)
 
     def redraw(self):
         self.manager.redraw(self.element)
@@ -125,19 +125,19 @@ class MouseOperated(Stateful):
             handlers.MouseOut(): self.on_leave,
         })
 
-    def on_enter(self, widget, *args, **kwargs):
+    def on_enter(self, element, *args, **kwargs):
         self.enter()
 
-    def on_over(self, widget, position, *args, **kwargs):
+    def on_over(self, element, position, *args, **kwargs):
         self.hover(position)
 
-    def on_leave(self, widget, *args, **kwargs):
+    def on_leave(self, element, *args, **kwargs):
         self.leave()
 
-    def on_press(self, widget, position, *args, **kwargs):
+    def on_press(self, element, position, *args, **kwargs):
         self.press(position)
 
-    def on_click(self, widget, position, *args, **kwargs):
+    def on_click(self, element, position, *args, **kwargs):
         self.toggle()
 
     def hover(self, position):
@@ -153,7 +153,7 @@ class WithHotkey(Stateful):
             handlers.OnKeyPress(ecs, key_binding): self.on_hotkey,
         })
 
-    def on_hotkey(self, widget, key, *args, **kwargs):
+    def on_hotkey(self, element, key, *args, **kwargs):
         self.toggle()
 
 
@@ -214,14 +214,14 @@ class TextInput(MouseOperated, Widget, containers.Stack, toolkit.UIElement):
     def txt(self, txt):
         self.text.txt = txt
 
-    def on_input(self, widget, char):
+    def on_input(self, element, char):
         if len(self.txt) < self.width-1:
             before_cursor = self.txt[:self.cursor.position.x]
             after_cursor = self.txt[self.cursor.position.x:]
             self.txt = before_cursor + char + after_cursor
             self.cursor.move(Vector(1, 0))
 
-    def on_edit(self, widget, cmd):
+    def on_edit(self, element, cmd):
         if not cmd:
             return
         elif cmd == 'CLEAR':
@@ -364,12 +364,12 @@ class ListBox(containers.List):
     def append_separator(self, separator):
         self.append(separator)
 
-    def on_mouse_over(self, widget, position):
+    def on_mouse_over(self, element, position):
         for item in self.items:
             if item.is_focused and not item.is_hovered:
                 return item.unfocus()
 
-    def on_focus_change(self, widget, direction):
+    def on_focus_change(self, element, direction):
         index = None
         for i, item in enumerate(self.items):
             if item.is_focused or item.is_hovered:
@@ -385,12 +385,12 @@ class ListBox(containers.List):
             index = max(direction-1, -1)
             self.items[index].focus()
 
-    def on_select(self, widget, value):
+    def on_select(self, element, value):
         for item in self.items:
             if item.is_focused or item.is_hovered:
                 return item.toggle()
 
-    def on_index(self, widget, index):
+    def on_index(self, element, index):
         if index < len(self.items):
             self.items[index].toggle()
 
@@ -423,8 +423,8 @@ class Window(Widget, containers.Stack):
         if title:
             self.frame.append(title)
 
-    def append(self, widget):
-        self.content.append(widget)
+    def append(self, element):
+        self.content.append(element)
 
     def extend(self, widgets):
         self.content.extend(widgets)

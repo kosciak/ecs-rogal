@@ -130,8 +130,8 @@ def run(wrapper):
         systems.run_state.RenderStateSystem(ecs),
         systems.run_state.AnimationsStateSystem(ecs),
 
-        systems.gui.DestroyUIWidgetsSystem(ecs),
-        systems.gui.CreateUIWidgetsSystem(ecs),
+        systems.gui.DestroyUIElementsSystem(ecs),
+        systems.gui.CreateUIElementsSystem(ecs),
 
         systems.console.LayoutSytem(ecs),
         systems.console.RenderingSystem(ecs),

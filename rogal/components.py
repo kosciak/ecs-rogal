@@ -15,7 +15,7 @@ from . import terrain
 
 # GUI, Windows, Rendering
 
-class CreateUIWidget(Component):
+class CreateUIElement(Component):
     __slots__ = ('widget_type', 'context', )
 
     def __init__(self, widget_type, context=None):
@@ -23,11 +23,11 @@ class CreateUIWidget(Component):
         self.context = context or {}
 
 
-DestroyUIWidget = Flag('DestroyUIWidget')
+DestroyUIElement = Flag('DestroyUIElement')
 
-DestroyUIWidgetChildren = Flag('DestroyUIWidgetChildren')
+DestroyUIElementContent = Flag('DestroyUIElementContent')
 
-ParentUIWidget = EntityReference('ParentUIWidget')
+ParentUIElement = EntityReference('ParentUIElement')
 
 
 class UIWidget(Component):
