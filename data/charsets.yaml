@@ -2,6 +2,22 @@
 # Charsets - lists of unicode code points
 #
 
+ASCII_DIGITS:
+  glyphs: '0123456789'
+
+ASCII_LETTERS:
+  glyphs: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+ASCII_LOWERCASE:
+  glyphs: 'abcdefghijklmnopqrstuvwxyz'
+
+ASCII_UPPERCASE:
+  glyphs: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+ASCII_PUNCTUATION:
+  glyphs: "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+
+
 CP437: 
   code_points: [
     0x0000, # 

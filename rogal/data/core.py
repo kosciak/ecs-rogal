@@ -30,7 +30,7 @@ class Data:
 
     def parse(self, data):
         # If it's a name just return data, parse otherwise
-        if isinstance(data, str) and data in self._data:
+        if self._data and isinstance(data, str) and data in self._data:
             return self.get(data)
         return self._parse(data)
 
