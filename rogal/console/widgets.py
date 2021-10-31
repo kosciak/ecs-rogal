@@ -12,14 +12,14 @@ from . import decorations
 from . import renderers
 
 
-class UIWidget:
+class Widget:
 
     def __init__(self, default_colors, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.renderer = renderers.ClearPanel(
             colors=default_colors,
         )
-        self.widget = None
+        self.element = None
         self.manager = None
 
     @property
@@ -32,7 +32,7 @@ class UIWidget:
 
     def layout(self, manager, widget, panel, z_order):
         self.manager = manager
-        self.widget = widget
+        self.element = widget
         manager.insert(
             widget,
             ui_widget=self,
@@ -40,7 +40,7 @@ class UIWidget:
         return super().layout(manager, widget, panel, z_order)
 
     def redraw(self):
-        self.manager.redraw(self.widget)
+        self.manager.redraw(self.element)
 
 
 class WidgetState(Enum):
@@ -165,14 +165,14 @@ class Activable:
         self.value = value
 
     def activate(self):
-        return self.callback(self.widget, self.value)
+        return self.callback(self.element, self.value)
 
     def select(self):
         super().select()
         self.activate()
 
 
-class TextInput(MouseOperated, UIWidget, containers.Stack, toolkit.Widget):
+class TextInput(MouseOperated, Widget, containers.Stack, toolkit.UIElement):
 
     def __init__(self, ecs, width, *,
                  default_colors,
@@ -252,7 +252,7 @@ class TextInput(MouseOperated, UIWidget, containers.Stack, toolkit.Widget):
             pass
 
 
-class Button(Activable, MouseOperated, UIWidget, toolkit.PostProcessed, decorations.Framed):
+class Button(Activable, MouseOperated, Widget, toolkit.PostProcessed, decorations.Framed):
 
     def __init__(self, value, callback, text, frame, *,
                  default_colors,
@@ -299,7 +299,7 @@ class Button(Activable, MouseOperated, UIWidget, toolkit.PostProcessed, decorati
         self.redraw()
 
 
-class ListItem(Activable, MouseOperated, WithHotkey, UIWidget, toolkit.PostProcessed, containers.Row):
+class ListItem(Activable, MouseOperated, WithHotkey, Widget, toolkit.PostProcessed, containers.Row):
 
     def __init__(self, ecs, key_binding, callback, value, index, item, *,
                  default_colors,
@@ -397,7 +397,7 @@ class ListBox(containers.List):
 
 
 # TODO: Consider renaming to FramedPanel?
-class Window(UIWidget, containers.Stack):
+class Window(Widget, containers.Stack):
 
     DEFAULT_Z_ORDER = ZOrder.BASE
 
@@ -430,7 +430,7 @@ class Window(UIWidget, containers.Stack):
         self.content.extend(widgets)
 
 
-class ModalWindow(Window, toolkit.Widget):
+class ModalWindow(Window, toolkit.UIElement):
 
     DEFAULT_Z_ORDER = ZOrder.MODAL
 

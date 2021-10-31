@@ -31,7 +31,7 @@ class Cursor(toolkit.Renderer, toolkit.UIElement):
             panel.invert(self.position)
 
 
-class Text(toolkit.Renderer, toolkit.Widget):
+class Text(toolkit.Renderer, toolkit.UIElement):
 
     """Text widget and renderer."""
 

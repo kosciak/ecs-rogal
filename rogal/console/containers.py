@@ -3,19 +3,19 @@ from ..geometry import Position, Size
 from . import toolkit
 
 
-class Stack(toolkit.Container, toolkit.Widget):
+class Stack(toolkit.Container, toolkit.UIElement):
 
     """Free form container where all children are stacked on top of each other.
 
-    Widgets are rendered in FIFO order and each widget use whole panel.
+    UIElements are rendered in FIFO order and each element use whole panel.
     Will overdraw previous ones if they overlap.
 
     """
 
     def layout_content(self, manager, parent, panel, z_order):
         for child in self.children:
-            widget = manager.create_child(parent)
-            z_order = child.layout(manager, widget, panel, z_order+1)
+            element = manager.create_child(parent)
+            z_order = child.layout(manager, element, panel, z_order+1)
         return z_order
 
 
@@ -32,11 +32,11 @@ def calc_sizes(available_size, sizes):
     return [size or default_size for size in sizes]
 
 
-class Row(toolkit.Container, toolkit.Widget):
+class Row(toolkit.Container, toolkit.UIElement):
 
     """Horizontal container.
 
-    Widgets are rendererd in FIFO order from left to right.
+    UIElements are rendererd in FIFO order from left to right.
 
     align=LEFT    |AA BB CC      |
     align=RIGHT   |      AA BB CC|
@@ -72,10 +72,10 @@ class Row(toolkit.Container, toolkit.Widget):
         widths = [child.width for child in self.children]
         calc_widths = calc_sizes(panel.width, widths)
         for i, child in enumerate(self.children):
-            widget = manager.create_child(parent)
+            element = manager.create_child(parent)
             size = Size(calc_widths[i], child.height or panel.height)
             subpanel = panel.create_panel(position, size)
-            child_z_order = child.layout(manager, widget, subpanel, z_order+1)
+            child_z_order = child.layout(manager, element, subpanel, z_order+1)
             z_orders.append(child_z_order or 0)
             position += Position(calc_widths[i], 0)
         return max(z_orders)
@@ -87,11 +87,11 @@ class Row(toolkit.Container, toolkit.Widget):
 #     pass
 
 
-class List(toolkit.Container, toolkit.Widget):
+class List(toolkit.Container, toolkit.UIElement):
 
     """Vertical container.
 
-    Widgets are rendererd in FIFO order from top to bottom.
+    UIElements are rendererd in FIFO order from top to bottom.
 
     """
 
@@ -123,18 +123,18 @@ class List(toolkit.Container, toolkit.Widget):
         heights = [child.height for child in self.children]
         calc_heights = calc_sizes(panel.height, heights)
         for i, child in enumerate(self.children):
-            widget = manager.create_child(parent)
+            element = manager.create_child(parent)
             size = Size(child.width or panel.width, calc_heights[i])
             subpanel = panel.create_panel(position, size)
-            child_z_order = child.layout(manager, widget, subpanel, z_order+1)
+            child_z_order = child.layout(manager, element, subpanel, z_order+1)
             z_orders.append(child_z_order or 0)
             position += Position(0, calc_heights[i])
         return max(z_orders)
 
 
-class Split(toolkit.Container, toolkit.Widget):
+class Split(toolkit.Container, toolkit.UIElement):
 
-    """Container that renders widgets on each side of splitted panel."""
+    """Container that renders elements on each side of splitted panel."""
 
     def __init__(self, content=None, *, left=None, right=None, top=None, bottom=None):
         super().__init__(content=content)
@@ -148,8 +148,8 @@ class Split(toolkit.Container, toolkit.Widget):
         subpanels = panel.split(self.left, self.right, self.top, self.bottom)
         for i, child in enumerate(self.children):
             if child:
-                widget = manager.create_child(parent)
-                child_z_order = child.layout(manager, widget, subpanels[i], z_order+1)
+                element = manager.create_child(parent)
+                child_z_order = child.layout(manager, element, subpanels[i], z_order+1)
                 z_orders.append(child_z_order or 0)
             if i >= 2:
                 break

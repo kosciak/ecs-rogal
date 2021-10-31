@@ -4,10 +4,10 @@ from ..tiles import Tile
 from . import toolkit
 
 
-"""Widgets that wrap other widget and change their look."""
+"""UIElements that wrap other UI elements and change their look."""
 
 
-class Padded(toolkit.Widget):
+class Padded(toolkit.UIElement):
 
     def __init__(self, content, padding, *, align=None, **kwargs):
         # TODO: use content.align instead of align in constructor? OR align=align or content.align?
@@ -35,12 +35,12 @@ class Padded(toolkit.Widget):
         return panel.create_panel(position, size)
 
     def layout_content(self, manager, parent, panel, z_order):
-        widget = manager.create_child(parent)
+        element = manager.create_child(parent)
         panel = self.get_inner_panel(panel)
-        return self.content.layout(manager, widget, panel, z_order+1)
+        return self.content.layout(manager, element, panel, z_order+1)
 
-    def layout(self, manager, widget, panel, z_order):
-        return super().layout(manager, widget, panel, z_order or self.default_z_order)
+    def layout(self, manager, element, panel, z_order):
+        return super().layout(manager, element, panel, z_order or self.default_z_order)
 
 
 
@@ -127,7 +127,7 @@ class Frame(toolkit.Renderer, toolkit.UIElement):
         return any(self.top, self.bottom, self.left, self.right)
 
 
-class Framed(toolkit.Widget):
+class Framed(toolkit.UIElement):
 
     """Frame with element rendered inside."""
 
@@ -147,9 +147,9 @@ class Framed(toolkit.Widget):
         return height and (height + self.frame.extents.height) or 0
 
     def layout_content(self, manager, parent, panel, z_order):
-        widget = manager.create_child(parent)
-        self.frame.layout(manager, widget, panel, z_order+1)
-        widget = manager.create_child(parent)
+        element = manager.create_child(parent)
+        self.frame.layout(manager, element, panel, z_order+1)
+        element = manager.create_child(parent)
         panel = self.frame.inner_panel(panel)
-        return self.content.layout(manager, widget, panel, z_order+2)
+        return self.content.layout(manager, element, panel, z_order+2)
 

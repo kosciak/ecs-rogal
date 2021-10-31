@@ -227,9 +227,17 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
                 else:
                     panel.draw(tile, render_position)
 
+    def get_seen(self, actor, location):
+        level_memories = self.ecs.manage(components.LevelMemory)
+        memory = level_memories.get(actor)
+        if memory:
+            seen = memory.revealed.get(location.level_id)
+        else:
+            seen = self.spatial.revealable(location.level_id)
+        return seen
+
     def render(self, panel, timestamp, actor=None, location=None):
         fov = None
-        seen = None
         actor = actor or self.ecs.resources.current_player
         if actor:
             locations = self.ecs.manage(components.Location)
@@ -244,12 +252,7 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
         if fov is None:
             fov = np.ones(level.size, dtype=np.bool)
 
-        level_memories = self.ecs.manage(components.LevelMemory)
-        memory = level_memories.get(actor)
-        if memory:
-            seen = memory.revealed.get(location.level_id)
-        else:
-            seen = self.spatial.revealable(location.level_id)
+        seen = self.get_seen(actor, location)
 
         self.update_cam_area(panel, level, position)
 
