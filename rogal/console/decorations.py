@@ -43,8 +43,6 @@ class Padded(toolkit.UIElement):
         return super().layout(manager, element, panel, z_order or self.default_z_order)
 
 
-
-# TODO: Only Renderer set as renderer for Framed? What about Button that subclasses it?
 class Frame(toolkit.Renderer, toolkit.UIElement):
 
     """Frame decorations."""

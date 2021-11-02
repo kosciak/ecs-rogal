@@ -50,10 +50,11 @@ class WidgetsBuilder:
         if title is None:
             return
         title = decorations.Padded(
-            content=decorations.Framed(
-                content=basic.Text(
+            content=widgets.Title(
+                default_colors=self.default_colors,
+                text=basic.Text(
                     title,
-                    colors=self.default_colors,
+                    # colors=self.default_colors,
                     # align=self.title_align,
                     # width=10,
                 ),
@@ -62,6 +63,12 @@ class WidgetsBuilder:
             ),
             padding=Padding(0, 1),
         )
+
+#         title.content.content.renderer = renderers.Blinking(
+#             title.content.content.renderer,
+#             rate=1200,
+#         )
+
         return title
 
     def create_window(self, title=None, on_key_press=None):
@@ -190,6 +197,31 @@ class WidgetsBuilder:
         )
 
         window.extend([
+            # basic.ProgressBarAnimatedDemo(
+            #     colors=Colors(
+            #         fg=self.palette.BASE_RED,
+            #         bg=self.palette.WHITE,
+            #     ),
+            #     value=.75,
+            #     full='█',
+            #     parts='░▒▓',
+            #     # parts='▌',
+            #     width=24,
+            #     frame_duration=300,
+            #     # align=Align.TOP_CENTER,
+            # ),
+
+            # basic.Spinner(
+            #     colors=Colors(
+            #         fg=self.palette.BRIGHT_BLUE,
+            #         bg=self.palette.BRIGHT_BLACK,
+            #     ),
+            #     # frames='|/-\\',
+            #     frames='▘▝▗▖',
+            #     align=Align.TOP_RIGHT,
+            #     frame_duration=150,
+            # ),
+
             decorations.Padded(
                 content=msg,
                 padding=Padding(1, 0),

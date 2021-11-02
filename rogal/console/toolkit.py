@@ -6,25 +6,22 @@ from ..geometry import Position, Size
 from .core import Align
 
 
-"""Console UI basic elements and renderers toolkit."""
-
-'''
-TODO:
-- progress bars (paint background only and print tiles)
-
-'''
+"""Console UI Toolkit core building blocks."""
 
 
 class UIElement:
 
-    """Abstract UI element that can be layouted on panel."""
+    """Abstract UI element that can be layouted on a panel."""
 
     DEFAULT_Z_ORDER = 0
+    DEFAULT_ALIGN = Align.TOP_LEFT
 
     def __init__(self, *, width=None, height=None, align=None):
         self._width = width
         self._height = height
-        self.align = align is None and Align.TOP_LEFT or align
+        if align is None:
+            align = self.DEFAULT_ALIGN
+        self.align = align
         self.renderer = None
         self.handlers = DefaultAttrDict(dict)
 
@@ -64,7 +61,6 @@ class UIElement:
             z_order=z_order,
             renderer=self.renderer,
         )
-
         manager.bind(
             element,
             **self.handlers,
@@ -80,7 +76,7 @@ class UIElement:
 
 class Container:
 
-    """UIElements container mixin."""
+    """Mixin for UIElements containers."""
 
     def __init__(self, content=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -92,6 +88,9 @@ class Container:
     def extend(self, elements):
         self.children.extend(elements)
 
+    def layout_content(self, manager, parent, panel, z_order):
+        raise NotImplementedError()
+
     def __len__(self):
         return len(self.children)
 
@@ -101,7 +100,7 @@ class Container:
 
 class Renderer:
 
-    """Abstract UI element that can render it's contents on panel."""
+    """Mixin for UIElements that renders it's contents on panel."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -109,6 +108,41 @@ class Renderer:
 
     def render(self, panel, timestamp):
         raise NotImplementedError()
+
+
+class Animated:
+
+    """Mixin for UIElements which appearance depends on timestamp."""
+
+    def __init__(self, duration=None, frame_duration=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._duration = duration
+        self._frame_duration = frame_duration
+        self._frames_num = None
+
+    def get_frames_num(self):
+        raise NotImplementedError()
+
+    @property
+    def frames_num(self):
+        if self._frames_num is None:
+            self._frames_num = self.get_frames_num()
+        return self._frames_num
+
+    @property
+    def duration(self):
+        if self._duration is None:
+            self._duration = self.frame_duration * self.frames_num
+        return self._duration
+
+    @property
+    def frame_duration(self):
+        if self._frame_duration is None:
+            self._frame_duration = self.duration // self.frames_num
+        return self._frame_duration
+
+    def get_frame_num(self, timestamp):
+        return int(timestamp // self.frame_duration % self.frames_num)
 
 
 class PostProcessed:

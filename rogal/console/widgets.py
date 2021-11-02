@@ -48,6 +48,7 @@ class WidgetState(Enum):
     PRESSED = auto()
     FOCUSED = auto()
     SELECTED = auto()
+    # TODO: DISABLED
 
 
 class Stateful:
@@ -172,7 +173,7 @@ class Activable:
         self.activate()
 
 
-class TextInput(MouseOperated, Widget, containers.Stack, toolkit.UIElement):
+class TextInput(MouseOperated, Widget, containers.Stack):
 
     def __init__(self, ecs, width, *,
                  default_colors,
@@ -279,6 +280,7 @@ class Button(Activable, MouseOperated, Widget, toolkit.PostProcessed, decoration
     @txt.setter
     def txt(self, txt):
         self.content.txt = text
+        self.redraw();
 
     def enter(self):
         super().enter()
@@ -394,6 +396,25 @@ class ListBox(containers.List):
         if index < len(self.items):
             self.items[index].toggle()
 
+
+class Title(Widget, decorations.Framed):
+
+    def __init__(self, default_colors, text, frame, align=Align.TOP_LEFT):
+        super().__init__(
+            content=text,
+            frame=frame,
+            align=align,
+            default_colors=default_colors,
+        )
+
+    @property
+    def txt(self):
+        return self.content.txt
+
+    @txt.setter
+    def txt(self, txt):
+        self.content.txt = text
+        self.redraw();
 
 
 # TODO: Consider renaming to FramedPanel?

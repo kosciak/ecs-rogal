@@ -25,7 +25,7 @@ def calc_sizes(available_size, sizes):
     # Calc size for fixed size elements
     reserved = sum(size for size in sizes if size)
     left = available_size - reserved
-    # Now calc default size for elements withour fixed size
+    # Now calc default size for elements without fixed size
     dynamic_num = len([size for size in sizes if not size])
     default_size = left // dynamic_num
     # TODO: What about modulo?
