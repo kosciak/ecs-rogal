@@ -28,18 +28,18 @@ class WidgetsBuilder:
         self.palette = self.ecs.resources.wrapper.palette
         self.default_colors = Colors(self.palette.fg, self.palette.bg)
 
-        self.window_frame = decorations.Frame(
+        self.window_frame = basic.Frame(
             *Decorations.DSLINE,
             colors=None,
         )
 
-        self.title_frame = decorations.Frame(
+        self.title_frame = basic.Frame(
             *Decorations.MINIMAL_DSLINE,
             colors=None,
         )
         self.title_align = Align.TOP_CENTER
 
-        self.button_frame = decorations.Frame(
+        self.button_frame = basic.Frame(
             *Decorations.LINE,
             colors=None,
         )
@@ -130,7 +130,7 @@ class WidgetsBuilder:
         )
         return text_input
 
-    def create_list_item(self, width, item, key_binding, callback, index):
+    def create_list_item(self, item, key_binding, callback, index):
         index_text = decorations.Padded(
             content=basic.Text(
                 f'{key_binding})',
@@ -160,11 +160,18 @@ class WidgetsBuilder:
         return list_item
 
     def create_list_separator(self):
-        separator = basic.Text(
-            '-'*5,
-            width=0,
-            align=Align.CENTER,
+        separator = decorations.Padded(
+            content=basic.HorizontalSeparator(
+                0x2500, 0x251c, 0x2524,
+            ),
+            padding=Padding(0, -1),
         )
+
+        # separator = basic.HorizontalSeparator(
+        #     0x2500,
+        #     width=10,
+        #     align=Align.CENTER,
+        # )
 
         return separator
 
@@ -335,7 +342,7 @@ class WidgetsBuilder:
                 )
             key_binding = string.ascii_lowercase[index]
             items_list.append_item(
-                self.create_list_item(18, item, key_binding, callback, index)
+                self.create_list_item(item, key_binding, callback, index)
             )
 
         window.extend([
