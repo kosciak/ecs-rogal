@@ -10,7 +10,26 @@ from . import renderers
 """Most basic UI elements - building blocks for more complicated ones."""
 
 
-class Text(toolkit.Renderer, toolkit.UIElement):
+class TextRenderer(toolkit.Renderer):
+
+    def get_txt_size(self, txt):
+        lines = txt.splitlines() or ['', ]
+        # TODO: Use: textwrap.wrap(line, width)
+        txt_size = Size(
+            max(len(line) for line in lines),
+            len(lines)
+        )
+        return txt_size
+
+    def render_txt(self, panel, txt, colors):
+        position = panel.get_align_position(self.txt_size, self.align)
+        panel.print(txt, position, colors=colors, align=self.align)
+
+    def render(self, panel, timestamp):
+        self.render_txt(panel, self.txt, self.colors)
+
+
+class Text(TextRenderer, toolkit.UIElement):
 
     """Text widget and renderer."""
 
@@ -22,25 +41,9 @@ class Text(toolkit.Renderer, toolkit.UIElement):
             width = self.txt_size.width
         super().__init__(width=width, align=align)
 
-    def get_txt_size(self, txt):
-        lines = txt.splitlines() or ['', ]
-        # TODO: Use: textwrap.wrap(line, width)
-        txt_size = Size(
-            max(len(line) for line in lines),
-            len(lines)
-        )
-        return txt_size
-
     @property
     def height(self):
         return self.txt_size.height
-
-    def render(self, panel, timestamp):
-        # TODO: panel.clear() should be done higher, on parent widget level, not here!
-        # if self.colors:
-        #     panel.clear(self.colors)
-        position = panel.get_align_position(self.txt_size, self.align)
-        panel.print(self.txt, position, colors=self.colors, align=self.align)
 
 
 class Frame(toolkit.Renderer, toolkit.UIElement):
@@ -147,19 +150,28 @@ class Cursor(toolkit.Renderer, toolkit.UIElement):
             panel.invert(self.position)
 
 
-class Spinner(toolkit.Animated, toolkit.Renderer, toolkit.UIElement):
+class Spinner(toolkit.Animated, TextRenderer, toolkit.UIElement):
 
     DEFAULT_FRAME_DURATION = 100
 
     def __init__(self, colors, frames, duration=None, frame_duration=None, *, align=None):
         if duration is None and frame_duration is None:
             frame_duration = self.DEFAULT_FRAME_DURATION
+        self.txt_size = self.get_frames_txt_size(frames)
         super().__init__(
             duration=duration, frame_duration=frame_duration,
-            width=1, height=1, align=align,
+            width=self.txt_size.width, height=self.txt_size.height, align=align,
         )
         self.colors = colors
         self.frames = frames
+
+    def get_frames_txt_size(self, frames):
+        frame_sizes = [self.get_txt_size(frame) for frame in frames]
+        txt_size = Size(
+            max(size.width for size in frame_sizes),
+            max(size.height for size in frame_sizes),
+        )
+        return txt_size
 
     def get_frames_num(self):
         return len(self.frames)
@@ -167,18 +179,19 @@ class Spinner(toolkit.Animated, toolkit.Renderer, toolkit.UIElement):
     def render(self, panel, timestamp):
         frame_num = self.get_frame_num(timestamp)
         frame = self.frames[frame_num]
-        panel.print(frame, Position.ZERO, colors=self.colors)
+        self.render_txt(panel, frame, self.colors)
 
 
 class ProgressBar(toolkit.Renderer, toolkit.UIElement):
 
     EMPTY_CHAR = ' '
 
-    def __init__(self, value, colors, full, parts=None, width=None, *, align=None):
+    def __init__(self, value, colors, full, empty=EMPTY_CHAR, parts=None, width=None, *, align=None):
         super().__init__(width=width, height=1, align=align)
         self.colors = colors
         self.value = value # float value from 0.0 to 1.0
         self.full = full
+        self.empty = empty
         self.parts_values = self.get_parts_values(parts)
 
     def get_parts_values(self, parts):
@@ -203,7 +216,7 @@ class ProgressBar(toolkit.Renderer, toolkit.UIElement):
                 break
 
         empty_num = panel.width - len(txt)
-        txt += self.EMPTY_CHAR * empty_num
+        txt += self.empty * empty_num
 
         panel.print(txt, Position.ZERO, colors=self.colors)
 
