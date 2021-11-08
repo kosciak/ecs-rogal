@@ -65,13 +65,13 @@ class TcodWrapper(IOWrapper):
 
     def __init__(self,
         console_size,
-        palette,
+        colors_manager,
         tiles_sources,
         resizable=False,
         title=None,
         enable_joystick=False,
     ):
-        super().__init__(console_size=console_size, palette=palette, title=title)
+        super().__init__(console_size=console_size, colors_manager=colors_manager, title=title)
         self._context = None
         self.tiles_loader = TilesLoader(tiles_sources)
         self.resizable = resizable
@@ -104,7 +104,7 @@ class TcodWrapper(IOWrapper):
         self._context = self.initialize_context()
 
         self._input = TcodSDLInputWrapper(sdl2, self.context)
-        self._output = TcodOutputWrapper(self.context)
+        self._output = TcodOutputWrapper(self.context, self.colors_manager)
 
     def terminate(self):
         self.context.close()

@@ -66,10 +66,7 @@ class RenderingSystem(ConsoleSystem):
         RunState.RENDER,
     }
 
-    def __init__(self, ecs):
-        super().__init__(ecs)
-
-    def render(self):
+    def run(self):
         # Clear panel
         self.root.clear()
 
@@ -90,8 +87,4 @@ class RenderingSystem(ConsoleSystem):
         # Show rendered panel
         with perf.Perf(self.wrapper.render):
             self.wrapper.render(self.root)
-
-    def run(self):
-        self.render()
-        return True
 

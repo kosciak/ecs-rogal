@@ -25,8 +25,7 @@ class WidgetsBuilder:
     def __init__(self, ecs):
         self.ecs = ecs
 
-        self.palette = self.ecs.resources.wrapper.palette
-        self.default_colors = Colors(self.palette.fg, self.palette.bg)
+        self.default_colors = Colors("fg", "bg")
 
         self.window_frame = basic.Frame(
             *Decorations.DSLINE,
@@ -103,8 +102,8 @@ class WidgetsBuilder:
             frame=self.button_frame,
             # selected_colors=self.default_colors.invert(),
             press_colors=Colors(
-                bg=self.palette.bg,
-                fg=self.palette.BRIGHT_WHITE
+                bg="bg",
+                fg="BRIGHT_WHITE"
             ),
             selected_renderers=[
                 renderers.InvertColors(),
@@ -126,7 +125,7 @@ class WidgetsBuilder:
             width=width,
             default_text=text,
             # default_colors=self.default_colors,
-            default_colors=Colors(fg=self.palette.fg, bg=self.palette.BRIGHT_BLACK),
+            default_colors=Colors(fg="fg", bg="BRIGHT_BLACK"),
         )
         return text_input
 
@@ -140,7 +139,7 @@ class WidgetsBuilder:
         item_text = basic.Text(
             item,
             colors=Colors(
-                fg=self.palette.BLUE,
+                fg="BLUE",
             ),
             width=0,
         )
@@ -206,25 +205,27 @@ class WidgetsBuilder:
         window.extend([
             # basic.ProgressBarAnimatedDemo(
             #     colors=Colors(
-            #         fg=self.palette.BASE_RED,
-            #         bg=self.palette.WHITE,
+            #         fg="BASE_RED",
+            #         bg="WHITE",
             #     ),
             #     value=.75,
             #     full='█',
             #     parts='░▒▓',
             #     # parts='▌',
             #     width=24,
+            #     height=3,
             #     frame_duration=300,
             #     # align=Align.TOP_CENTER,
             # ),
 
             # basic.Spinner(
             #     colors=Colors(
-            #         fg=self.palette.BRIGHT_BLUE,
-            #         bg=self.palette.BRIGHT_BLACK,
+            #         fg="BRIGHT_BLUE",
+            #         bg="BRIGHT_BLACK",
             #     ),
             #     # frames='|/-\\',
-            #     frames='▘▝▗▖',
+            #     # frames='▘▝▗▖',
+            #     frames=['[o  ]', '[ o ]', '[  o]', '[ o ]'],
             #     align=Align.TOP_RIGHT,
             #     frame_duration=150,
             # ),

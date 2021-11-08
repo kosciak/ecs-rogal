@@ -38,12 +38,15 @@ class OutputWrapper:
     CONSOLE_CLS = None
     ROOT_PANEL_CLS = RootPanel
 
+    def __init__(self, colors_manager):
+        self.colors_manager = colors_manager
+
     def create_console(self, size):
         return self.CONSOLE_CLS(size)
 
-    def create_panel(self, size, palette):
+    def create_panel(self, size):
         console = self.create_console(size)
-        return self.ROOT_PANEL_CLS(console, palette)
+        return self.ROOT_PANEL_CLS(console, self.colors_manager)
 
     def render(self, panel):
         """Show contents of given panel on screen."""
@@ -54,24 +57,18 @@ class IOWrapper:
 
     def __init__(self,
         console_size,
-        palette,
+        colors_manager,
         title=None,
         *args, **kwargs,
     ):
         self.title = title
         self.console_size = console_size
-        self._palette = palette
+        self.colors_manager = colors_manager
         self._input = None
         self._output = None
 
-    @property
-    def palette(self):
-        return self._palette
-
-    @palette.setter
-    def palette(self, palette):
-        # TODO: Some event on palette change forcing everything to redraw?
-        self._palette = palette
+    def set_palette(self, palette):
+        self.colors_manager.palette = palette
 
     @property
     def is_initialized(self):
@@ -84,7 +81,7 @@ class IOWrapper:
         raise NotImplementedError()
 
     def create_panel(self, size=None):
-        return self._output.create_panel(size or self.console_size, self.palette)
+        return self._output.create_panel(size or self.console_size)
 
     def render(self, panel):
         """Render contents of given panel on screen."""

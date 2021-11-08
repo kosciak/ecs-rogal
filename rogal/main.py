@@ -15,6 +15,7 @@ from .procgen.dungeons import StaticLevel
 
 from . import components
 from .console.manager import UIManager
+from .colors.manager import ColorsManager
 from .data.loaders import DataLoader
 from .ecs import ECS
 from .entities_spawner import EntitiesSpawner
@@ -104,11 +105,13 @@ def run(wrapper):
     # for depth in range(1, 50):
     #     level, starting_position = level_generator.generate(depth=depth)
 
+    ecs.resources.colors_manager = ColorsManager(ecs.resources.tileset.palette)
+
     # Initialize Wrapper
     wrapper_cls = WRAPPERS[wrapper]
     ecs.resources.wrapper = wrapper_cls(
         console_size=CONSOLE_SIZE,
-        palette=ecs.resources.tileset.palette,
+        colors_manager=ecs.resources.colors_manager,
         tiles_sources=ecs.resources.tileset.tiles_sources,
         resizable=False,
         title='Rogal test'

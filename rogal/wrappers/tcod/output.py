@@ -14,8 +14,8 @@ class TcodRootPanel(RootPanel):
         return str(self.console)
 
     def clear(self, colors=None, *args, **kwargs):
-        fg = self.get_color(colors and colors.fg) or self.palette.fg.rgb
-        bg = self.get_color(colors and colors.bg) or self.palette.bg.rgb
+        fg = self.get_color(colors and colors.fg) or self.colors_manager.palette.fg.rgb
+        bg = self.get_color(colors and colors.bg) or self.colors_manager.palette.bg.rgb
         return self._clear(fg=fg, bg=bg, *args, **kwargs)
 
     def print(self, text, position, colors=None, align=None, *args, **kwargs):
@@ -157,7 +157,8 @@ class TcodOutputWrapper(OutputWrapper):
 
     ROOT_PANEL_CLS = TcodRootPanel
 
-    def __init__(self, context):
+    def __init__(self, context, colors_manager):
+        super().__init__(colors_manager)
         self.context = context
 
     def create_console(self, size):

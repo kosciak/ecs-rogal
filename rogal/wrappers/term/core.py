@@ -44,7 +44,7 @@ class TermWrapper(IOWrapper):
             self.term.set_title(self.title)
 
         self._input = TermInputWrapper(self.term)
-        self._output = TermOutputWrapper(self.term)
+        self._output = TermOutputWrapper(self.term, self.colors_manager)
 
     def terminate(self):
         self.term.close()

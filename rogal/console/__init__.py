@@ -1,1 +1,1 @@
-from .core import DEFAULT_CH, Align, ConsoleRGB, ConsoleIndexedColors, RootPanel
+from .core import DEFAULT_CH, Align, RGBConsole, IndexedColorsConsole, RootPanel

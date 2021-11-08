@@ -1,6 +1,6 @@
 import logging
 
-from ...console import ConsoleRGB
+from ...console import RGBConsole
 
 from ..core import OutputWrapper
 
@@ -10,9 +10,10 @@ log = logging.getLogger(__name__)
 
 class TermOutputWrapper(OutputWrapper):
 
-    CONSOLE_CLS = ConsoleRGB
+    CONSOLE_CLS = RGBConsole
 
-    def __init__(self, term):
+    def __init__(self, term, colors_manager):
+        super().__init__(colors_manager)
         self.term = term
         self._prev_tiles = None
 

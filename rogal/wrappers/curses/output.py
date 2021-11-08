@@ -2,7 +2,7 @@ import curses
 import functools
 import logging
 
-from ...console import ConsoleIndexedColors, RootPanel
+from ...console import IndexedColorsConsole, RootPanel
 
 from ..core import OutputWrapper
 
@@ -12,15 +12,14 @@ log = logging.getLogger(__name__)
 
 class CursesRootPanel(RootPanel):
 
-    def __init__(self, window, console, palette):
-        super().__init__(console, palette)
+    def __init__(self, window, console, colors_manager):
+        super().__init__(console, colors_manager)
         self.window = window
 
-    @functools.lru_cache(maxsize=None)
     def get_color(self, color):
         if color is None:
             return None
-        return self.palette.get(color)
+        return self.colors_manager.get(color)
 
 
 class ColorPairsManager:
@@ -37,6 +36,7 @@ class ColorPairsManager:
         curses.init_pair(next_pair_num, color_pair[0], color_pair[1])
         self.color_pairs[color_pair] = next_pair_num
 
+    @functools.lru_cache(maxsize=None)
     def get_pair(self, fg, bg):
         color_pair = tuple(sorted([fg, bg]))
         pair_num = self.color_pairs.get(color_pair)
@@ -52,16 +52,17 @@ class ColorPairsManager:
 
 class CursesOutputWrapper(OutputWrapper):
 
-    CONSOLE_CLS = ConsoleIndexedColors
+    CONSOLE_CLS = IndexedColorsConsole
     ROOT_PANEL_CLS = CursesRootPanel
 
-    def __init__(self):
+    def __init__(self, colors_manager):
+        super().__init__(colors_manager)
         self.color_pairs = ColorPairsManager()
 
-    def create_panel(self, window, size, palette):
+    def create_panel(self, window, size):
         # TODO: Ensure terminal size is big enough!
         console = self.create_console(size)
-        return self.ROOT_PANEL_CLS(window, console, palette)
+        return self.ROOT_PANEL_CLS(window, console, self.colors_manager)
 
     def render(self, panel):
         prev_fg = -1

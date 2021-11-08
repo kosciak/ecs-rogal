@@ -37,46 +37,36 @@ class CursesWrapper(IOWrapper):
 
     def __init__(self,
         console_size,
-        palette,
+        colors_manager,
         *args, **kwargs,
     ):
-        super().__init__(console_size=console_size, palette=palette, *args, **kwargs)
-        self._indexed_palette = None
+        super().__init__(console_size=console_size, colors_manager=colors_manager, *args, **kwargs)
         self._screen = None
         self.__prev_escdelay = None
 
-    def initialize_palette(self):
+    def get_index_palette(self, palette):
         self.initialize()
         max_colors = curses.COLORS
         can_change_color = curses.can_change_color()
         rgb_factor = 1000 / 255
-        palette = self._palette.invert()
-        if self._palette.fg in self._palette.colors:
-            palette.fg = self._palette.colors.index(self._palette.fg)
+        indexed_palette = palette.invert() # TODO: Why? Just to copy?
+        if palette.fg in palette.colors:
+            indexed_palette.fg = palette.colors.index(palette.fg)
         else:
-            palette.fg = -1
-        if self._palette.bg in self._palette.colors:
-            palette.bg = self._palette.colors.index(self._palette.bg)
+            indexed_palette.fg = -1
+        if palette.bg in palette.colors:
+            indexed_palette.bg = palette.colors.index(palette.bg)
         else:
-            palette.bg = -1
-        for i, color in enumerate(palette.colors):
+            indexed_palette.bg = -1
+        for i, color in enumerate(indexed_palette.colors):
             if can_change_color and i < max_colors:
                 rgb = color.to_rgb()
                 curses.init_color(i, round(rgb.r*rgb_factor), round(rgb.g*rgb_factor), round(rgb.b*rgb_factor))
-            palette.colors[i] = i
-        return palette
+            indexed_palette.colors[i] = i
+        return indexed_palette
 
-    @property
-    def palette(self):
-        if self._indexed_palette is None:
-            self._indexed_palette = self.initialize_palette()
-        return self._indexed_palette
-
-    @palette.setter
-    def palette(self, palette):
-        # TODO: Some event on palette change forcing everything to redraw?
-        self._palette = palette
-        self._indexed_palette = None
+    def set_palette(self, palette):
+        self.colors_manager.palette = self.get_index_palette(palette)
 
     @property
     def is_initialized(self):
@@ -165,8 +155,9 @@ class CursesWrapper(IOWrapper):
 
         self._screen = self.initialize_screen()
 
+        self.set_palette(self.colors_manager.palette)
         self._input = CursesInputWrapper(self.screen)
-        self._output = CursesOutputWrapper()
+        self._output = CursesOutputWrapper(self.colors_manager)
 
         self.hide_cursor()
         # dump_capabilities(self._screen)
@@ -186,7 +177,7 @@ class CursesWrapper(IOWrapper):
         window = self.initialize_window(
             curses.newwin(size.height, size.width)
         )
-        return self._output.create_panel(window, size, self.palette)
+        return self._output.create_panel(window, size)
 
     def get_size(self):
         return self.screen.getmaxyx()

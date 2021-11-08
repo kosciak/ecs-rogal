@@ -155,14 +155,14 @@ class Console:
             yield y, x, *self.encode_tile_data(tile, encode_ch)
 
 
-class ConsoleRGB(Console):
+class RGBConsole(Console):
 
     TILES_DTYPE = dtypes.CONSOLE_RGB_DT
     DEFAULT_FG = RGB(255, 255, 255).rgb
     DEFAULT_BG = RGB(0, 0, 0).rgb
 
 
-class ConsoleIndexedColors(Console):
+class IndexedColorsConsole(Console):
 
     TILES_DTYPE = dtypes.TILES_INDEXED_COLORS_DT
     DEFAULT_FG = -1
@@ -347,22 +347,21 @@ class Panel(Rectangular, TilesGrid):
 
 class RootPanel(Panel):
 
-    def __init__(self, console, palette):
+    def __init__(self, console, colors_manager):
         super().__init__(self, Position.ZERO, Size(console.width, console.height))
         self.console = console
         # TODO: This shouldn't be here...
         #       OR... maybe it should? Swapping palette in single place instead of
         #       recalculating all colors used? Maybe store palette in ecs.resources?
-        self.palette = palette
-        self.clear()
+        self.colors_manager = colors_manager
 
     def get_fg_bg(self, colors):
         fg = self.get_color(colors and colors.fg)
         if fg is None:
-            fg = self.get_color(self.palette.fg)
+            fg = self.get_color(self.colors_manager.palette.fg)
         bg = self.get_color(colors and colors.bg)
         if bg is None:
-            bg = self.get_color(self.palette.bg)
+            bg = self.get_color(self.colors_manager.palette.bg)
         return fg, bg
 
     def _empty_tile(self, colors):
@@ -372,7 +371,6 @@ class RootPanel(Panel):
     def create_panel(self, position, size):
         return Panel(self, position, size)
 
-    @functools.lru_cache(maxsize=None)
     def get_color(self, color):
         if color is None:
             return None
@@ -384,7 +382,7 @@ class RootPanel(Panel):
             else:
                 return color[:3]
         # NOTE: logs.DEFAULT_LEVEL_COLORS use numbers as colors!
-        return self.palette.get(color).rgb
+        return self.colors_manager.get(color).rgb
 
     def clear(self, colors=None, *args, **kwargs):
         fg, bg = self.get_fg_bg(colors)
