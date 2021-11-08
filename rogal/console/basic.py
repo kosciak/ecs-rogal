@@ -186,8 +186,8 @@ class ProgressBar(toolkit.Renderer, toolkit.UIElement):
 
     EMPTY_CHAR = ' '
 
-    def __init__(self, value, colors, full, empty=EMPTY_CHAR, parts=None, width=None, *, align=None):
-        super().__init__(width=width, height=1, align=align)
+    def __init__(self, value, colors, full, empty=EMPTY_CHAR, parts=None, width=None, height=1, *, align=None):
+        super().__init__(width=width, height=height, align=align)
         self.colors = colors
         self.value = value # float value from 0.0 to 1.0
         self.full = full
@@ -217,6 +217,8 @@ class ProgressBar(toolkit.Renderer, toolkit.UIElement):
 
         empty_num = panel.width - len(txt)
         txt += self.empty * empty_num
+        if self.height > 1:
+            txt = '\n'.join([txt, ]*self.height)
 
         panel.print(txt, Position.ZERO, colors=self.colors)
 
@@ -235,7 +237,6 @@ class ProgressBarAnimatedDemo(toolkit.Animated, ProgressBar):
     def render(self, panel, timestamp):
         frame_num = self.get_frame_num(timestamp)
         self.value = 1. - (frame_num+1)/self.frames_num
-        # self.value = frame_num/100
         super().render(panel, timestamp)
 
 
