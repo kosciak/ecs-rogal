@@ -17,6 +17,7 @@ class ColorPalette:
         if key is None:
             return None
         if isinstance(key, str) and self.color_names:
+            # NOTE: key.upper() to make color palette keys case insensitive
             key = self.color_names.get(key.upper())
         return self.colors[key]
 
