@@ -1,6 +1,7 @@
 import logging
 
-from ...console import EMPTY_TILE, Align, RootPanel
+from ...console.core import EMPTY_TILE, Align
+from ...console.panels import RootPanel
 
 from ..core import OutputWrapper
 

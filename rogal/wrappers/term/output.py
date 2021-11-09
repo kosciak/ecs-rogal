@@ -1,6 +1,6 @@
 import logging
 
-from ...console import RGBConsole
+from ...console.consoles import RGBConsole
 
 from ..core import OutputWrapper
 

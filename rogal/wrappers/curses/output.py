@@ -2,7 +2,8 @@ import curses
 import functools
 import logging
 
-from ...console import IndexedColorsConsole, RootPanel
+from ...console.consoles import IndexedColorsConsole
+from ...console.panels import RootPanel
 
 from ..core import OutputWrapper
 

@@ -1,6 +1,6 @@
 import collections
 
-from ..console import RootPanel
+from ..console.panels import RootPanel
 
 
 class InputWrapper:
