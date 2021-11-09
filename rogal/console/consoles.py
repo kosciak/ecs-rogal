@@ -4,7 +4,8 @@ from .. import dtypes
 
 from ..colors import RGB
 from ..geometry import Size
-from ..tiles import Glyph
+
+from .core import Glyph
 
 
 EMPTY_TILE = Glyph(' ')

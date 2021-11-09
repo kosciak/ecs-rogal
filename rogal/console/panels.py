@@ -2,7 +2,10 @@ from ..colors import Color
 from ..geometry import Position, Vector, Size, WithSizeMixin, Rectangular, split_rect
 from ..tiles import Glyph, Colors
 
-from .core import EMPTY_TILE, Align, Padding
+from .core import Glyph, Align, Padding
+
+
+EMPTY_TILE = Glyph(' ')
 
 
 def get_x(panel_width, width, align, padding=Padding.ZERO):

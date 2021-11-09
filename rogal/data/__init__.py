@@ -1,9 +1,9 @@
 from .core import Data
 from .loaders import DataLoader
 
-from ..tiles.data_parsers import parse_glyph, GlyphsSequenceParser, CharsetsParser
-from ..tiles_sources.data_parsers import TilesSourcesParser
 from ..colors.data_parsers import parse_color_list, parse_color_names, ColorPaletteParser
+from ..console.data_parsers import parse_glyph, GlyphsSequenceParser, CharsetsParser
+from ..tiles_sources.data_parsers import TilesSourcesParser
 
 
 Glyphs = Data(parse_glyph)
