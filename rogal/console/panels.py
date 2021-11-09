@@ -1,8 +1,7 @@
 from ..colors import Color
 from ..geometry import Position, Vector, Size, WithSizeMixin, Rectangular, split_rect
-from ..tiles import Glyph, Colors
 
-from .core import Glyph, Align, Padding
+from .core import Glyph, Colors, Align, Padding
 
 
 EMPTY_TILE = Glyph(' ')

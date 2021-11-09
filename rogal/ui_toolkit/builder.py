@@ -2,13 +2,13 @@ import string
 
 from ..data import Decorations
 from ..geometry import Size
-from ..tiles import Colors
 
 from ..events import handlers
 
 from .. import render
 
-from .core import Align, Padding
+from ..console.core import Align, Padding, Colors
+
 from . import basic
 from . import containers
 from . import decorations

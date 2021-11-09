@@ -5,7 +5,7 @@ from ..geometry import Position, Vector, Size
 from ..events import handlers
 
 from .core import Align, ZOrder
-from . import toolkit
+from . import core
 from . import basic
 from . import containers
 from . import decorations
@@ -253,7 +253,7 @@ class TextInput(MouseOperated, Widget, containers.Stack):
             pass
 
 
-class Button(Activable, MouseOperated, Widget, toolkit.PostProcessed, decorations.Framed):
+class Button(Activable, MouseOperated, Widget, core.PostProcessed, decorations.Framed):
 
     def __init__(self, value, callback, text, frame, *,
                  default_colors,
@@ -301,7 +301,7 @@ class Button(Activable, MouseOperated, Widget, toolkit.PostProcessed, decoration
         self.redraw()
 
 
-class ListItem(Activable, MouseOperated, WithHotkey, Widget, toolkit.PostProcessed, containers.Row):
+class ListItem(Activable, MouseOperated, WithHotkey, Widget, core.PostProcessed, containers.Row):
 
     def __init__(self, ecs, key_binding, callback, value, index, item, *,
                  default_colors,
@@ -451,7 +451,7 @@ class Window(Widget, containers.Stack):
         self.content.extend(widgets)
 
 
-class ModalWindow(Window, toolkit.UIElement):
+class ModalWindow(Window, core.UIElement):
 
     DEFAULT_Z_ORDER = ZOrder.MODAL
 

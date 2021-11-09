@@ -6,8 +6,6 @@ from .. import components
 from ..ecs import System
 from ..ecs.run_state import RunState
 
-from ..tiles import Colors
-
 from ..utils import perf
 
 

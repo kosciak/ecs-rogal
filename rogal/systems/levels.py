@@ -17,10 +17,10 @@ class LevelsSystem(System):
         RunState.PERFOM_ACTIONS,
     }
 
-    def __init__(self, ecs, level_generator):
+    def __init__(self, ecs):
         super().__init__(ecs)
         self.spatial = self.ecs.resources.spatial
-        self.level_generator = level_generator
+        self.level_generator = self.ecs.resources.level_generator
 
     def run(self):
         wants_to_change_level = self.ecs.manage(components.WantsToChangeLevel)

@@ -3,10 +3,15 @@ import time
 from ..collections .attrdict import DefaultAttrDict
 from ..geometry import Position, Size
 
-from .core import Align
+from ..console.core import Align
 
 
 """Console UI Toolkit core building blocks."""
+
+
+class ZOrder:
+    BASE = 1
+    MODAL = 100
 
 
 class UIElement:

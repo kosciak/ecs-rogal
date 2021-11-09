@@ -65,11 +65,6 @@ class HasColorsMixin:
         return self.colors and self.colors.bg
 
 
-class ZOrder:
-    BASE = 1
-    MODAL = 100
-
-
 class Align(IntFlag):
     # Horizontal alignment
     LEFT = 0    # tcod.LEFT

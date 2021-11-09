@@ -1,9 +1,9 @@
 from ..geometry import Position
 
-from . import toolkit
+from . import core
 
 
-class ClearPanel(toolkit.Renderer):
+class ClearPanel(core.Renderer):
 
     def __init__(self, colors, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -13,7 +13,7 @@ class ClearPanel(toolkit.Renderer):
         panel.clear(self.colors)
 
 
-class PaintPanel(toolkit.Renderer):
+class PaintPanel(core.Renderer):
 
     def __init__(self, colors, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -23,17 +23,17 @@ class PaintPanel(toolkit.Renderer):
         panel.paint(self.colors, Position.ZERO, panel.size)
 
 
-# TODO: FillPanel(toolkit.Renderer):
+# TODO: FillPanel(core.Renderer):
 
 
-class InvertColors(toolkit.Renderer):
+class InvertColors(core.Renderer):
 
     def render(self, panel, timestamp):
         panel.invert(Position.ZERO, panel.size)
 
 
 # TODO: RenderEffect?
-class Blinking(toolkit.Animated, toolkit.Renderer):
+class Blinking(core.Animated, core.Renderer):
 
     BLINK_RATE = 1200
 

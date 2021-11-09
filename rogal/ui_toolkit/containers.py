@@ -1,9 +1,9 @@
 from ..geometry import Position, Size
 
-from . import toolkit
+from . import core
 
 
-class Stack(toolkit.Container, toolkit.UIElement):
+class Stack(core.Container, core.UIElement):
 
     """Free form container where all children are stacked on top of each other.
 
@@ -32,7 +32,7 @@ def calc_sizes(available_size, sizes):
     return [size or default_size for size in sizes]
 
 
-class Row(toolkit.Container, toolkit.UIElement):
+class Row(core.Container, core.UIElement):
 
     """Horizontal container.
 
@@ -87,7 +87,7 @@ class Row(toolkit.Container, toolkit.UIElement):
 #     pass
 
 
-class List(toolkit.Container, toolkit.UIElement):
+class List(core.Container, core.UIElement):
 
     """Vertical container.
 
@@ -132,7 +132,7 @@ class List(toolkit.Container, toolkit.UIElement):
         return max(z_orders)
 
 
-class Split(toolkit.Container, toolkit.UIElement):
+class Split(core.Container, core.UIElement):
 
     """Container that renders elements on each side of splitted panel."""
 

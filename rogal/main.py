@@ -10,11 +10,11 @@ from .wrappers.term import TermWrapper
 from .data import register_data
 
 from .rng import rng, generate_seed
+
 from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerator, BSPLevelGenerator
 from .procgen.dungeons import StaticLevel
 
-from . import components
-from .console.manager import UIManager
+from .ui_toolkit.manager import UIManager
 from .colors.manager import ColorsManager
 from .data.loaders import DataLoader
 from .ecs import ECS
@@ -23,8 +23,6 @@ from .events.keys import KeyBindings
 from .tiles.tilesets import Tileset
 from .spatial_index import SpatialIndex
 from . import systems
-
-from . import render
 
 
 log = logging.getLogger(__name__)
@@ -95,7 +93,7 @@ def run(wrapper):
     ecs.resources.spawner = EntitiesSpawner(ecs, DataLoader(ENTITIES_DATA_FN))
 
     # Level generator
-    level_generator = LEVEL_GENERATOR_CLS(seed, ecs, LEVEL_SIZE)
+    ecs.resources.level_generator = LEVEL_GENERATOR_CLS(seed, ecs, LEVEL_SIZE)
 
     # Create player
     player = ecs.resources.spawner.create('actors.PLAYER')
@@ -142,8 +140,7 @@ def run(wrapper):
         systems.commands.QuitSystem(ecs),
 
         # Game related systems
-        # TODO: level_generator(s) should be in ecs.resources!
-        systems.levels.LevelsSystem(ecs, level_generator),
+        systems.levels.LevelsSystem(ecs),
 
         systems.actions.ActionsQueueSystem(ecs),
         systems.actions.TakeActionsSystem(ecs),

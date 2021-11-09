@@ -9,10 +9,11 @@ from .data import Bitmasks
 from .bitmask import bitmask_walls
 from . import components
 from .geometry import Position, WithPositionMixin, Size, Rectangle
-from .tiles import RenderOrder, Colors, Tile
+from .console.core import Colors
+from .tiles import RenderOrder, Tile
 from . import terrain
 
-from .console import toolkit
+from .ui_toolkit import core
 
 from .utils import perf
 
@@ -32,7 +33,7 @@ SCROLLABLE_CAMERA = False
 SHOW_BOUNDARIES = True
 
 
-class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
+class Camera(WithPositionMixin, core.Renderer, core.UIElement):
 
     def __init__(self, ecs,
                  scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
@@ -275,7 +276,7 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
             self.draw_entities(panel, location.level_id, coverage, revealed, visible)
 
 
-class MessageLog(toolkit.Renderer, toolkit.UIElement):
+class MessageLog(core.Renderer, core.UIElement):
 
     def render(self, panel, timestamp):
         """Render logging records."""

@@ -1,12 +1,12 @@
 from ..geometry import Position, Size
 
-from . import toolkit
+from . import core
 
 
 """UIElements that wrap other UI elements and change their look."""
 
 
-class Padded(toolkit.UIElement):
+class Padded(core.UIElement):
 
     def __init__(self, content, padding, **kwargs):
         super().__init__(align=content.align, **kwargs)
@@ -41,7 +41,7 @@ class Padded(toolkit.UIElement):
         return super().layout(manager, element, panel, z_order or self.default_z_order)
 
 
-class Framed(toolkit.UIElement):
+class Framed(core.UIElement):
 
     """Frame with element rendered inside."""
 

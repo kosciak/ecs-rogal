@@ -1,16 +1,15 @@
 from ..geometry import Position, Size
-from ..tiles import Glyph
 
-from .core import Align
+from ..console.core import Align, Glyph
 
-from . import toolkit
+from . import core
 from . import renderers
 
 
 """Most basic UI elements - building blocks for more complicated ones."""
 
 
-class TextRenderer(toolkit.Renderer):
+class TextRenderer(core.Renderer):
 
     def get_txt_size(self, txt):
         lines = txt.splitlines() or ['', ]
@@ -29,7 +28,7 @@ class TextRenderer(toolkit.Renderer):
         self.render_txt(panel, self.txt, self.colors)
 
 
-class Text(TextRenderer, toolkit.UIElement):
+class Text(TextRenderer, core.UIElement):
 
     """Text widget and renderer."""
 
@@ -46,7 +45,7 @@ class Text(TextRenderer, toolkit.UIElement):
         return self.txt_size.height
 
 
-class Frame(toolkit.Renderer, toolkit.UIElement):
+class Frame(core.Renderer, core.UIElement):
 
     """Frame decorations."""
 
@@ -130,7 +129,7 @@ class Frame(toolkit.Renderer, toolkit.UIElement):
         return any(self.top, self.bottom, self.left, self.right)
 
 
-class Cursor(toolkit.Renderer, toolkit.UIElement):
+class Cursor(core.Renderer, core.UIElement):
 
     def __init__(self, *, glyph=None, colors=None, position=None, blinking=None):
         super().__init__()
@@ -152,7 +151,7 @@ class Cursor(toolkit.Renderer, toolkit.UIElement):
             panel.invert(self.position)
 
 
-class Spinner(toolkit.Animated, TextRenderer, toolkit.UIElement):
+class Spinner(core.Animated, TextRenderer, core.UIElement):
 
     DEFAULT_FRAME_DURATION = 100
 
@@ -184,7 +183,7 @@ class Spinner(toolkit.Animated, TextRenderer, toolkit.UIElement):
         self.render_txt(panel, frame, self.colors)
 
 
-class ProgressBar(toolkit.Renderer, toolkit.UIElement):
+class ProgressBar(core.Renderer, core.UIElement):
 
     EMPTY_CHAR = ' '
 
@@ -192,6 +191,7 @@ class ProgressBar(toolkit.Renderer, toolkit.UIElement):
         super().__init__(width=width, height=height, align=align)
         self.colors = colors
         self.value = value # float value from 0.0 to 1.0
+        # TODO: just pass parts(? rename it...) empty = parts[0], full=parts[-1]
         self.full = full
         self.empty = empty
         self.parts_values = self.get_parts_values(parts)
@@ -225,7 +225,7 @@ class ProgressBar(toolkit.Renderer, toolkit.UIElement):
         panel.print(txt, Position.ZERO, colors=self.colors)
 
 
-class ProgressBarAnimatedDemo(toolkit.Animated, ProgressBar):
+class ProgressBarAnimatedDemo(core.Animated, ProgressBar):
 
     def __init__(self, duration=None, frame_duration=None, *args, **kwargs):
         super().__init__(
@@ -242,7 +242,7 @@ class ProgressBarAnimatedDemo(toolkit.Animated, ProgressBar):
         super().render(panel, timestamp)
 
 
-class Separator(toolkit.Renderer, toolkit.UIElement):
+class Separator(core.Renderer, core.UIElement):
 
     def __init__(self, separator, start=None, end=None, colors=None, width=None, height=None, align=None):
         super().__init__(width=width, height=height, align=align)
