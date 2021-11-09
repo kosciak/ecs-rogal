@@ -120,7 +120,7 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
         for position in boundaries:
             tile = self.tileset.get('BOUNDARY').visible
             render_position = position.offset(self.position)
-            panel.draw(tile, render_position)
+            panel.draw(tile,glyph, tile.colors, render_position)
 
     def draw_terrain_tile(self,
         panel,
@@ -133,7 +133,7 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
             tile = renderable.tile_visible
             if ch is not None:
                 tile = Tile.create(ch, tile.fg, tile.bg)
-            panel.mask(tile, mask, mask_offset)
+            panel.mask(tile.glyph, tile.colors, mask, mask_offset)
 
         # Revealed but not visible
         mask = terrain_mask & revealed
@@ -141,7 +141,7 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
             tile = renderable.tile_revealed
             if ch is not None:
                 tile = Tile.create(ch, tile.fg, tile.bg)
-            panel.mask(tile, mask, mask_offset)
+            panel.mask(tile.glyph, tile.colors, mask, mask_offset)
 
     def draw_bitmasked_terrain_tile(self,
         panel,
@@ -225,7 +225,7 @@ class Camera(WithPositionMixin, toolkit.Renderer, toolkit.UIElement):
                 if not tile.ch:
                     panel.paint(tile.colors, render_position)
                 else:
-                    panel.draw(tile, render_position)
+                    panel.draw(tile.glyph, tile.colors, render_position)
 
     def get_seen(self, actor, location):
         level_memories = self.ecs.manage(components.LevelMemory)

@@ -24,6 +24,8 @@ class Glyph(int):
     __INSTANCES = {}
 
     def __new__(cls, code_point):
+        if code_point is None:
+            return None
         if isinstance(code_point, Glyph):
             return code_point
         if isinstance(code_point, Tile):

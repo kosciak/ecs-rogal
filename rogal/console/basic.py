@@ -1,5 +1,5 @@
 from ..geometry import Position, Size
-from ..tiles import Tile
+from ..tiles import Glyph
 
 from .core import Align
 
@@ -53,6 +53,7 @@ class Frame(toolkit.Renderer, toolkit.UIElement):
     __slots__ = (
         'top', 'bottom', 'left', 'right',
         '_top_left', '_top_right', '_bottom_left', '_bottom_right',
+        'colors',
         'inner_offset', 'size',
     )
 
@@ -64,14 +65,15 @@ class Frame(toolkit.Renderer, toolkit.UIElement):
         *, colors=None,
     ):
         super().__init__()
-        self.top = Tile.create(top, fg=colors and colors.fg, bg=colors and colors.bg)
-        self.bottom = Tile.create(bottom, fg=colors and colors.fg, bg=colors and colors.bg)
-        self.left = Tile.create(left, fg=colors and colors.fg, bg=colors and colors.bg)
-        self.right = Tile.create(right, fg=colors and colors.fg, bg=colors and colors.bg)
-        self._top_left = Tile.create(top_left, fg=colors and colors.fg, bg=colors and colors.bg)
-        self._top_right = Tile.create(top_right, fg=colors and colors.fg, bg=colors and colors.bg)
-        self._bottom_left = Tile.create(bottom_left, fg=colors and colors.fg, bg=colors and colors.bg)
-        self._bottom_right = Tile.create(bottom_right, fg=colors and colors.fg, bg=colors and colors.bg)
+        self.top = Glyph(top)
+        self.bottom = Glyph(bottom)
+        self.left = Glyph(left)
+        self.right = Glyph(right)
+        self._top_left = Glyph(top_left)
+        self._top_right = Glyph(top_right)
+        self._bottom_left = Glyph(bottom_left)
+        self._bottom_right = Glyph(bottom_right)
+        self.colors = colors
 
         self.inner_offset = Position(
             self.left and 1 or 0,
@@ -114,15 +116,15 @@ class Frame(toolkit.Renderer, toolkit.UIElement):
         )
 
     def render(self, panel, timestamp):
-        panel.draw(self.top, Position(1, 0), Size(panel.width-2, 1))
-        panel.draw(self.bottom, Position(1, panel.height-1), Size(panel.width-2, 1))
-        panel.draw(self.left, Position(0, 1), Size(1, panel.height-2))
-        panel.draw(self.right, Position(panel.width-1, 1), Size(1, panel.height-2))
+        panel.draw(self.top, self.colors, Position(1, 0), Size(panel.width-2, 1))
+        panel.draw(self.bottom, self.colors, Position(1, panel.height-1), Size(panel.width-2, 1))
+        panel.draw(self.left, self.colors, Position(0, 1), Size(1, panel.height-2))
+        panel.draw(self.right, self.colors, Position(panel.width-1, 1), Size(1, panel.height-2))
 
-        panel.draw(self.top_left, Position(0, 0))
-        panel.draw(self.top_right, Position(panel.width-1, 0))
-        panel.draw(self.bottom_left, Position(0, panel.height-1))
-        panel.draw(self.bottom_right, Position(panel.width-1, panel.height-1))
+        panel.draw(self.top_left, self.colors, Position(0, 0))
+        panel.draw(self.top_right, self.colors, Position(panel.width-1, 0))
+        panel.draw(self.bottom_left, self.colors, Position(0, panel.height-1))
+        panel.draw(self.bottom_right, self.colors, Position(panel.width-1, panel.height-1))
 
     def __nonzero__(self):
         return any(self.top, self.bottom, self.left, self.right)
@@ -244,14 +246,15 @@ class Separator(toolkit.Renderer, toolkit.UIElement):
 
     def __init__(self, separator, start=None, end=None, colors=None, width=None, height=None, align=None):
         super().__init__(width=width, height=height, align=align)
-        self.separator = Tile.create(separator, fg=colors and colors.fg, bg=colors and colors.bg)
-        self.start = Tile.create(start, fg=colors and colors.fg, bg=colors and colors.bg)
-        self.end = Tile.create(end, fg=colors and colors.fg, bg=colors and colors.bg)
+        self.separator = Glyph(separator)
+        self.start = Glyph(start)
+        self.end = Glyph(end)
+        self.colors = colors
 
     def render(self, panel, timestamp):
         panel.fill(self.separator)
         if self.start:
-            panel.draw(self.start, Position.ZERO)
+            panel.draw(self.start, self.colors, Position.ZERO)
 
 
 class HorizontalSeparator(Separator):
@@ -272,7 +275,7 @@ class HorizontalSeparator(Separator):
     def render(self, panel, timestamp):
         super().render(panel, timestamp)
         if self.end:
-            panel.draw(self.end, Position(panel.width-1, 0))
+            panel.draw(self.end, self.colors, Position(panel.width-1, 0))
 
 
 class VerticalSeparator(Separator):
@@ -293,5 +296,5 @@ class VerticalSeparator(Separator):
     def render(self, panel, timestamp):
         super().render(panel, timestamp)
         if self.end:
-            panel.draw(self.end, Position(0, panel.height-1))
+            panel.draw(self.end, self.colors, Position(0, panel.height-1))
 

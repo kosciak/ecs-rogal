@@ -1,13 +1,9 @@
 from enum import IntFlag
 import collections
-import functools
 
-import numpy as np
-
-from .. import dtypes
-from ..geometry import Position, Size, WithSizeMixin, Rectangular, split_rect
-from ..colors import RGB, Color
-from ..tiles import Tile, Colors
+from ..colors import Color
+from ..geometry import Position, Vector, Size, WithSizeMixin, Rectangular, split_rect
+from ..tiles import Glyph, Colors
 
 
 """Basic UI elements / building blocks, working as abstraction layer for tcod.Console.
@@ -17,7 +13,7 @@ This should make working on UI much easier, and maybe allow to use other cli/gra
 """
 
 
-DEFAULT_CH = ord(' ')
+EMPTY_TILE = Glyph(' ')
 
 
 class ZOrder:
@@ -102,91 +98,21 @@ def get_y(panel_height, height, align, padding=Padding.ZERO):
     return y
 
 
-class Console:
-
-    TILES_DTYPE = None
-    DEFAULT_FG = None
-    DEFAULT_BG = None
-
-    def __init__(self, size):
-        size = Size(size.height, size.width)
-        self.tiles = np.zeros(size, dtype=self.TILES_DTYPE, order="C")
-        self.tiles[...] = (DEFAULT_CH, self.DEFAULT_FG, self.DEFAULT_BG)
-
-    @property
-    def width(self):
-        return self.tiles.shape[1]
-
-    @property
-    def height(self):
-        return self.tiles.shape[0]
-
-    @property
-    def ch(self):
-        return self.tiles['ch']
-
-    @property
-    def fg(self):
-        return self.tiles['fg']
-
-    @property
-    def bg(self):
-        return self.tiles['bg']
-
-    def encode_tile_data(self, tile, encode_ch):
-        return encode_ch(tile['ch']), tile['fg'], tile['bg']
-
-    def tiles_gen(self, encode_ch=int):
-        tiles = np.nditer(self.tiles, flags=['refs_ok', 'multi_index', ])
-        for tile in tiles:
-            y, x = tiles.multi_index
-            yield x, y, *self.encode_tile_data(tile, encode_ch)
-
-    def tiles_diff_gen(self, other, encode_ch=int):
-        if other is None or not self.tiles.shape == other.shape:
-            yield from self.tiles_gen(encode_ch)
-            return
-
-        diff = self.tiles != other
-        # for x, y in np.nditer(diff.nonzero(), flags=['zerosize_ok', ]):
-        for x, y in np.transpose(diff.nonzero()):
-            tile = self.tiles[x, y]
-            # yield int(y), int(x), *self.encode_tile_data(tile, encode_ch)
-            yield y, x, *self.encode_tile_data(tile, encode_ch)
-
-
-class RGBConsole(Console):
-
-    TILES_DTYPE = dtypes.CONSOLE_RGB_DT
-    DEFAULT_FG = RGB(255, 255, 255).rgb
-    DEFAULT_BG = RGB(0, 0, 0).rgb
-
-
-class IndexedColorsConsole(Console):
-
-    TILES_DTYPE = dtypes.TILES_INDEXED_COLORS_DT
-    DEFAULT_FG = -1
-    DEFAULT_BG = -1
-
-    def encode_tile_data(self, tile, encode_ch):
-        return encode_ch(tile['ch']), int(tile['fg']), int(tile['bg'])
-
-
 class TilesGrid(WithSizeMixin):
 
     """Representation of rectangular Tiles based drawing area."""
 
     __slots__ = ()
 
-    def _empty_tile(self, colors):
+    def get_fg_bg(self, colors):
         fg = (colors and colors.fg)# or DEFAULT_FG
         bg = (colors and colors.bg)# or DEFAULT_BG
-        return Tile.create(DEFAULT_CH, fg=fg, bg=bg)
+        return Colors(fg=fg, bg=bg)
 
     def clear(self, colors=None, *args, **kwargs):
         """Clear whole area with default values."""
-        tile = self._empty_tile(colors)
-        return self.fill(tile)
+        colors = self.get_fg_bg(colors)
+        return self.fill(EMPTY_TILE, colors)
 
     def print(self, text, position, colors=None, align=None, *args, **kwargs):
         """Print text on given Position.
@@ -196,7 +122,7 @@ class TilesGrid(WithSizeMixin):
         """
         raise NotImplementedError()
 
-    def draw(self, tile, position, size=None, *args, **kwargs):
+    def draw(self, glyph, colors, position, size=None, *args, **kwargs):
         """Draw Tile on given position.
 
         If size provided draw rectangle filled with this Tile.
@@ -204,9 +130,13 @@ class TilesGrid(WithSizeMixin):
         """
         raise NotImplementedError()
 
-    def fill(self, tile, *args, **kwargs):
+    def fill(self, glyph, colors, *args, **kwargs):
         """Fill whole area with given Tile."""
-        return self.draw(tile, Position.ZERO, size=self.size, *args, **kwargs)
+        return self.draw(glyph, colors, Position.ZERO, size=self.size, *args, **kwargs)
+
+    def mask(self, glyph, colors, mask, position=None, *args, **kwargs):
+        """Draw Tile on positions where mask is True, startig on position."""
+        raise NotImplementedError()
 
     def paint(self, colors, position, size=None, *args, **kwargs):
         """Paint Colors on given position.
@@ -222,10 +152,6 @@ class TilesGrid(WithSizeMixin):
         If size provided invert color on rectangle.
 
         """
-        raise NotImplementedError()
-
-    def mask(self, tile, mask, position=None, *args, **kwargs):
-        """Draw Tile on positions where mask is True, startig on position."""
         raise NotImplementedError()
 
     def image(self, image, position=None, *args, **kwargs):
@@ -299,15 +225,15 @@ class Panel(Rectangular, TilesGrid):
         align = (align or Align.LEFT) & (Align.LEFT|Align.RIGHT|Align.CENTER)
         return self.root.print(text, self.offset(position), colors=colors, align=align, *args, **kwargs)
 
-    def draw(self, tile, position, size=None, *args, **kwargs):
+    def draw(self, glyph, colors, position, size=None, *args, **kwargs):
         """Draw Tile on given position.
 
         If size provided draw rectangle filled with this Tile.
 
         """
-        if not tile:
-            return
-        return self.root.draw(tile, self.offset(position), size=size, *args, **kwargs)
+        if not glyph:
+            return self.paint(colors, position, size=size, *args, **kwargs)
+        return self.root.draw(glyph, colors, self.offset(position), size=size, *args, **kwargs)
 
     def paint(self, colors, position, size=None, *args, **kwargs):
         """Paint Colors on given position.
@@ -325,10 +251,10 @@ class Panel(Rectangular, TilesGrid):
         """
         return self.root.invert(self.offset(position), size=size, *args, **kwargs)
 
-    def mask(self, tile, mask, position=None, *args, **kwargs):
+    def mask(self, glyph, colors, mask, position=None, *args, **kwargs):
         """Draw Tile on positions where mask is True, startig on position."""
         position = position or Position.ZERO
-        return self.root.mask(tile, mask, self.offset(position), *args, **kwargs)
+        return self.root.mask(glyph, colors, mask, self.offset(position), *args, **kwargs)
 
     def image(self, image, position=None, *args, **kwargs):
         """Draw image on given position."""
@@ -362,11 +288,7 @@ class RootPanel(Panel):
         bg = self.get_color(colors and colors.bg)
         if bg is None:
             bg = self.get_color(self.colors_manager.palette.bg)
-        return fg, bg
-
-    def _empty_tile(self, colors):
-        fg, bg = self.get_fg_bg(colors)
-        return Tile.create(DEFAULT_CH, fg=fg, bg=bg)
+        return Colors(fg, bg)
 
     def create_panel(self, position, size):
         return Panel(self, position, size)
@@ -385,8 +307,8 @@ class RootPanel(Panel):
         return self.colors_manager.get(color).rgb
 
     def clear(self, colors=None, *args, **kwargs):
-        fg, bg = self.get_fg_bg(colors)
-        self.console.tiles[...] = (DEFAULT_CH, fg, bg)
+        colors = self.get_fg_bg(colors)
+        self.console.tiles[...] = (EMPTY_TILE, colors.fg, colors.bg)
 
     def _draw(self, ch, colors, position, size=None, *args, **kwargs):
         fg = self.get_color(colors and colors.fg)
@@ -437,9 +359,10 @@ class RootPanel(Panel):
     def print(self, text, position, colors=None, align=None, *args, **kwargs):
         for line in text.splitlines():
             self._print_line(line, position, colors=colors, align=align, *args, **kwargs)
+            position = position.move(Vector(0, 1))
 
-    def draw(self, tile, position, size=None, *args, **kwargs):
-        self._draw(tile.ch, tile.colors, position, size=size, *args, **kwargs)
+    def draw(self, glyph, colors, position, size=None, *args, **kwargs):
+        self._draw(glyph, colors, position, size=size, *args, **kwargs)
 
     def paint(self, colors, position, size=None, *args, **kwargs):
         self._draw(None, colors, position, size=size, *args, **kwargs)
@@ -459,15 +382,15 @@ class RootPanel(Panel):
             self.console.fg[i, j] = bg
             self.console.bg[i, j] = fg
 
-    def mask(self, tile, mask, position=None):
+    def mask(self, glyph, colors, mask, position=None):
         position = position or Position.ZERO
-        fg = self.get_color(tile.fg)
-        bg = self.get_color(tile.bg)
+        fg = self.get_color(colors.fg)
+        bg = self.get_color(colors.bg)
         # NOTE: console is in order="C", so we need to do some transpositions
         j, i = position
         mask = mask.transpose()
         width, height = mask.shape
-        self.console.ch[i:i+width, j:j+height][mask] = tile.ch
+        self.console.ch[i:i+width, j:j+height][mask] = glyph
         if fg:
             self.console.fg[i:i+width, j:j+height][mask] = fg
         if bg:

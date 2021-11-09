@@ -1,6 +1,6 @@
 import logging
 
-from ...console import DEFAULT_CH, Align, RootPanel
+from ...console import EMPTY_TILE, Align, RootPanel
 
 from ..core import OutputWrapper
 
@@ -26,16 +26,16 @@ class TcodRootPanel(RootPanel):
         return self._print(
             position.x, position.y, text, fg=fg, bg=bg, alignment=align, *args, **kwargs)
 
-    def draw(self, tile, position, size=None, *args, **kwargs):
-        fg = self.get_color(tile.fg)
-        bg = self.get_color(tile.bg)
+    def draw(self, glyph, colors, position, size=None, *args, **kwargs):
+        fg = self.get_color(colors and colors.fg)
+        bg = self.get_color(colors and colors.bg)
         if size:
             return self._draw_rect(
                 position.x, position.y, size.width, size.height,
-                ch=tile.ch, fg=fg, bg=bg, *args, **kwargs)
+                ch=glyph, fg=fg, bg=bg, *args, **kwargs)
         else:
             return self._print(
-                position.x, position.y, tile.char, fg=fg, bg=bg, *args, **kwargs)
+                position.x, position.y, glyph.char, fg=fg, bg=bg, *args, **kwargs)
 
     def image(self, image, position, *args, **kwargs):
         return self._draw_semigraphics(
@@ -132,11 +132,11 @@ class TcodRootPanel(RootPanel):
 
     def _clear(self, ch=None, fg=None, bg=None, *args, **kwargs):
         """tcod.Console.clear(
-            ch: int = 32,
+            Tilech: int = 32,
             fg: Tuple[int, int, int] = Ellipsis,
             bg: Tuple[int, int, int] = Ellipsis)
         """
-        ch = ch or DEFAULT_CH
+        ch = ch or EMPTY_TILE
         return self.console.clear(ch, fg=fg, bg=bg, *args, **kwargs)
 
     # blit(

@@ -1,1 +1,2 @@
-from .core import DEFAULT_CH, Align, RGBConsole, IndexedColorsConsole, RootPanel
+from .core import EMPTY_TILE, Align, RootPanel
+from .console import RGBConsole, IndexedColorsConsole
