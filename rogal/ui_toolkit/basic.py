@@ -185,36 +185,36 @@ class Spinner(core.Animated, TextRenderer, core.UIElement):
 
 class ProgressBar(core.Renderer, core.UIElement):
 
-    EMPTY_CHAR = ' '
-
-    def __init__(self, value, colors, full, empty=EMPTY_CHAR, parts=None, width=None, height=1, *, align=None):
+    def __init__(self, value, segments, colors, width=None, height=1, *, align=None):
         super().__init__(width=width, height=height, align=align)
         self.colors = colors
         self.value = value # float value from 0.0 to 1.0
-        # TODO: just pass parts(? rename it...) empty = parts[0], full=parts[-1]
-        self.full = full
-        self.empty = empty
-        self.parts_values = self.get_parts_values(parts)
+        self.full = segments[-1]
+        self.fractions = self.get_fractions(segments[1:-1])
+        self.empty = segments[0]
 
-    def get_parts_values(self, parts):
-        parts = parts or []
-        part_value = 1. / (len(parts)+1)
-        parts_values = [(i*part_value, part) for i, part in enumerate(parts, start=1)]
-        parts_values.reverse()
-        return parts_values
+    def get_fractions(self, segments):
+        segments = segments or []
+        fraction_value = 1. / (len(segments)+1)
+        fractions = [
+            (i*fraction_value, segment)
+            for i, segment in enumerate(segments, start=1)
+        ]
+        fractions.reverse()
+        return fractions
 
     def render(self, panel, timestamp):
         width = panel.width * self.value
 
         fulls_num = int(width)
-        if not self.parts_values:
+        rest = width - fulls_num
+        if not self.fractions:
             fulls_num += round(rest)
         txt = self.full*fulls_num
 
-        rest = width - fulls_num
-        for value, part in self.parts_values:
+        for value, segment in self.fractions:
             if rest >= value:
-                txt += part
+                txt += segment
                 break
 
         empty_num = panel.width - len(txt)
