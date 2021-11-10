@@ -8,7 +8,8 @@ from . import logs
 from .data import Bitmasks
 from .bitmask import bitmask_walls
 from . import components
-from .geometry import Position, WithPositionMixin, Size, Rectangle
+from .geometry import Position, WithPositionMixin, Size
+from .geometry.rectangle import Rectangle
 from .console.core import Colors
 from .tiles import RenderOrder, Tile
 from . import terrain

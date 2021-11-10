@@ -1,5 +1,6 @@
 from ..colors import Color
-from ..geometry import Position, Vector, Size, WithSizeMixin, Rectangular, split_rect
+from ..geometry import Position, Vector, Size, WithSizeMixin
+from ..geometry.rectangle import Rectangular, split_rect
 
 from .core import Glyph, Colors, Align, Padding
 

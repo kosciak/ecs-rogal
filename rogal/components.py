@@ -7,7 +7,8 @@ from .ecs import Component
 from .ecs.components import Flag, IntFlag, Int, Counter, FloatComponent, String, EntityReference, EntitiesRefs
 from .ecs.components import component_type
 from . import flags
-from .geometry import Direction, Position, Size, Rectangular, WithPositionMixin
+from .geometry import Direction, Position, Size, WithPositionMixin
+from .geometry.rectangle import Rectangular
 from . import stats
 from .tiles import RenderOrder
 from . import terrain
@@ -276,6 +277,8 @@ class Viewshed(Component):
         return self._positions
 
 
+# TODO: Instead of storing bool array of revealed,
+#       copy part of level's terrain?
 class LevelMemory(Component):
     __slots__ = ('shared', 'revealed', )
     params = ('shared', )
@@ -336,6 +339,7 @@ WantsToRevealLevel = Flag('WantsToRevealLevel')
 WantsToRest = Flag('WantsToRest')
 
 
+# TODO: WantsToMove: to: Location, how: MovementType
 class WantsToMove(Component):
     __slots__ = ('vector', )
 
@@ -364,6 +368,7 @@ class WantsToMove(Component):
         return f'<{self.name}={getattr(self.vector, "name", self.vector)}>'
 
 
+# TODO: HasMoved: from: Location, how: ModeOfTransport/MovementType
 HasMoved = Flag('HasMoved')
 
 

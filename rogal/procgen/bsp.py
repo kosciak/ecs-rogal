@@ -1,7 +1,8 @@
 import logging
 
 from ..collections.tree import BinaryTree
-from ..geometry import Rectangular, Position, Size, split_rect
+from ..geometry import Position, Size
+from ..geometry.rectangle import Rectangular, split_rect
 
 from .core import Generator
 

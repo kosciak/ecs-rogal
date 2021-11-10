@@ -1,7 +1,8 @@
 import collections
 import logging
 
-from ..geometry import Rectangular, Position, Size, Rectangle
+from ..geometry import Position, Size
+from ..geometry.rectangle import Rectangular, Rectangle
 from ..rng import RNG
 
 

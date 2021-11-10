@@ -1,7 +1,8 @@
 import collections
 import logging
 
-from ..geometry import Position, Size, Rectangle, WithSizeMixin
+from ..geometry import Position, Size, WithSizeMixin
+from ..geometry.rectangle import Rectangle
 
 from .core import Generator, Digable
 from .bsp import BSPGenerator
