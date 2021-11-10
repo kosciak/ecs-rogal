@@ -189,15 +189,15 @@ class ProgressBar(core.Renderer, core.UIElement):
         super().__init__(width=width, height=height, align=align)
         self.colors = colors
         self.value = value # float value from 0.0 to 1.0
-        self.full = segments[-1]
+        self.full = str(segments[-1])
         self.fractions = self.get_fractions(segments[1:-1])
-        self.empty = segments[0]
+        self.empty = str(segments[0])
 
     def get_fractions(self, segments):
         segments = segments or []
         fraction_value = 1. / (len(segments)+1)
         fractions = [
-            (i*fraction_value, segment)
+            (i*fraction_value, str(segment))
             for i, segment in enumerate(segments, start=1)
         ]
         fractions.reverse()
@@ -238,7 +238,7 @@ class ProgressBarAnimatedDemo(core.Animated, ProgressBar):
 
     def render(self, panel, timestamp):
         frame_num = self.get_frame_num(timestamp)
-        self.value = 1. - (frame_num+1)/self.frames_num
+        self.value = 1. - (frame_num)/self.frames_num
         super().render(panel, timestamp)
 
 

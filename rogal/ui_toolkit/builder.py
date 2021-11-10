@@ -1,6 +1,6 @@
 import string
 
-from ..data import Decorations
+from ..data import Decorations, ProgressBars, Spinners
 from ..geometry import Size
 
 from ..events import handlers
@@ -209,12 +209,10 @@ class WidgetsBuilder:
             #         bg="WHITE",
             #     ),
             #     value=.75,
-            #     full='█',
-            #     parts='░▒▓',
-            #     # parts='▌',
+            #     segments=ProgressBars.BLOCKS_FADE_QUARTS,
             #     width=24,
-            #     height=3,
-            #     frame_duration=300,
+            #     # height=3,
+            #     frame_duration=150,
             #     # align=Align.TOP_CENTER,
             # ),
 
@@ -223,11 +221,10 @@ class WidgetsBuilder:
             #         fg="BRIGHT_BLUE",
             #         bg="BRIGHT_BLACK",
             #     ),
-            #     # frames='|/-\\',
-            #     # frames='▘▝▗▖',
-            #     frames=['[o  ]', '[ o ]', '[  o]', '[ o ]'],
+            #     # frames=['[o  ]', '[ o ]', '[  o]', '[ o ]'],
+            #     frames=Spinners.BLOCK_FADE,
             #     align=Align.TOP_RIGHT,
-            #     frame_duration=150,
+            #     frame_duration=200,
             # ),
 
             decorations.Padded(

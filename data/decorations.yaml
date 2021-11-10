@@ -37,18 +37,21 @@ DSLINE: [
     DSNW, DSNE, SW, SE,
 ]
 
-ASCII: ['|', '|', '=', '-', '.', '.', '`', "'"]
+ASCII: [
+  '|', '|', '=', '-',
+  '.', '.', '`', "'",
+]
 
-MINIMAL_SPACE: [' ', ' ']
+MINIMAL_SPACE: '  '
 
-MINIMAL_PIPE: ['|', '|']
-MINIMAL_SLASH: ['/', '/']
-MINIMAL_BACKSLASH: ['\', '\']
+MINIMAL_PIPE: '||'
+MINIMAL_SLASH: '//'
+MINIMAL_BACKSLASH: '\\'
 
-MINIMAL_BRACKETS_ROUND: ['(', ')']
-MINIMAL_BRACKETS_SQUARE: ['[', ']']
-MINIMAL_BRACKETS_ANGLE: ['<', '>']
-MINIMAL_BRACKETS_CURLY: ['<', '>']
+MINIMAL_BRACKETS_ROUND: '()'
+MINIMAL_BRACKETS_SQUARE: '[]'
+MINIMAL_BRACKETS_ANGLE: '<>'
+MINIMAL_BRACKETS_CURLY: '{}'
 
 MINIMAL_BLOCK1: [BLOCK1, BLOCK1]
 MINIMAL_BLOCK2: [BLOCK2, BLOCK2]

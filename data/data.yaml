@@ -15,6 +15,12 @@ bitmasks:
 decorations:
   - 'decorations.yaml'
 
+spinners:
+  - 'spinners.yaml'
+
+progress_bars:
+  - 'progress_bars.yaml'
+
 tiles_sources:
   - 'tiles_sources.yaml'
 

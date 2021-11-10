@@ -22,6 +22,14 @@ class GlyphsSequenceParser(GlyphsParser):
         return self.parse_glyphs_sequence(data)
 
 
+class FramesSequenceParser(GlyphsParser):
+
+    def __call__(self, data):
+        frames = [str(frame) for frame in self.parse_glyphs_sequence(data)]
+        return frames
+
+
+
 class CharsetsParser(GlyphsParser):
 
     def __call__(self, data):

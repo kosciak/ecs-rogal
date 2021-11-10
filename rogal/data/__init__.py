@@ -2,7 +2,7 @@ from .core import Data
 from .loaders import DataLoader
 
 from ..colors.data_parsers import parse_color_list, parse_color_names, ColorPaletteParser
-from ..console.data_parsers import parse_glyph, GlyphsSequenceParser, CharsetsParser
+from ..console.data_parsers import parse_glyph, GlyphsSequenceParser, FramesSequenceParser, CharsetsParser
 from ..tiles_sources.data_parsers import TilesSourcesParser
 
 
@@ -13,6 +13,10 @@ Charsets = Data(CharsetsParser(Glyphs))
 Bitmasks = Data(GlyphsSequenceParser(Glyphs))
 
 Decorations = Data(GlyphsSequenceParser(Glyphs))
+
+ProgressBars = Data(GlyphsSequenceParser(Glyphs))
+
+Spinners = Data(FramesSequenceParser(Glyphs))
 
 TilesSources = Data(TilesSourcesParser(Charsets))
 
@@ -28,6 +32,8 @@ DATA = {
     'Glyphs': Glyphs,
     'Bitmasks': Bitmasks,
     'Decorations': Decorations,
+    'ProgressBars': ProgressBars,
+    'Spinners': Spinners,
     'TilesSources': TilesSources,
     'ColorLists': ColorLists,
     'ColorNames': ColorNames,

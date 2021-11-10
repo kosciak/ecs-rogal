@@ -6,6 +6,8 @@
 NONE            : 0x0000
 EMPTY           : 0x0000
 
+SPACE           : 0x0020
+
 # Single line walls, T junctions, and cross
 HLINE           : 0x2500 # ─
 VLINE           : 0x2502 # │
