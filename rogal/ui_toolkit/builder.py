@@ -33,7 +33,7 @@ class WidgetsBuilder:
         )
 
         self.title_frame = basic.Frame(
-            *Decorations.MINIMAL_DSLINE,
+            *Decorations.HORIZONTAL_DSLINE,
             colors=None,
         )
         self.title_align = Align.TOP_CENTER

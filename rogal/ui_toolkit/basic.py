@@ -49,13 +49,6 @@ class Frame(core.Renderer, core.UIElement):
 
     """Frame decorations."""
 
-    __slots__ = (
-        'top', 'bottom', 'left', 'right',
-        '_top_left', '_top_right', '_bottom_left', '_bottom_right',
-        'colors',
-        'inner_offset', 'size',
-    )
-
     def __init__(self,
         left=None, right=None,
         top=None, bottom=None,
