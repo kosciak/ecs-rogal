@@ -7,7 +7,7 @@ from .wrappers.tcod import TcodWrapper
 from .wrappers.curses import CursesWrapper
 from .wrappers.term import TermWrapper
 
-from .data import register_data
+from .data import data_store
 
 from .rng import rng, generate_seed
 
@@ -33,7 +33,7 @@ ENTITIES_DATA_FN = 'entities.yaml'
 TILESET_DATA_FN = 'tiles.yaml'
 KEY_BINDINGS_DATA_FN = 'keys.yaml'
 
-register_data(data='data.yaml')
+data_store.register_source(data='data.yaml')
 
 CONSOLE_SIZE = Size(80, 48)
 #CONSOLE_SIZE = Size(80, 60)

@@ -1,5 +1,7 @@
 from ..collections.attrdict import AttrDict
 
+from ..data import data_store, parsers
+
 from .core import RGB, HSV, HEX
 from .palette import ColorPalette
 
@@ -27,10 +29,6 @@ def parse_color_names(data):
 
 class ColorPaletteParser:
 
-    def __init__(self, color_lists, color_names):
-        self.color_lists = color_lists
-        self.color_names = color_names
-
     def parse_color(self, data, colors, color_names):
         color = parse_color(data)
         if not color:
@@ -40,11 +38,11 @@ class ColorPaletteParser:
     def __call__(self, data):
         colors = []
         for name in data['colors']:
-            colors.extend(self.color_lists.get(name)[len(colors):])
+            colors.extend(parsers.parse_color_list(name)[len(colors):])
 
         color_names = AttrDict()
         for name in data['color_names']:
-            color_names.update(self.color_names.get(name) or {})
+            color_names.update(parsers.parse_color_names(name) or {})
 
         fg = self.parse_color(data['fg'], colors, color_names)
         bg = self.parse_color(data['bg'], colors, color_names)
@@ -56,4 +54,14 @@ class ColorPaletteParser:
             color_names=color_names,
             colors=colors,
         )
+
+
+data_store.register('color_lists', parse_color_list)
+data_store.register('color_names', parse_color_names)
+data_store.register('color_palettes', ColorPaletteParser())
+
+parsers.register('color', parse_color)
+parsers.register('color_list', data_store.color_lists.parse)
+parsers.register('color_names', data_store.color_names.parse)
+parsers.register('color_palette', data_store.color_palettes.parse)
 

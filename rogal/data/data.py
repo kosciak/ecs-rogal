@@ -1,62 +1,19 @@
-from .core import Data
-from .loaders import DataLoader
-
-from ..colors.data_parsers import parse_color_list, parse_color_names, ColorPaletteParser
-from ..console.data_parsers import parse_glyph, GlyphsSequenceParser, FramesSequenceParser, CharsetsParser
-from ..tiles_sources.data_parsers import TilesSourcesParser
+from . import data_store, parsers
 
 
-Glyphs = Data(parse_glyph)
+Glyphs = data_store.glyphs
 
-Charsets = Data(CharsetsParser(Glyphs))
+Charsets = data_store.charsets
 
-Bitmasks = Data(GlyphsSequenceParser(Glyphs))
+Bitmasks = data_store.register('bitmasks', parsers.parse_glyphs_sequence)
 
-Decorations = Data(GlyphsSequenceParser(Glyphs))
+Decorations = data_store.register('decorations', parsers.parse_glyphs_sequence)
 
-ProgressBars = Data(GlyphsSequenceParser(Glyphs))
+ProgressBars = data_store.register('progress_bars', parsers.parse_glyphs_sequence)
 
-Spinners = Data(FramesSequenceParser(Glyphs))
+Spinners = data_store.register('spinners', parsers.parse_frames_sequence)
 
-TilesSources = Data(TilesSourcesParser(Charsets))
+TilesSources = data_store.tiles_sources
 
-ColorLists = Data(parse_color_list)
-
-ColorNames = Data(parse_color_names)
-
-ColorPalettes = Data(ColorPaletteParser(ColorLists, ColorNames))
-
-
-DATA = {
-    'Charsets': Charsets,
-    'Glyphs': Glyphs,
-    'Bitmasks': Bitmasks,
-    'Decorations': Decorations,
-    'ProgressBars': ProgressBars,
-    'Spinners': Spinners,
-    'TilesSources': TilesSources,
-    'ColorLists': ColorLists,
-    'ColorNames': ColorNames,
-    'ColorPalettes': ColorPalettes,
-}
-
-
-def register_data(**kwargs):
-    if 'data' in kwargs:
-        data = kwargs.pop('data')
-        loader = DataLoader(data)
-        kwargs.update(loader.load())
-
-    for name, loader in kwargs.items():
-        name = name.title().replace('_', '')
-        data = DATA.get(name)
-        if isinstance(loader, (list, tuple)):
-            for l in loader:
-                data.register(l)
-        else:
-            data.register(loader)
-
-
-__all__ = ['register_data', ]
-__all__.extend(DATA.keys())
+ColorPalettes = data_store.color_palettes
 

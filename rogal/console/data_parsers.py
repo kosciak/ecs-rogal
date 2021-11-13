@@ -1,5 +1,7 @@
+from ..data import data_store, parsers
+
 from .core import Align, Padding
-from .core import Glyph
+from .core import Glyph, Colors
 from .charsets import Charset, UnicodeBlock
 
 
@@ -9,11 +11,8 @@ def parse_glyph(data):
 
 class GlyphsParser:
 
-    def __init__(self, glyphs):
-        self.glyphs = glyphs
-
     def parse_glyphs_sequence(self, data):
-        return [self.glyphs.parse(glyph) for glyph in data]
+        return [parsers.parse_glyph(glyph) for glyph in data]
 
 
 class GlyphsSequenceParser(GlyphsParser):
@@ -57,4 +56,19 @@ def parse_padding(data):
         return Padding(*data)
     if isinstance(data, dict):
         return Padding(**data)
+
+
+def parse_colors(data):
+    fg = data.get('fg')
+    bg = data.get('bg')
+    return Colors(fg, bg)
+
+
+data_store.register('glyphs', parse_glyph)
+data_store.register('charsets', CharsetsParser())
+
+parsers.register('glyph', data_store.glyphs.parse)
+parsers.register('charset', data_store.charsets.parse)
+parsers.register('glyphs_sequence', GlyphsSequenceParser())
+parsers.register('frames_sequence', FramesSequenceParser())
 
