@@ -178,13 +178,14 @@ class Spinner(core.Animated, TextRenderer, core.UIElement):
 
 class ProgressBar(core.Renderer, core.UIElement):
 
-    def __init__(self, value, segments, colors, width=None, height=1, *, align=None):
+    def __init__(self, value, segments, colors, reverse=False, width=None, height=1, *, align=None):
         super().__init__(width=width, height=height, align=align)
         self.colors = colors
         self.value = value # float value from 0.0 to 1.0
         self.full = str(segments[-1])
         self.fractions = self.get_fractions(segments[1:-1])
         self.empty = str(segments[0])
+        self.reverse = reverse
 
     def get_fractions(self, segments):
         segments = segments or []
@@ -212,6 +213,10 @@ class ProgressBar(core.Renderer, core.UIElement):
 
         empty_num = panel.width - len(txt)
         txt += self.empty * empty_num
+
+        if self.reverse:
+            txt = txt[::-1]
+
         if self.height > 1:
             txt = '\n'.join([txt, ]*self.height)
 
