@@ -1,17 +1,19 @@
 from . import data_store, parsers
 
 
+# TODO: Not a great fan of this approach, but still not sure how to make
+#       some of the stored data easily accessible and importable
 Glyphs = data_store.glyphs
 
 Charsets = data_store.charsets
 
-Bitmasks = data_store.register('bitmasks', parsers.parse_glyphs_sequence)
+Bitmasks = data_store.bitmasks
 
-Decorations = data_store.register('decorations', parsers.parse_glyphs_sequence)
+Decorations = data_store.decorations
 
-ProgressBars = data_store.register('progress_bars', parsers.parse_glyphs_sequence)
+ProgressBars = data_store.progress_bars
 
-Spinners = data_store.register('spinners', parsers.parse_frames_sequence)
+Spinners = data_store.spinners
 
 TilesSources = data_store.tiles_sources
 

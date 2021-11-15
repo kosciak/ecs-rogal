@@ -27,38 +27,37 @@ def parse_color_names(data):
     return color_names
 
 
-class ColorPaletteParser:
+def _parse_named_color(data, colors, color_names):
+    color = parse_color(data)
+    if not color:
+        color = colors[color_names[data]]
+    return color
 
-    def parse_color(self, data, colors, color_names):
-        color = parse_color(data)
-        if not color:
-            color = colors[color_names[data]]
-        return color
 
-    def __call__(self, data):
-        colors = []
-        for name in data['colors']:
-            colors.extend(parsers.parse_color_list(name)[len(colors):])
+def parse_color_palette(data):
+    colors = []
+    for name in data['colors']:
+        colors.extend(parsers.parse_color_list(name)[len(colors):])
 
-        color_names = AttrDict()
-        for name in data['color_names']:
-            color_names.update(parsers.parse_color_names(name) or {})
+    color_names = AttrDict()
+    for name in data['color_names']:
+        color_names.update(parsers.parse_color_names(name) or {})
 
-        fg = self.parse_color(data['fg'], colors, color_names)
-        bg = self.parse_color(data['bg'], colors, color_names)
+    fg = _parse_named_color(data['fg'], colors, color_names)
+    bg = _parse_named_color(data['bg'], colors, color_names)
 
-        return ColorPalette(
-            name=data['name'],
-            fg=fg,
-            bg=bg,
-            color_names=color_names,
-            colors=colors,
-        )
+    return ColorPalette(
+        name=data['name'],
+        fg=fg,
+        bg=bg,
+        color_names=color_names,
+        colors=colors,
+    )
 
 
 data_store.register('color_lists', parse_color_list)
 data_store.register('color_names', parse_color_names)
-data_store.register('color_palettes', ColorPaletteParser())
+data_store.register('color_palettes', parse_color_palette)
 
 parsers.register('color', parse_color)
 parsers.register('color_list', data_store.color_lists.parse)

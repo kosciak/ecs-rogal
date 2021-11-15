@@ -43,6 +43,8 @@ class Data:
 class DataParsers(AttrDict):
 
     def register(self, name, parser):
+        # TODO: Keep name, so we can automate parsing? 
+        #       Like: parse(node_name, data) -> parse using parser by node_name
         self['parse_%s' % name] = parser
 
 
