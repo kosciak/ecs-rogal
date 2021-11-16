@@ -16,7 +16,6 @@ from . import renderers
 from . import widgets
 
 
-# TODO: frames overlapping, and fixing overlapped/overdrawn characters to merge borders/decorations
 # TODO: Scrollable Panels?
 
 
@@ -28,18 +27,18 @@ class WidgetsBuilder:
         self.default_colors = Colors("fg", "bg")
 
         self.window_frame = basic.Frame(
-            *Decorations.DSLINE,
+            Decorations.DSLINE,
             colors=None,
         )
 
         self.title_frame = basic.Frame(
-            *Decorations.HORIZONTAL_DSLINE,
+            Decorations.HORIZONTAL_DSLINE,
             colors=None,
         )
         self.title_align = Align.TOP_CENTER
 
         self.button_frame = basic.Frame(
-            *Decorations.LINE,
+            Decorations.LINE,
             colors=None,
         )
         self.button_width = 8
@@ -161,13 +160,13 @@ class WidgetsBuilder:
     def create_list_separator(self):
         separator = decorations.Padded(
             content=basic.HorizontalSeparator(
-                0x2500, 0x251c, 0x2524,
+                [0x2500, 0x251c, 0x2524, ],
             ),
             padding=Padding(0, -1),
         )
 
         # separator = basic.HorizontalSeparator(
-        #     0x2500,
+        #     '-><',
         #     width=10,
         #     align=Align.CENTER,
         # )
@@ -213,6 +212,7 @@ class WidgetsBuilder:
             #     width=24,
             #     # height=3,
             #     frame_duration=150,
+            #     reverse=True,
             #     # align=Align.TOP_CENTER,
             # ),
 

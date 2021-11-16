@@ -49,22 +49,17 @@ class Frame(core.Renderer, core.UIElement):
 
     """Frame decorations."""
 
-    def __init__(self,
-        left=None, right=None,
-        top=None, bottom=None,
-        top_left=None, top_right=None,
-        bottom_left=None, bottom_right=None,
-        *, colors=None,
-    ):
+    def __init__(self, decorations, *, colors=None):
         super().__init__()
-        self.top = Glyph(top)
-        self.bottom = Glyph(bottom)
-        self.left = Glyph(left)
-        self.right = Glyph(right)
-        self._top_left = Glyph(top_left)
-        self._top_right = Glyph(top_right)
-        self._bottom_left = Glyph(bottom_left)
-        self._bottom_right = Glyph(bottom_right)
+        self.left = None
+        self.right = None
+        self.top = None
+        self.bottom = None
+        self._top_left = None
+        self._top_right = None
+        self._bottom_left = None
+        self._bottom_right = None
+        self._parse_decorations(*decorations)
         self.colors = colors
 
         self.inner_offset = Position(
@@ -75,6 +70,21 @@ class Frame(core.Renderer, core.UIElement):
             self.inner_offset.x + (self.right and 1 or 0),
             self.inner_offset.y + (self.bottom and 1 or 0)
         )
+
+    def _parse_decorations(self,
+        left=None, right=None,
+        top=None, bottom=None,
+        top_left=None, top_right=None,
+        bottom_left=None, bottom_right=None
+    ):
+        self.left = Glyph(left)
+        self.right = Glyph(right)
+        self.top = Glyph(top)
+        self.bottom = Glyph(bottom)
+        self._top_left = Glyph(top_left)
+        self._top_right = Glyph(top_right)
+        self._bottom_left = Glyph(bottom_left)
+        self._bottom_right = Glyph(bottom_right)
 
     @property
     def top_left(self):
@@ -242,23 +252,27 @@ class ProgressBarAnimatedDemo(core.Animated, ProgressBar):
 
 class Separator(core.Renderer, core.UIElement):
 
-    def __init__(self, separator, start=None, end=None, colors=None, width=None, height=None, align=None):
+    def __init__(self, separator, colors=None, width=None, height=None, align=None):
         super().__init__(width=width, height=height, align=align)
-        self.separator = Glyph(separator)
-        self.start = Glyph(start)
-        self.end = Glyph(end)
+        self.separator = Glyph(separator[0])
+        if len(separator) > 1:
+            self.start = Glyph(separator[1])
+            self.end = Glyph(separator[-1])
+        else:
+            self.start = None
+            self.end = None
         self.colors = colors
 
     def render(self, panel, timestamp):
-        panel.fill(self.separator)
-        if self.start:
+        panel.fill(self.separator, self.colors)
+        if self.start is not None:
             panel.draw(self.start, self.colors, Position.ZERO)
 
 
 class HorizontalSeparator(Separator):
 
-    def __init__(self, separator, start=None, end=None, colors=None, width=None, align=None):
-        super().__init__(separator, start, end, colors, width=width or 0, height=1, align=align)
+    def __init__(self, separator, colors=None, width=None, align=None):
+        super().__init__(separator, colors, width=width or 0, height=1, align=align)
 
     @property
     def width(self):
@@ -272,14 +286,14 @@ class HorizontalSeparator(Separator):
 
     def render(self, panel, timestamp):
         super().render(panel, timestamp)
-        if self.end:
+        if self.end is not None:
             panel.draw(self.end, self.colors, Position(panel.width-1, 0))
 
 
 class VerticalSeparator(Separator):
 
-    def __init__(self, separator, start=None, end=None, colors=None, height=None, align=None):
-        super().__init__(separator, start, end, colors, width=1, height=height or 0, align=align)
+    def __init__(self, separator, colors=None, height=None, align=None):
+        super().__init__(separator, colors, width=1, height=height or 0, align=align)
 
     @property
     def height(self):
@@ -293,6 +307,6 @@ class VerticalSeparator(Separator):
 
     def render(self, panel, timestamp):
         super().render(panel, timestamp)
-        if self.end:
+        if self.end is not None:
             panel.draw(self.end, self.colors, Position(0, panel.height-1))
 
