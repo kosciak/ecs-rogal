@@ -35,7 +35,6 @@
   decorations: HORIZONTAL_DSLINE
 
 
-
 'TextInput':
   fg: FG
   bg: BRIGHT_BLACK

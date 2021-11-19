@@ -106,7 +106,7 @@ class UIManager:
         self.ecs.manage(components.InputFocus).remove(element)
 
     def create_widget(self, widget_type, context):
-        widget = self.widgets_builder.create(
+        widget = self.widgets_builder.build(
             widget_type, context,
         )
         return widget

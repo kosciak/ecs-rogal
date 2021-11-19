@@ -29,27 +29,44 @@ class WidgetsBuilder:
 
         self.default_colors = Colors("fg", "bg")
 
+    def get_style(self, selectors):
+        style = {}
+        for selector in selectors.split(','):
+            style.update(
+                self.styles.get(selector.strip())
+            )
+        return style
+
+    def create(self, element_cls, selector, *args, **kwargs):
+        style = self.get_style(selector)
+        padding = style.pop('padding', None)
+        element = element_cls(
+            *args,
+            **kwargs,
+            **style,
+        )
+        if padding:
+            element = decorations.Padded(
+                content=element,
+                padding=padding,
+            )
+        return element
+
     def create_window_title(self, title):
         if title is None:
             return
-        # TODO: I don't like this style.pop('padding') approach...
-        title_style = self.styles.get('Label.title')
-        padding = title_style.pop('padding', None)
-        title = widgets.Label(
-            text=basic.Text(
-                title,
-                **self.styles.get('Label.title Text'),
-            ),
-            frame=basic.Frame(
-                **self.styles.get('Label.title Frame'),
-            ),
-            **title_style,
+        text = self.create(
+            basic.Text, 'Label.title Text',
+            title,
         )
-        if padding:
-            title = decorations.Padded(
-                content=title,
-                padding=padding,
-            )
+        frame = self.create(
+            basic.Frame, 'Label.title Frame',
+        )
+        title = self.create(
+            widgets.Label, 'Label.title',
+            text=text,
+            frame=frame,
+        )
 
 #         title.content.content.renderer = renderers.Blinking(
 #             title.content.content.renderer,
@@ -59,46 +76,49 @@ class WidgetsBuilder:
         return title
 
     def create_window(self, title=None, on_key_press=None):
-        window = widgets.Window(
-            frame=basic.Frame(
-                **self.styles.get('Window Frame'),
-            ),
+        frame = self.create(
+            basic.Frame, 'Window Frame',
+        )
+        window = self.create(
+            widgets.Window, 'Window',
+            frame=frame,
             title=self.create_window_title(title),
             on_key_press=on_key_press,
-            **self.styles.get('Window'),
         )
         return window
 
     def create_modal_window(self, size, title=None, on_key_press=None):
         # NOTE: Extending window size by frame.extents
         #       So basically we only set size of contents, not whole Window
-        frame=basic.Frame(
-            **self.styles.get('Window Frame'),
+        frame = self.create(
+            basic.Frame, 'Window Frame',
         )
         size = Size(
             size.width + frame.extents.width,
             size.height + frame.extents.height,
         )
-        window = content=widgets.ModalWindow(
+        window = self.create(
+            widgets.ModalWindow, 'Window, Window.modal',
             size=size,
             frame=frame,
             title=self.create_window_title(title),
             on_key_press=on_key_press,
-            **self.styles.get('Window'),
-            **self.styles.get('Window.modal'),
         )
         return window
 
     def create_button(self, text, callback, value):
-        button = widgets.Button(
+        text = self.create(
+            basic.Text, 'Button Text',
+            text,
+        )
+        frame = self.create(
+            basic.Frame, 'Button Frame',
+        )
+        button = self.create(
+            widgets.Button, 'Button',
             value, callback,
-            text=basic.Text(
-                text,
-                **self.styles.get('Button Text'),
-            ),
-            frame=basic.Frame(
-                **self.styles.get('Button Frame'),
-            ),
+            text=text,
+            frame=frame,
             # selected_colors=self.default_colors.invert(),
             press_colors=Colors(
                 bg="bg",
@@ -107,24 +127,23 @@ class WidgetsBuilder:
             selected_renderers=[
                 renderers.InvertColors(),
             ],
-            **self.styles.get('Button'),
         )
         return button
 
     def create_buttons_row(self, callback, buttons):
-        buttons_row = containers.Row(
-            **self.styles.get('Row.buttons'),
+        buttons_row = self.create(
+            containers.Row, 'Row.buttons',
         )
         for text, value in buttons:
             buttons_row.append(self.create_button(text, callback, value))
         return buttons_row
 
     def create_text_input(self, width, text=None):
-        text_input = widgets.TextInput(
+        text_input = self.create(
+            widgets.TextInput, 'TextInput',
             self.ecs,
             width=width,
             default_text=text,
-            **self.styles.get('TextInput'),
         )
         return text_input
 
@@ -201,16 +220,16 @@ class WidgetsBuilder:
         )
 
         window.extend([
-            # basic.ProgressBarAnimatedDemo(
+            # self.create(
+            #     basic.ProgressBarAnimatedDemo, 'ProgressBar',
             #     value=.75,
             #     width=24,
             #     # height=3,
             #     frame_duration=150,
-            #     **self.styles.get('ProgressBar'),
             # ),
 
-            # basic.Spinner(
-            #     **self.styles.get('Spinner'),
+            # self.create(
+            #     basic.Spinner, 'Spinner',
             # ),
 
             decorations.Padded(
@@ -348,7 +367,7 @@ class WidgetsBuilder:
         )
         return widgets_layout
 
-    def create(self, widget_type, context):
+    def build(self, widget_type, context):
         # TODO: Move layout definitions to data/ui.yaml ?
         if widget_type == 'YES_NO_PROMPT':
             widgets_layout = self.create_yes_no_prompt(context)
