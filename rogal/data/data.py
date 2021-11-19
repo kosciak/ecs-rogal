@@ -15,6 +15,8 @@ ProgressBars = data_store.progress_bars
 
 Spinners = data_store.spinners
 
+Separators = data_store.separators
+
 TilesSources = data_store.tiles_sources
 
 ColorPalettes = data_store.color_palettes

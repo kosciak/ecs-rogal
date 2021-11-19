@@ -14,10 +14,10 @@ from . import renderers
 
 class Widget:
 
-    def __init__(self, default_colors, *args, **kwargs):
+    def __init__(self, colors, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.renderer = renderers.ClearPanel(
-            colors=default_colors,
+            colors=colors,
         )
         self.element = None
         self.manager = None
@@ -83,6 +83,8 @@ class Stateful:
     def press(self, position):
         self.states.add(WidgetState.PRESSED)
 
+    # TODO: release?
+
     def focus(self):
         self.states.add(WidgetState.FOCUSED)
 
@@ -96,8 +98,7 @@ class Stateful:
         self.states.discard(WidgetState.SELECTED)
 
     def toggle(self):
-        is_selected = WidgetState.SELECTED in self.states
-        if is_selected:
+        if self.is_selected:
             self.unselect()
         else:
             self.select()
@@ -176,7 +177,7 @@ class Activable:
 class TextInput(MouseOperated, Widget, containers.Stack):
 
     def __init__(self, ecs, width, *,
-                 default_colors,
+                 colors,
                  default_text=None,
                  align=Align.TOP_LEFT,
                 ):
@@ -184,14 +185,14 @@ class TextInput(MouseOperated, Widget, containers.Stack):
             width=width,
             height=1,
             align=Align.TOP_LEFT,
-            default_colors=default_colors,
+            colors=colors,
         )
         self.text = basic.Text(
             default_text or '',
             width=width,
         )
         self.cursor = basic.Cursor(
-            # colors=default_colors.invert(),
+            # colors=colors.invert(),
             blinking=1200,
         )
         self.cursor.position = Position(len(self.txt), 0)
@@ -256,7 +257,7 @@ class TextInput(MouseOperated, Widget, containers.Stack):
 class Button(Activable, MouseOperated, Widget, core.PostProcessed, decorations.Framed):
 
     def __init__(self, value, callback, text, frame, *,
-                 default_colors,
+                 colors,
                  selected_colors=None, press_colors=None,
                  selected_renderers=None,
                  align=Align.TOP_LEFT,
@@ -266,9 +267,9 @@ class Button(Activable, MouseOperated, Widget, core.PostProcessed, decorations.F
             content=text,
             frame=frame,
             align=align,
-            default_colors=default_colors,
+            colors=colors,
         )
-        self.default_colors = default_colors
+        self.default_colors = colors
         self.selected_colors = selected_colors or self.default_colors
         self.press_colors = press_colors or self.selected_colors
         self.selected_renderers = list(selected_renderers or [])
@@ -304,7 +305,7 @@ class Button(Activable, MouseOperated, Widget, core.PostProcessed, decorations.F
 class ListItem(Activable, MouseOperated, WithHotkey, Widget, core.PostProcessed, containers.Row):
 
     def __init__(self, ecs, key_binding, callback, value, index, item, *,
-                 default_colors,
+                 colors,
                  selected_renderers=None,
                  align=Align.TOP_LEFT,
                 ):
@@ -316,7 +317,7 @@ class ListItem(Activable, MouseOperated, WithHotkey, Widget, core.PostProcessed,
                 item,
             ],
             align=align,
-            default_colors=default_colors,
+            colors=colors,
         )
         self.selected_renderers = list(selected_renderers or [])
 
@@ -397,14 +398,14 @@ class ListBox(containers.List):
             self.items[index].toggle()
 
 
-class Title(Widget, decorations.Framed):
+class Label(Widget, decorations.Framed):
 
-    def __init__(self, default_colors, text, frame, align=Align.TOP_LEFT):
+    def __init__(self, colors, text, frame, align=Align.TOP_LEFT):
         super().__init__(
             content=text,
             frame=frame,
             align=align,
-            default_colors=default_colors,
+            colors=colors,
         )
 
     @property
@@ -422,12 +423,12 @@ class Window(Widget, containers.Stack):
 
     DEFAULT_Z_ORDER = ZOrder.BASE
 
-    def __init__(self, frame, default_colors, *,
+    def __init__(self, frame, colors, *,
                  title=None,
                  on_key_press=None,
                  **kwargs
                 ):
-        super().__init__(default_colors=default_colors, **kwargs)
+        super().__init__(colors=colors, **kwargs)
         self.frame = containers.Stack()
         # TODO: Instead of frame use header, footer?
         self.content = containers.Stack()
@@ -455,7 +456,7 @@ class ModalWindow(Window, core.UIElement):
 
     DEFAULT_Z_ORDER = ZOrder.MODAL
 
-    def __init__(self, size, align, frame, default_colors, *,
+    def __init__(self, size, align, frame, colors, *,
                  title=None,
                  on_key_press=None,
                  **kwargs
@@ -465,7 +466,7 @@ class ModalWindow(Window, core.UIElement):
             height=size.height,
             align=align,
             frame=frame,
-            default_colors=default_colors,
+            colors=colors,
             title=title,
             on_key_press=on_key_press,
             **kwargs,

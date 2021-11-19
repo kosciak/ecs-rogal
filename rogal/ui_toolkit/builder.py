@@ -1,6 +1,7 @@
 import string
 
 from ..data import Decorations, ProgressBars, Spinners
+from ..data import data_store
 from ..geometry import Size
 
 from ..events import handlers
@@ -24,43 +25,31 @@ class WidgetsBuilder:
     def __init__(self, ecs):
         self.ecs = ecs
 
+        self.styles = data_store.ui_style
+
         self.default_colors = Colors("fg", "bg")
-
-        self.window_frame = basic.Frame(
-            Decorations.DSLINE,
-            colors=None,
-        )
-
-        self.title_frame = basic.Frame(
-            Decorations.HORIZONTAL_DSLINE,
-            colors=None,
-        )
-        self.title_align = Align.TOP_CENTER
-
-        self.button_frame = basic.Frame(
-            Decorations.LINE,
-            colors=None,
-        )
-        self.button_width = 8
-        self.buttons_align = Align.BOTTOM_CENTER
 
     def create_window_title(self, title):
         if title is None:
             return
-        title = decorations.Padded(
-            content=widgets.Title(
-                default_colors=self.default_colors,
-                text=basic.Text(
-                    title,
-                    # colors=self.default_colors,
-                    # align=self.title_align,
-                    # width=10,
-                ),
-                frame=self.title_frame,
-                align=self.title_align,
+        # TODO: I don't like this style.pop('padding') approach...
+        title_style = self.styles.get('Label.title')
+        padding = title_style.pop('padding', None)
+        title = widgets.Label(
+            text=basic.Text(
+                title,
+                **self.styles.get('Label.title Text'),
             ),
-            padding=Padding(0, 1),
+            frame=basic.Frame(
+                **self.styles.get('Label.title Frame'),
+            ),
+            **title_style,
         )
+        if padding:
+            title = decorations.Padded(
+                content=title,
+                padding=padding,
+            )
 
 #         title.content.content.renderer = renderers.Blinking(
 #             title.content.content.renderer,
@@ -71,34 +60,45 @@ class WidgetsBuilder:
 
     def create_window(self, title=None, on_key_press=None):
         window = widgets.Window(
-            frame=self.window_frame,
-            default_colors=self.default_colors,
+            frame=basic.Frame(
+                **self.styles.get('Window Frame'),
+            ),
             title=self.create_window_title(title),
             on_key_press=on_key_press,
+            **self.styles.get('Window'),
         )
         return window
 
-    def create_modal_window(self, align, size, title=None, on_key_press=None):
+    def create_modal_window(self, size, title=None, on_key_press=None):
+        # NOTE: Extending window size by frame.extents
+        #       So basically we only set size of contents, not whole Window
+        frame=basic.Frame(
+            **self.styles.get('Window Frame'),
+        )
+        size = Size(
+            size.width + frame.extents.width,
+            size.height + frame.extents.height,
+        )
         window = content=widgets.ModalWindow(
             size=size,
-            align=align,
-            default_colors=self.default_colors,
-            frame=self.window_frame,
+            frame=frame,
             title=self.create_window_title(title),
             on_key_press=on_key_press,
+            **self.styles.get('Window'),
+            **self.styles.get('Window.modal'),
         )
         return window
 
     def create_button(self, text, callback, value):
         button = widgets.Button(
             value, callback,
-            default_colors=self.default_colors,
             text=basic.Text(
                 text,
-                width=self.button_width,
-                align=Align.CENTER,
+                **self.styles.get('Button Text'),
             ),
-            frame=self.button_frame,
+            frame=basic.Frame(
+                **self.styles.get('Button Frame'),
+            ),
             # selected_colors=self.default_colors.invert(),
             press_colors=Colors(
                 bg="bg",
@@ -107,12 +107,13 @@ class WidgetsBuilder:
             selected_renderers=[
                 renderers.InvertColors(),
             ],
+            **self.styles.get('Button'),
         )
         return button
 
     def create_buttons_row(self, callback, buttons):
         buttons_row = containers.Row(
-            align=self.buttons_align,
+            **self.styles.get('Row.buttons'),
         )
         for text, value in buttons:
             buttons_row.append(self.create_button(text, callback, value))
@@ -123,8 +124,7 @@ class WidgetsBuilder:
             self.ecs,
             width=width,
             default_text=text,
-            # default_colors=self.default_colors,
-            default_colors=Colors(fg="fg", bg="BRIGHT_BLACK"),
+            **self.styles.get('TextInput'),
         )
         return text_input
 
@@ -148,7 +148,7 @@ class WidgetsBuilder:
             key_binding=key_binding,
             callback=callback, value=index,
             index=index_text, item=item_text,
-            default_colors=self.default_colors,
+            colors=self.default_colors,
             selected_renderers=[
                 renderers.InvertColors(),
                 renderers.PaintPanel(Colors(bg=item_text.colors.fg)),
@@ -179,8 +179,7 @@ class WidgetsBuilder:
         callback = context['callback']
 
         window = self.create_modal_window(
-            size=Size(40, 8),
-            align=Align.TOP_CENTER,
+            size=Size(40, 6),
             title=title,
             on_key_press={
                 handlers.YesNoKeyPress(self.ecs): callback,
@@ -203,28 +202,15 @@ class WidgetsBuilder:
 
         window.extend([
             # basic.ProgressBarAnimatedDemo(
-            #     colors=Colors(
-            #         fg="BASE_RED",
-            #         bg="WHITE",
-            #     ),
             #     value=.75,
-            #     segments=ProgressBars.BLOCKS_FADE_QUARTS,
             #     width=24,
             #     # height=3,
             #     frame_duration=150,
-            #     reverse=True,
-            #     # align=Align.TOP_CENTER,
+            #     **self.styles.get('ProgressBar'),
             # ),
 
             # basic.Spinner(
-            #     colors=Colors(
-            #         fg="BRIGHT_BLUE",
-            #         bg="BRIGHT_BLACK",
-            #     ),
-            #     # frames=['[o  ]', '[ o ]', '[  o]', '[ o ]'],
-            #     frames=Spinners.BLOCK_FADE,
-            #     align=Align.TOP_RIGHT,
-            #     frame_duration=200,
+            #     **self.styles.get('Spinner'),
             # ),
 
             decorations.Padded(
@@ -272,8 +258,7 @@ class WidgetsBuilder:
         )
 
         window = self.create_modal_window(
-            align=Align.TOP_CENTER,
-            size=Size(40, 8),
+            size=Size(40, 6),
             title=title,
             on_key_press={
                 handlers.OnKeyPress(self.ecs, 'common.SUBMIT', text_input): callback,
@@ -317,10 +302,9 @@ class WidgetsBuilder:
         )
 
         window = self.create_modal_window(
-            align=Align.TOP_CENTER,
             size=Size(
                 20,
-                self.window_frame.extents.height+msg.height+buttons.height+len(items)+4
+                msg.height+buttons.height+len(items)+4
             ),
             title=title,
             on_key_press={

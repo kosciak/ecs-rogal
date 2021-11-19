@@ -21,6 +21,11 @@ spinners:
 progress_bars:
   - 'progress_bars.yaml'
 
+separators:
+
+ui_style:
+  - 'ui_style.yaml'
+
 tiles_sources:
   - 'tiles_sources.yaml'
 

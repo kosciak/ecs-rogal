@@ -5,10 +5,11 @@ from .loaders import DataLoader
 
 class Data:
 
-    def __init__(self, name, parse, *loaders):
+    def __init__(self, name, parse, default=None, /, *loaders):
         self.name = name # NOTE: Just in case it would be handy for debugging
         self._data = None
         self._parse = parse
+        self._default = default
         self.loaders = list(loaders)
 
     def register(self, loader):
@@ -26,7 +27,7 @@ class Data:
     def get(self, key, default=None, /):
         if self._data is None:
             self._load()
-        return self._data.get(key, default)
+        return self._data.get(key, default or (self._default and self._default()))
 
     def parse(self, data):
         # If it's a name just return data, parse otherwise
@@ -50,8 +51,8 @@ class DataParsers(AttrDict):
 
 class DataStore(AttrDict):
 
-    def register(self, name, parser):
-        data = Data(name, parser)
+    def register(self, name, parser, default=None):
+        data = Data(name, parser, default)
         self[name] = data
         return data
 
