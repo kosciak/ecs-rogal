@@ -27,6 +27,7 @@ class UIElement:
         if align is None:
             align = self.DEFAULT_ALIGN
         self.align = align
+        self.default_z_order = self.DEFAULT_Z_ORDER
         self.renderer = None
         self.handlers = DefaultAttrDict(dict)
 
@@ -58,7 +59,7 @@ class UIElement:
         return panel
 
     def layout(self, manager, element, panel, z_order):
-        z_order = z_order or self.DEFAULT_Z_ORDER
+        z_order = z_order or self.default_z_order
         panel = self.get_layout_panel(panel)
         manager.insert(
             element,

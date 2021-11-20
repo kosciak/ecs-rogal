@@ -126,6 +126,7 @@ class MouseOperated(Stateful):
         self.handlers.on_mouse_out.update({
             handlers.MouseOut(): self.on_leave,
         })
+        # TODO: Mouse Wheel events
 
     def on_enter(self, element, *args, **kwargs):
         self.enter()

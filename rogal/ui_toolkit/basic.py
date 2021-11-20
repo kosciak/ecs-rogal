@@ -111,7 +111,7 @@ class Frame(core.Renderer, core.UIElement):
             colors=colors,
         )
 
-    def inner_panel(self, panel):
+    def get_inner_panel(self, panel):
         return panel.create_panel(
             self.inner_offset,
             Size(panel.width-self.extents.width, panel.height-self.extents.height)

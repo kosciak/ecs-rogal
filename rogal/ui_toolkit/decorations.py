@@ -6,12 +6,18 @@ from . import core
 """UIElements that wrap other UI elements and change their look."""
 
 
+class ContentProxy:
+
+    def __getattr__(self, name):
+        return getattr(self.content, name)
+
+
 class Padded(core.UIElement):
 
     def __init__(self, content, padding, **kwargs):
         super().__init__(align=content.align, **kwargs)
         self.content = content
-        self.default_z_order = self.content.DEFAULT_Z_ORDER
+        self.default_z_order = self.content.default_z_order
         self.padding = padding
 
     @property
@@ -37,9 +43,6 @@ class Padded(core.UIElement):
         panel = self.get_inner_panel(panel)
         return self.content.layout(manager, element, panel, z_order+1)
 
-    def layout(self, manager, element, panel, z_order):
-        return super().layout(manager, element, panel, z_order or self.default_z_order)
-
 
 class Framed(core.UIElement):
 
@@ -64,6 +67,6 @@ class Framed(core.UIElement):
         element = manager.create_child(parent)
         self.frame.layout(manager, element, panel, z_order+1)
         element = manager.create_child(parent)
-        panel = self.frame.inner_panel(panel)
+        panel = self.frame.get_inner_panel(panel)
         return self.content.layout(manager, element, panel, z_order+2)
 
