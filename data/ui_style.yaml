@@ -16,7 +16,7 @@
 'Button Frame':
   decorations: LINE
 
-'Button Text':
+'Button Label':
   align: CENTER
   width: 8
 
@@ -25,14 +25,17 @@
   align: BOTTOM_CENTER
 
 
-'Label.title':
+'.title':
   align: TOP_CENTER
   fg: FG
   bg: BG
   padding: [0, 1]
 
-'Label.title Frame':
+'.title Frame':
   decorations: HORIZONTAL_DSLINE
+
+'.title Label':
+  padding: [0, 1]
 
 
 'TextInput':

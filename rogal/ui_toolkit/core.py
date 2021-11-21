@@ -36,10 +36,16 @@ class UIElement:
         """Return element's fixed width or None if whole available space should be used."""
         return self._width or 0
 
+    def set_width(self, width):
+        self._width = width
+
     @property
     def height(self):
         """Return element's fixed height or None if whole available space should be used."""
         return self._height or 0
+
+    def set_height(self, height):
+        self._height = height
 
     def get_size(self, panel):
         """Return element's size based on available panel space."""

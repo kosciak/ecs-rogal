@@ -4,7 +4,9 @@ from ..geometry import Position, Vector, Size
 
 from ..events import handlers
 
-from .core import Align, ZOrder
+from ..console.core import Align, Padding
+
+from .core import ZOrder
 from . import core
 from . import basic
 from . import containers
@@ -14,21 +16,10 @@ from . import renderers
 
 class Widget:
 
-    def __init__(self, colors, *args, **kwargs):
+    def __init__(self, colors=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.renderer = renderers.ClearPanel(
-            colors=colors,
-        )
         self.element = None
         self.manager = None
-
-    @property
-    def colors(self):
-        return self.renderer.colors
-
-    @colors.setter
-    def colors(self, colors):
-        self.renderer.colors = colors
 
     def layout(self, manager, element, panel, z_order):
         self.manager = manager
@@ -40,7 +31,85 @@ class Widget:
         return super().layout(manager, element, panel, z_order)
 
     def redraw(self):
+        if self.manager is None:
+            return
         self.manager.redraw(self.element)
+
+
+class TextWrapper:
+
+    def __init__(self, text, *args, **kwargs):
+        self.text = text
+        super().__init__(*args, **kwargs)
+
+    def _text(self, text, *, width=None, align=None):
+        if isinstance(text, str):
+            text = basic.Text(
+                txt=text,
+            )
+        if width is not None:
+            text.set_width(width)
+        if align is not None:
+            text.align = align
+        return text
+
+    @property
+    def txt(self):
+        return self.text.txt
+
+    @txt.setter
+    def txt(self, txt):
+        self.text.txt = txt
+        self.redraw();
+
+
+class WithClearedContent:
+
+    def __init__(self, content, colors, *args, **kwargs):
+        super().__init__(
+            content=decorations.Cleared(
+                content=content,
+                colors=colors,
+            ),
+            *args, **kwargs,
+        )
+
+    @property
+    def colors(self):
+        return self.content.colors
+
+    @colors.setter
+    def colors(self, colors):
+        self.content.colors = colors
+
+
+class Label(TextWrapper, WithClearedContent, Widget, decorations.Padded):
+
+    def __init__(self, text, *, width=None, colors=None, align=None, padding=None):
+        text = self._text(text, width=width, align=align)
+        super().__init__(
+            text=text,
+            content=text,
+            padding=padding or Padding.ZERO,
+            colors=colors,
+        )
+
+
+class FramedLabel(TextWrapper, WithClearedContent, Widget, decorations.Padded):
+
+    def __init__(self, label, frame, *, colors=None, padding=None, align=None):
+        content = decorations.Framed(
+            content=label,
+            frame=frame,
+            align=align,
+        )
+        super().__init__(
+            text=label,
+            content=content,
+            padding=padding or Padding.ZERO,
+            colors=colors,
+        )
+        self.frame = frame
 
 
 class WidgetState(Enum):
@@ -255,18 +324,19 @@ class TextInput(MouseOperated, Widget, containers.Stack):
             pass
 
 
-class Button(Activable, MouseOperated, Widget, core.PostProcessed, decorations.Framed):
+class Button(Activable, MouseOperated, core.PostProcessed, FramedLabel):
 
-    def __init__(self, value, callback, text, frame, *,
-                 colors,
+    def __init__(self, value, callback, label, frame, *,
+                 colors=None, padding=None,
                  selected_colors=None, press_colors=None,
                  selected_renderers=None,
                  align=Align.TOP_LEFT,
                 ):
         super().__init__(
             callback=callback, value=value,
-            content=text,
+            label=label,
             frame=frame,
+            padding=padding,
             align=align,
             colors=colors,
         )
@@ -274,15 +344,6 @@ class Button(Activable, MouseOperated, Widget, core.PostProcessed, decorations.F
         self.selected_colors = selected_colors or self.default_colors
         self.press_colors = press_colors or self.selected_colors
         self.selected_renderers = list(selected_renderers or [])
-
-    @property
-    def txt(self):
-        return self.content.txt
-
-    @txt.setter
-    def txt(self, txt):
-        self.content.txt = text
-        self.redraw();
 
     def enter(self):
         super().enter()
@@ -399,26 +460,6 @@ class ListBox(containers.List):
             self.items[index].toggle()
 
 
-class Label(Widget, decorations.Framed):
-
-    def __init__(self, colors, text, frame, align=Align.TOP_LEFT):
-        super().__init__(
-            content=text,
-            frame=frame,
-            align=align,
-            colors=colors,
-        )
-
-    @property
-    def txt(self):
-        return self.content.txt
-
-    @txt.setter
-    def txt(self, txt):
-        self.content.txt = text
-        self.redraw();
-
-
 # TODO: Consider renaming to FramedPanel?
 class Window(Widget, containers.Stack):
 
@@ -429,17 +470,20 @@ class Window(Widget, containers.Stack):
                  on_key_press=None,
                  **kwargs
                 ):
-        super().__init__(colors=colors, **kwargs)
+        super().__init__(**kwargs)
         self.frame = containers.Stack()
         # TODO: Instead of frame use header, footer?
         self.content = containers.Stack()
         self.handlers.on_key_press.update(on_key_press or {})
 
         self.children.extend([
-            decorations.Framed(
-                content=self.content,
-                frame=frame,
-                align=Align.TOP_LEFT,
+            decorations.Cleared(
+                content=decorations.Framed(
+                    content=self.content,
+                    frame=frame,
+                    align=Align.TOP_LEFT,
+                ),
+                colors=colors,
             ),
             self.frame,
         ])

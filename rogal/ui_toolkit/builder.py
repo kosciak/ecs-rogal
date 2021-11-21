@@ -39,32 +39,26 @@ class WidgetsBuilder:
 
     def create(self, element_cls, selector, *args, **kwargs):
         style = self.get_style(selector)
-        padding = style.pop('padding', None)
         element = element_cls(
             *args,
             **kwargs,
             **style,
         )
-        if padding:
-            element = decorations.Padded(
-                content=element,
-                padding=padding,
-            )
         return element
 
     def create_window_title(self, title):
         if title is None:
             return
-        text = self.create(
-            basic.Text, 'Label.title Text',
+        label = self.create(
+            widgets.Label, '.title Label',
             title,
         )
         frame = self.create(
-            basic.Frame, 'Label.title Frame',
+            basic.Frame, '.title Frame',
         )
         title = self.create(
-            widgets.Label, 'Label.title',
-            text=text,
+            widgets.FramedLabel, '.title',
+            label=label,
             frame=frame,
         )
 
@@ -107,8 +101,8 @@ class WidgetsBuilder:
         return window
 
     def create_button(self, text, callback, value):
-        text = self.create(
-            basic.Text, 'Button Text',
+        label = self.create(
+            widgets.Label, 'Button Label',
             text,
         )
         frame = self.create(
@@ -117,7 +111,7 @@ class WidgetsBuilder:
         button = self.create(
             widgets.Button, 'Button',
             value, callback,
-            text=text,
+            label=label,
             frame=frame,
             # selected_colors=self.default_colors.invert(),
             press_colors=Colors(

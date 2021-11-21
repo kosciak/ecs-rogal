@@ -1,21 +1,16 @@
 from ..geometry import Position, Size
 
 from . import core
+from . import renderers
 
 
 """UIElements that wrap other UI elements and change their look."""
 
 
-class ContentProxy:
-
-    def __getattr__(self, name):
-        return getattr(self.content, name)
-
-
 class Padded(core.UIElement):
 
-    def __init__(self, content, padding, **kwargs):
-        super().__init__(align=content.align, **kwargs)
+    def __init__(self, content, padding):
+        super().__init__(align=content.align)
         self.content = content
         self.default_z_order = self.content.default_z_order
         self.padding = padding
@@ -23,12 +18,16 @@ class Padded(core.UIElement):
     @property
     def width(self):
         width = self.content.width
-        return width and (width + self.padding.left + self.padding.right) or 0
+        if width:
+            return width + self.padding.left + self.padding.right
+        return 0
 
     @property
     def height(self):
         height = self.content.height
-        return height and (height + self.padding.top + self.padding.bottom) or 0
+        if height:
+            return height + self.padding.top + self.padding.bottom
+        return 0
 
     def get_inner_panel(self, panel):
         position = Position(self.padding.left, self.padding.top)
@@ -56,12 +55,16 @@ class Framed(core.UIElement):
     @property
     def width(self):
         width = self.content.width
-        return width and (width + self.frame.extents.width) or 0
+        if width:
+            return width + self.frame.extents.width
+        return 0
 
     @property
     def height(self):
         height = self.content.height
-        return height and (height + self.frame.extents.height) or 0
+        if height:
+            return height + self.frame.extents.height
+        return 0
 
     def layout_content(self, manager, parent, panel, z_order):
         element = manager.create_child(parent)
@@ -69,4 +72,30 @@ class Framed(core.UIElement):
         element = manager.create_child(parent)
         panel = self.frame.get_inner_panel(panel)
         return self.content.layout(manager, element, panel, z_order+2)
+
+
+class Cleared(core.UIElement):
+
+    def __init__(self, content, *, colors=None):
+        super().__init__(
+            width=content.width,
+            height=content.height,
+            align=content.align,
+        )
+        self.content = content
+        self.renderer = renderers.ClearPanel(
+            colors=colors,
+        )
+
+    @property
+    def colors(self):
+        return self.renderer.colors
+
+    @colors.setter
+    def colors(self, colors):
+        self.renderer.colors = colors
+
+    def layout_content(self, manager, parent, panel, z_order):
+        element = manager.create_child(parent)
+        return self.content.layout(manager, element, panel, z_order+1)
 

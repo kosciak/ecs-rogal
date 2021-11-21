@@ -153,5 +153,7 @@ class Split(core.Container, core.UIElement):
                 z_orders.append(child_z_order or 0)
             if i >= 2:
                 break
-        return z_orders and max(z_orders) or z_order
+        if z_orders:
+            z_order = max(z_orders)
+        return z_order
 

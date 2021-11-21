@@ -32,7 +32,7 @@ class Text(TextRenderer, core.UIElement):
 
     """Text widget and renderer."""
 
-    def __init__(self, txt, width=None, colors=None, *, align=None):
+    def __init__(self, txt, *, width=None, colors=None, align=None):
         self.txt = txt
         self.colors = colors
         self.txt_size = self.get_txt_size(self.txt)
@@ -118,10 +118,14 @@ class Frame(core.Renderer, core.UIElement):
         )
 
     def render(self, panel, timestamp):
-        panel.draw(self.top, self.colors, Position(1, 0), Size(panel.width-2, 1))
-        panel.draw(self.bottom, self.colors, Position(1, panel.height-1), Size(panel.width-2, 1))
-        panel.draw(self.left, self.colors, Position(0, 1), Size(1, panel.height-2))
-        panel.draw(self.right, self.colors, Position(panel.width-1, 1), Size(1, panel.height-2))
+        if self.top is not None:
+            panel.draw(self.top, self.colors, Position(1, 0), Size(panel.width-2, 1))
+        if self.top is not None:
+            panel.draw(self.bottom, self.colors, Position(1, panel.height-1), Size(panel.width-2, 1))
+        if self.left is not None:
+            panel.draw(self.left, self.colors, Position(0, 1), Size(1, panel.height-2))
+        if self.right is not None:
+            panel.draw(self.right, self.colors, Position(panel.width-1, 1), Size(1, panel.height-2))
 
         panel.draw(self.top_left, self.colors, Position(0, 0))
         panel.draw(self.top_right, self.colors, Position(panel.width-1, 0))
@@ -158,7 +162,7 @@ class Spinner(core.Animated, TextRenderer, core.UIElement):
 
     DEFAULT_FRAME_DURATION = 100
 
-    def __init__(self, colors, frames, duration=None, frame_duration=None, *, align=None):
+    def __init__(self, colors, frames, *, duration=None, frame_duration=None, align=None):
         if duration is None and frame_duration is None:
             frame_duration = self.DEFAULT_FRAME_DURATION
         self.txt_size = self.get_frames_txt_size(frames)
@@ -188,7 +192,7 @@ class Spinner(core.Animated, TextRenderer, core.UIElement):
 
 class ProgressBar(core.Renderer, core.UIElement):
 
-    def __init__(self, value, segments, colors, reverse=False, width=None, height=1, *, align=None):
+    def __init__(self, value, segments, colors, *, reverse=False, width=None, height=1, align=None):
         super().__init__(width=width, height=height, align=align)
         self.colors = colors
         self.value = value # float value from 0.0 to 1.0
@@ -252,7 +256,7 @@ class ProgressBarAnimatedDemo(core.Animated, ProgressBar):
 
 class Separator(core.Renderer, core.UIElement):
 
-    def __init__(self, separator, colors=None, width=None, height=None, align=None):
+    def __init__(self, separator, *, colors=None, width=None, height=None, align=None):
         super().__init__(width=width, height=height, align=align)
         self.separator = Glyph(separator[0])
         if len(separator) > 1:
@@ -271,8 +275,11 @@ class Separator(core.Renderer, core.UIElement):
 
 class HorizontalSeparator(Separator):
 
-    def __init__(self, separator, colors=None, width=None, align=None):
-        super().__init__(separator, colors, width=width or 0, height=1, align=align)
+    def __init__(self, separator, *, colors=None, width=None, align=None):
+        super().__init__(
+            separator,
+            colors=colors, width=width or 0, height=1, align=align,
+        )
 
     @property
     def width(self):
@@ -292,8 +299,11 @@ class HorizontalSeparator(Separator):
 
 class VerticalSeparator(Separator):
 
-    def __init__(self, separator, colors=None, height=None, align=None):
-        super().__init__(separator, colors, width=1, height=height or 0, align=align)
+    def __init__(self, separator, *, colors=None, height=None, align=None):
+        super().__init__(
+            separator,
+            colors=colors, width=1, height=height or 0, align=align,
+        )
 
     @property
     def height(self):
