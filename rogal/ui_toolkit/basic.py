@@ -45,6 +45,36 @@ class Text(TextRenderer, core.UIElement):
         return self.txt_size.height
 
 
+class WithTextContent:
+
+    def __init__(self, content, *args, **kwargs):
+        super().__init__(
+            content=content,
+            *args, **kwargs,
+        )
+        self.text = content
+
+    def _text(self, text, *, width=None, align=None):
+        if isinstance(text, str):
+            text = Text(
+                txt=text,
+            )
+        if width is not None:
+            text.set_width(width)
+        if align is not None:
+            text.align = align
+        return text
+
+    @property
+    def txt(self):
+        return self.text.txt
+
+    @txt.setter
+    def txt(self, txt):
+        self.text.txt = txt
+        self.redraw();
+
+
 class Frame(core.Renderer, core.UIElement):
 
     """Frame decorations."""

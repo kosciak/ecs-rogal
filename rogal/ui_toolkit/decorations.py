@@ -74,6 +74,20 @@ class Framed(core.UIElement):
         return self.content.layout(manager, element, panel, z_order+2)
 
 
+class WithFramedContent:
+
+    def __init__(self, content, frame, align=None, *args, **kwargs):
+        super().__init__(
+            content=Framed(
+                content=content,
+                frame=frame,
+                align=align,
+            ),
+            *args, **kwargs,
+        )
+        self.frame = frame
+
+
 class Cleared(core.UIElement):
 
     def __init__(self, content, *, colors=None):
@@ -98,4 +112,24 @@ class Cleared(core.UIElement):
     def layout_content(self, manager, parent, panel, z_order):
         element = manager.create_child(parent)
         return self.content.layout(manager, element, panel, z_order+1)
+
+
+class WithClearedContent:
+
+    def __init__(self, content, colors, *args, **kwargs):
+        super().__init__(
+            content=Cleared(
+                content=content,
+                colors=colors,
+            ),
+            *args, **kwargs,
+        )
+
+    @property
+    def colors(self):
+        return self.content.colors
+
+    @colors.setter
+    def colors(self, colors):
+        self.content.colors = colors
 

@@ -16,7 +16,7 @@ from . import renderers
 
 class Widget:
 
-    def __init__(self, colors=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.element = None
         self.manager = None
@@ -36,82 +36,41 @@ class Widget:
         self.manager.redraw(self.element)
 
 
-class TextWrapper:
-
-    def __init__(self, text, *args, **kwargs):
-        self.text = text
-        super().__init__(*args, **kwargs)
-
-    def _text(self, text, *, width=None, align=None):
-        if isinstance(text, str):
-            text = basic.Text(
-                txt=text,
-            )
-        if width is not None:
-            text.set_width(width)
-        if align is not None:
-            text.align = align
-        return text
-
-    @property
-    def txt(self):
-        return self.text.txt
-
-    @txt.setter
-    def txt(self, txt):
-        self.text.txt = txt
-        self.redraw();
-
-
-class WithClearedContent:
-
-    def __init__(self, content, colors, *args, **kwargs):
-        super().__init__(
-            content=decorations.Cleared(
-                content=content,
-                colors=colors,
-            ),
-            *args, **kwargs,
-        )
-
-    @property
-    def colors(self):
-        return self.content.colors
-
-    @colors.setter
-    def colors(self, colors):
-        self.content.colors = colors
-
-
-class Label(TextWrapper, WithClearedContent, Widget, decorations.Padded):
+class Label(
+        Widget,
+        basic.WithTextContent,
+        decorations.WithClearedContent,
+        decorations.Padded,
+    ):
 
     def __init__(self, text, *, width=None, colors=None, align=None, padding=None):
         text = self._text(text, width=width, align=align)
         super().__init__(
-            text=text,
             content=text,
             padding=padding or Padding.ZERO,
             colors=colors,
         )
 
 
-class FramedLabel(TextWrapper, WithClearedContent, Widget, decorations.Padded):
+class FramedLabel(
+        Widget,
+        basic.WithTextContent,
+        decorations.WithFramedContent,
+        decorations.WithClearedContent,
+        decorations.Padded,
+    ):
 
-    def __init__(self, label, frame, *, colors=None, padding=None, align=None):
-        content = decorations.Framed(
+    def __init__(self, label, frame, *, colors=None, align=None, padding=None):
+        super().__init__(
             content=label,
             frame=frame,
             align=align,
-        )
-        super().__init__(
-            text=label,
-            content=content,
-            padding=padding or Padding.ZERO,
             colors=colors,
+            padding=padding or Padding.ZERO,
         )
-        self.frame = frame
 
 
+# TODO: Move state related code to separate module!
 class WidgetState(Enum):
     HOVERED = auto()
     PRESSED = auto()
@@ -244,6 +203,7 @@ class Activable:
         self.activate()
 
 
+# TODO: Use basic.WithTextContent
 class TextInput(MouseOperated, Widget, containers.Stack):
 
     def __init__(self, ecs, width, *,
@@ -324,6 +284,7 @@ class TextInput(MouseOperated, Widget, containers.Stack):
             pass
 
 
+# TODO: Consider: instead of subclassing FramedLabel, have Label associated with each state, change on state change?
 class Button(Activable, MouseOperated, core.PostProcessed, FramedLabel):
 
     def __init__(self, value, callback, label, frame, *,
@@ -460,6 +421,7 @@ class ListBox(containers.List):
             self.items[index].toggle()
 
 
+# TODO: Use decorations.WithClearedContent
 # TODO: Consider renaming to FramedPanel?
 class Window(Widget, containers.Stack):
 
@@ -497,6 +459,7 @@ class Window(Widget, containers.Stack):
         self.content.extend(widgets)
 
 
+# TODO: Subclass Padded, or maybe some kind of WithPaddedContent?
 class ModalWindow(Window, core.UIElement):
 
     DEFAULT_Z_ORDER = ZOrder.MODAL
