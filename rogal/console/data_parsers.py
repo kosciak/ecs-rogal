@@ -50,7 +50,11 @@ def parse_padding(data):
     if isinstance(data, (list, tuple)):
         return Padding(*data)
     if isinstance(data, dict):
-        return Padding(**data)
+        padding = dict(
+            top=0, right=0, bottom=0, left=0,
+        )
+        padding.update(data)
+        return Padding(**padding)
 
 
 def parse_colors(data):
