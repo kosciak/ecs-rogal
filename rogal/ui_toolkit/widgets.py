@@ -1,5 +1,3 @@
-from enum import Enum, auto
-
 from ..geometry import Position, Vector, Size
 
 from ..events import handlers
@@ -12,6 +10,7 @@ from . import basic
 from . import containers
 from . import decorations
 from . import renderers
+from . import states
 
 
 class Widget:
@@ -40,13 +39,14 @@ class Label(
         Widget,
         basic.WithTextContent,
         decorations.WithClearedContent,
-        decorations.Padded,
+        decorations.WithPaddedContent,
+        containers.Bin,
     ):
 
     def __init__(self, text, *, width=None, colors=None, align=None, padding=None):
-        text = self._text(text, width=width, align=align)
+        self.text = self._text(text, width=width, align=align)
         super().__init__(
-            content=text,
+            content=self.text,
             padding=padding or Padding.ZERO,
             colors=colors,
         )
@@ -57,12 +57,14 @@ class FramedLabel(
         basic.WithTextContent,
         decorations.WithFramedContent,
         decorations.WithClearedContent,
-        decorations.Padded,
+        decorations.WithPaddedContent,
+        containers.Bin,
     ):
 
     def __init__(self, label, frame, *, colors=None, align=None, padding=None):
+        self.label = label
         super().__init__(
-            content=label,
+            content=self.label,
             frame=frame,
             align=align,
             colors=colors,
@@ -70,141 +72,12 @@ class FramedLabel(
         )
 
 
-# TODO: Move state related code to separate module!
-class WidgetState(Enum):
-    HOVERED = auto()
-    PRESSED = auto()
-    FOCUSED = auto()
-    SELECTED = auto()
-    # TODO: DISABLED
-
-
-class Stateful:
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.states = set()
-
-    @property
-    def is_hovered(self):
-        return WidgetState.HOVERED in self.states
-
-    @property
-    def is_pressed(self):
-        return WidgetState.PRESSD in self.states
-
-    @property
-    def is_focused(self):
-        return WidgetState.FOCUSED in self.states
-
-    @property
-    def is_selected(self):
-        return WidgetState.SELECTED in self.states
-
-    def enter(self):
-        self.states.add(WidgetState.HOVERED)
-
-    def leave(self):
-        self.states.discard(WidgetState.HOVERED)
-        self.states.discard(WidgetState.PRESSED)
-
-    def press(self, position):
-        self.states.add(WidgetState.PRESSED)
-
-    # TODO: release?
-
-    def focus(self):
-        self.states.add(WidgetState.FOCUSED)
-
-    def unfocus(self):
-        self.states.discard(WidgetState.FOCUSED)
-
-    def select(self):
-        self.states.add(WidgetState.SELECTED)
-
-    def unselect(self):
-        self.states.discard(WidgetState.SELECTED)
-
-    def toggle(self):
-        if self.is_selected:
-            self.unselect()
-        else:
-            self.select()
-
-
-class MouseOperated(Stateful):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.handlers.on_mouse_click.update({
-            handlers.MouseLeftButton(): self.on_click,
-        })
-        self.handlers.on_mouse_press.update({
-            handlers.MouseLeftButton(): self.on_press,
-        })
-        self.handlers.on_mouse_up.update({
-            handlers.MouseLeftButton(): self.on_enter,
-        })
-        self.handlers.on_mouse_in.update({
-            handlers.MouseIn(): self.on_enter,
-        })
-        self.handlers.on_mouse_over.update({
-            handlers.MouseOver(): self.on_over,
-        })
-        self.handlers.on_mouse_out.update({
-            handlers.MouseOut(): self.on_leave,
-        })
-        # TODO: Mouse Wheel events
-
-    def on_enter(self, element, *args, **kwargs):
-        self.enter()
-
-    def on_over(self, element, position, *args, **kwargs):
-        self.hover(position)
-
-    def on_leave(self, element, *args, **kwargs):
-        self.leave()
-
-    def on_press(self, element, position, *args, **kwargs):
-        self.press(position)
-
-    def on_click(self, element, position, *args, **kwargs):
-        self.toggle()
-
-    def hover(self, position):
-        if not self.is_hovered:
-            self.enter()
-
-
-class WithHotkey(Stateful):
-
-    def __init__(self, ecs, key_binding, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.handlers.on_key_press.update({
-            handlers.OnKeyPress(ecs, key_binding): self.on_hotkey,
-        })
-
-    def on_hotkey(self, element, key, *args, **kwargs):
-        self.toggle()
-
-
-class Activable:
-
-    def __init__(self, callback, value, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.callback = callback
-        self.value = value
-
-    def activate(self):
-        return self.callback(self.element, self.value)
-
-    def select(self):
-        super().select()
-        self.activate()
-
-
 # TODO: Use basic.WithTextContent
-class TextInput(MouseOperated, Widget, containers.Stack):
+class TextInput(
+        Widget,
+        states.MouseOperated,
+        containers.Stack,
+    ):
 
     def __init__(self, ecs, width, *,
                  colors,
@@ -284,48 +157,55 @@ class TextInput(MouseOperated, Widget, containers.Stack):
             pass
 
 
-# TODO: Consider: instead of subclassing FramedLabel, have Label associated with each state, change on state change?
-class Button(Activable, MouseOperated, core.PostProcessed, FramedLabel):
+# TODO: Consider: multiple Labels associated with each state, change content on state change?
+class Button(
+        Widget,
+        states.Activable,
+        states.MouseOperated,
+        core.PostProcessed,
+        containers.Bin,
+    ):
 
-    def __init__(self, value, callback, label, frame, *,
-                 colors=None, padding=None,
+    def __init__(self, value, callback, content, *,
                  selected_colors=None, press_colors=None,
                  selected_renderers=None,
-                 align=Align.TOP_LEFT,
                 ):
         super().__init__(
             callback=callback, value=value,
-            label=label,
-            frame=frame,
-            padding=padding,
-            align=align,
-            colors=colors,
+            content=content,
         )
-        self.default_colors = colors
+        self.default_colors = content.colors
         self.selected_colors = selected_colors or self.default_colors
         self.press_colors = press_colors or self.selected_colors
         self.selected_renderers = list(selected_renderers or [])
 
     def enter(self):
         super().enter()
-        self.colors = self.selected_colors
+        self.content.colors = self.selected_colors
         self.post_renderers = self.selected_renderers
         self.redraw();
 
     def leave(self):
         super().leave()
-        self.colors = self.default_colors
+        self.content.colors = self.default_colors
         self.post_renderers = []
         self.redraw()
 
     def press(self, position):
         super().press(position)
-        self.colors = self.press_colors
+        self.content.colors = self.press_colors
         self.post_renderers = self.selected_renderers
         self.redraw()
 
 
-class ListItem(Activable, MouseOperated, WithHotkey, Widget, core.PostProcessed, containers.Row):
+class ListItem(
+        Widget,
+        states.Activable,
+        states.MouseOperated,
+        states.WithHotkey,
+        core.PostProcessed,
+        containers.Row,
+    ):
 
     def __init__(self, ecs, key_binding, callback, value, index, item, *,
                  colors,
@@ -421,7 +301,7 @@ class ListBox(containers.List):
             self.items[index].toggle()
 
 
-# TODO: Use decorations.WithClearedContent
+# TODO: Use decorations.With*Content and containers.Bin
 # TODO: Consider renaming to FramedPanel?
 class Window(Widget, containers.Stack):
 

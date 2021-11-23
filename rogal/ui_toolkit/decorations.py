@@ -1,17 +1,20 @@
 from ..geometry import Position, Size
 
 from . import core
+from . import containers
 from . import renderers
 
 
 """UIElements that wrap other UI elements and change their look."""
 
 
-class Padded(core.UIElement):
+class Padded(containers.Bin):
 
-    def __init__(self, content, padding):
-        super().__init__(align=content.align)
-        self.content = content
+    def __init__(self, content, padding, *, align=None):
+        super().__init__(
+            content=content,
+            align=align,
+        )
         self.default_z_order = self.content.default_z_order
         self.padding = padding
 
@@ -43,13 +46,37 @@ class Padded(core.UIElement):
         return self.content.layout(manager, element, panel, z_order+1)
 
 
-class Framed(core.UIElement):
+class WithPaddedContent:
+
+    def __init__(self, content, padding, align=None, *args, **kwargs):
+        self._padded = Padded(
+            content=content,
+            padding=padding,
+            align=align,
+        )
+        super().__init__(
+            content=self._padded,
+            *args, **kwargs,
+        )
+
+    @property
+    def padding(self):
+        return self._padded.padding
+
+    @padding.setter
+    def padding(self, padding):
+        self._padded.frame = padding
+
+
+class Framed(containers.Bin):
 
     """Frame with element rendered inside."""
 
     def __init__(self, content, frame, *, align=None):
-        super().__init__(align=align)
-        self.content = content
+        super().__init__(
+            content=content,
+            align=align,
+        )
         self.frame = frame
 
     @property
@@ -77,26 +104,31 @@ class Framed(core.UIElement):
 class WithFramedContent:
 
     def __init__(self, content, frame, align=None, *args, **kwargs):
+        self._framed = Framed(
+            content=content,
+            frame=frame,
+            align=align,
+        )
         super().__init__(
-            content=Framed(
-                content=content,
-                frame=frame,
-                align=align,
-            ),
+            content=self._framed,
             *args, **kwargs,
         )
-        self.frame = frame
+
+    @property
+    def frame(self):
+        return self._framed.frame
+
+    @frame.setter
+    def frame(self, frame):
+        self._framed.frame = frame
 
 
-class Cleared(core.UIElement):
+class Cleared(containers.Bin):
 
     def __init__(self, content, *, colors=None):
         super().__init__(
-            width=content.width,
-            height=content.height,
-            align=content.align,
+            content=content,
         )
-        self.content = content
         self.renderer = renderers.ClearPanel(
             colors=colors,
         )
@@ -109,27 +141,24 @@ class Cleared(core.UIElement):
     def colors(self, colors):
         self.renderer.colors = colors
 
-    def layout_content(self, manager, parent, panel, z_order):
-        element = manager.create_child(parent)
-        return self.content.layout(manager, element, panel, z_order+1)
-
 
 class WithClearedContent:
 
     def __init__(self, content, colors, *args, **kwargs):
+        self._cleared = Cleared(
+            content=content,
+            colors=colors,
+        )
         super().__init__(
-            content=Cleared(
-                content=content,
-                colors=colors,
-            ),
+            content=self._cleared,
             *args, **kwargs,
         )
 
     @property
     def colors(self):
-        return self.content.colors
+        return self._cleared.colors
 
     @colors.setter
     def colors(self, colors):
-        self.content.colors = colors
+        self._cleared.colors = colors
 

@@ -88,7 +88,7 @@ class UIElement:
 
 class Container:
 
-    """Mixin for UIElements containers."""
+    """Mixin for UIElements containers with multiple child elements."""
 
     def __init__(self, content=None, *args, **kwargs):
         super().__init__(*args, **kwargs)

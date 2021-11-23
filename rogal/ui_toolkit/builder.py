@@ -108,11 +108,15 @@ class WidgetsBuilder:
         frame = self.create(
             basic.Frame, 'Button Frame',
         )
-        button = self.create(
-            widgets.Button, 'Button',
-            value, callback,
+        framed_label = self.create(
+            widgets.FramedLabel, 'Button',
             label=label,
             frame=frame,
+        )
+        button = self.create(
+            widgets.Button, '',
+            value, callback,
+            content=framed_label,
             # selected_colors=self.default_colors.invert(),
             press_colors=Colors(
                 bg="bg",

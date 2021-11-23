@@ -3,6 +3,29 @@ from ..geometry import Position, Size
 from . import core
 
 
+class Bin(core.UIElement):
+
+    """UIElement containing single content element."""
+
+    def __init__(self, content, *, width=None, height=None, align=None):
+        if width is None:
+            width = content.width
+        if height is None:
+            height = content.height
+        if align is None:
+            align  = content.align
+        super().__init__(
+            width=width,
+            height=height,
+            align=align,
+        )
+        self.content = content
+
+    def layout_content(self, manager, parent, panel, z_order):
+        element = manager.create_child(parent)
+        return self.content.layout(manager, element, panel, z_order+1)
+
+
 class Stack(core.Container, core.UIElement):
 
     """Free form container where all children are stacked on top of each other.
