@@ -380,10 +380,10 @@ class WidgetsBuilder:
             widgets_layout = containers.Split(bottom=12)
 
             camera = self.create_window(title='mapcam')
-            camera.content.append(render.Camera(self.ecs))
+            camera.append(render.Camera(self.ecs))
 
             msg_log = self.create_window(title='logs')
-            msg_log.content.append(render.MessageLog())
+            msg_log.append(render.MessageLog())
 
             widgets_layout.extend([camera, msg_log])
 

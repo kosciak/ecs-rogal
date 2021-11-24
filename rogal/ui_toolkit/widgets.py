@@ -99,7 +99,7 @@ class TextInput(
             blinking=1200,
         )
         self.cursor.position = Position(len(self.txt), 0)
-        self.children.extend([
+        self.content.extend([
             self.text,
             # TODO: Show Cursor only if has focus and ready for input?
             self.cursor,
@@ -313,30 +313,30 @@ class Window(Widget, containers.Stack):
                  **kwargs
                 ):
         super().__init__(**kwargs)
-        self.frame = containers.Stack()
+        self.outer = containers.Stack()
         # TODO: Instead of frame use header, footer?
-        self.content = containers.Stack()
+        self.inner = containers.Stack()
         self.handlers.on_key_press.update(on_key_press or {})
 
-        self.children.extend([
+        self.content.extend([
             decorations.Cleared(
                 content=decorations.Framed(
-                    content=self.content,
+                    content=self.inner,
                     frame=frame,
                     align=Align.TOP_LEFT,
                 ),
                 colors=colors,
             ),
-            self.frame,
+            self.outer,
         ])
         if title:
-            self.frame.append(title)
+            self.outer.append(title)
 
     def append(self, element):
-        self.content.append(element)
+        self.inner.append(element)
 
     def extend(self, widgets):
-        self.content.extend(widgets)
+        self.inner.extend(widgets)
 
 
 # TODO: Subclass Padded, or maybe some kind of WithPaddedContent?

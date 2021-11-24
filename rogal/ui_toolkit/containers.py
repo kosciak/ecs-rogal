@@ -25,6 +25,9 @@ class Bin(core.UIElement):
         element = manager.create_child(parent)
         return self.content.layout(manager, element, panel, z_order+1)
 
+    def __iter__(self):
+        yield self.content
+
 
 class Stack(core.Container, core.UIElement):
 
@@ -36,7 +39,7 @@ class Stack(core.Container, core.UIElement):
     """
 
     def layout_content(self, manager, parent, panel, z_order):
-        for child in self.children:
+        for child in self.content:
             element = manager.create_child(parent)
             z_order = child.layout(manager, element, panel, z_order+1)
         return z_order
@@ -74,7 +77,7 @@ class Row(core.Container, core.UIElement):
     def width(self):
         if self._width:
             return self._width
-        widths = [child.width for child in self.children]
+        widths = [child.width for child in self.content]
         if 0 in widths:
             return 0
         return sum(widths)
@@ -83,7 +86,7 @@ class Row(core.Container, core.UIElement):
     def height(self):
         if self._height:
             return self._height
-        heights = [child.height for child in self.children]
+        heights = [child.height for child in self.content]
         if 0 in heights:
             return 0
         heights.append(0)
@@ -92,9 +95,9 @@ class Row(core.Container, core.UIElement):
     def layout_content(self, manager, parent, panel, z_order):
         z_orders = [z_order, ]
         position = Position.ZERO
-        widths = [child.width for child in self.children]
+        widths = [child.width for child in self.content]
         calc_widths = calc_sizes(panel.width, widths)
-        for i, child in enumerate(self.children):
+        for i, child in enumerate(self.content):
             element = manager.create_child(parent)
             size = Size(calc_widths[i], child.height or panel.height)
             subpanel = panel.create_panel(position, size)
@@ -125,7 +128,7 @@ class List(core.Container, core.UIElement):
     def width(self):
         if self._width:
             return self._width
-        widths = [child.width for child in self.children]
+        widths = [child.width for child in self.content]
         if 0 in widths:
             return 0
         widths.append(0)
@@ -135,7 +138,7 @@ class List(core.Container, core.UIElement):
     def height(self):
         if self._height:
             return self._height
-        heights = [child.height for child in self.children]
+        heights = [child.height for child in self.content]
         if 0 in heights:
             return 0
         return sum(heights)
@@ -143,9 +146,9 @@ class List(core.Container, core.UIElement):
     def layout_content(self, manager, parent, panel, z_order):
         z_orders = [z_order, ]
         position = Position.ZERO
-        heights = [child.height for child in self.children]
+        heights = [child.height for child in self.content]
         calc_heights = calc_sizes(panel.height, heights)
-        for i, child in enumerate(self.children):
+        for i, child in enumerate(self.content):
             element = manager.create_child(parent)
             size = Size(child.width or panel.width, calc_heights[i])
             subpanel = panel.create_panel(position, size)
@@ -169,7 +172,7 @@ class Split(core.Container, core.UIElement):
     def layout_content(self, manager, parent, panel, z_order):
         z_orders = []
         subpanels = panel.split(self.left, self.right, self.top, self.bottom)
-        for i, child in enumerate(self.children):
+        for i, child in enumerate(self.content):
             if child:
                 element = manager.create_child(parent)
                 child_z_order = child.layout(manager, element, subpanels[i], z_order+1)

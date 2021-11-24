@@ -92,22 +92,22 @@ class Container:
 
     def __init__(self, content=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.children = list(content or [])
+        self.content = list(content or [])
 
     def append(self, element):
-        self.children.append(element)
+        self.content.append(element)
 
     def extend(self, elements):
-        self.children.extend(elements)
+        self.content.extend(elements)
 
     def layout_content(self, manager, parent, panel, z_order):
         raise NotImplementedError()
 
     def __len__(self):
-        return len(self.children)
+        return len(self.content)
 
     def __iter__(self):
-        yield from self.children
+        yield from self.content
 
 
 class Renderer:
