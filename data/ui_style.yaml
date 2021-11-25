@@ -1,56 +1,63 @@
-'Window':
+Window:
   fg: FG
   bg: BG
 
-'Window.modal':
+Window.modal:
   align: TOP_CENTER
 
-'Window Frame':
+Window Frame:
   decorations: DSLINE
 
 
-'Button':
+Button:
+  padding: [0, 1]
+
+Button Frame:
+  decorations: LINE
+
+Button Label:
+  align: CENTER
+  width: 8
   fg: FG
   bg: BG
 
-'Button Frame':
-  decorations: LINE
 
-'Button Label':
-  align: CENTER
-  width: 8
-
-
-'Row.buttons':
+ButtonsRow:
   align: BOTTOM_CENTER
 
 
-'.title':
+.title:
   align: TOP_CENTER
   fg: FG
   bg: BG
   padding: [0, 1]
 
-'.title Frame':
+.title Frame:
   decorations: HORIZONTAL_DSLINE
 
-'.title Label':
+.title Label:
   padding: [0, 1]
 
 
-'TextInput':
+Dialog Label:
+  align: TOP_CENTER
+  width: 0
+  padding: [1, 0]
+
+
+TextInput:
   fg: FG
   bg: BRIGHT_BLACK
 
 
-'ProgressBar':
+ProgressBar:
   fg: BASE_RED
   bg: WHITE
   segments: BLOCKS_FADE_QUARTS
   reverse: true
 
 
-'Spinner':
+Spinner:
   fg: BRIGHT_BLUE
   bg: BRIGHT_BLACK
   frames: BLOCK_FADE

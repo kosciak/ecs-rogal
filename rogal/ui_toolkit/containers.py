@@ -183,3 +183,35 @@ class Split(core.Container, core.UIElement):
             z_order = max(z_orders)
         return z_order
 
+
+class WithContainedContent:
+
+    def __init__(self, container, *args, **kwargs):
+        self._container = container
+        super().__init__(
+            content=self._container,
+            *args, **kwargs,
+        )
+
+    def _update_size(self):
+        self.set_width(self._container.width)
+        self.set_height(self._container.height)
+
+    def append(self, element):
+        self._container.append(element)
+        self._update_size()
+
+    def extend(self, elements):
+        self._container.extend(elements)
+        self._update_size()
+
+    def remove(self, element):
+        self._container.remove(element)
+        self._update_size()
+
+    def __len__(self):
+        return len(self._container)
+
+    def __iter__(self):
+        yield from self._container
+

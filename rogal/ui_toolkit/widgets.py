@@ -37,6 +37,7 @@ class Widget:
 
 class Label(
         Widget,
+        core.PostProcessed,
         basic.WithTextContent,
         decorations.WithClearedContent,
         decorations.WithPaddedContent,
@@ -47,13 +48,14 @@ class Label(
         self.text = self._text(text, width=width, align=align)
         super().__init__(
             content=self.text,
-            padding=padding or Padding.ZERO,
+            padding=padding,
             colors=colors,
         )
 
 
 class FramedLabel(
         Widget,
+        core.PostProcessed,
         basic.WithTextContent,
         decorations.WithFramedContent,
         decorations.WithClearedContent,
@@ -61,14 +63,14 @@ class FramedLabel(
         containers.Bin,
     ):
 
-    def __init__(self, label, frame, *, colors=None, align=None, padding=None):
-        self.label = label
+    def __init__(self, text, frame, *, width=None, colors=None, align=None, padding=None):
+        self.text = self._text(text, width=width, align=align)
         super().__init__(
-            content=self.label,
+            content=self.text,
             frame=frame,
             align=align,
             colors=colors,
-            padding=padding or Padding.ZERO,
+            padding=padding,
         )
 
 
@@ -163,39 +165,60 @@ class Button(
         states.Activable,
         states.MouseOperated,
         core.PostProcessed,
+        decorations.WithPaddedContent,
         containers.Bin,
     ):
 
     def __init__(self, value, callback, content, *,
+                 padding=None,
                  selected_colors=None, press_colors=None,
                  selected_renderers=None,
                 ):
+        self.button = content
         super().__init__(
             callback=callback, value=value,
-            content=content,
+            content=self.button,
+            padding=padding, # NOTE: with padding whole area is mouse operated, including padding!
         )
-        self.default_colors = content.colors
+        self.default_colors = self.button.colors
         self.selected_colors = selected_colors or self.default_colors
         self.press_colors = press_colors or self.selected_colors
         self.selected_renderers = list(selected_renderers or [])
 
     def enter(self):
         super().enter()
-        self.content.colors = self.selected_colors
-        self.post_renderers = self.selected_renderers
+        self.button.colors = self.selected_colors
+        self.button.post_renderers = self.selected_renderers
         self.redraw();
 
     def leave(self):
         super().leave()
-        self.content.colors = self.default_colors
-        self.post_renderers = []
+        self.button.colors = self.default_colors
+        self.button.post_renderers = []
         self.redraw()
 
     def press(self, position):
         super().press(position)
-        self.content.colors = self.press_colors
-        self.post_renderers = self.selected_renderers
+        self.button.colors = self.press_colors
+        self.button.post_renderers = self.selected_renderers
         self.redraw()
+
+
+class ButtonsRow(
+        Widget,
+        containers.WithContainedContent,
+        decorations.WithPaddedContent,
+        containers.Bin,
+    ):
+    def __init__(self, buttons=None, *, align=None, padding=None):
+        container = containers.Row(
+            buttons,
+            align=align,
+        )
+        super().__init__(
+            container=container,
+            padding=padding,
+        )
 
 
 class ListItem(

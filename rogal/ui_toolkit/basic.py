@@ -48,11 +48,11 @@ class Text(TextRenderer, core.UIElement):
 class WithTextContent:
 
     def __init__(self, content, *args, **kwargs):
+        self.text = content
         super().__init__(
-            content=content,
+            content=self.text,
             *args, **kwargs,
         )
-        self.text = content
 
     def _text(self, text, *, width=None, align=None):
         if isinstance(text, str):

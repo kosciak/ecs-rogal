@@ -100,6 +100,9 @@ class Container:
     def extend(self, elements):
         self.content.extend(elements)
 
+    def remove(self, element):
+        self.content.remove(element)
+
     def layout_content(self, manager, parent, panel, z_order):
         raise NotImplementedError()
 

@@ -58,7 +58,7 @@ class WidgetsBuilder:
         )
         title = self.create(
             widgets.FramedLabel, '.title',
-            label=label,
+            text=label,
             frame=frame,
         )
 
@@ -101,20 +101,17 @@ class WidgetsBuilder:
         return window
 
     def create_button(self, text, callback, value):
-        label = self.create(
-            widgets.Label, 'Button Label',
-            text,
-        )
         frame = self.create(
             basic.Frame, 'Button Frame',
         )
         framed_label = self.create(
-            widgets.FramedLabel, 'Button',
-            label=label,
+            widgets.FramedLabel, 'Button Label',
+            text=text,
             frame=frame,
         )
+        # TODO: How to declare padding for Button, not for (Framed)Label
         button = self.create(
-            widgets.Button, '',
+            widgets.Button, 'Button',
             value, callback,
             content=framed_label,
             # selected_colors=self.default_colors.invert(),
@@ -130,7 +127,7 @@ class WidgetsBuilder:
 
     def create_buttons_row(self, callback, buttons):
         buttons_row = self.create(
-            containers.Row, 'Row.buttons',
+            widgets.ButtonsRow, 'ButtonsRow',
         )
         for text, value in buttons:
             buttons_row.append(self.create_button(text, callback, value))
@@ -204,12 +201,12 @@ class WidgetsBuilder:
             },
         )
 
-        msg = basic.Text(
+        msg = self.create(
+            widgets.Label, 'Dialog Label',
             msg,
-            align=Align.TOP_CENTER,
         )
 
-        buttons = self.create_buttons_row(
+        buttons_row = self.create_buttons_row(
             callback=callback,
             buttons=[
                 ['No',  False],
@@ -230,14 +227,9 @@ class WidgetsBuilder:
             #     basic.Spinner, 'Spinner',
             # ),
 
-            decorations.Padded(
-                content=msg,
-                padding=Padding(1, 0),
-            ),
-            decorations.Padded(
-                content=buttons,
-                padding=Padding(1, 0, 0, 0),
-            ),
+            msg,
+            buttons_row,
+
         ])
 
         widgets_layout = decorations.Padded(
@@ -266,7 +258,7 @@ class WidgetsBuilder:
             text_input,
         ])
 
-        buttons = self.create_buttons_row(
+        buttons_row = self.create_buttons_row(
             callback=callback,
             buttons=[
                 ['Cancel', False],
@@ -288,10 +280,7 @@ class WidgetsBuilder:
                 content=input_row,
                 padding=Padding(1, 0),
             ),
-            decorations.Padded(
-                content=buttons,
-                padding=Padding(1, 0, 0, 0),
-            ),
+            buttons_row,
         ])
 
         widgets_layout = decorations.Padded(
@@ -306,12 +295,12 @@ class WidgetsBuilder:
         callback = context['callback']
         items = [f'index: {i}' for i in range(10)]
 
-        msg = basic.Text(
+        msg = self.create(
+            widgets.Label, 'Dialog Label',
             msg,
-            align=Align.TOP_CENTER,
         )
 
-        buttons = self.create_buttons_row(
+        buttons_row = self.create_buttons_row(
             callback=callback,
             buttons=[
                 ['Cancel', False],
@@ -345,18 +334,12 @@ class WidgetsBuilder:
             )
 
         window.extend([
-            decorations.Padded(
-                content=msg,
-                padding=Padding(1, 0),
-            ),
+            msg,
             decorations.Padded(
                 content=items_list,
                 padding=Padding(3, 0, 0, 0),
             ),
-            decorations.Padded(
-                content=buttons,
-                padding=Padding(1, 0, 0, 0),
-            ),
+            buttons_row,
         ])
 
         widgets_layout = decorations.Padded(

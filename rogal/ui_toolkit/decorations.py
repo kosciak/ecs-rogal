@@ -1,5 +1,7 @@
 from ..geometry import Position, Size
 
+from ..console.core import Padding
+
 from . import core
 from . import containers
 from . import renderers
@@ -16,7 +18,7 @@ class Padded(containers.Bin):
             align=align,
         )
         self.default_z_order = self.content.default_z_order
-        self.padding = padding
+        self.padding = padding or Padding.ZERO
 
     @property
     def width(self):
