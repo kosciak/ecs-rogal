@@ -45,9 +45,9 @@ class Label(
     ):
 
     def __init__(self, text, *, width=None, colors=None, align=None, padding=None):
-        self.text = self._text(text, width=width, align=align)
+        text = self._text(text, width=width, align=align)
         super().__init__(
-            content=self.text,
+            content=text,
             padding=padding,
             colors=colors,
         )
@@ -63,10 +63,10 @@ class FramedLabel(
         containers.Bin,
     ):
 
-    def __init__(self, text, frame, *, width=None, colors=None, align=None, padding=None):
-        self.text = self._text(text, width=width, align=align)
+    def __init__(self, label, frame, *, width=None, colors=None, align=None, padding=None):
+        self.label = self._text(label, width=width, align=align)
         super().__init__(
-            content=self.text,
+            content=self.label,
             frame=frame,
             align=align,
             colors=colors,

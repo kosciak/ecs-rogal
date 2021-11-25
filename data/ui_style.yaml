@@ -1,25 +1,25 @@
 Window:
   fg: FG
   bg: BG
+  frame:
+    decorations: DSLINE
 
 Window.modal:
   align: TOP_CENTER
-
-Window Frame:
-  decorations: DSLINE
 
 
 Button:
   padding: [0, 1]
 
-Button Frame:
-  decorations: LINE
 
-Button Label:
-  align: CENTER
-  width: 8
+.button:
   fg: FG
   bg: BG
+  frame:
+    decorations: LINE
+  label:
+    align: CENTER
+    width: 8
 
 
 ButtonsRow:
@@ -31,12 +31,10 @@ ButtonsRow:
   fg: FG
   bg: BG
   padding: [0, 1]
-
-.title Frame:
-  decorations: HORIZONTAL_DSLINE
-
-.title Label:
-  padding: [0, 1]
+  frame:
+    decorations: HORIZONTAL_DSLINE
+  label:
+    padding: [0, 1]
 
 
 Dialog Label:

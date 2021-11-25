@@ -1,6 +1,11 @@
 from ..data import data_store, parsers
 
 
+NESTED_ELEMENTS = [
+    'frame',
+    'label',
+]
+
 def parse_ui_style(data):
     if not data:
         return {}
@@ -24,6 +29,11 @@ def parse_ui_style(data):
         # Separator
         separator=parsers.parse_separator(data.get('separator')),
     )
+
+    for element in NESTED_ELEMENTS:
+        if element in data:
+            style[element] = parsers.parse_ui_style(data.get(element))
+
     style = {
         key: value for key, value in style.items()
         if value is not None
