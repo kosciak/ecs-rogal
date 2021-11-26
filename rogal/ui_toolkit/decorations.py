@@ -7,10 +7,19 @@ from . import containers
 from . import renderers
 
 
-"""UIElements that wrap other UI elements and change their look."""
+"""UIElements that wrap it's content and change its look.
+
+<Decorated> class function as decorator around content.
+With<Decorated>Content is a mixin that exposes decorator attributes/methods.
+
+This way you can easily contruct more complex elements by stacking decorations.
+
+"""
 
 
 class Padded(containers.Bin):
+
+    """Adds padding to it's content."""
 
     def __init__(self, content, padding, *, align=None):
         super().__init__(
@@ -72,7 +81,7 @@ class WithPaddedContent:
 
 class Framed(containers.Bin):
 
-    """Frame with element rendered inside."""
+    """Renders frame around content."""
 
     def __init__(self, content, frame, *, align=None):
         super().__init__(
@@ -127,6 +136,8 @@ class WithFramedContent:
 
 class Cleared(containers.Bin):
 
+    """Clears content area."""
+
     def __init__(self, content, *, colors=None):
         super().__init__(
             content=content,
@@ -163,4 +174,49 @@ class WithClearedContent:
     @colors.setter
     def colors(self, colors):
         self._cleared.colors = colors
+
+
+class PostProcessed(containers.Bin):
+
+    """Adds list of post_renderers that alter already rendered element."""
+
+    def __init__(self, content, post_renderers=None):
+        super().__init__(
+            content=content,
+        )
+        self.post_renderers = list(post_renderers or [])
+
+    def layout_content(self, manager, parent, panel, z_order):
+        z_order = super().layout_content(manager, parent, panel, z_order)
+        for renderer in self.post_renderers:
+            element = manager.create_child(parent)
+            z_order += 1
+            manager.insert(
+                element,
+                panel=panel,
+                z_order=z_order,
+                renderer=renderer,
+            )
+        return z_order
+
+
+class WithPostProcessedContent:
+
+    def __init__(self, content, post_renderers=None, *args, **kwargs):
+        self._post_processed = PostProcessed(
+            content=content,
+            post_renderers=post_renderers,
+        )
+        super().__init__(
+            content=self._post_processed,
+            *args, **kwargs,
+        )
+
+    @property
+    def post_renderers(self):
+        return self._post_processed.post_renderers
+
+    @post_renderers.setter
+    def post_renderers(self, post_renderers):
+        self._post_processed.post_renderers = post_renderers
 

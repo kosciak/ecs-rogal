@@ -134,6 +134,8 @@ class Animated:
         self._duration = duration
         self._frame_duration = frame_duration
         self._frames_num = None
+        # TODO: AnimationType: CYCLE, BOUNCE, ???
+        # TODO: repeat - how many times animation should be played
 
     def get_frames_num(self):
         raise NotImplementedError()
@@ -158,26 +160,4 @@ class Animated:
 
     def get_frame_num(self, timestamp):
         return int(timestamp // self.frame_duration % self.frames_num)
-
-
-class PostProcessed:
-
-    """Adds list of post_renderers that will alter alter already rendered element."""
-
-    def __init__(self, post_renderers=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.post_renderers = list(post_renderers or [])
-
-    def layout_content(self, manager, parent, panel, z_order):
-        z_order = super().layout_content(manager, parent, panel, z_order)
-        for renderer in self.post_renderers:
-            element = manager.create_child(parent)
-            z_order += 1
-            manager.insert(
-                element,
-                panel=panel,
-                z_order=z_order,
-                renderer=renderer,
-            )
-        return z_order
 

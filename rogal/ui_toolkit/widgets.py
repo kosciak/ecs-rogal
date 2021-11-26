@@ -37,9 +37,9 @@ class Widget:
 
 class Label(
         Widget,
-        core.PostProcessed,
         basic.WithTextContent,
         decorations.WithClearedContent,
+        decorations.WithPostProcessedContent,
         decorations.WithPaddedContent,
         containers.Bin,
     ):
@@ -55,10 +55,10 @@ class Label(
 
 class FramedLabel(
         Widget,
-        core.PostProcessed,
         basic.WithTextContent,
         decorations.WithFramedContent,
         decorations.WithClearedContent,
+        decorations.WithPostProcessedContent,
         decorations.WithPaddedContent,
         containers.Bin,
     ):
@@ -74,6 +74,68 @@ class FramedLabel(
         )
 
 
+# TODO: Consider: multiple Labels associated with each state, change content on state change?
+class Button(
+        Widget,
+        states.Activable,
+        states.MouseOperated,
+        decorations.WithPaddedContent,
+        containers.Bin,
+    ):
+
+    def __init__(self, value, callback, content, *,
+                 padding=None,
+                 selected_colors=None, press_colors=None,
+                 selected_renderers=None,
+                ):
+        self._button = content
+        super().__init__(
+            callback=callback, value=value,
+            content=self._button,
+            padding=padding, # NOTE: with padding whole area is mouse operated, including padding!
+        )
+        self.default_colors = self._button.colors
+        self.selected_colors = selected_colors or self.default_colors
+        self.press_colors = press_colors or self.selected_colors
+        self.selected_renderers = list(selected_renderers or [])
+
+    def enter(self):
+        super().enter()
+        self._button.colors = self.selected_colors
+        self._button.post_renderers = self.selected_renderers
+        self.redraw();
+
+    def leave(self):
+        super().leave()
+        self._button.colors = self.default_colors
+        self._button.post_renderers = []
+        self.redraw()
+
+    def press(self, position):
+        super().press(position)
+        self._button.colors = self.press_colors
+        self._button.post_renderers = self.selected_renderers
+        self.redraw()
+
+
+class ButtonsRow(
+        Widget,
+        containers.WithContainedContent,
+        decorations.WithPaddedContent,
+        containers.Bin,
+    ):
+    def __init__(self, buttons=None, *, align=None, padding=None):
+        container = containers.Row(
+            buttons,
+            align=align,
+        )
+        super().__init__(
+            container=container,
+            padding=padding,
+        )
+
+
+# TODO: Needs major rewrite
 # TODO: Use basic.WithTextContent
 class TextInput(
         Widget,
@@ -159,74 +221,13 @@ class TextInput(
             pass
 
 
-# TODO: Consider: multiple Labels associated with each state, change content on state change?
-class Button(
-        Widget,
-        states.Activable,
-        states.MouseOperated,
-        core.PostProcessed,
-        decorations.WithPaddedContent,
-        containers.Bin,
-    ):
-
-    def __init__(self, value, callback, content, *,
-                 padding=None,
-                 selected_colors=None, press_colors=None,
-                 selected_renderers=None,
-                ):
-        self.button = content
-        super().__init__(
-            callback=callback, value=value,
-            content=self.button,
-            padding=padding, # NOTE: with padding whole area is mouse operated, including padding!
-        )
-        self.default_colors = self.button.colors
-        self.selected_colors = selected_colors or self.default_colors
-        self.press_colors = press_colors or self.selected_colors
-        self.selected_renderers = list(selected_renderers or [])
-
-    def enter(self):
-        super().enter()
-        self.button.colors = self.selected_colors
-        self.button.post_renderers = self.selected_renderers
-        self.redraw();
-
-    def leave(self):
-        super().leave()
-        self.button.colors = self.default_colors
-        self.button.post_renderers = []
-        self.redraw()
-
-    def press(self, position):
-        super().press(position)
-        self.button.colors = self.press_colors
-        self.button.post_renderers = self.selected_renderers
-        self.redraw()
-
-
-class ButtonsRow(
-        Widget,
-        containers.WithContainedContent,
-        decorations.WithPaddedContent,
-        containers.Bin,
-    ):
-    def __init__(self, buttons=None, *, align=None, padding=None):
-        container = containers.Row(
-            buttons,
-            align=align,
-        )
-        super().__init__(
-            container=container,
-            padding=padding,
-        )
-
-
+# TODO: Needs major rewrite
 class ListItem(
         Widget,
         states.Activable,
         states.MouseOperated,
         states.WithHotkey,
-        core.PostProcessed,
+        # core.PostProcessed,
         containers.Row,
     ):
 
@@ -249,7 +250,7 @@ class ListItem(
 
     def enter(self):
         super().enter()
-        self.post_renderers = self.selected_renderers
+        # self.post_renderers = self.selected_renderers
         self.redraw();
 
     def leave(self):
@@ -259,20 +260,21 @@ class ListItem(
 
     def press(self, position):
         super().press(position)
-        self.post_renderers = self.selected_renderers
+        # self.post_renderers = self.selected_renderers
         self.redraw()
 
     def focus(self):
         super().focus()
-        self.post_renderers = self.selected_renderers
+        # self.post_renderers = self.selected_renderers
         self.redraw()
 
     def unfocus(self):
         super().unfocus()
-        self.post_renderers = []
+        # self.post_renderers = []
         self.redraw()
 
 
+# TODO: Needs major rewrite
 class ListBox(containers.List):
 
     def __init__(self, ecs, align=Align.TOP_LEFT):
@@ -324,6 +326,7 @@ class ListBox(containers.List):
             self.items[index].toggle()
 
 
+# TODO: Needs major rewrite
 # TODO: Use decorations.With*Content and containers.Bin
 # TODO: Consider renaming to FramedPanel?
 class Window(Widget, containers.Stack):
@@ -362,6 +365,7 @@ class Window(Widget, containers.Stack):
         self.inner.extend(widgets)
 
 
+# TODO: Needs major rewrite
 # TODO: Subclass Padded, or maybe some kind of WithPaddedContent?
 class ModalWindow(Window, core.UIElement):
 

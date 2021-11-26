@@ -88,6 +88,8 @@ class MouseOperated(Stateful):
         })
         # TODO: Mouse Wheel events
 
+    # TODO: Instead of calling methods, emit signals?
+
     def on_enter(self, element, *args, **kwargs):
         self.enter()
 
