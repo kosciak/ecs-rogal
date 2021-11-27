@@ -8,18 +8,30 @@ class Bin(core.UIElement):
     """UIElement containing single content element."""
 
     def __init__(self, content, *, width=None, height=None, align=None):
-        if width is None:
-            width = content.width
-        if height is None:
-            height = content.height
+        # if width is None:
+        #     width = content.width
+        # if height is None:
+        #     height = content.height
         if align is None:
-            align  = content.align
+            align = content.align
         super().__init__(
             width=width,
             height=height,
             align=align,
         )
         self.content = content
+
+    @property
+    def width(self):
+        if self._width:
+            return self._width
+        return self.content.width
+
+    @property
+    def height(self):
+        if self._height:
+            return self._height
+        return self.content.height
 
     def layout_content(self, manager, parent, panel, z_order):
         element = manager.create_child(parent)
@@ -186,12 +198,16 @@ class Split(core.Container, core.UIElement):
 
 class WithContainedContent:
 
-    def __init__(self, container, *args, **kwargs):
+    def __init__(self, container, content, *args, **kwargs):
         self._container = container
         super().__init__(
             content=self._container,
             *args, **kwargs,
         )
+        if isinstance(content, (list, tuple)):
+            self.extend(content)
+        elif content is not None:
+            self.append(content)
 
     def _update_size(self):
         self.set_width(self._container.width)
@@ -199,15 +215,15 @@ class WithContainedContent:
 
     def append(self, element):
         self._container.append(element)
-        self._update_size()
+        # self._update_size()
 
     def extend(self, elements):
         self._container.extend(elements)
-        self._update_size()
+        # self._update_size()
 
     def remove(self, element):
         self._container.remove(element)
-        self._update_size()
+        # self._update_size()
 
     def __len__(self):
         return len(self._container)

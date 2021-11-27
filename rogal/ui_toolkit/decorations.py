@@ -22,12 +22,12 @@ class Padded(containers.Bin):
     """Adds padding to it's content."""
 
     def __init__(self, content, padding, *, align=None):
+        self.padding = padding or Padding.ZERO
         super().__init__(
             content=content,
             align=align,
         )
         self.default_z_order = self.content.default_z_order
-        self.padding = padding or Padding.ZERO
 
     @property
     def width(self):
@@ -67,6 +67,7 @@ class WithPaddedContent:
         )
         super().__init__(
             content=self._padded,
+            align=align,
             *args, **kwargs,
         )
 
@@ -84,11 +85,12 @@ class Framed(containers.Bin):
     """Renders frame around content."""
 
     def __init__(self, content, frame, *, align=None):
+        self.frame = frame
         super().__init__(
             content=content,
             align=align,
         )
-        self.frame = frame
+        # TODO: Consider using multiple frames?
 
     @property
     def width(self):
@@ -122,6 +124,7 @@ class WithFramedContent:
         )
         super().__init__(
             content=self._framed,
+            align=align,
             *args, **kwargs,
         )
 
@@ -219,4 +222,7 @@ class WithPostProcessedContent:
     @post_renderers.setter
     def post_renderers(self, post_renderers):
         self._post_processed.post_renderers = post_renderers
+
+
+# TODO: Consider Positioned(content, position)
 

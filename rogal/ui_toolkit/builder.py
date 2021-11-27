@@ -66,7 +66,7 @@ class WidgetsBuilder:
 
         return framed_label
 
-    def create_window(self, style, title=None, on_key_press=None):
+    def create_window(self, style, content, title=None, on_key_press=None):
         frame = self.create(
             basic.Frame, style.pop('frame', {}),
         )
@@ -76,33 +76,37 @@ class WidgetsBuilder:
         )
         window = self.create(
             widgets.Window, style,
+            content=content,
             frame=frame,
-            title=title,
             on_key_press=on_key_press,
         )
+        window.append(title)
         return window
 
-    def create_modal_window(self, style, size, title=None, on_key_press=None):
-        # NOTE: Extending window size by frame.extents
-        #       So basically we only set size of contents, not whole Window
+    def create_modal_window(self, style, content, size, title=None, on_key_press=None):
         frame = self.create(
             basic.Frame, style.pop('frame', {}),
         )
-        size = Size(
-            size.width + frame.extents.width,
-            size.height + frame.extents.height,
-        )
+        width = size.width + frame.extents.width
+        height = size.height + frame.extents.height
+        # width = size.width
+        # height = size.height
+
         title = self.create_framed_label(
             self.get_style('.title'),
             txt=title,
         )
         window = self.create(
-            widgets.ModalWindow, style,
-            size=size,
+            widgets.Window, style,
+            content=content,
+            # content=containers.Stack(),
+            width=width,
+            height=height,
             frame=frame,
-            title=title,
             on_key_press=on_key_press,
         )
+        window.default_z_order=500
+        window.append(title)
         return window
 
     def create_button(self, style, content, callback, value):
@@ -197,16 +201,6 @@ class WidgetsBuilder:
         msg = context['msg']
         callback = context['callback']
 
-        window = self.create_modal_window(
-            self.get_style('Window, Window.modal'),
-            size=Size(40, 6),
-            title=title,
-            on_key_press={
-                handlers.YesNoKeyPress(self.ecs): callback,
-                handlers.DiscardKeyPress(self.ecs): callback,
-            },
-        )
-
         msg = self.create(
             widgets.Label, 'Dialog Label',
             msg,
@@ -221,29 +215,44 @@ class WidgetsBuilder:
             ],
         )
 
-        window.extend([
-            # self.create(
-            #     basic.ProgressBarAnimatedDemo, 'ProgressBar',
-            #     value=.75,
-            #     width=24,
-            #     # height=3,
-            #     frame_duration=150,
-            # ),
+        progress_bar = self.create(
+            basic.ProgressBarAnimatedDemo, 'ProgressBar',
+            value=.75,
+            width=24,
+            # height=3,
+            frame_duration=150,
+        )
 
-            # self.create(
-            #     basic.Spinner, 'Spinner',
-            # ),
+        spinner = self.create(
+            basic.Spinner, 'Spinner',
+        )
 
+#         content = containers.List([
+#             progress_bar,
+#             spinner,
+#             msg,
+#             buttons_row,
+#         ], align=Align.TOP)
+
+        content = containers.Stack([
+            # progress_bar,
+            # spinner,
             msg,
             buttons_row,
-
         ])
 
-        widgets_layout = decorations.Padded(
-            content=window,
-            padding=Padding(12, 0),
+        window = self.create_modal_window(
+            self.get_style('Window, Window.modal'),
+            content=content,
+            size=Size(40, 6),
+            title=title,
+            on_key_press={
+                handlers.YesNoKeyPress(self.ecs): callback,
+                handlers.DiscardKeyPress(self.ecs): callback,
+            },
         )
-        return widgets_layout
+
+        return window
 
     def create_text_input_prompt(self, context):
         title = context['title']
@@ -375,15 +384,15 @@ class WidgetsBuilder:
 
             camera = self.create_window(
                 self.get_style('Window'),
+                content=render.Camera(self.ecs),
                 title='mapcam',
             )
-            camera.append(render.Camera(self.ecs))
 
             msg_log = self.create_window(
                 self.get_style('Window'),
+                content=render.MessageLog(),
                 title='logs',
             )
-            msg_log.append(render.MessageLog())
 
             widgets_layout.extend([camera, msg_log])
 

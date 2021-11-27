@@ -44,7 +44,8 @@ class Label(
         containers.Bin,
     ):
 
-    def __init__(self, text, *, width=None, colors=None, align=None, padding=None):
+    def __init__(self, text, *,
+                 width=None, colors=None, align=None, padding=None):
         text = self._text(text, width=width, align=align)
         super().__init__(
             content=text,
@@ -63,7 +64,8 @@ class FramedLabel(
         containers.Bin,
     ):
 
-    def __init__(self, label, frame, *, width=None, colors=None, align=None, padding=None):
+    def __init__(self, label, frame, *,
+                 width=None, colors=None, align=None, padding=None):
         self.label = self._text(label, width=width, align=align)
         super().__init__(
             content=self.label,
@@ -124,15 +126,46 @@ class ButtonsRow(
         decorations.WithPaddedContent,
         containers.Bin,
     ):
-    def __init__(self, buttons=None, *, align=None, padding=None):
+    def __init__(self, buttons=None, *,
+                 align=None, padding=None):
         container = containers.Row(
-            buttons,
             align=align,
         )
         super().__init__(
+            content=buttons,
             container=container,
             padding=padding,
         )
+
+
+class Window(
+        Widget,
+        decorations.WithFramedContent,
+        decorations.WithClearedContent,
+        containers.WithContainedContent,
+        decorations.WithPaddedContent,
+        containers.Bin,
+    ):
+
+    def __init__(self, content, frame, colors, *,
+                 width=None, height=None, align=None, padding=None,
+                 on_key_press=None,):
+        self.contents = content
+        container = containers.Stack(
+            width=width,
+            height=height,
+        )
+        super().__init__(
+            content=self.contents,
+            container=container,
+            frame=frame,
+            align=align,
+            colors=colors,
+            padding=padding,
+            # width=width,
+            # height=height,
+        )
+        self.handlers.on_key_press.update(on_key_press or {})
 
 
 # TODO: Needs major rewrite
@@ -324,66 +357,4 @@ class ListBox(containers.List):
     def on_index(self, element, index):
         if index < len(self.items):
             self.items[index].toggle()
-
-
-# TODO: Needs major rewrite
-# TODO: Use decorations.With*Content and containers.Bin
-# TODO: Consider renaming to FramedPanel?
-class Window(Widget, containers.Stack):
-
-    DEFAULT_Z_ORDER = ZOrder.BASE
-
-    def __init__(self, frame, colors, *,
-                 title=None,
-                 on_key_press=None,
-                 **kwargs
-                ):
-        super().__init__(**kwargs)
-        self.outer = containers.Stack()
-        # TODO: Instead of frame use header, footer?
-        self.inner = containers.Stack()
-        self.handlers.on_key_press.update(on_key_press or {})
-
-        self.content.extend([
-            decorations.Cleared(
-                content=decorations.Framed(
-                    content=self.inner,
-                    frame=frame,
-                    align=Align.TOP_LEFT,
-                ),
-                colors=colors,
-            ),
-            self.outer,
-        ])
-        if title:
-            self.outer.append(title)
-
-    def append(self, element):
-        self.inner.append(element)
-
-    def extend(self, widgets):
-        self.inner.extend(widgets)
-
-
-# TODO: Needs major rewrite
-# TODO: Subclass Padded, or maybe some kind of WithPaddedContent?
-class ModalWindow(Window, core.UIElement):
-
-    DEFAULT_Z_ORDER = ZOrder.MODAL
-
-    def __init__(self, size, align, frame, colors, *,
-                 title=None,
-                 on_key_press=None,
-                 **kwargs
-                ):
-        super().__init__(
-            width=size.width,
-            height=size.height,
-            align=align,
-            frame=frame,
-            colors=colors,
-            title=title,
-            on_key_press=on_key_press,
-            **kwargs,
-        )
 
