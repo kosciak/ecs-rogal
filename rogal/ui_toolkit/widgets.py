@@ -40,8 +40,7 @@ class Label(
         basic.WithTextContent,
         decorations.WithClearedContent,
         decorations.WithPostProcessedContent,
-        decorations.WithPaddedContent,
-        containers.Bin,
+        decorations.Padded,
     ):
 
     def __init__(self, text, *,
@@ -60,8 +59,7 @@ class FramedLabel(
         decorations.WithFramedContent,
         decorations.WithClearedContent,
         decorations.WithPostProcessedContent,
-        decorations.WithPaddedContent,
-        containers.Bin,
+        decorations.Padded,
     ):
 
     def __init__(self, label, frame, *,
@@ -81,8 +79,7 @@ class Button(
         Widget,
         states.Activable,
         states.MouseOperated,
-        decorations.WithPaddedContent,
-        containers.Bin,
+        decorations.Padded,
     ):
 
     def __init__(self, value, callback, content, *,
@@ -122,58 +119,55 @@ class Button(
 
 class ButtonsRow(
         Widget,
-        containers.WithContainedContent,
-        decorations.WithPaddedContent,
-        containers.Bin,
+        containers.WithContainer,
+        decorations.Padded,
     ):
     def __init__(self, buttons=None, *,
                  align=None, padding=None):
-        container = containers.Row(
+        self._container = containers.Row(
             content=buttons,
             align=align,
         )
         super().__init__(
-            content=container,
+            content=self._container,
             padding=padding,
         )
 
 
 class Window(
         Widget,
+        containers.WithContainer,
         decorations.WithFramedContent,
-        # decorations.WithClearedContent,
-        # containers.WithContainedContent,
-        # decorations.WithClearedContent,
-        decorations.WithPaddedContent,
         decorations.WithClearedContent,
-        containers.Bin,
+        decorations.Padded,
     ):
 
     def __init__(self, content, frame, colors, *,
                  width=None, height=None, align=None, padding=None,
                  on_key_press=None,):
+        self.contents = content
         # NOTE: Instead of using set_width / set_height we use 
         #       containers.Bin to force width and size of window's contents
-        self.contents = content
         content = containers.Bin(
-            content=content,
+            content=self.contents,
             width=width,
             height=height,
-            # align=align,
+            align=align,
         )
-        container = containers.Stack()
         super().__init__(
             content=content,
-            # container=container,
             frame=frame,
-            align=align,
             colors=colors,
             padding=padding,
         )
+        # Replace Cleared(Framed(content)) with Stack
+        self._container = containers.Stack(
+            content=self.content,
+            width=self.content.width,
+            height=self.content.height,
+        )
+        self.content = self._container
         self.handlers.on_key_press.update(on_key_press or {})
-
-    def append(self, element):
-        return
 
 
 # TODO: Needs major rewrite

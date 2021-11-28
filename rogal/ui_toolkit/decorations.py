@@ -21,10 +21,12 @@ class Padded(containers.Bin):
 
     """Adds padding to it's content."""
 
-    def __init__(self, content, padding, *, align=None):
+    def __init__(self, content, padding, *, width=None, height=None, align=None):
         self.padding = padding or Padding.ZERO
         super().__init__(
             content=content,
+            width=width,
+            height=height,
             align=align,
         )
         self.default_z_order = self.content.default_z_order
@@ -47,9 +49,7 @@ class Padded(containers.Bin):
             return height + self.padding.top + self.padding.bottom
         return 0
 
-    def get_layout_panel(self, panel):
-        position = Position(self.padding.left, self.padding.top)
-
+    def get_size(self, panel):
         width = self._width
         if width is None:
             width = self.content.width
@@ -57,17 +57,23 @@ class Padded(containers.Bin):
             width = panel.width - self.padding.left - self.padding.right
         height = self._height
         if height is None:
-            heighheight = self.content.height
+            height = self.content.height
         if not height:
             height = panel.height - self.padding.top - self.padding.bottom
         size = Size(width, height)
+        return size
 
+    def get_layout_panel(self, panel):
+        size = self.get_size(panel)
+        position = panel.get_position(size, self.align, self.padding)
         panel = panel.create_panel(position, size)
-
         return panel
 
 
 class WithPaddedContent:
+
+    # NOTE: You might just want to subclass Padded instead of using WithPaddedContent and Bin
+    #       If you put Padded inside Bin, then Bin will get panel of content size + padding!
 
     def __init__(self, content, padding, align=None, *args, **kwargs):
         self._padded = Padded(
@@ -94,10 +100,12 @@ class Framed(containers.Bin):
 
     """Renders frame around content."""
 
-    def __init__(self, content, frame, *, align=None):
+    def __init__(self, content, frame, *, width=None, height=None, align=None):
         self.frame = frame
         super().__init__(
             content=content,
+            width=width,
+            height=height,
             align=align,
         )
         # TODO: Consider using multiple nested frames?
@@ -155,9 +163,12 @@ class Cleared(containers.Bin):
 
     """Clears content area."""
 
-    def __init__(self, content, *, colors=None):
+    def __init__(self, content, colors, *, width=None, height=None, align=None):
         super().__init__(
             content=content,
+            width=width,
+            height=height,
+            align=align,
         )
         self.renderer = renderers.ClearPanel(
             colors=colors,

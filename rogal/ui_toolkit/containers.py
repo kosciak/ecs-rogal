@@ -203,14 +203,14 @@ class Split(core.Container, core.UIElement):
         return z_order
 
 
-class WithContainedContent:
+class WithContainer:
 
-    def __init__(self, content, *args, **kwargs):
-        self._container = content
-        super().__init__(
-            content=self._container,
-            *args, **kwargs,
-        )
+    # def __init__(self, content, *args, **kwargs):
+    #     self._container = content
+    #     super().__init__(
+    #         content=self._container,
+    #         *args, **kwargs,
+    #     )
 
     def append(self, element):
         self._container.append(element)

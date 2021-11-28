@@ -83,15 +83,10 @@ class WidgetsBuilder:
         window.append(title)
         return window
 
-    def create_modal_window(self, style, content, size, title=None, on_key_press=None):
+    def create_modal_window(self, style, content, width=None, height=None, title=None, on_key_press=None):
         frame = self.create(
             basic.Frame, style.pop('frame', {}),
         )
-        width = size.width + frame.extents.width
-        height = size.height + frame.extents.height
-        # width = size.width
-        # height = size.height
-
         title = self.create_framed_label(
             self.get_style('.title'),
             txt=title,
@@ -227,24 +222,25 @@ class WidgetsBuilder:
             basic.Spinner, 'Spinner',
         )
 
-#         content = containers.List([
-#             progress_bar,
-#             spinner,
-#             msg,
-#             buttons_row,
-#         ], align=Align.TOP)
-
-        content = containers.Stack([
+        content = containers.List([
             # progress_bar,
             # spinner,
             msg,
             buttons_row,
-        ])
+        ], align=Align.TOP)
+
+        # content = containers.Stack([
+        #     # progress_bar,
+        #     # spinner,
+        #     msg,
+        #     buttons_row,
+        # ])
 
         window = self.create_modal_window(
             self.get_style('Window, Window.modal'),
             content=content,
-            size=Size(40, 6),
+            width=40,
+            # height=6,
             title=title,
             on_key_press={
                 handlers.YesNoKeyPress(self.ecs): callback,
@@ -285,7 +281,8 @@ class WidgetsBuilder:
 
         window = self.create_modal_window(
             self.get_style('Window, Window.modal'),
-            size=Size(40, 6),
+            width=40,
+            height=6,
             title=title,
             on_key_press={
                 handlers.OnKeyPress(self.ecs, 'common.SUBMIT', text_input): callback,
@@ -328,10 +325,8 @@ class WidgetsBuilder:
 
         window = self.create_modal_window(
             self.get_style('Window, Window.modal'),
-            size=Size(
-                20,
-                msg.height+buttons.height+len(items)+4
-            ),
+            width=20,
+            height= msg.height+buttons.height+len(items)+4,
             title=title,
             on_key_press={
                 handlers.DiscardKeyPress(self.ecs): callback,
