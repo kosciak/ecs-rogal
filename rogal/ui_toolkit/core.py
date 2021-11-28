@@ -92,7 +92,11 @@ class Container:
 
     def __init__(self, content=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.content = list(content or [])
+        self.content = []
+        if isinstance(content, (list, tuple)):
+            self.extend(content)
+        elif content is not None:
+            self.append(content)
 
     def append(self, element):
         self.content.append(element)

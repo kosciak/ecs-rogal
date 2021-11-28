@@ -8,10 +8,6 @@ class Bin(core.UIElement):
     """UIElement containing single content element."""
 
     def __init__(self, content, *, width=None, height=None, align=None):
-        # if width is None:
-        #     width = content.width
-        # if height is None:
-        #     height = content.height
         if align is None:
             align = content.align
         super().__init__(
@@ -23,13 +19,13 @@ class Bin(core.UIElement):
 
     @property
     def width(self):
-        if self._width:
+        if self._width is not None:
             return self._width
         return self.content.width
 
     @property
     def height(self):
-        if self._height:
+        if self._height is not None:
             return self._height
         return self.content.height
 
@@ -49,6 +45,14 @@ class Stack(core.Container, core.UIElement):
     Will overdraw previous ones if they overlap.
 
     """
+
+    # def __init__(self, content=None, width=None, height=None, *args, **kwargs):
+    #     super().__init__(
+    #         content=content,
+    #         width=width or 0,
+    #         height=height or 0,
+    #         *args, **kwargs,
+    #     )
 
     def layout_content(self, manager, parent, panel, z_order):
         for child in self.content:
@@ -87,7 +91,7 @@ class Row(core.Container, core.UIElement):
 
     @property
     def width(self):
-        if self._width:
+        if self._width is not None:
             return self._width
         widths = [child.width for child in self.content]
         if 0 in widths:
@@ -96,7 +100,7 @@ class Row(core.Container, core.UIElement):
 
     @property
     def height(self):
-        if self._height:
+        if self._height is not None:
             return self._height
         heights = [child.height for child in self.content]
         if 0 in heights:
@@ -111,7 +115,8 @@ class Row(core.Container, core.UIElement):
         calc_widths = calc_sizes(panel.width, widths)
         for i, child in enumerate(self.content):
             element = manager.create_child(parent)
-            size = Size(calc_widths[i], child.height or panel.height)
+            # size = Size(calc_widths[i], child.height or panel.height)
+            size = Size(calc_widths[i], panel.height)
             subpanel = panel.create_panel(position, size)
             child_z_order = child.layout(manager, element, subpanel, z_order+1)
             z_orders.append(child_z_order or 0)
@@ -138,7 +143,7 @@ class List(core.Container, core.UIElement):
 
     @property
     def width(self):
-        if self._width:
+        if self._width is not None:
             return self._width
         widths = [child.width for child in self.content]
         if 0 in widths:
@@ -148,7 +153,7 @@ class List(core.Container, core.UIElement):
 
     @property
     def height(self):
-        if self._height:
+        if self._height is not None:
             return self._height
         heights = [child.height for child in self.content]
         if 0 in heights:
@@ -162,7 +167,9 @@ class List(core.Container, core.UIElement):
         calc_heights = calc_sizes(panel.height, heights)
         for i, child in enumerate(self.content):
             element = manager.create_child(parent)
-            size = Size(child.width or panel.width, calc_heights[i])
+            # NOTE: Use whole panel.width instead of child.width 
+            #       for containers (e.g. Row) to work correctly
+            size = Size(panel.width, calc_heights[i])
             subpanel = panel.create_panel(position, size)
             child_z_order = child.layout(manager, element, subpanel, z_order+1)
             z_orders.append(child_z_order or 0)
@@ -198,32 +205,21 @@ class Split(core.Container, core.UIElement):
 
 class WithContainedContent:
 
-    def __init__(self, container, content, *args, **kwargs):
-        self._container = container
+    def __init__(self, content, *args, **kwargs):
+        self._container = content
         super().__init__(
             content=self._container,
             *args, **kwargs,
         )
-        if isinstance(content, (list, tuple)):
-            self.extend(content)
-        elif content is not None:
-            self.append(content)
-
-    def _update_size(self):
-        self.set_width(self._container.width)
-        self.set_height(self._container.height)
 
     def append(self, element):
         self._container.append(element)
-        # self._update_size()
 
     def extend(self, elements):
         self._container.extend(elements)
-        # self._update_size()
 
     def remove(self, element):
         self._container.remove(element)
-        # self._update_size()
 
     def __len__(self):
         return len(self._container)

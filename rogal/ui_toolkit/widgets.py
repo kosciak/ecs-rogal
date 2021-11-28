@@ -129,11 +129,11 @@ class ButtonsRow(
     def __init__(self, buttons=None, *,
                  align=None, padding=None):
         container = containers.Row(
+            content=buttons,
             align=align,
         )
         super().__init__(
-            content=buttons,
-            container=container,
+            content=container,
             padding=padding,
         )
 
@@ -141,31 +141,39 @@ class ButtonsRow(
 class Window(
         Widget,
         decorations.WithFramedContent,
-        decorations.WithClearedContent,
-        containers.WithContainedContent,
+        # decorations.WithClearedContent,
+        # containers.WithContainedContent,
+        # decorations.WithClearedContent,
         decorations.WithPaddedContent,
+        decorations.WithClearedContent,
         containers.Bin,
     ):
 
     def __init__(self, content, frame, colors, *,
                  width=None, height=None, align=None, padding=None,
                  on_key_press=None,):
+        # NOTE: Instead of using set_width / set_height we use 
+        #       containers.Bin to force width and size of window's contents
         self.contents = content
-        container = containers.Stack(
+        content = containers.Bin(
+            content=content,
             width=width,
             height=height,
+            # align=align,
         )
+        container = containers.Stack()
         super().__init__(
-            content=self.contents,
-            container=container,
+            content=content,
+            # container=container,
             frame=frame,
             align=align,
             colors=colors,
             padding=padding,
-            # width=width,
-            # height=height,
         )
         self.handlers.on_key_press.update(on_key_press or {})
+
+    def append(self, element):
+        return
 
 
 # TODO: Needs major rewrite
