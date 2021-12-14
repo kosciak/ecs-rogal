@@ -19,6 +19,8 @@ ACTION_COST = 60
 class TakeActionHandler:
 
     def __init__(self, ecs):
+        # TODO: Initialize with entity? Or add set_actor(actor)
+        #       Do not set_actor, this should be able to run in parallel!
         self.ecs = ecs
         self.spatial = self.ecs.resources.spatial
         self.waiting_queue = self.ecs.manage(components.WaitsForAction)
@@ -66,7 +68,7 @@ class PlayerInput(TakeActionHandler):
         for handler_cls, callback in [
             [handlers.DirectionKeyPress, self.try_direction],
         ]:
-            self.on_key_press.bind(handler_cls(self.ecs), callback)
+            self.on_key_press.bind(handler_cls(), callback)
 
         for key_binding, action, callback in [
             ['actions.QUIT', components.WantsToQuit, self.try_action],
@@ -74,12 +76,12 @@ class PlayerInput(TakeActionHandler):
             ['actions.REVEAL_LEVEL', components.WantsToRevealLevel, self.try_action],
         ]:
             self.on_key_press.bind(
-                handlers.OnKeyPress(self.ecs, key_binding, action),
+                handlers.OnKeyPress(key_binding, action),
                 callback
             )
 
         self.on_key_press.bind(
-            handlers.NextPrevKeyPress(self.ecs, 'actions.NEXT_LEVEL', 'actions.PREV_LEVEL'),
+            handlers.NextPrevKeyPress('actions.NEXT_LEVEL', 'actions.PREV_LEVEL'),
             self.try_change_level
         )
 

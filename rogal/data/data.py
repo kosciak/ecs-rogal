@@ -21,3 +21,5 @@ TilesSources = data_store.tiles_sources
 
 ColorPalettes = data_store.color_palettes
 
+KeyBindings = data_store.key_bindings
+

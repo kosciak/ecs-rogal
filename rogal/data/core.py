@@ -40,6 +40,11 @@ class Data:
     def __getattr__(self, key):
         return self.get(key)
 
+    def __iter__(self):
+        if self._data is None:
+            self._load()
+        yield from self._data
+
 
 class DataParsers(AttrDict):
 

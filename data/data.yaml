@@ -42,3 +42,6 @@ color_names:
 color_palettes:
   - 'colors/color_palettes.yaml'
 
+key_bindings:
+  - 'keys.yaml'
+

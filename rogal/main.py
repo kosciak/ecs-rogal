@@ -19,7 +19,6 @@ from .colors.manager import ColorsManager
 from .data.loaders import DataLoader
 from .ecs import ECS
 from .entities_spawner import EntitiesSpawner
-from .events.keys import KeyBindings
 from .tiles.tilesets import Tileset
 from .spatial_index import SpatialIndex
 from . import systems
@@ -79,9 +78,6 @@ def run(wrapper):
 
     # ECS initialization
     ecs = ECS()
-
-    # Key bindings initialization
-    ecs.resources.key_bindings = KeyBindings(DataLoader(KEY_BINDINGS_DATA_FN))
 
     # Spatial index
     ecs.resources.spatial = SpatialIndex(ecs)
