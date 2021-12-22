@@ -105,6 +105,10 @@ class UIManager:
     def release_focus(self, element):
         self.ecs.manage(components.InputFocus).remove(element)
 
+    def connect(self, element, signal_handlers):
+        # TODO: insert into ECS
+        return
+
     def create_widget(self, widget_type, context):
         widget = self.widgets_builder.build(
             widget_type, context,

@@ -11,6 +11,7 @@ from . import containers
 from . import decorations
 from . import renderers
 from . import states
+from . import signals
 
 
 class Widget:
@@ -77,6 +78,7 @@ class FramedLabel(
 # TODO: Consider: multiple Labels associated with each state, change content on state change?
 class Button(
         Widget,
+        signals.SignalsEmitter,
         states.Activable,
         states.MouseOperated,
         decorations.Padded,
@@ -91,7 +93,7 @@ class Button(
         super().__init__(
             callback=callback, value=value,
             content=self._button,
-            padding=padding, # NOTE: with padding whole area is mouse operated, including padding!
+            padding=padding,
         )
         self.default_colors = self._button.colors
         self.selected_colors = selected_colors or self.default_colors
@@ -116,12 +118,23 @@ class Button(
         self._button.post_renderers = self.selected_renderers
         self.redraw()
 
+    def release(self, position):
+        super().release(position)
+        self._button.colors = self.selected_colors
+        self._button.post_renderers = self.selected_renderers
+        self.redraw();
+
+    def activate(self):
+        self.emit('clicked')
+        super().activate()
+
 
 class ButtonsRow(
         Widget,
         containers.WithContainer,
         decorations.Padded,
     ):
+
     def __init__(self, buttons=None, *,
                  align=None, padding=None):
         self._container = containers.Row(
@@ -178,7 +191,7 @@ class TextInput(
         containers.Stack,
     ):
 
-    def __init__(self, ecs, width, *,
+    def __init__(self, width, *,
                  colors,
                  default_text=None,
                  align=Align.TOP_LEFT,
@@ -207,7 +220,7 @@ class TextInput(
             handlers.TextInput(): self.on_input,
         })
         self.handlers.on_key_press.update({
-            handlers.TextEdit(ecs): self.on_edit,
+            handlers.TextEdit(): self.on_edit,
         })
 
     @property
@@ -266,13 +279,13 @@ class ListItem(
         containers.Row,
     ):
 
-    def __init__(self, ecs, key_binding, callback, value, index, item, *,
+    def __init__(self, key_binding, callback, value, index, item, *,
                  colors,
                  selected_renderers=None,
                  align=Align.TOP_LEFT,
                 ):
         super().__init__(
-            ecs=ecs, key_binding=key_binding,
+            key_binding=key_binding,
             callback=callback, value=value,
             content=[
                 index,
@@ -312,12 +325,12 @@ class ListItem(
 # TODO: Needs major rewrite
 class ListBox(containers.List):
 
-    def __init__(self, ecs, align=Align.TOP_LEFT):
+    def __init__(self, align=Align.TOP_LEFT):
         super().__init__(align=align)
         self.items = []
         self.handlers.on_key_press.update({
-            handlers.NextPrevKeyPress(ecs, 'list.NEXT', 'list.PREV'): self.on_focus_change,
-            handlers.OnKeyPress(ecs, 'list.SELECT'): self.on_select,
+            handlers.NextPrevKeyPress('list.NEXT', 'list.PREV'): self.on_focus_change,
+            handlers.OnKeyPress('list.SELECT'): self.on_select,
         })
         self.handlers.on_mouse_over.update({
             handlers.MouseOver(): self.on_mouse_over,

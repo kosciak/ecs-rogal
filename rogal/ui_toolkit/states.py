@@ -23,7 +23,7 @@ class Stateful:
 
     @property
     def is_pressed(self):
-        return WidgetState.PRESSD in self.states
+        return WidgetState.PRESSED in self.states
 
     @property
     def is_focused(self):
@@ -43,7 +43,8 @@ class Stateful:
     def press(self, position):
         self.states.add(WidgetState.PRESSED)
 
-    # TODO: release?
+    def release(self, position):
+        self.states.discard(WidgetState.PRESSED)
 
     def focus(self):
         self.states.add(WidgetState.FOCUSED)
@@ -75,7 +76,7 @@ class MouseOperated(Stateful):
             handlers.MouseLeftButton(): self.on_press,
         })
         self.handlers.on_mouse_up.update({
-            handlers.MouseLeftButton(): self.on_enter,
+            handlers.MouseLeftButton(): self.on_release,
         })
         self.handlers.on_mouse_in.update({
             handlers.MouseIn(): self.on_enter,
@@ -91,22 +92,31 @@ class MouseOperated(Stateful):
     # TODO: Instead of calling methods, emit signals?
 
     def on_enter(self, element, *args, **kwargs):
+        self.emit('enter')
         self.enter()
 
     def on_over(self, element, position, *args, **kwargs):
+        self.emit('hovered', position)
         self.hover(position)
 
     def on_leave(self, element, *args, **kwargs):
+        self.emit('leave')
         self.leave()
 
     def on_press(self, element, position, *args, **kwargs):
+        self.emit('pressed')
         self.press(position)
 
+    def on_release(self, element, position, *args, **kwargs):
+        self.emit('released')
+        self.release(position)
+
     def on_click(self, element, position, *args, **kwargs):
-        self.toggle()
+        self.emit('activated')
+        self.activate()
 
     def hover(self, position):
-        if not self.is_hovered:
+        if not self.is_hovered and not self.is_pressed:
             self.enter()
 
 
@@ -115,11 +125,11 @@ class WithHotkey(Stateful):
     def __init__(self, ecs, key_binding, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.handlers.on_key_press.update({
-            handlers.OnKeyPress(ecs, key_binding): self.on_hotkey,
+            handlers.OnKeyPress(key_binding): self.on_hotkey,
         })
 
     def on_hotkey(self, element, key, *args, **kwargs):
-        self.toggle()
+        self.activate()
 
 
 class Activable:
@@ -131,8 +141,4 @@ class Activable:
 
     def activate(self):
         return self.callback(self.element, self.value)
-
-    def select(self):
-        super().select()
-        self.activate()
 

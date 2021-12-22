@@ -29,6 +29,7 @@ class UIElement:
         self.align = align
         self.default_z_order = self.DEFAULT_Z_ORDER
         self.renderer = None
+        # TODO: Move event_handlers to separate class/mixin?
         self.handlers = DefaultAttrDict(dict)
 
     @property

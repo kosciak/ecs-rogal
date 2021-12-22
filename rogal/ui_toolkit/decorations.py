@@ -93,7 +93,8 @@ class WithPaddedContent:
 
     @padding.setter
     def padding(self, padding):
-        self._padded.frame = padding
+        self._padded.padding = padding
+        # TODO: self.redraw() ?
 
 
 class Framed(containers.Bin):
@@ -157,6 +158,7 @@ class WithFramedContent:
     @frame.setter
     def frame(self, frame):
         self._framed.frame = frame
+        # TODO: self.redraw() ?
 
 
 class Cleared(containers.Bin):
@@ -247,7 +249,8 @@ class WithPostProcessedContent:
     @post_renderers.setter
     def post_renderers(self, post_renderers):
         self._post_processed.post_renderers = post_renderers
+        # TODO: self.redraw() ?
 
 
-# TODO: Consider Positioned(content, position)
+# TODO: Consider: Positioned(content, position), need move(vector) and maybe move_to(position)
 

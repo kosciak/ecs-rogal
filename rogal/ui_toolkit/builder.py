@@ -1,7 +1,6 @@
 import string
 
 from ..data import Decorations, ProgressBars, Spinners
-from ..data import data_store
 from ..geometry import Size
 
 from ..events import handlers
@@ -10,6 +9,7 @@ from .. import render
 
 from ..console.core import Align, Padding, Colors
 
+from .stylesheets import StylesheetsManager
 from . import basic
 from . import containers
 from . import decorations
@@ -24,18 +24,11 @@ class WidgetsBuilder:
 
     def __init__(self, ecs):
         self.ecs = ecs
-
-        self.styles = data_store.ui_style
-
+        self.stylesheets = StylesheetsManager()
         self.default_colors = Colors("fg", "bg")
 
     def get_style(self, selectors):
-        style = {}
-        for selector in selectors.split(','):
-            style.update(
-                self.styles.get(selector.strip())
-            )
-        return style
+        return self.stylesheets.get(selectors)
 
     def create(self, element_cls, style, *args, **kwargs):
         if isinstance(style, str):
@@ -70,26 +63,24 @@ class WidgetsBuilder:
         frame = self.create(
             basic.Frame, style.pop('frame', {}),
         )
-        title = self.create_framed_label(
-            self.get_style('.title'),
-            txt=title,
-        )
         window = self.create(
             widgets.Window, style,
             content=content,
             frame=frame,
             on_key_press=on_key_press,
         )
+
+        title = self.create_framed_label(
+            self.get_style('.title'),
+            txt=title,
+        )
         window.append(title)
+
         return window
 
     def create_modal_window(self, style, content, width=None, height=None, title=None, on_key_press=None):
         frame = self.create(
             basic.Frame, style.pop('frame', {}),
-        )
-        title = self.create_framed_label(
-            self.get_style('.title'),
-            txt=title,
         )
         window = self.create(
             widgets.Window, style,
@@ -101,7 +92,19 @@ class WidgetsBuilder:
             on_key_press=on_key_press,
         )
         window.default_z_order=500
+
+        title = self.create_framed_label(
+            self.get_style('.title'),
+            txt=title,
+        )
         window.append(title)
+
+        close_button = self.create_framed_label(
+            self.get_style('.close_button'),
+            txt='X',
+        )
+        window.append(close_button)
+
         return window
 
     def create_button(self, style, content, callback, value):
@@ -140,7 +143,6 @@ class WidgetsBuilder:
     def create_text_input(self, width, text=None):
         text_input = self.create(
             widgets.TextInput, 'TextInput',
-            self.ecs,
             width=width,
             default_text=text,
         )
@@ -162,7 +164,6 @@ class WidgetsBuilder:
         )
 
         list_item = widgets.ListItem(
-            self.ecs,
             key_binding=key_binding,
             callback=callback, value=index,
             index=index_text, item=item_text,
@@ -237,14 +238,14 @@ class WidgetsBuilder:
         # ])
 
         window = self.create_modal_window(
-            self.get_style('Window, Window.modal'),
+            self.get_style('Window.modal'),
             content=content,
             width=40,
             # height=6,
             title=title,
             on_key_press={
-                handlers.YesNoKeyPress(self.ecs): callback,
-                handlers.DiscardKeyPress(self.ecs): callback,
+                handlers.YesNoKeyPress(): callback,
+                handlers.DiscardKeyPress(): callback,
             },
         )
 
@@ -285,8 +286,8 @@ class WidgetsBuilder:
             height=6,
             title=title,
             on_key_press={
-                handlers.OnKeyPress(self.ecs, 'common.SUBMIT', text_input): callback,
-                handlers.DiscardKeyPress(self.ecs): callback,
+                handlers.OnKeyPress('common.SUBMIT', text_input): callback,
+                handlers.DiscardKeyPress(): callback,
             },
         )
 
@@ -329,12 +330,11 @@ class WidgetsBuilder:
             height= msg.height+buttons.height+len(items)+4,
             title=title,
             on_key_press={
-                handlers.DiscardKeyPress(self.ecs): callback,
+                handlers.DiscardKeyPress(): callback,
             },
         )
 
         items_list = widgets.ListBox(
-            self.ecs,
             align=Align.TOP_LEFT,
         )
         # TODO: Move to create_list()
