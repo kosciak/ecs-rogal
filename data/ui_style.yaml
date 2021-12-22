@@ -6,6 +6,7 @@ Window:
 
 Window.modal:
   align: TOP_CENTER
+  padding: [10, 3]
 
 
 Button:
@@ -35,6 +36,15 @@ ButtonsRow:
     decorations: HORIZONTAL_DSLINE
   label:
     padding: [0, 1]
+
+
+.close_button:
+  align: TOP_RIGHT
+  fg: FG
+  bg: BG
+  padding: [0, 1]
+  frame:
+    decorations: HORIZONTAL_BRACKETS_SQUARE
 
 
 Dialog Label:
