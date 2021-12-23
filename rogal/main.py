@@ -122,6 +122,7 @@ def run(wrapper):
     for system in [
         # Core engine related systems
         systems.user_input.InputFocusSystem(ecs),
+        systems.user_input.OnScreenContentSystem(ecs),
         systems.user_input.EventsHandlersSystem(ecs),
 
         systems.real_time.TTLSystem(ecs),
