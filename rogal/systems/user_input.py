@@ -58,8 +58,8 @@ class InputFocusSystem(System):
 
 class EventsHandlersSystem(System):
 
-    TIMEOUT = 1./60
-    # TIMEOUT = 10
+    TIMEOUT = 1./60/3
+    # TIMEOUT = False
 
     INCLUDE_STATES = {
         RunState.WAIT_FOR_INPUT,
@@ -77,13 +77,14 @@ class EventsHandlersSystem(System):
         self.ecs.resources.mouse_state = MouseState()
         self.mouse = self.ecs.resources.mouse_state
 
-        self.widgets_per_position = {}
+        self.onscreen_manager = self.ecs.resources.onscreen_manager
 
     def handle_event(self, event, entity, handlers):
         value = None
         for handler, callback in handlers:
             value = handler.handle(event)
             if value is not None:
+                # TODO: Is entity needed here?
                 callback(entity, value)
 
     def get_handlers_with_focus(self, handlers_component):
@@ -97,18 +98,12 @@ class EventsHandlersSystem(System):
         ]
         return valid_handlers
 
-    def get_widgets_per_position(self):
-        import numpy as np
-        root_panel = self.ecs.resources.root_panel
-        if not root_panel:
-            return {}
-        positions = np.zeros(root_panel.size, dtype="object", order="C")
+    def update_widgets_per_position(self):
         widgets = self.ecs.manage(components.UIWidget)
         consoles = self.ecs.manage(components.Console)
         # NOTE: Use only UIWidgets, we don't want renderers that might have higher z_order to mask widgets
         for widget, console in sorted(self.ecs.join(widgets.entities, consoles), key=lambda e: e[1].z_order):
-            positions[console.panel.x:console.panel.x2, console.panel.y:console.panel.y2] = widget
-        return positions
+            self.onscreen_manager.update_positions(widget, console.panel)
 
     def get_parents_gen(self, entity):
         parents = self.ecs.manage(components.ParentUIElement)
@@ -120,12 +115,7 @@ class EventsHandlersSystem(System):
         consoles = self.ecs.manage(components.Console)
         event_handlers = self.ecs.manage(handlers_component)
 
-        # NOTE: On terminal position might be outside root console!
-        max_x, max_y = self.widgets_per_position.shape
-        if position.x >= max_x or position.y >= max_y:
-            return
-
-        entity = self.widgets_per_position[position]
+        entity = self.onscreen_manager.get(position)
         for entity in self.get_parents_gen(entity):
             if entity in event_handlers:
                 yield [entity, consoles.get(entity), event_handlers.get(entity)]
@@ -199,7 +189,7 @@ class EventsHandlersSystem(System):
     def run(self):
         # Update widgets positions
         # TODO: Consider moving into separate system, and store in resources
-        self.widgets_per_position = self.get_widgets_per_position()
+        self.update_widgets_per_position()
 
         # Get valid events and pass them to all entities with appopriate EventHandlers
         # NOTE: It is NOT checked if entity has ActsNow flag, as EventHandlers can be attached

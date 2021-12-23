@@ -25,7 +25,13 @@ class Entity(int):
     def __new__(cls, entity_id=None):
         if entity_id is None:
             entity_id = uuid.uuid4().int
+        if isinstance(entity_id, bytes):
+            entity_id = int.from_bytes(entity_id, 'big')
         return super().__new__(cls, entity_id)
+
+    @property
+    def bytes(self):
+        return self.to_bytes(16, 'big')
 
     @property
     def short_id(self):

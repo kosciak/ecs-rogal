@@ -15,6 +15,7 @@ from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerat
 from .procgen.dungeons import StaticLevel
 
 from .ui_toolkit.manager import UIManager
+from .ui_toolkit.onscreen import OnScreenManager
 from .colors.manager import ColorsManager
 from .data.loaders import DataLoader
 from .ecs import ECS
@@ -113,6 +114,8 @@ def run(wrapper):
 
     # Console UI manager
     ecs.resources.ui_manager = UIManager(ecs)
+
+    ecs.resources.onscreen_manager = OnScreenManager(ecs)
 
     # Register systems
     # NOTE: Systems are run in order they were registered
