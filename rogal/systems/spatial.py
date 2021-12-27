@@ -22,6 +22,7 @@ class IndexingSystem(System):
         self.spatial = self.ecs.resources.spatial
 
     def calculate_spatial(self):
+        # TODO: This will work for already created entities, what about generating new level?
         if not self.spatial._entities:
             self.spatial.calculate_entities()
 

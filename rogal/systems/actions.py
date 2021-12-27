@@ -44,6 +44,7 @@ class ActionsQueueSystem(System):
                 acts_now.insert(entity)
 
 
+# TODO: AIActionsSystem, for player just wait?
 class TakeActionsSystem(System):
 
     INCLUDE_STATES = {
@@ -57,6 +58,7 @@ class TakeActionsSystem(System):
         actions_handlers = self.ecs.manage(components.Actor)
 
         for actor, handler in self.ecs.join(acts_now.entities, actions_handlers):
+            # TODO: Initialize handler with actor, and set to component for later?
             if not handler.take_action(actor):
                 break
 
@@ -88,12 +90,14 @@ class MovementSystem(System):
         super().__init__(ecs)
         self.spatial = self.ecs.resources.spatial
 
-    def apply_move(self):
+    def run(self):
         players = self.ecs.manage(components.Player)
         names = self.ecs.manage(components.Name)
         locations = self.ecs.manage(components.Location)
         movement_directions = self.ecs.manage(components.WantsToMove)
         has_moved = self.ecs.manage(components.HasMoved)
+
+        has_moved.clear()
 
         for entity, location, direction in self.ecs.join(self.ecs.entities, locations, movement_directions):
             if entity in players:
@@ -107,9 +111,6 @@ class MovementSystem(System):
 
         # Clear processed movement intents
         movement_directions.clear()
-
-    def run(self):
-        self.apply_move()
 
 
 class MeleeCombatSystem(System):
@@ -153,6 +154,9 @@ class OperateSystem(System):
         blocks_vision_changes = self.ecs.manage(components.BlocksVisionChanged)
         blocks_movement_changes = self.ecs.manage(components.BlocksMovementChanged)
 
+        blocks_vision_changes.clear()
+        blocks_movement_changes.clear()
+
         for entity, target in operate_targets:
             if entity in players:
                 msg_log.info(f'{names.get(entity)} OPERATE: {names.get(target)}')
@@ -183,12 +187,5 @@ class ActionsPerformedSystem(System):
     }
 
     def run(self):
-        has_moved = self.ecs.manage(components.HasMoved)
-        has_moved.clear()
-
-        blocks_vision_changes = self.ecs.manage(components.BlocksVisionChanged)
-        blocks_vision_changes.clear()
-
-        blocks_movement_changes = self.ecs.manage(components.BlocksMovementChanged)
-        blocks_movement_changes.clear()
+        pass
 

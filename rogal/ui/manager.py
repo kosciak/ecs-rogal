@@ -1,14 +1,12 @@
 from .. import components
 
-from .core import ZOrder
-from .builder import WidgetsBuilder
+from ..toolkit.core import ZOrder
 
 
 class UIManager:
 
     def __init__(self, ecs):
         self.ecs = ecs
-        self.widgets_builder = WidgetsBuilder(self.ecs)
 
     def create(self, widget_type, context):
         widget = self.ecs.create(
@@ -108,10 +106,4 @@ class UIManager:
     def connect(self, element, signal_handlers):
         # TODO: insert into ECS
         return
-
-    def create_widget(self, widget_type, context):
-        widget = self.widgets_builder.build(
-            widget_type, context,
-        )
-        return widget
 

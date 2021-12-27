@@ -14,7 +14,7 @@ from .console.core import Colors
 from .tiles import RenderOrder, Tile
 from . import terrain
 
-from .ui_toolkit import core
+from .toolkit import core
 
 from .utils import perf
 
@@ -264,6 +264,7 @@ class Camera(WithPositionMixin, core.Renderer, core.UIElement):
             return
 
         # Calculate visibility masks
+        # TODO: Fails on level change (seen is None)!
         revealed = self.get_covered(seen, coverage)
         visible = self.get_covered(fov, coverage)
 

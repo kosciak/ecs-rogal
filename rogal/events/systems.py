@@ -56,21 +56,6 @@ class InputFocusSystem(System):
             has_focus.insert(entity)
 
 
-# TODO: Move to ui_toolkit related systems
-class OnScreenContentSystem(System):
-
-    def __init__(self, ecs):
-        super().__init__(ecs)
-        self.onscreen_manager = self.ecs.resources.onscreen_manager
-
-    def run(self):
-        widgets = self.ecs.manage(components.UIWidget)
-        consoles = self.ecs.manage(components.Console)
-        # NOTE: Use only UIWidgets, we don't want renderers that might have higher z_order to mask widgets
-        for widget, console in sorted(self.ecs.join(widgets.entities, consoles), key=lambda e: e[1].z_order):
-            self.onscreen_manager.update_positions(widget, console.panel)
-
-
 class EventsHandlersSystem(System):
 
     TIMEOUT = 1./60/3
@@ -113,9 +98,6 @@ class EventsHandlersSystem(System):
         ]
         return valid_handlers
 
-        entities = self.onscreen_manager.get_entities(position)
-        yield from self.ecs.join(entities, consoles, event_handlers)
-
     def on_text_input(self, event):
         event_handlers = self.get_handlers_with_focus(components.OnTextInput)
         for entity, handlers in event_handlers:
@@ -129,6 +111,8 @@ class EventsHandlersSystem(System):
     def get_handlers_over_position(self, handlers_component, position):
         consoles = self.ecs.manage(components.Console)
         event_handlers = self.ecs.manage(handlers_component)
+        entities = self.onscreen_manager.get_entities(position)
+        yield from self.ecs.join(entities, consoles, event_handlers)
 
     def on_mouse_over_event(self, event, handlers_component):
         for entity, console, handlers in self.get_handlers_over_position(handlers_component, event.position):

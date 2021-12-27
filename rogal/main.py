@@ -14,8 +14,9 @@ from .rng import rng, generate_seed
 from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerator, BSPLevelGenerator
 from .procgen.dungeons import StaticLevel
 
-from .ui_toolkit.manager import UIManager
-from .ui_toolkit.onscreen import OnScreenManager
+from .ui.manager import UIManager
+from .ui.onscreen import OnScreenManager
+from .toolkit.builder import WidgetsBuilder
 from .colors.manager import ColorsManager
 from .data.loaders import DataLoader
 from .ecs import ECS
@@ -112,6 +113,8 @@ def run(wrapper):
         title='Rogal test'
     )
 
+    ecs.resources.widgets_builder = WidgetsBuilder(ecs)
+
     # Console UI manager
     ecs.resources.ui_manager = UIManager(ecs)
 
@@ -121,9 +124,6 @@ def run(wrapper):
     # NOTE: Systems are run in order they were registered
     for system in [
         # Core engine related systems
-        systems.user_input.InputFocusSystem(ecs),
-        systems.user_input.OnScreenContentSystem(ecs),
-        systems.user_input.EventsHandlersSystem(ecs),
 
         systems.real_time.TTLSystem(ecs),
 
@@ -131,11 +131,16 @@ def run(wrapper):
         systems.run_state.RenderStateSystem(ecs),
         systems.run_state.AnimationsStateSystem(ecs),
 
-        systems.gui.DestroyUIElementsSystem(ecs),
-        systems.gui.CreateUIElementsSystem(ecs),
+        systems.ui.DestroyUIElementsSystem(ecs),
+        systems.ui.CreateUIElementsSystem(ecs),
 
-        systems.console.LayoutSytem(ecs),
-        systems.console.RenderingSystem(ecs),
+        systems.ui.LayoutSytem(ecs),
+        systems.ui.RenderSystem(ecs),
+
+        systems.ui.OnScreenContentSystem(ecs),
+
+        systems.events.InputFocusSystem(ecs),
+        systems.events.EventsHandlersSystem(ecs),
 
         systems.commands.QuitSystem(ecs),
 
