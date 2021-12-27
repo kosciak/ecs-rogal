@@ -24,6 +24,21 @@ class Vector(collections.namedtuple(
 Vector.ZERO = Vector(0, 0)
 
 
+class WithVectorMixin:
+
+    __slots__ = ()
+
+    @property
+    def dx(self):
+        return self.vector.dx
+
+    @property
+    def dy(self):
+        return self.vector.dy
+
+
+
+# TODO: Rename to MoveDirection
 # TODO: Move to movement related something?
 class Direction(Vector, Enum):
 

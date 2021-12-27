@@ -109,11 +109,12 @@ def component_type(*bases):
 
 
 Int = component_type(IntComponent)
-Bool = component_type(IntComponent)
-Float = component_type(IntComponent)
+Bool = component_type(BoolComponent)
+Float = component_type(FloatComponent)
 String = component_type(Component, str)
 List = component_type(Component, list)
 Set = component_type(Component, set)
+Dict = component_type(Component, dict)
 
 EntityReference = component_type(Component, Entity)
 EntitiesRefs = component_type(Component, EntitiesSet)

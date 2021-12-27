@@ -7,7 +7,7 @@ from .ecs import Component
 from .ecs.components import Flag, IntFlag, Int, Counter, FloatComponent, String, EntityReference, EntitiesRefs
 from .ecs.components import component_type
 from . import flags
-from .geometry import Direction, Position, Size, WithPositionMixin
+from .geometry import Direction, Position, Size, WithPositionMixin, WithVectorMixin
 from .geometry.rectangle import Rectangular
 from . import stats
 from .tiles import RenderOrder
@@ -143,6 +143,7 @@ class TTL(FloatComponent):
     __slots__ = ()
 
     def __new__(cls, value):
+        # TODO: instead of time() use monotonic() ?
         return super().__new__(cls, time.time()+value)
 
 # TODO: RealTimeParticles and TickBasedParticles based on ClockTicks like WaitsForAction
@@ -293,7 +294,7 @@ WantsToRest = Flag('WantsToRest')
 
 
 # TODO: WantsToMove: to: Location, how: MovementType
-class WantsToMove(Component):
+class WantsToMove(WithVectorMixin, Component):
     __slots__ = ('vector', )
 
     """Move one step in given Direction."""
@@ -302,14 +303,6 @@ class WantsToMove(Component):
         if isinstance(vector, str):
             vector = getattr(Direction, vector)
         self.vector = vector
-
-    @property
-    def dx(self):
-        return self.vector.dx
-
-    @property
-    def dy(self):
-        return self.vector.dy
 
     def serialize(self):
         return self.vector.name

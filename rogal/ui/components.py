@@ -2,7 +2,7 @@ import functools
 
 from ..ecs import Component
 
-from ..ecs.components import Flag, IntFlag, Int, Counter, FloatComponent, String, EntityReference, EntitiesRefs
+from ..ecs.components import Flag, EntityReference
 
 
 class CreateUIElement(Component):
@@ -52,7 +52,7 @@ class UIPanel(Component):
 class UIRenderer(Component):
     __slots__ = ('renderer', )
 
-    def __init__(self, renderer, ):
+    def __init__(self, renderer):
         self.renderer = renderer
 
     def render(self, panel, timestamp):
