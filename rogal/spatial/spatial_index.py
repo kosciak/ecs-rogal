@@ -3,12 +3,12 @@ import logging
 
 import numpy as np
 
-from .bitmask import bitmask_8bit
-from . import components
-from . import dtypes
-from .ecs import EntitiesSet
-from .flags import Flag
-from .geometry import Direction
+from ..bitmask import bitmask_8bit
+from .. import components
+from .. import dtypes
+from ..ecs import EntitiesSet
+from ..flags import Flag
+from ..geometry import Direction
 
 
 log = logging.getLogger(__name__)

@@ -22,7 +22,7 @@ from .data.loaders import DataLoader
 from .ecs import ECS
 from .entities_spawner import EntitiesSpawner
 from .tiles.tilesets import Tileset
-from .spatial_index import SpatialIndex
+from .spatial.spatial_index import SpatialIndex
 from . import systems
 
 
@@ -156,7 +156,7 @@ def run(wrapper):
         systems.actions.MovementSystem(ecs),
         systems.actions.OperateSystem(ecs),
 
-        systems.spatial.IndexingSystem(ecs),
+        systems.spatial.SpatialIndexingSystem(ecs),
 
         systems.awerness.InvalidateViewshedsSystem(ecs),
         systems.awerness.VisibilitySystem(ecs),
