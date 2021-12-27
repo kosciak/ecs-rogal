@@ -1,7 +1,8 @@
 import collections
 import logging
 
-from .. import components
+from ..utils import perf
+
 from ..ecs import System
 from ..ecs.run_state import RunState
 
@@ -9,7 +10,8 @@ from ..events import EventType
 from ..events.keyboard import KeyboardState
 from ..events.mouse import MouseState
 
-from ..utils import perf
+from .. import components
+from ..ui.components import UIPanel
 
 
 log = logging.getLogger(__name__)
@@ -109,31 +111,31 @@ class EventsHandlersSystem(System):
             self.handle_event(event, entity, handlers)
 
     def get_handlers_over_position(self, handlers_component, position):
-        consoles = self.ecs.manage(components.Console)
+        panels = self.ecs.manage(UIPanel)
         event_handlers = self.ecs.manage(handlers_component)
         entities = self.onscreen_manager.get_entities(position)
-        yield from self.ecs.join(entities, consoles, event_handlers)
+        yield from self.ecs.join(entities, panels, event_handlers)
 
     def on_mouse_over_event(self, event, handlers_component):
-        for entity, console, handlers in self.get_handlers_over_position(handlers_component, event.position):
+        for entity, panel, handlers in self.get_handlers_over_position(handlers_component, event.position):
             self.mouse_over_entities.add(entity)
-            # TODO: Need to pass: event.position.offset(console.panel.position)
+            # TODO: Need to pass: event.position.offset(panel.panel.position)
             #       So event_handler will get position relative to panel
-            # print(event.position.offset(console.panel.position))
+            # print(event.position.offset(panel.panel.position))
             self.handle_event(event, entity, handlers)
 
     def on_mouse_in_event(self, event, handlers_component):
-        for entity, console, handlers in self.get_handlers_over_position(handlers_component, event.position):
+        for entity, panel, handlers in self.get_handlers_over_position(handlers_component, event.position):
             if entity in self.mouse_over_entities and \
-               self.mouse.prev_position and self.mouse.prev_position in console.panel:
+               self.mouse.prev_position and self.mouse.prev_position in panel.panel:
                 # cursor did not enter, just moved over
                 continue
             self.mouse_over_entities.add(entity)
             self.handle_event(event, entity, handlers)
 
     def on_mouse_out_event(self, event, handlers_component):
-        for entity, console, handlers in self.get_handlers_over_position(handlers_component, event.prev_position):
-            if event.position in console.panel:
+        for entity, panel, handlers in self.get_handlers_over_position(handlers_component, event.prev_position):
+            if event.position in panel.panel:
                 # cursor did not leave, just moved over
                 continue
             self.handle_event(event, entity, handlers)

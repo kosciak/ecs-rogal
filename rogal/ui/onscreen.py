@@ -3,7 +3,7 @@ import logging
 
 import numpy as np
 
-from .. import components
+from .components import ParentUIElement
 
 from ..ecs.core import Entity, EntitiesSet
 
@@ -17,6 +17,7 @@ class OnScreenManager:
         self.ecs = ecs
         self._positions = None
         self.parents = collections.defaultdict(EntitiesSet)
+        # TODO: Clear parents from already destroyed entities?
         # TODO: consider adding pixel_positions ??
 
     @property
@@ -31,7 +32,7 @@ class OnScreenManager:
         self.parents.clear()
 
     def get_parents_gen(self, entity):
-        parents = self.ecs.manage(components.ParentUIElement)
+        parents = self.ecs.manage(ParentUIElement)
         while entity:
             yield entity
             entity = parents.get(entity)

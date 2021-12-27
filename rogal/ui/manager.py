@@ -1,6 +1,22 @@
-from .. import components
-
 from ..toolkit.core import ZOrder
+
+from ..components import (
+    OnTextInput,
+    OnKeyPress,
+    OnMousePress, OnMouseClick, OnMouseUp,
+    OnMouseIn, OnMouseOver, OnMouseOut,
+    OnMouseWheel,
+    GrabInputFocus, InputFocus,
+)
+
+from .components import (
+    CreateUIElement, DestroyUIElement, DestroyUIElementContent,
+    ParentUIElement,
+    UIWidget,
+    NeedsLayout,
+    UIPanel,
+    UIRenderer,
+)
 
 
 class UIManager:
@@ -10,7 +26,7 @@ class UIManager:
 
     def create(self, widget_type, context):
         widget = self.ecs.create(
-            components.CreateUIElement(
+            CreateUIElement(
                 widget_type=widget_type,
                 context=context,
             ),
@@ -18,19 +34,17 @@ class UIManager:
         return widget
 
     def destroy(self, element):
-        self.ecs.manage(components.DestroyUIElement).insert(element)
+        self.ecs.manage(DestroyUIElement).insert(element)
 
     def create_child(self, parent):
         element = self.ecs.create(
-            components.ParentUIElement(parent),
+            ParentUIElement(parent),
         )
         return element
 
     def redraw(self, element):
-        self.ecs.manage(components.DestroyUIElementContent).insert(element)
-        content = self.ecs.manage(components.UIWidget).get(element)
-        if content:
-            content.invalidate()
+        self.ecs.manage(DestroyUIElementContent).insert(element)
+        self.ecs.manage(NeedsLayout).insert(element)
 
     def insert(self, element, *,
                ui_widget=None,
@@ -39,15 +53,15 @@ class UIManager:
                renderer=None,
               ):
         if ui_widget:
-            self.ecs.manage(components.UIWidget).insert(
-                element, ui_widget, needs_update=False,
+            self.ecs.manage(UIWidget).insert(
+                element, ui_widget,
             )
         if panel:
-            self.ecs.manage(components.Console).insert(
+            self.ecs.manage(UIPanel).insert(
                 element, panel, z_order or ZOrder.BASE,
             )
         if renderer:
-            self.ecs.manage(components.PanelRenderer).insert(
+            self.ecs.manage(UIRenderer).insert(
                 element, renderer,
             )
 
@@ -59,49 +73,49 @@ class UIManager:
              on_mouse_wheel=None,
             ):
         if on_text_input:
-            self.ecs.manage(components.OnTextInput).insert(
+            self.ecs.manage(OnTextInput).insert(
                 element, on_text_input,
             )
         if on_key_press:
-            self.ecs.manage(components.OnKeyPress).insert(
+            self.ecs.manage(OnKeyPress).insert(
                 element, on_key_press,
             )
         if on_mouse_click:
-            self.ecs.manage(components.OnMouseClick).insert(
+            self.ecs.manage(OnMouseClick).insert(
                 element, on_mouse_click,
             )
         if on_mouse_press:
-            self.ecs.manage(components.OnMousePress).insert(
+            self.ecs.manage(OnMousePress).insert(
                 element, on_mouse_press,
             )
         if on_mouse_up:
-            self.ecs.manage(components.OnMouseUp).insert(
+            self.ecs.manage(OnMouseUp).insert(
                 element, on_mouse_up,
             )
         if on_mouse_in:
-            self.ecs.manage(components.OnMouseIn).insert(
+            self.ecs.manage(OnMouseIn).insert(
                 element, on_mouse_in,
             )
         if on_mouse_over:
-            self.ecs.manage(components.OnMouseOver).insert(
+            self.ecs.manage(OnMouseOver).insert(
                 element, on_mouse_over,
             )
         if on_mouse_out:
-            self.ecs.manage(components.OnMouseOut).insert(
+            self.ecs.manage(OnMouseOut).insert(
                 element, on_mouse_out,
             )
         if on_mouse_wheel:
-            self.ecs.manage(components.OnMouseWheel).insert(
+            self.ecs.manage(OnMouseWheel).insert(
                 element, on_mouse_wheel,
             )
 
     def grab_focus(self, element):
-        self.ecs.manage(components.GrabInputFocus).insert(element)
+        self.ecs.manage(GrabInputFocus).insert(element)
 
     # TODO: get_focus -> just set current InputFocus value, not higher one!
 
     def release_focus(self, element):
-        self.ecs.manage(components.InputFocus).remove(element)
+        self.ecs.manage(InputFocus).remove(element)
 
     def connect(self, element, signal_handlers):
         # TODO: insert into ECS

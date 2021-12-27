@@ -14,61 +14,6 @@ from .tiles import RenderOrder
 from . import terrain
 
 
-# GUI, Windows, Rendering
-
-class CreateUIElement(Component):
-    __slots__ = ('widget_type', 'context', )
-
-    def __init__(self, widget_type, context=None):
-        self.widget_type = widget_type
-        self.context = context or {}
-
-
-DestroyUIElement = Flag('DestroyUIElement')
-
-DestroyUIElementContent = Flag('DestroyUIElementContent')
-
-ParentUIElement = EntityReference('ParentUIElement')
-
-
-class UIWidget(Component):
-    __slots__ = ('widget', 'needs_update', )
-
-    def __init__(self, widget, needs_update=True):
-        self.widget = widget
-        self.needs_update = needs_update
-
-    def invalidate(self):
-        self.needs_update = True
-
-    def layout(self, ui_manager, parent, panel, z_order=0):
-        self.widget.layout(ui_manager, parent, panel, z_order)
-        self.needs_update = False
-
-    def layout_content(self, ui_manager, parent, panel, z_order):
-        self.widget.layout_content(ui_manager, parent, panel, z_order)
-        self.needs_update = False
-
-
-@functools.total_ordering
-class Console(Component):
-    __slots__ = ('panel', 'z_order', )
-
-    def __init__(self, panel, z_order):
-        self.panel = panel
-        self.z_order = z_order
-
-    def __lt__(self, other):
-        return self.z_order < other.z_order
-
-
-class PanelRenderer(Component):
-    __slots__ = ('renderer', )
-
-    def __init__(self, renderer, ):
-        self.renderer = renderer
-
-
 # Events and user input
 
 class EventHandlersComponent(Component):
@@ -107,12 +52,19 @@ OnMouseClick = EventHandlers('OnMouseClick')
 
 OnMouseWheel = EventHandlers('OnMouseWheel')
 
+# TODO: For each Event type related component add *Events component with list of events to process
+
 
 InputFocus = Int('InputFocus')
 
 GrabInputFocus = Flag('GrabInputFocus')
 
 HasInputFocus = Flag('HasInputFocus')
+
+
+# TODO: Signals
+
+# OnSignal
 
 
 # Flags
@@ -247,6 +199,7 @@ class Renderable(Component):
         return data
 
 
+# TODO: needs_update as separate Flag
 class Viewshed(Component):
     __slots__ = ('view_range', 'fov', '_positions', 'entities', 'needs_update', )
     params = ('view_range', )
