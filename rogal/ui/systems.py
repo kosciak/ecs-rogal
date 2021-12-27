@@ -27,11 +27,7 @@ class CreateUIElementsSystem(System):
         RunState.RENDER,
     }
 
-    def init_elements(self):
-        self.ecs.create(CreateUIElement('IN_GAME'))
-        # self.ecs.create(CreateUIElement('MAIN_MENU'))
-
-    def create_elements(self):
+    def run(self):
         to_create = self.ecs.manage(CreateUIElement)
         if not to_create:
             return
@@ -49,11 +45,6 @@ class CreateUIElementsSystem(System):
             needs_layout.insert(element)
 
         to_create.clear()
-
-    def run(self):
-        if self.ecs.run_state == RunState.PRE_RUN:
-            self.init_elements()
-        self.create_elements()
 
 
 class DestroyUIElementsSystem(System):

@@ -117,6 +117,7 @@ def run(wrapper):
 
     # Console UI manager
     ecs.resources.ui_manager = UIManager(ecs)
+    ecs.resources.ui_manager.create('IN_GAME')
 
     ecs.resources.onscreen_manager = OnScreenManager(ecs)
 

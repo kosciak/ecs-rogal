@@ -24,7 +24,7 @@ class UIManager:
     def __init__(self, ecs):
         self.ecs = ecs
 
-    def create(self, widget_type, context):
+    def create(self, widget_type, context=None):
         widget = self.ecs.create(
             CreateUIElement(
                 widget_type=widget_type,
