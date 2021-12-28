@@ -157,7 +157,7 @@ class RenderSystem(UISystem):
         timestamp = time.monotonic_ns() // 1e6
         for panel, renderer in sorted(
             self.ecs.join(panels, renderers),
-            key=itemgetter(0)
+            key=itemgetter(0) # Sort by panel.z_order
         ):
             with perf.Perf(renderer.renderer.render):
                 renderer.render(panel.panel, timestamp)

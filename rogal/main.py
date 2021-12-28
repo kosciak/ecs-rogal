@@ -14,15 +14,21 @@ from .rng import rng, generate_seed
 from .procgen.dungeons import RandomDungeonLevelGenerator, RogueGridLevelGenerator, BSPLevelGenerator
 from .procgen.dungeons import StaticLevel
 
+from .ecs import ECS
+
 from .ui.manager import UIManager
 from .ui.onscreen import OnScreenManager
 from .toolkit.builder import WidgetsBuilder
+from .events.manager import EventsManager
+
 from .colors.manager import ColorsManager
-from .data.loaders import DataLoader
-from .ecs import ECS
 from .entities_spawner import EntitiesSpawner
+
+from .data.loaders import DataLoader
 from .tiles.tilesets import Tileset
+
 from .spatial.spatial_index import SpatialIndex
+
 from . import systems
 
 
@@ -113,6 +119,9 @@ def run(wrapper):
         title='Rogal test'
     )
 
+    ecs.resources.events_manager = EventsManager(ecs)
+    ecs.resources.events_manager.register_source(ecs.resources.wrapper)
+
     ecs.resources.widgets_builder = WidgetsBuilder(ecs)
 
     # Console UI manager
@@ -139,9 +148,11 @@ def run(wrapper):
         systems.ui.RenderSystem(ecs),
 
         systems.ui.OnScreenContentSystem(ecs),
-
         systems.events.InputFocusSystem(ecs),
-        systems.events.EventsHandlersSystem(ecs),
+
+        # systems.events.EventsHandlersSystem(ecs),
+        systems.events.EventsDispatchSystem(ecs),
+        systems.events.EventsHandleSystem(ecs),
 
         systems.commands.QuitSystem(ecs),
 

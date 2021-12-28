@@ -1,11 +1,6 @@
 from ..toolkit.core import ZOrder
 
-from ..components import (
-    OnTextInput,
-    OnKeyPress,
-    OnMousePress, OnMouseClick, OnMouseUp,
-    OnMouseIn, OnMouseOver, OnMouseOut,
-    OnMouseWheel,
+from ..events.components import (
     GrabInputFocus, InputFocus,
 )
 
@@ -23,6 +18,13 @@ class UIManager:
 
     def __init__(self, ecs):
         self.ecs = ecs
+        self._events = None
+
+    @property
+    def events(self):
+        if self._events is None:
+            self._events = self.ecs.resources.events_manager
+        return self._events
 
     def create(self, widget_type, context=None):
         widget = self.ecs.create(
@@ -43,6 +45,7 @@ class UIManager:
         return element
 
     def redraw(self, element):
+        # TODO: redraw without destroying contents?
         self.ecs.manage(DestroyUIElementContent).insert(element)
         self.ecs.manage(NeedsLayout).insert(element)
 
@@ -65,49 +68,8 @@ class UIManager:
                 element, renderer,
             )
 
-    def bind(self, element, *,
-             on_text_input=None,
-             on_key_press=None,
-             on_mouse_click=None, on_mouse_press=None, on_mouse_up=None,
-             on_mouse_in=None, on_mouse_over=None, on_mouse_out=None,
-             on_mouse_wheel=None,
-            ):
-        if on_text_input:
-            self.ecs.manage(OnTextInput).insert(
-                element, on_text_input,
-            )
-        if on_key_press:
-            self.ecs.manage(OnKeyPress).insert(
-                element, on_key_press,
-            )
-        if on_mouse_click:
-            self.ecs.manage(OnMouseClick).insert(
-                element, on_mouse_click,
-            )
-        if on_mouse_press:
-            self.ecs.manage(OnMousePress).insert(
-                element, on_mouse_press,
-            )
-        if on_mouse_up:
-            self.ecs.manage(OnMouseUp).insert(
-                element, on_mouse_up,
-            )
-        if on_mouse_in:
-            self.ecs.manage(OnMouseIn).insert(
-                element, on_mouse_in,
-            )
-        if on_mouse_over:
-            self.ecs.manage(OnMouseOver).insert(
-                element, on_mouse_over,
-            )
-        if on_mouse_out:
-            self.ecs.manage(OnMouseOut).insert(
-                element, on_mouse_out,
-            )
-        if on_mouse_wheel:
-            self.ecs.manage(OnMouseWheel).insert(
-                element, on_mouse_wheel,
-            )
+    def bind(self, element, **handlers):
+        self.events.bind(element, **handlers)
 
     def grab_focus(self, element):
         self.ecs.manage(GrabInputFocus).insert(element)

@@ -14,54 +14,6 @@ from .tiles import RenderOrder
 from . import terrain
 
 
-# Events and user input
-
-class EventHandlersComponent(Component):
-    __slots__ = ('handlers', )
-
-    def __init__(self, handlers=None):
-        self.handlers = dict(handlers or {})
-
-    def __iter__(self):
-        yield from self.handlers.items()
-
-    def bind(self, handler, callback):
-        self.handlers[handler] = callback
-
-
-EventHandlers = component_type(EventHandlersComponent)
-
-
-OnQuit = EventHandlers('OnQuit')
-
-OnTextInput = EventHandlers('OnTextInput')
-
-OnKeyPress = EventHandlers('OnKeyPress')
-
-OnMouseIn = EventHandlers('OnMouseIn')
-
-OnMouseOver = EventHandlers('OnMouseOver')
-
-OnMouseOut = EventHandlers('OnMouseOut')
-
-OnMousePress = EventHandlers('OnMousePress')
-
-OnMouseUp = EventHandlers('OnMouseUp')
-
-OnMouseClick = EventHandlers('OnMouseClick')
-
-OnMouseWheel = EventHandlers('OnMouseWheel')
-
-# TODO: For each Event type related component add *Events component with list of events to process
-
-
-InputFocus = Int('InputFocus')
-
-GrabInputFocus = Flag('GrabInputFocus')
-
-HasInputFocus = Flag('HasInputFocus')
-
-
 # TODO: Signals
 
 # OnSignal

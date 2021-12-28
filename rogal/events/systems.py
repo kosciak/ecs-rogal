@@ -13,6 +13,23 @@ from ..events.mouse import MouseState
 from .. import components
 from ..ui.components import UIPanel
 
+from .components import (
+    EventsSource,
+    TextInputEvents,
+    KeyPressEvents, KeyUpEvents,
+    MousePressEvents, MouseClickEvents, MouseUpEvents,
+    MouseInEvents, MouseOverEvents, MouseOutEvents,
+    MouseWheelEvents,
+    QuitEvents,
+    OnTextInput,
+    OnKeyPress, OnKeyUp,
+    OnMousePress, OnMouseClick, OnMouseUp,
+    OnMouseIn, OnMouseOver, OnMouseOut,
+    OnMouseWheel,
+    OnQuit,
+    InputFocus, HasInputFocus, GrabInputFocus,
+)
+
 
 log = logging.getLogger(__name__)
 
@@ -32,9 +49,10 @@ class InputFocusSystem(System):
     }
 
     def run(self):
-        input_focus = self.ecs.manage(components.InputFocus)
-        grab_focus = self.ecs.manage(components.GrabInputFocus)
-        has_focus = self.ecs.manage(components.HasInputFocus)
+        # TODO: This is a mess...
+        input_focus = self.ecs.manage(InputFocus)
+        grab_focus = self.ecs.manage(GrabInputFocus)
+        has_focus = self.ecs.manage(HasInputFocus)
 
         focus_per_priority = collections.defaultdict(set)
         for entity, priority in input_focus:
@@ -58,7 +76,7 @@ class InputFocusSystem(System):
             has_focus.insert(entity)
 
 
-class EventsHandlersSystem(System):
+class ObsoleteEventsHandlersSystem(System):
 
     TIMEOUT = 1./60/3
     # TIMEOUT = False
@@ -202,4 +220,129 @@ class EventsHandlersSystem(System):
             elif event.type == EventType.MOUSE_WHEEL:
                 self.on_mouse_wheel(event)
             break
+
+
+
+class EventsDispatchSystem(System):
+
+    TIMEOUT = 1./60/3
+    # TIMEOUT = False
+
+    INCLUDE_STATES = {
+        RunState.WAIT_FOR_INPUT,
+    }
+
+    def __init__(self, ecs):
+        super().__init__(ecs)
+        self.wrapper = self.ecs.resources.wrapper
+        self.timeout = self.TIMEOUT
+        self.onscreen_manager = self.ecs.resources.onscreen_manager
+
+    def on_quit(self, event):
+        self.ecs.create(
+            components.WantsToQuit,
+        )
+
+    def dispatch_to_entities(self, event, entities, component):
+        if not entities:
+            return
+        manager = self.ecs.manage(component)
+        for entity in entities:
+            events = manager.get(entity)
+            if not events:
+                events = manager.insert(entity)
+            events.append(event)
+
+    def dispatch_has_focus(self, event, component):
+        # TODO: Use focus_manager
+        has_focus = self.ecs.manage(HasInputFocus)
+        self.dispatch_to_entities(event, has_focus.entities, component)
+
+    def dispatch_onscreen_position(self, position, event, component):
+        entities = self.onscreen_manager.get_entities(position)
+        self.dispatch_to_entities(event, entities, component)
+
+    def dispatch_mouse_button(self, event, component):
+        self.dispatch_onscreen_position(event.position, event, component)
+
+    def dispatch_mouse_motion(self, event):
+        current_entities = self.onscreen_manager.get_entities(event.position) or set()
+        prev_entities = self.onscreen_manager.get_entities(event.prev_position) or set()
+
+        self.dispatch_to_entities(event, current_entities, MouseOverEvents)
+
+        out_entities = prev_entities - current_entities
+        self.dispatch_to_entities(event, out_entities, MouseOutEvents)
+
+        in_entities = current_entities - prev_entities
+        self.dispatch_to_entities(event, in_entities, MouseInEvents)
+
+    def dispatch(self, event):
+        log.debug(f'Event: {event}')
+        # print(f'Event: {event}')
+        if event.type == EventType.QUIT:
+            self.on_quit(event)
+        elif event.type == EventType.TEXT_INPUT:
+            self.dispatch_has_focus(event, TextInputEvents)
+        elif event.type == EventType.KEY_PRESS:
+            self.dispatch_has_focus(event, KeyPressEvents)
+        elif event.type == EventType.KEY_UP:
+            self.dispatch_has_focus(event, KeyUpEvents)
+        elif event.type == EventType.MOUSE_BUTTON_PRESS:
+            self.dispatch_mouse_button(event, MousePressEvents)
+        elif event.type == EventType.MOUSE_BUTTON_UP:
+            if event.is_click:
+                self.dispatch_mouse_button(event, MouseClickEvents)
+            self.dispatch_mouse_button(event, MouseUpEvents)
+        elif event.type == EventType.MOUSE_MOTION:
+            self.dispatch_mouse_motion(event)
+        elif event.type == EventType.MOUSE_WHEEL:
+            self.dispatch_has_focus(event, MouseWheelEvents)
+
+    def run(self):
+        # Get valid events and pass them to all entities with appopriate EventHandlers
+        # NOTE: It is NOT checked if entity has ActsNow flag, as EventHandlers can be attached
+        #       to any entity, not only to actors (for example to GUI elements)
+        #       BUT there must be some ActsNow actor for system to be running!
+        events_sources = self.ecs.manage(EventsSource)
+        for source, events_gen in events_sources:
+            for event in events_gen(self.timeout):
+                self.dispatch(event)
+
+
+class EventsHandleSystem(System):
+
+    INCLUDE_STATES = {
+        RunState.WAIT_FOR_INPUT,
+    }
+
+    EVENTS_HANDLERS = [
+        (TextInputEvents, OnTextInput),
+        (KeyPressEvents, OnKeyPress),
+        (KeyUpEvents, OnKeyUp),
+        (MousePressEvents, OnMousePress),
+        (MouseClickEvents, OnMouseClick),
+        (MouseUpEvents, OnMouseUp),
+        (MouseInEvents, OnMouseIn),
+        (MouseOverEvents, OnMouseOver),
+        (MouseOutEvents, OnMouseOut),
+        (MouseWheelEvents, OnMouseWheel),
+        (QuitEvents, OnQuit),
+    ]
+
+    def run(self):
+        for events_component, handlers_component in self.EVENTS_HANDLERS:
+            event_queues = self.ecs.manage(events_component)
+            if not event_queues:
+                continue
+            event_handlers = self.ecs.manage(handlers_component)
+            if not event_handlers:
+                continue
+            for entity, events, handlers in self.ecs.join(self.ecs.entities, event_queues, event_handlers):
+                for event in events:
+                    for handler, callback in handlers.items():
+                        value = handler.handle(event)
+                        if value is not None:
+                            callback(entity, value)
+            event_queues.clear()
 

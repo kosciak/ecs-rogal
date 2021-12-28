@@ -1,12 +1,18 @@
 import logging
 
-from . import components
+from .utils import perf
+
 from .ecs.run_state import RunState
 from .events import handlers
 from . import gui
 from .rng import rng
 
-from .utils import perf
+from . import components
+from .events.components import (
+    OnKeyPress,
+    GrabInputFocus,
+)
+
 
 
 log = logging.getLogger(__name__)
@@ -63,34 +69,38 @@ class PlayerInput(TakeActionHandler):
 
     def __init__(self, ecs):
         super().__init__(ecs)
+        self._events = None
 
-        self.on_key_press = components.OnKeyPress()
+        self.on_key_press = {}
         for handler_cls, callback in [
             [handlers.DirectionKeyPress, self.try_direction],
         ]:
-            self.on_key_press.bind(handler_cls(), callback)
+            handler = handler_cls()
+            self.on_key_press[handler] = callback
 
         for key_binding, action, callback in [
             ['actions.QUIT', components.WantsToQuit, self.try_action],
             ['actions.REST', components.WantsToRest, self.try_action],
             ['actions.REVEAL_LEVEL', components.WantsToRevealLevel, self.try_action],
         ]:
-            self.on_key_press.bind(
-                handlers.OnKeyPress(key_binding, action),
-                callback
-            )
+            handler = handlers.OnKeyPress(key_binding, action)
+            self.on_key_press[handler] = callback
 
-        self.on_key_press.bind(
-            handlers.NextPrevKeyPress('actions.NEXT_LEVEL', 'actions.PREV_LEVEL'),
-            self.try_change_level
-        )
+        handler = handlers.NextPrevKeyPress('actions.NEXT_LEVEL', 'actions.PREV_LEVEL')
+        self.on_key_press[handler] = self.try_change_level
+
+    @property
+    def events(self):
+        if self._events is None:
+            self._events = self.ecs.resources.events_manager
+        return self._events
 
     def set_event_handlers(self, actor):
-        self.ecs.manage(components.OnKeyPress).insert(actor, self.on_key_press)
-        self.ecs.manage(components.GrabInputFocus).insert(actor)
+        self.events.bind(actor, on_key_press=self.on_key_press)
+        self.ecs.manage(GrabInputFocus).insert(actor)
 
     def remove_event_handlers(self, actor):
-        self.ecs.manage(components.OnKeyPress).remove(actor)
+        self.ecs.manage(OnKeyPress).remove(actor)
 
     def insert_action(self, actor, action, *args, **kwargs):
         self.remove_event_handlers(actor)

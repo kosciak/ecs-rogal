@@ -1,7 +1,6 @@
 import functools
 
 from ..ecs import Component
-
 from ..ecs.components import Flag, EntityReference
 
 
