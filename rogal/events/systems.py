@@ -7,11 +7,10 @@ from ..ecs import System
 from ..ecs.run_state import RunState
 
 from ..events import EventType
-from ..events.keyboard import KeyboardState
-from ..events.mouse import MouseState
+# from ..events.keyboard import KeyboardState
+# from ..events.mouse import MouseState
 
-from .. import components
-from ..ui.components import UIPanel
+from ..components import WantsToQuit
 
 from .components import (
     EventsSource,
@@ -76,153 +75,6 @@ class InputFocusSystem(System):
             has_focus.insert(entity)
 
 
-class ObsoleteEventsHandlersSystem(System):
-
-    TIMEOUT = 1./60/3
-    # TIMEOUT = False
-
-    INCLUDE_STATES = {
-        RunState.WAIT_FOR_INPUT,
-    }
-
-    def __init__(self, ecs):
-        super().__init__(ecs)
-        self.wrapper = self.ecs.resources.wrapper
-        self.timeout = self.TIMEOUT
-
-        self.ecs.resources.keyboard_state = KeyboardState()
-        self.keys = self.ecs.resources.keyboard_state
-
-        self.mouse_over_entities = set()
-        self.ecs.resources.mouse_state = MouseState()
-        self.mouse = self.ecs.resources.mouse_state
-
-        self.onscreen_manager = self.ecs.resources.onscreen_manager
-
-    def handle_event(self, event, entity, handlers):
-        value = None
-        for handler, callback in handlers:
-            value = handler.handle(event)
-            if value is not None:
-                # TODO: Is entity needed here?
-                callback(entity, value)
-
-    def get_handlers_with_focus(self, handlers_component):
-        event_handlers = self.ecs.manage(handlers_component)
-        if not event_handlers:
-            return []
-        has_focus = self.ecs.manage(components.HasInputFocus)
-        valid_handlers = [
-            [entity, handlers] for entity, with_focus, handlers
-            in self.ecs.join(event_handlers.entities, has_focus, event_handlers)
-        ]
-        return valid_handlers
-
-    def on_text_input(self, event):
-        event_handlers = self.get_handlers_with_focus(components.OnTextInput)
-        for entity, handlers in event_handlers:
-            self.handle_event(event, entity, handlers)
-
-    def on_key_press(self, event):
-        event_handlers = self.get_handlers_with_focus(components.OnKeyPress)
-        for entity, handlers in event_handlers:
-            self.handle_event(event, entity, handlers)
-
-    def get_handlers_over_position(self, handlers_component, position):
-        panels = self.ecs.manage(UIPanel)
-        event_handlers = self.ecs.manage(handlers_component)
-        entities = self.onscreen_manager.get_entities(position)
-        yield from self.ecs.join(entities, panels, event_handlers)
-
-    def on_mouse_over_event(self, event, handlers_component):
-        for entity, panel, handlers in self.get_handlers_over_position(handlers_component, event.position):
-            self.mouse_over_entities.add(entity)
-            # TODO: Need to pass: event.position.offset(panel.panel.position)
-            #       So event_handler will get position relative to panel
-            # print(event.position.offset(panel.panel.position))
-            self.handle_event(event, entity, handlers)
-
-    def on_mouse_in_event(self, event, handlers_component):
-        for entity, panel, handlers in self.get_handlers_over_position(handlers_component, event.position):
-            if entity in self.mouse_over_entities and \
-               self.mouse.prev_position and self.mouse.prev_position in panel.panel:
-                # cursor did not enter, just moved over
-                continue
-            self.mouse_over_entities.add(entity)
-            self.handle_event(event, entity, handlers)
-
-    def on_mouse_out_event(self, event, handlers_component):
-        for entity, panel, handlers in self.get_handlers_over_position(handlers_component, event.prev_position):
-            if event.position in panel.panel:
-                # cursor did not leave, just moved over
-                continue
-            self.handle_event(event, entity, handlers)
-
-    def on_mouse_press(self, event):
-        self.on_mouse_over_event(event, components.OnMousePress)
-
-    def on_mouse_up(self, event):
-        self.on_mouse_over_event(event, components.OnMouseUp)
-
-    def on_mouse_click(self, event):
-        # Fire OnMouseClick if button was pressed and released without moving
-        # TODO: Press, show button, release -> click is registered! WHAT this even mean?!?
-        self.on_mouse_over_event(event, components.OnMouseClick)
-
-    def on_mouse_motion(self, event):
-        # Removing obsolete entities
-        self.mouse_over_entities.intersection_update(self.ecs.entities)
-
-        self.on_mouse_in_event(event, components.OnMouseIn)
-        self.on_mouse_over_event(event, components.OnMouseOver)
-        # TODO: For OnMouseOut to be 100% accurate we would need to process mouse leaving (game) window
-        self.on_mouse_out_event(event, components.OnMouseOut)
-
-    def on_mouse_wheel(self, event):
-        # TODO: Wheel should work only OVER element
-        #       BUT! We don't have mouse position associated with wheel event!
-        event_handlers = self.get_handlers_with_focus(components.OnMouseWheel)
-        for entity, handlers in event_handlers:
-            self.handle_event(event, entity, handlers)
-
-    def on_quit(self, event):
-        self.ecs.create(
-            components.WantsToQuit,
-        )
-
-    def run(self):
-        # Get valid events and pass them to all entities with appopriate EventHandlers
-        # NOTE: It is NOT checked if entity has ActsNow flag, as EventHandlers can be attached
-        #       to any entity, not only to actors (for example to GUI elements)
-        #       BUT there must be some ActsNow actor for system to be running!
-        for event in self.wrapper.events_gen(self.timeout):
-            log.debug(f'Event: {event}')
-            if event.type == EventType.QUIT:
-                self.on_quit(event)
-            elif event.type == EventType.TEXT_INPUT:
-                self.on_text_input(event)
-            elif event.type == EventType.KEY_PRESS:
-                self.keys.update(press_event=event)
-                self.on_key_press(event)
-            elif event.type == EventType.KEY_UP:
-                self.keys.update(up_event=event)
-            elif event.type == EventType.MOUSE_BUTTON_PRESS:
-                self.mouse.update(press_event=event)
-                self.on_mouse_press(event)
-            elif event.type == EventType.MOUSE_BUTTON_UP:
-                if event.is_click:
-                    self.on_mouse_click(event)
-                self.on_mouse_up(event)
-                self.mouse.update(up_event=event)
-            elif event.type == EventType.MOUSE_MOTION:
-                self.mouse.update(motion_event=event)
-                self.on_mouse_motion(event)
-            elif event.type == EventType.MOUSE_WHEEL:
-                self.on_mouse_wheel(event)
-            break
-
-
-
 class EventsDispatchSystem(System):
 
     TIMEOUT = 1./60/3
@@ -240,7 +92,7 @@ class EventsDispatchSystem(System):
 
     def on_quit(self, event):
         self.ecs.create(
-            components.WantsToQuit,
+            WantsToQuit,
         )
 
     def dispatch_to_entities(self, event, entities, component):
@@ -285,25 +137,27 @@ class EventsDispatchSystem(System):
         elif event.type == EventType.TEXT_INPUT:
             self.dispatch_has_focus(event, TextInputEvents)
         elif event.type == EventType.KEY_PRESS:
+            # self.keys.update(press_event=event)
             self.dispatch_has_focus(event, KeyPressEvents)
         elif event.type == EventType.KEY_UP:
+            # self.keys.update(up_event=event)
             self.dispatch_has_focus(event, KeyUpEvents)
         elif event.type == EventType.MOUSE_BUTTON_PRESS:
+            # self.mouse.update(press_event=event)
             self.dispatch_mouse_button(event, MousePressEvents)
         elif event.type == EventType.MOUSE_BUTTON_UP:
             if event.is_click:
                 self.dispatch_mouse_button(event, MouseClickEvents)
             self.dispatch_mouse_button(event, MouseUpEvents)
+            # self.mouse.update(up_event=event)
         elif event.type == EventType.MOUSE_MOTION:
+            # self.mouse.update(motion_event=event)
             self.dispatch_mouse_motion(event)
         elif event.type == EventType.MOUSE_WHEEL:
             self.dispatch_has_focus(event, MouseWheelEvents)
 
     def run(self):
-        # Get valid events and pass them to all entities with appopriate EventHandlers
-        # NOTE: It is NOT checked if entity has ActsNow flag, as EventHandlers can be attached
-        #       to any entity, not only to actors (for example to GUI elements)
-        #       BUT there must be some ActsNow actor for system to be running!
+        # Get events from sources and dispatch them to all valid entities
         events_sources = self.ecs.manage(EventsSource)
         for source, events_gen in events_sources:
             for event in events_gen(self.timeout):
@@ -340,9 +194,7 @@ class EventsHandleSystem(System):
                 continue
             for entity, events, handlers in self.ecs.join(self.ecs.entities, event_queues, event_handlers):
                 for event in events:
-                    for handler, callback in handlers.items():
-                        value = handler.handle(event)
-                        if value is not None:
-                            callback(entity, value)
+                    for callback in handlers:
+                        callback(entity, event)
             event_queues.clear()
 

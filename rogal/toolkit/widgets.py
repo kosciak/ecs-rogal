@@ -180,7 +180,7 @@ class Window(
             height=self.content.height,
         )
         self.content = self._container
-        self.handlers.on_key_press.update(on_key_press or {})
+        self.handlers.on_key_press.extend(on_key_press or [])
 
 
 # TODO: Needs major rewrite
@@ -216,12 +216,12 @@ class TextInput(
             # TODO: Show Cursor only if has focus and ready for input?
             self.cursor,
         ])
-        self.handlers.on_text_input.update({
-            handlers.TextInput(): self.on_input,
-        })
-        self.handlers.on_key_press.update({
-            handlers.TextEdit(): self.on_edit,
-        })
+        self.handlers.on_text_input.extend([
+            handlers.TextInput(self.on_input),
+        ])
+        self.handlers.on_key_press.extend([
+            handlers.TextEdit(self.on_edit),
+        ])
 
     @property
     def txt(self):
@@ -328,13 +328,13 @@ class ListBox(containers.List):
     def __init__(self, align=Align.TOP_LEFT):
         super().__init__(align=align)
         self.items = []
-        self.handlers.on_key_press.update({
-            handlers.NextPrevKeyPress('list.NEXT', 'list.PREV'): self.on_focus_change,
-            handlers.OnKeyPress('list.SELECT'): self.on_select,
-        })
-        self.handlers.on_mouse_over.update({
-            handlers.MouseOver(): self.on_mouse_over,
-        })
+        self.handlers.on_key_press.extend([
+            handlers.NextPrevKeyPress('list.NEXT', 'list.PREV', self.on_focus_change),
+            handlers.OnKeyPress('list.SELECT', self.on_select),
+        ])
+        self.handlers.on_mouse_over.extend([
+            handlers.MouseOver(self.on_mouse_over),
+        ])
 
     def append_item(self, item):
         self.append(item)

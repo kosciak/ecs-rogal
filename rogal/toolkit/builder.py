@@ -243,10 +243,10 @@ class WidgetsBuilder:
             width=40,
             # height=6,
             title=title,
-            on_key_press={
-                handlers.YesNoKeyPress(): callback,
-                handlers.DiscardKeyPress(): callback,
-            },
+            on_key_press=[
+                handlers.YesNoKeyPress(callback),
+                handlers.DiscardKeyPress(callback),
+            ],
         )
 
         return window
@@ -285,10 +285,10 @@ class WidgetsBuilder:
             width=40,
             height=6,
             title=title,
-            on_key_press={
-                handlers.OnKeyPress('common.SUBMIT', text_input): callback,
-                handlers.DiscardKeyPress(): callback,
-            },
+            on_key_press=[
+                handlers.OnKeyPress('common.SUBMIT', callback, text_input),
+                handlers.DiscardKeyPress(callback),
+            ],
         )
 
         window.extend([
@@ -329,9 +329,9 @@ class WidgetsBuilder:
             width=20,
             height= msg.height+buttons.height+len(items)+4,
             title=title,
-            on_key_press={
-                handlers.DiscardKeyPress(): callback,
-            },
+            on_key_press=[
+                handlers.DiscardKeyPress(callback),
+            ],
         )
 
         items_list = widgets.ListBox(

@@ -14,6 +14,14 @@ log = logging.getLogger(__name__)
 
 """EventHandler implementations.
 
+Event handlers are expected to accept (entity, event) as arguments,
+but most of the time we:
+- need to filter out events (only specified key is pressed, only specified button
+    mouse button is pressed, etc)
+- need to translate this the event to some other, more meaningful value
+
+EventHandlers can do this and call callback only if we got value from event.
+
 Each Handler should just return simple value, no fancy logic here.
 
 """
@@ -21,8 +29,16 @@ Each Handler should just return simple value, no fancy logic here.
 
 class EventHandler:
 
+    def __init__(self, callback):
+        self.callback = callback
+
     def handle(self, event):
         raise NotImplementedError()
+
+    def __call__(self, entity, event):
+        value = self.handle(event)
+        if value is not None:
+            self.callback(entity, value)
 
 
 class KeyPressHandler(EventHandler):
@@ -37,8 +53,8 @@ class KeyPressHandler(EventHandler):
 
 class OnKeyPress(KeyPressHandler):
 
-    def __init__(self, key_binding, value=None):
-        super().__init__()
+    def __init__(self, key_binding, callback, value=None):
+        super().__init__(callback)
         self.key_bindings = self.get_key_bindings(key_binding)
         if not self.key_bindings:
             self.key_bindings = {Key.parse(key_binding), }
@@ -63,8 +79,8 @@ class DirectionKeyPress(KeyPressHandler):
 
 class NextPrevKeyPress(KeyPressHandler):
 
-    def __init__(self, next_key_binding, prev_prev_binding):
-        super().__init__()
+    def __init__(self, next_key_binding, prev_prev_binding, callback):
+        super().__init__(callback)
         self.next_key_bindings = self.get_key_bindings(next_key_binding)
         self.prev_key_bindings = self.get_key_bindings(prev_prev_binding)
 
@@ -106,8 +122,8 @@ class DiscardKeyPress(KeyPressHandler):
 
 class IndexKeypressHandler(KeyPressHandler):
 
-    def __init__(self, size=None, *args, **kwargs):
-        super().__init__()
+    def __init__(self, callback, size=None):
+        super().__init__(callback)
         self.size = size
 
 
@@ -194,8 +210,8 @@ class MouseButtonEvent(EventHandler):
 
     BUTTONS = {}
 
-    def __init__(self, value=None):
-        super().__init__()
+    def __init__(self, callback, value=None):
+        super().__init__(callback)
         self.value = value
 
     def handle(self, event):
@@ -227,6 +243,7 @@ class MouseOver(EventHandler):
         return event.position
 
 
+# TODO: OBSOLETE as they always return True, just use callback instead?
 class MouseIn(EventHandler):
 
     def handle(self, event):

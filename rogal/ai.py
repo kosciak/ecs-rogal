@@ -71,23 +71,23 @@ class PlayerInput(TakeActionHandler):
         super().__init__(ecs)
         self._events = None
 
-        self.on_key_press = {}
+        self.on_key_press = []
         for handler_cls, callback in [
             [handlers.DirectionKeyPress, self.try_direction],
         ]:
-            handler = handler_cls()
-            self.on_key_press[handler] = callback
+            handler = handler_cls(callback)
+            self.on_key_press.append(handler)
 
         for key_binding, action, callback in [
             ['actions.QUIT', components.WantsToQuit, self.try_action],
             ['actions.REST', components.WantsToRest, self.try_action],
             ['actions.REVEAL_LEVEL', components.WantsToRevealLevel, self.try_action],
         ]:
-            handler = handlers.OnKeyPress(key_binding, action)
-            self.on_key_press[handler] = callback
+            handler = handlers.OnKeyPress(key_binding, callback, action)
+            self.on_key_press.append(handler)
 
-        handler = handlers.NextPrevKeyPress('actions.NEXT_LEVEL', 'actions.PREV_LEVEL')
-        self.on_key_press[handler] = self.try_change_level
+        handler = handlers.NextPrevKeyPress('actions.NEXT_LEVEL', 'actions.PREV_LEVEL', self.try_change_level)
+        self.on_key_press.append(handler)
 
     @property
     def events(self):

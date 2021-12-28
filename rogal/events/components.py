@@ -1,5 +1,5 @@
 from ..ecs import Component
-from ..ecs.components import Int, Flag, List, Dict
+from ..ecs.components import Int, Flag, List
 
 
 class EventsSource(Component):
@@ -14,49 +14,49 @@ class EventsSource(Component):
 
 # Text input
 TextInputEvents = List('TextInputEvents')
-OnTextInput = Dict('OnTextInput')
+OnTextInput = List('OnTextInput')
 
 
 # Keyboard presses
 KeyPressEvents = List('KeyPressEvents')
-OnKeyPress = Dict('OnKeyPress')
+OnKeyPress = List('OnKeyPress')
 
 KeyUpEvents = List('KeyUpEvents')
-OnKeyUp = Dict('OnKeyUp')
+OnKeyUp = List('OnKeyUp')
 
 
 # Mouse buttons
 MousePressEvents = List('MousePressEvents')
-OnMousePress = Dict('OnMousePress')
+OnMousePress = List('OnMousePress')
 
 MouseClickEvents = List('MouseClickEvents')
-OnMouseClick = Dict('OnMouseClick')
+OnMouseClick = List('OnMouseClick')
 
 MouseUpEvents = List('MouseUpEvents')
-OnMouseUp = Dict('MouseUpEvents')
+OnMouseUp = List('MouseUpEvents')
 
 
 # Mouse motion
 MouseInEvents = List('MouseInEvents')
-OnMouseIn = Dict('OnMouseIn')
+OnMouseIn = List('OnMouseIn')
 
 MouseOverEvents = List('MouseOverEvents')
-OnMouseOver = Dict('OnMouseOver')
+OnMouseOver = List('OnMouseOver')
 
 MouseOutEvents = List('MouseOutEvents')
-OnMouseOut = Dict('OnMouseOut')
+OnMouseOut = List('OnMouseOut')
 
 
 # Mouse wheels
 MouseWheelEvents = List('MouseWheelEvents')
-OnMouseWheel = Dict('OnMouseWheel')
+OnMouseWheel = List('OnMouseWheel')
 
 
 # TODO: Controller related events
 
 
 QuitEvents = List('QuitEvents')
-OnQuit = Dict('OnQuit')
+OnQuit = List('OnQuit')
 
 
 # TODO: Window related events (FocusIn, FocusOut, etc)

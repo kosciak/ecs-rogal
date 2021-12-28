@@ -69,24 +69,24 @@ class MouseOperated(Stateful):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.handlers.on_mouse_click.update({
-            handlers.MouseLeftButton(): self.on_click,
-        })
-        self.handlers.on_mouse_press.update({
-            handlers.MouseLeftButton(): self.on_press,
-        })
-        self.handlers.on_mouse_up.update({
-            handlers.MouseLeftButton(): self.on_release,
-        })
-        self.handlers.on_mouse_in.update({
-            handlers.MouseIn(): self.on_enter,
-        })
-        self.handlers.on_mouse_over.update({
-            handlers.MouseOver(): self.on_over,
-        })
-        self.handlers.on_mouse_out.update({
-            handlers.MouseOut(): self.on_leave,
-        })
+        self.handlers.on_mouse_click.extend([
+            handlers.MouseLeftButton(self.on_click),
+        ])
+        self.handlers.on_mouse_press.extend([
+            handlers.MouseLeftButton(self.on_press),
+        ])
+        self.handlers.on_mouse_up.extend([
+            handlers.MouseLeftButton(self.on_release),
+        ])
+        self.handlers.on_mouse_in.extend([
+            handlers.MouseIn(self.on_enter),
+        ])
+        self.handlers.on_mouse_over.extend([
+            handlers.MouseOver(self.on_over),
+        ])
+        self.handlers.on_mouse_out.extend([
+            handlers.MouseOut(self.on_leave),
+        ])
         # TODO: Mouse Wheel events
 
     # TODO: Instead of calling methods, emit signals?
@@ -124,9 +124,9 @@ class WithHotkey(Stateful):
 
     def __init__(self, ecs, key_binding, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.handlers.on_key_press.update({
-            handlers.OnKeyPress(key_binding): self.on_hotkey,
-        })
+        self.handlers.on_key_press.extend([
+            handlers.OnKeyPress(key_binding, self.on_hotkey),
+        ])
 
     def on_hotkey(self, element, key, *args, **kwargs):
         self.activate()
