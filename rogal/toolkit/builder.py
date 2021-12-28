@@ -375,8 +375,6 @@ class WidgetsBuilder:
             widgets_layout = self.create_alphabetic_select_prompt(context)
 
         if widget_type == 'IN_GAME':
-            widgets_layout = containers.Split(bottom=12)
-
             camera = self.create_window(
                 self.get_style('Window'),
                 content=render.Camera(self.ecs),
@@ -389,7 +387,20 @@ class WidgetsBuilder:
                 title='logs',
             )
 
-            widgets_layout.extend([camera, msg_log])
+            content = containers.Split(
+                content=[
+                    camera,
+                    msg_log,
+                ],
+                bottom=12,
+            )
+
+            # TODO: widgets.Screen?
+            widgets_layout = widgets.Window(
+                content=content,
+                frame=basic.Frame([]),
+                colors=None,
+            )
 
         if widget_type == 'MAIN_MENU':
             widgets_layout = containers.Split(top=.4)
