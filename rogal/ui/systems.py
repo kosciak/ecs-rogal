@@ -1,3 +1,4 @@
+import collections
 import logging
 from operator import itemgetter
 import time
@@ -14,6 +15,7 @@ from .components import (
     NeedsLayout,
     UIPanel,
     UIRenderer,
+    InputFocus, HasInputFocus, GrabInputFocus,
 )
 
 
@@ -27,18 +29,19 @@ class CreateUIElementsSystem(System):
         RunState.RENDER,
     }
 
+    def __init__(self, ecs):
+        super().__init__(ecs)
+        self.builder = self.ecs.resources.widgets_builder
+
     def run(self):
         to_create = self.ecs.manage(CreateUIElement)
         if not to_create:
             return
 
-        # TODO: Needs some rework...
-        #       Better names, why insert as UIWidget? To have layout point?
-        widgets_builder = self.ecs.resources.widgets_builder
         widgets = self.ecs.manage(UIWidget)
         needs_layout = self.ecs.manage(NeedsLayout)
         for element, create in to_create:
-            widget = widgets_builder.build(
+            widget = self.builder.build(
                 create.widget_type, create.context,
             )
             widgets.insert(element, widget)
@@ -120,7 +123,42 @@ class LayoutSytem(UISystem):
         needs_layout.clear()
 
 
-class OnScreenContentSystem(System):
+class InputFocusSystem(System):
+
+    INCLUDE_STATES = {
+        RunState.RENDER,
+    }
+
+    def run(self):
+        # TODO: This is a mess...
+        # TODO: Integrate with ui.managers.InputFocusManager
+        input_focus = self.ecs.manage(InputFocus)
+        grab_focus = self.ecs.manage(GrabInputFocus)
+        has_focus = self.ecs.manage(HasInputFocus)
+
+        focus_per_priority = collections.defaultdict(set)
+        for entity, priority in input_focus:
+            focus_per_priority[priority].add(entity)
+
+        max_priority = max(focus_per_priority.keys() or [0, ])
+        next_priority = max_priority
+        if has_focus:
+            next_priority = max_priority + 1
+
+        for entity in grab_focus.entities:
+            if entity in has_focus:
+                continue
+            focus_per_priority[next_priority].add(entity)
+            input_focus.insert(entity, next_priority)
+        grab_focus.clear()
+
+        has_focus.clear()
+        max_priority = max(focus_per_priority.keys() or [0, ])
+        for entity in focus_per_priority.get(max_priority, []):
+            has_focus.insert(entity)
+
+
+class OnScreenFocusSystem(System):
 
     INCLUDE_STATES = {
         RunState.RENDER,
@@ -128,14 +166,15 @@ class OnScreenContentSystem(System):
 
     def __init__(self, ecs):
         super().__init__(ecs)
-        self.onscreen_manager = self.ecs.resources.onscreen_manager
+        self.focus_manager = self.ecs.resources.focus_manager
 
     def run(self):
+        self.focus_manager.clear_positions()
         widgets = self.ecs.manage(UIWidget)
         panels = self.ecs.manage(UIPanel)
         # NOTE: Use only UIWidgets, we don't want renderers that might have higher z_order to mask widgets
         for widget, panel in sorted(self.ecs.join(widgets.entities, panels), key=lambda e: e[1].z_order):
-            self.onscreen_manager.update_positions(widget, panel.panel)
+            self.focus_manager.update_positions(widget, panel.panel)
 
 
 class RenderSystem(UISystem):

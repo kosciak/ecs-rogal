@@ -17,7 +17,7 @@ from .procgen.dungeons import StaticLevel
 from .ecs import ECS
 
 from .ui.managers import UIManager
-from .ui.managers import OnScreenManager
+from .ui.managers import InputFocusManager
 from .toolkit.builder import WidgetsBuilder
 from .events.managers import EventsManager
 
@@ -120,7 +120,7 @@ def run(wrapper):
     )
 
     ecs.resources.events_manager = EventsManager(ecs)
-    ecs.resources.events_manager.register_source(ecs.resources.wrapper)
+    ecs.resources.events_manager.add_source(ecs.resources.wrapper)
 
     ecs.resources.widgets_builder = WidgetsBuilder(ecs)
 
@@ -128,7 +128,7 @@ def run(wrapper):
     ecs.resources.ui_manager = UIManager(ecs)
     ecs.resources.ui_manager.create('IN_GAME')
 
-    ecs.resources.onscreen_manager = OnScreenManager(ecs)
+    ecs.resources.focus_manager = InputFocusManager(ecs)
 
     # Register systems
     # NOTE: Systems are run in order they were registered
@@ -147,8 +147,8 @@ def run(wrapper):
         systems.ui.LayoutSytem(ecs),
         systems.ui.RenderSystem(ecs),
 
-        systems.ui.OnScreenContentSystem(ecs),
-        systems.events.InputFocusSystem(ecs),
+        systems.ui.InputFocusSystem(ecs),
+        systems.ui.OnScreenFocusSystem(ecs),
 
         # systems.events.EventsHandlersSystem(ecs),
         systems.events.EventsDispatchSystem(ecs),

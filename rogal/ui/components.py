@@ -1,7 +1,7 @@
 import functools
 
 from ..ecs import Component
-from ..ecs.components import Flag, EntityReference
+from ..ecs.components import Flag, Int, EntityReference
 
 
 class CreateUIElement(Component):
@@ -56,4 +56,11 @@ class UIRenderer(Component):
 
     def render(self, panel, timestamp):
         self.renderer.render(panel, timestamp)
+
+
+InputFocus = Int('InputFocus')
+
+GrabInputFocus = Flag('GrabInputFocus')
+
+HasInputFocus = Flag('HasInputFocus')
 

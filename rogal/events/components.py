@@ -1,5 +1,5 @@
 from ..ecs import Component
-from ..ecs.components import Int, Flag, List
+from ..ecs.components import List
 
 
 class EventsSource(Component):
@@ -60,12 +60,4 @@ OnQuit = List('OnQuit')
 
 
 # TODO: Window related events (FocusIn, FocusOut, etc)
-
-
-# TODO: Move to ui.focus_manager
-InputFocus = Int('InputFocus')
-
-GrabInputFocus = Flag('GrabInputFocus')
-
-HasInputFocus = Flag('HasInputFocus')
 

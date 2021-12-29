@@ -7,10 +7,6 @@ from ..ecs.core import Entity, EntitiesSet
 
 from ..toolkit.core import ZOrder
 
-from ..events.components import (
-    GrabInputFocus, InputFocus,
-)
-
 from .components import (
     CreateUIElement, DestroyUIElement, DestroyUIElementContent,
     ParentUIElement,
@@ -18,6 +14,7 @@ from .components import (
     NeedsLayout,
     UIPanel,
     UIRenderer,
+    GrabInputFocus, InputFocus, HasInputFocus,
 )
 
 
@@ -29,12 +26,19 @@ class UIManager:
     def __init__(self, ecs):
         self.ecs = ecs
         self._events = None
+        self._focus = None
 
     @property
     def events(self):
         if self._events is None:
             self._events = self.ecs.resources.events_manager
         return self._events
+
+    @property
+    def focus(self):
+        if self._focus is None:
+            self._focus = self.ecs.resources.focus_manager
+        return self._focus
 
     def create(self, widget_type, context=None):
         widget = self.ecs.create(
@@ -82,25 +86,24 @@ class UIManager:
         self.events.bind(element, **handlers)
 
     def grab_focus(self, element):
-        self.ecs.manage(GrabInputFocus).insert(element)
+        self.focus.grab(element)
 
     # TODO: get_focus -> just set current InputFocus value, not higher one!
 
     def release_focus(self, element):
-        self.ecs.manage(InputFocus).remove(element)
+        self.focus.release(element)
 
-    def connect(self, element, signal_handlers):
+    def connect(self, element, handlers):
         # TODO: insert into ECS
         return
 
 
-class OnScreenManager:
+class InputFocusManager:
 
     def __init__(self, ecs):
         self.ecs = ecs
         self._positions = None
         self.parents = collections.defaultdict(EntitiesSet)
-        # TODO: Clear parents from already destroyed entities?
         # TODO: consider adding pixel_positions ??
 
     @property
@@ -110,9 +113,17 @@ class OnScreenManager:
             self._positions = np.zeros(root_panel.size, dtype=(np.void, 16), order="C")
         return self._positions
 
-    def clear(self):
+    def clear_positions(self):
         self._positions = None
-        self.parents.clear()
+        # self.parents.clear()
+
+    def grab(self, element):
+        self.ecs.manage(GrabInputFocus).insert(element)
+
+    # TODO: get(self, element) -> change focus, grab without changing current priority
+
+    def release(self, element):
+        self.ecs.manage(InputFocus).remove(element)
 
     def get_parents_gen(self, entity):
         parents = self.ecs.manage(ParentUIElement)
@@ -120,20 +131,29 @@ class OnScreenManager:
             yield entity
             entity = parents.get(entity)
 
+    def get_parents(self, entity):
+        if not entity in self.parents:
+            self.parents[entity].update(self.get_parents_gen(entity))
+        return self.parents[entity]
+
     def update_positions(self, entity, panel):
         self.positions[panel.x : panel.x2, panel.y : panel.y2] = entity.bytes
-        for parent in self.get_parents_gen(entity):
-            self.parents[entity].add(parent)
 
     def get_entity(self, position):
         # NOTE: On terminal position might be outside root console!
         max_x, max_y = self.positions.shape
         if position.x >= max_x or position.y >= max_y:
             return
-
         return Entity(self.positions[position].tobytes())
 
-    def get_entities(self, position):
-        entity = self.get_entity(position)
-        return self.parents.get(entity)
+    def get_entities(self, position=None):
+        entities = EntitiesSet()
+        if position is None:
+            has_focus = self.ecs.manage(HasInputFocus)
+            for entity in has_focus.entities:
+                entities.update(self.get_parents(entity))
+        else:
+            entity = self.get_entity(position)
+            entities.update(self.get_parents(entity))
+        return entities
 

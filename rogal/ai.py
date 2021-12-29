@@ -8,10 +8,6 @@ from . import gui
 from .rng import rng
 
 from . import components
-from .events.components import (
-    OnKeyPress,
-    GrabInputFocus,
-)
 
 
 
@@ -30,6 +26,12 @@ class TakeActionHandler:
         self.ecs = ecs
         self.spatial = self.ecs.resources.spatial
         self.waiting_queue = self.ecs.manage(components.WaitsForAction)
+
+    @property
+    def focus(self):
+        if self._focus is None:
+            self._focus = self.ecs.resources.focus_manager
+        return self._focus
 
     def get_movement_cost(self, actor):
         movement_speed = self.ecs.manage(components.MovementSpeed)
@@ -70,6 +72,7 @@ class PlayerInput(TakeActionHandler):
     def __init__(self, ecs):
         super().__init__(ecs)
         self._events = None
+        self._focus = None
 
         self.on_key_press = []
         for handler_cls, callback in [
@@ -95,12 +98,18 @@ class PlayerInput(TakeActionHandler):
             self._events = self.ecs.resources.events_manager
         return self._events
 
+    @property
+    def focus(self):
+        if self._focus is None:
+            self._focus = self.ecs.resources.focus_manager
+        return self._focus
+
     def set_event_handlers(self, actor):
         self.events.bind(actor, on_key_press=self.on_key_press)
-        self.ecs.manage(GrabInputFocus).insert(actor)
+        self.focus.grab(actor)
 
     def remove_event_handlers(self, actor):
-        self.ecs.manage(OnKeyPress).remove(actor)
+        self.events.unbind(actor, on_key_press=self.on_key_press)
 
     def insert_action(self, actor, action, *args, **kwargs):
         self.remove_event_handlers(actor)

@@ -1,4 +1,3 @@
-import collections
 import logging
 
 from ..utils import perf
@@ -26,7 +25,6 @@ from .components import (
     OnMouseIn, OnMouseOver, OnMouseOut,
     OnMouseWheel,
     OnQuit,
-    InputFocus, HasInputFocus, GrabInputFocus,
 )
 
 
@@ -41,40 +39,6 @@ TODO:
 
 '''
 
-class InputFocusSystem(System):
-
-    INCLUDE_STATES = {
-        RunState.WAIT_FOR_INPUT,
-    }
-
-    def run(self):
-        # TODO: This is a mess...
-        input_focus = self.ecs.manage(InputFocus)
-        grab_focus = self.ecs.manage(GrabInputFocus)
-        has_focus = self.ecs.manage(HasInputFocus)
-
-        focus_per_priority = collections.defaultdict(set)
-        for entity, priority in input_focus:
-            focus_per_priority[priority].add(entity)
-
-        max_priority = max(focus_per_priority.keys() or [0, ])
-        next_priority = max_priority
-        if has_focus:
-            next_priority = max_priority + 1
-
-        for entity in grab_focus.entities:
-            if entity in has_focus:
-                continue
-            focus_per_priority[next_priority].add(entity)
-            input_focus.insert(entity, next_priority)
-        grab_focus.clear()
-
-        has_focus.clear()
-        max_priority = max(focus_per_priority.keys() or [0, ])
-        for entity in focus_per_priority.get(max_priority, []):
-            has_focus.insert(entity)
-
-
 class EventsDispatchSystem(System):
 
     TIMEOUT = 1./60/3
@@ -88,7 +52,7 @@ class EventsDispatchSystem(System):
         super().__init__(ecs)
         self.wrapper = self.ecs.resources.wrapper
         self.timeout = self.TIMEOUT
-        self.onscreen_manager = self.ecs.resources.onscreen_manager
+        self.focus_manager = self.ecs.resources.focus_manager
 
     def on_quit(self, event):
         self.ecs.create(
@@ -106,20 +70,19 @@ class EventsDispatchSystem(System):
             events.append(event)
 
     def dispatch_has_focus(self, event, component):
-        # TODO: Use focus_manager
-        has_focus = self.ecs.manage(HasInputFocus)
-        self.dispatch_to_entities(event, has_focus.entities, component)
+        entities = self.focus_manager.get_entities()
+        self.dispatch_to_entities(event, entities, component)
 
-    def dispatch_onscreen_position(self, position, event, component):
-        entities = self.onscreen_manager.get_entities(position)
+    def dispatch_focus_position(self, position, event, component):
+        entities = self.focus_manager.get_entities(position)
         self.dispatch_to_entities(event, entities, component)
 
     def dispatch_mouse_button(self, event, component):
-        self.dispatch_onscreen_position(event.position, event, component)
+        self.dispatch_focus_position(event.position, event, component)
 
     def dispatch_mouse_motion(self, event):
-        current_entities = self.onscreen_manager.get_entities(event.position) or set()
-        prev_entities = self.onscreen_manager.get_entities(event.prev_position) or set()
+        current_entities = self.focus_manager.get_entities(event.position)
+        prev_entities = self.focus_manager.get_entities(event.prev_position)
 
         self.dispatch_to_entities(event, current_entities, MouseOverEvents)
 
@@ -195,6 +158,8 @@ class EventsHandleSystem(System):
             for entity, events, handlers in self.ecs.join(self.ecs.entities, event_queues, event_handlers):
                 for event in events:
                     for callback in handlers:
+                        # TODO: Some return value to prevent further handling of an event?
+                        #       For example to stop other widgets to use same key?
                         callback(entity, event)
             event_queues.clear()
 

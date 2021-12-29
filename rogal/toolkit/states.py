@@ -65,6 +65,7 @@ class Stateful:
             self.select()
 
 
+# TODO: Split into MouseHoverable, MouseClickable, MouseScrollable
 class MouseOperated(Stateful):
 
     def __init__(self, *args, **kwargs):
