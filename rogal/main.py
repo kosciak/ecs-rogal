@@ -16,12 +16,12 @@ from .procgen.dungeons import StaticLevel
 
 from .ecs import ECS
 
-from .ui.manager import UIManager
-from .ui.onscreen import OnScreenManager
+from .ui.managers import UIManager
+from .ui.managers import OnScreenManager
 from .toolkit.builder import WidgetsBuilder
-from .events.manager import EventsManager
+from .events.managers import EventsManager
 
-from .colors.manager import ColorsManager
+from .colors.managers import ColorsManager
 from .entities_spawner import EntitiesSpawner
 
 from .data.loaders import DataLoader
