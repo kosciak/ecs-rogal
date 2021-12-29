@@ -214,20 +214,27 @@ class PostProcessed(containers.Bin):
         super().__init__(
             content=content,
         )
-        self.post_renderers = list(post_renderers or [])
+        self.post_renderer = renderers.Chain(post_renderers)
 
     def layout_content(self, manager, parent, panel, z_order):
         z_order = super().layout_content(manager, parent, panel, z_order)
-        for renderer in self.post_renderers:
-            element = manager.create_child(parent)
-            z_order += 1
-            manager.insert(
-                element,
-                panel=panel,
-                z_order=z_order,
-                renderer=renderer,
-            )
+        element = manager.create_child(parent)
+        z_order += 1
+        manager.insert(
+            element,
+            panel=panel,
+            z_order=z_order,
+            renderer=self.post_renderer,
+        )
         return z_order
+
+    @property
+    def post_renderers(self):
+        return self.post_renderer.renderers
+
+    @post_renderers.setter
+    def post_renderers(self, post_renderers):
+        self.post_renderer.renderers = post_renderers or []
 
 
 class WithPostProcessedContent:

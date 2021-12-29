@@ -3,6 +3,16 @@ from ..geometry import Position
 from . import core
 
 
+class Chain(core.Renderer):
+
+    def __init__(self, renderers=None):
+        self.renderers = renderers or []
+
+    def render(self, panel, timestamp):
+        for renderer in self.renderers:
+            renderer.render(panel, timestamp)
+
+
 class ClearPanel(core.Renderer):
 
     def __init__(self, colors, *args, **kwargs):
