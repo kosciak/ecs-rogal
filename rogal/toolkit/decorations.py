@@ -21,45 +21,45 @@ class Padded(containers.Bin):
 
     """Adds padding to it's content."""
 
-    def __init__(self, content, padding, *, width=None, height=None, align=None):
+    def __init__(self, content, padding, *, align=None, width=None, height=None):
         self.padding = padding or Padding.ZERO
         super().__init__(
             content=content,
+            align=align,
             width=width,
             height=height,
-            align=align,
         )
         self.default_z_order = self.content.default_z_order
 
-    @property
+    @containers.Bin.width.getter
     def width(self):
         if self._width is not None:
             return self._width
         width = self.content.width
         if width:
             return width + self.padding.left + self.padding.right
-        return 0
+        return self.FULL_SIZE
 
-    @property
+    @containers.Bin.height.getter
     def height(self):
         if self._height is not None:
             return self._height
         height = self.content.height
         if height:
             return height + self.padding.top + self.padding.bottom
-        return 0
+        return self.FULL_SIZE
 
-    def get_size(self, panel):
+    def get_size(self, available):
         width = self._width
         if width is None:
             width = self.content.width
         if not width:
-            width = panel.width - self.padding.left - self.padding.right
+            width = available.width - self.padding.left - self.padding.right
         height = self._height
         if height is None:
             height = self.content.height
         if not height:
-            height = panel.height - self.padding.top - self.padding.bottom
+            height = available.height - self.padding.top - self.padding.bottom
         size = Size(width, height)
         return size
 
@@ -79,11 +79,11 @@ class WithPaddedContent:
         self._padded = Padded(
             content=content,
             padding=padding,
-            align=align,
+            align=align, # TODO: !! Not sure why twice...
         )
         super().__init__(
             content=self._padded,
-            align=align,
+            align=align, # TODO: !! Not sure why twice...
             *args, **kwargs,
         )
 
@@ -101,33 +101,33 @@ class Framed(containers.Bin):
 
     """Renders frame around content."""
 
-    def __init__(self, content, frame, *, width=None, height=None, align=None):
+    def __init__(self, content, frame, *, align=None, width=None, height=None):
         self.frame = frame
         super().__init__(
             content=content,
+            align=align,
             width=width,
             height=height,
-            align=align,
         )
         # TODO: Consider using multiple nested frames?
 
-    @property
+    @containers.Bin.width.getter
     def width(self):
         if self._width is not None:
             return self._width
         width = self.content.width
         if width:
             return width + self.frame.extents.width
-        return 0
+        return self.FULL_SIZE
 
-    @property
+    @containers.Bin.height.getter
     def height(self):
         if self._height is not None:
             return self._height
         height = self.content.height
         if height:
             return height + self.frame.extents.height
-        return 0
+        return self.FULL_SIZE
 
     def layout_content(self, manager, parent, panel, z_order):
         element = manager.create_child(parent)
@@ -165,12 +165,12 @@ class Cleared(containers.Bin):
 
     """Clears content area."""
 
-    def __init__(self, content, colors, *, width=None, height=None, align=None):
+    def __init__(self, content, colors, *, align=None, width=None, height=None):
         super().__init__(
             content=content,
+            align=align,
             width=width,
             height=height,
-            align=align,
         )
         self.renderer = renderers.ClearPanel(
             colors=colors,

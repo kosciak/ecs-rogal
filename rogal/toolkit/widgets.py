@@ -1,9 +1,3 @@
-from ..geometry import Position, Vector, Size
-
-from ..events import handlers
-
-from ..console.core import Align, Padding
-
 from .core import ZOrder
 from . import core
 from . import basic
@@ -45,8 +39,8 @@ class Label(
     ):
 
     def __init__(self, text, *,
-                 width=None, colors=None, align=None, padding=None):
-        text = self._text(text, width=width, align=align)
+                 align=None, width=None, colors=None, padding=None):
+        text = self._text(text, align=align, width=width)
         super().__init__(
             content=text,
             padding=padding,
@@ -64,8 +58,8 @@ class FramedLabel(
     ):
 
     def __init__(self, label, frame, *,
-                 width=None, colors=None, align=None, padding=None):
-        self.label = self._text(label, width=width, align=align)
+                 align=None, width=None, colors=None, padding=None):
+        self.label = self._text(label, align=align, width=width)
         super().__init__(
             content=self.label,
             frame=frame,
@@ -156,7 +150,7 @@ class Window(
     ):
 
     def __init__(self, content, frame, colors, *,
-                 width=None, height=None, align=None, padding=None,
+                 align=None, width=None, height=None, padding=None,
                  on_key_press=None,):
         self.contents = content
         # NOTE: Instead of using set_width / set_height we use 
@@ -165,10 +159,10 @@ class Window(
             content=self.contents,
             width=width,
             height=height,
-            align=align,
         )
         super().__init__(
             content=content,
+            align=align,
             frame=frame,
             colors=colors,
             padding=padding,

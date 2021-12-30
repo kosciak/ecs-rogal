@@ -7,23 +7,27 @@ class Bin(core.UIElement):
 
     """UIElement containing single content element."""
 
-    def __init__(self, content, *, width=None, height=None, align=None):
-        if align is None:
-            align = content.align
+    def __init__(self, content, *, align=None, width=None, height=None):
         super().__init__(
+            align=align,
             width=width,
             height=height,
-            align=align,
         )
         self.content = content
 
-    @property
+    @core.UIElement.align.getter
+    def align(self):
+        if self._align is not None:
+            return self._align
+        return self.content.align
+
+    @core.UIElement.width.getter
     def width(self):
         if self._width is not None:
             return self._width
         return self.content.width
 
-    @property
+    @core.UIElement.height.getter
     def height(self):
         if self._height is not None:
             return self._height
@@ -45,14 +49,6 @@ class Stack(core.Container, core.UIElement):
     Will overdraw previous ones if they overlap.
 
     """
-
-    # def __init__(self, content=None, width=None, height=None, *args, **kwargs):
-    #     super().__init__(
-    #         content=content,
-    #         width=width or 0,
-    #         height=height or 0,
-    #         *args, **kwargs,
-    #     )
 
     def layout_content(self, manager, parent, panel, z_order):
         for child in self.content:
@@ -87,25 +83,28 @@ class Row(core.Container, core.UIElement):
     """
 
     def __init__(self, content=None, *, align):
-        super().__init__(content=content, align=align)
+        super().__init__(
+            content=content,
+            align=align
+        )
 
-    @property
+    @core.UIElement.width.getter
     def width(self):
         if self._width is not None:
             return self._width
         widths = [child.width for child in self.content]
-        if 0 in widths:
-            return 0
+        if self.FULL_SIZE in widths:
+            return self.FULL_SIZE
         return sum(widths)
 
-    @property
+    @core.UIElement.height.getter
     def height(self):
         if self._height is not None:
             return self._height
         heights = [child.height for child in self.content]
-        if 0 in heights:
-            return 0
-        heights.append(0)
+        if self.FULL_SIZE in heights:
+            return self.FULL_SIZE
+        heights.append(self.FULL_SIZE)
         return max(heights)
 
     def layout_content(self, manager, parent, panel, z_order):
@@ -139,25 +138,28 @@ class List(core.Container, core.UIElement):
     """
 
     def __init__(self, content=None, *, align):
-        super().__init__(content=content, align=align)
+        super().__init__(
+            content=content,
+            align=align
+        )
 
-    @property
+    @core.UIElement.width.getter
     def width(self):
         if self._width is not None:
             return self._width
         widths = [child.width for child in self.content]
-        if 0 in widths:
-            return 0
-        widths.append(0)
+        if self.FULL_SIZE in widths:
+            return self.FULL_SIZE
+        widths.append(self.FULL_SIZE)
         return max(widths)
 
-    @property
+    @core.UIElement.height.getter
     def height(self):
         if self._height is not None:
             return self._height
         heights = [child.height for child in self.content]
-        if 0 in heights:
-            return 0
+        if self.FULL_SIZE in heights:
+            return self.FULL_SIZE
         return sum(heights)
 
     def layout_content(self, manager, parent, panel, z_order):
@@ -204,13 +206,6 @@ class Split(core.Container, core.UIElement):
 
 
 class WithContainer:
-
-    # def __init__(self, content, *args, **kwargs):
-    #     self._container = content
-    #     super().__init__(
-    #         content=self._container,
-    #         *args, **kwargs,
-    #     )
 
     def append(self, element):
         self._container.append(element)

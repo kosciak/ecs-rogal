@@ -32,17 +32,22 @@ class Text(TextRenderer, core.UIElement):
 
     """Text widget and renderer."""
 
-    def __init__(self, txt, *, width=None, colors=None, align=None):
+    def __init__(self, txt, *, align=None, width=None, colors=None):
         self.txt = txt
         self.colors = colors
         self.txt_size = self.get_txt_size(self.txt)
         if width is None:
             width = self.txt_size.width
-        super().__init__(width=width, align=align)
+        super().__init__(
+            align=align,
+            width=width,
+        )
 
-    @property
+    @core.UIElement.height.getter
     def height(self):
         return self.txt_size.height
+
+    # TODO: Prevent from setting height? 
 
 
 class WithTextContent:
@@ -54,15 +59,15 @@ class WithTextContent:
             *args, **kwargs,
         )
 
-    def _text(self, text, *, width=None, align=None):
+    def _text(self, text, *, align=None, width=None):
         if isinstance(text, str):
             text = Text(
                 txt=text,
             )
-        if width is not None:
-            text.set_width(width)
         if align is not None:
             text.align = align
+        if width is not None:
+            text.width = width
         return text
 
     @property
@@ -222,8 +227,12 @@ class Spinner(core.Animated, TextRenderer, core.UIElement):
 
 class ProgressBar(core.Renderer, core.UIElement):
 
-    def __init__(self, value, segments, colors, *, reverse=False, width=None, height=1, align=None):
-        super().__init__(width=width, height=height, align=align)
+    def __init__(self, value, segments, colors, *, reverse=False, align=None, width=None, height=1):
+        super().__init__(
+            align=align,
+            width=width,
+            height=height,
+        )
         self.colors = colors
         self.value = value # float value from 0.0 to 1.0
         self.full = str(segments[-1])
@@ -286,8 +295,12 @@ class ProgressBarAnimatedDemo(core.Animated, ProgressBar):
 
 class Separator(core.Renderer, core.UIElement):
 
-    def __init__(self, separator, *, colors=None, width=None, height=None, align=None):
-        super().__init__(width=width, height=height, align=align)
+    def __init__(self, separator, *, colors=None, align=None, width=None, height=None):
+        super().__init__(
+            align=align,
+            width=width,
+            height=height,
+        )
         self.separator = Glyph(separator[0])
         if len(separator) > 1:
             self.start = Glyph(separator[1])
@@ -305,19 +318,22 @@ class Separator(core.Renderer, core.UIElement):
 
 class HorizontalSeparator(Separator):
 
-    def __init__(self, separator, *, colors=None, width=None, align=None):
+    def __init__(self, separator, *, colors=None, align=None, width=None):
         super().__init__(
             separator,
-            colors=colors, width=width or 0, height=1, align=align,
+            colors=colors,
+            align=align,
+            width=width or 0,
+            height=1,
         )
 
-    @property
+    @Separator.width.getter
     def width(self):
         return 0
 
-    def get_size(self, panel):
+    def get_size(self, available):
         return Size(
-            self._width or panel.width,
+            self._width or available.width,
             1,
         )
 
@@ -329,20 +345,23 @@ class HorizontalSeparator(Separator):
 
 class VerticalSeparator(Separator):
 
-    def __init__(self, separator, *, colors=None, height=None, align=None):
+    def __init__(self, separator, *, colors=None, align=None, height=None):
         super().__init__(
             separator,
-            colors=colors, width=1, height=height or 0, align=align,
+            colors=colors,
+            align=align,
+            width=1,
+            height=height or 0,
         )
 
-    @property
+    @Separator.width.getter
     def height(self):
         return 0
 
-    def get_size(self, panel):
+    def get_size(self, available):
         return Size(
             1,
-            self._height or panel.height,
+            self._height or available.height,
         )
 
     def render(self, panel, timestamp):

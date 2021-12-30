@@ -18,42 +18,54 @@ class UIElement:
 
     """Abstract UI element that can be layouted on a panel."""
 
-    DEFAULT_Z_ORDER = 0
     DEFAULT_ALIGN = Align.TOP_LEFT
+    FULL_SIZE = 0
+    DEFAULT_Z_ORDER = 0
 
-    def __init__(self, *, width=None, height=None, align=None):
+    def __init__(self, *, align=None, width=None, height=None):
+        self._align = align
         self._width = width
         self._height = height
-        if align is None:
-            align = self.DEFAULT_ALIGN
-        self.align = align
+        # TODO: get rid of default_z_order, it doesn't make much sense...
         self.default_z_order = self.DEFAULT_Z_ORDER
         self.renderer = None
         # TODO: Move event_handlers to separate class/mixin?
         self.handlers = DefaultAttrDict(list)
 
     @property
+    def align(self):
+        if self._align is not None:
+            return self._align
+        return self.DEFAULT_ALIGN
+
+    @align.setter
+    def align(self, align):
+        self._align = align
+
+    @property
     def width(self):
         """Return element's fixed width or 0 if whole available space should be used."""
-        return self._width or 0
+        return self._width or self.FULL_SIZE
 
-    def set_width(self, width):
+    @width.setter
+    def width(self, width):
         self._width = width
 
     @property
     def height(self):
         """Return element's fixed height or 0 if whole available space should be used."""
-        return self._height or 0
+        return self._height or self.FULL_SIZE
 
-    def set_height(self, height):
+    @height.setter
+    def height(self, height):
         self._height = height
 
-    def get_size(self, panel):
-        """Return element's size based on available panel space."""
-        # TODO: Allow float values? width = .75, height = .5 of panel size?
+    def get_size(self, available):
+        """Return element's size based on available space."""
+        # TODO: Allow float values? width = .75, height = .5 of available size?
         size = Size(
-            self.width or panel.width,
-            self.height or panel.height,
+            self.width or available.width,
+            self.height or available.height,
         )
         return size
 
@@ -79,6 +91,8 @@ class UIElement:
             **self.handlers,
         )
         if self.handlers:
+            # TODO: Not sure about this...
+            #       No need to grab focus for mouse only handlers
             manager.grab_focus(element)
 
         return self.layout_content(manager, element, panel, z_order)
