@@ -20,6 +20,7 @@ from .ui.managers import UIManager
 from .ui.managers import InputFocusManager
 from .toolkit.builder import WidgetsBuilder
 from .events.managers import EventsManager
+from .signals.managers import SignalsManager
 
 from .colors.managers import ColorsManager
 from .entities_spawner import EntitiesSpawner
@@ -119,6 +120,8 @@ def run(wrapper):
         title='Rogal test'
     )
 
+    ecs.resources.signals_manager = SignalsManager(ecs)
+
     ecs.resources.events_manager = EventsManager(ecs)
     ecs.resources.events_manager.add_source(ecs.resources.wrapper)
 
@@ -150,9 +153,10 @@ def run(wrapper):
         systems.ui.InputFocusSystem(ecs),
         systems.ui.OnScreenFocusSystem(ecs),
 
-        # systems.events.EventsHandlersSystem(ecs),
-        systems.events.EventsDispatchSystem(ecs),
-        systems.events.EventsHandleSystem(ecs),
+        systems.events.EventsDispatcherSystem(ecs),
+        systems.events.EventsHandlerSystem(ecs),
+
+        systems.signals.SignalsHandlerSystem(ecs),
 
         systems.commands.QuitSystem(ecs),
 

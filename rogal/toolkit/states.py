@@ -70,22 +70,22 @@ class MouseOperated(Stateful):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.handlers.on_mouse_click.extend([
+        self.events_handlers.on_mouse_click.extend([
             handlers.MouseLeftButton(self.on_click),
         ])
-        self.handlers.on_mouse_press.extend([
+        self.events_handlers.on_mouse_press.extend([
             handlers.MouseLeftButton(self.on_press),
         ])
-        self.handlers.on_mouse_up.extend([
+        self.events_handlers.on_mouse_up.extend([
             handlers.MouseLeftButton(self.on_release),
         ])
-        self.handlers.on_mouse_in.extend([
+        self.events_handlers.on_mouse_in.extend([
             handlers.MouseIn(self.on_enter),
         ])
-        self.handlers.on_mouse_over.extend([
+        self.events_handlers.on_mouse_over.extend([
             handlers.MouseOver(self.on_over),
         ])
-        self.handlers.on_mouse_out.extend([
+        self.events_handlers.on_mouse_out.extend([
             handlers.MouseOut(self.on_leave),
         ])
         # TODO: Mouse Wheel events
@@ -125,7 +125,7 @@ class WithHotkey(Stateful):
 
     def __init__(self, ecs, key_binding, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.handlers.on_key_press.extend([
+        self.events_handlers.on_key_press.extend([
             handlers.OnKeyPress(key_binding, self.on_hotkey),
         ])
 

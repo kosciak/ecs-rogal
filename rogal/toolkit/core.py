@@ -30,7 +30,7 @@ class UIElement:
         self.default_z_order = self.DEFAULT_Z_ORDER
         self.renderer = None
         # TODO: Move event_handlers to separate class/mixin?
-        self.handlers = DefaultAttrDict(list)
+        self.events_handlers = DefaultAttrDict(list)
 
     @property
     def align(self):
@@ -88,9 +88,9 @@ class UIElement:
         )
         manager.bind(
             element,
-            **self.handlers,
+            **self.events_handlers,
         )
-        if self.handlers:
+        if self.events_handlers:
             # TODO: Not sure about this...
             #       No need to grab focus for mouse only handlers
             manager.grab_focus(element)

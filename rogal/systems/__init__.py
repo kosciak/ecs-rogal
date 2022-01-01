@@ -6,6 +6,7 @@ from . import real_time
 from . import run_state
 
 from ..events import systems as events
+from ..signals import systems as signals
 from ..ui import systems as ui
 from ..spatial import systems as spatial
 

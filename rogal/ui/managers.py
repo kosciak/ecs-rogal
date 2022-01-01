@@ -26,6 +26,7 @@ class UIManager:
     def __init__(self, ecs):
         self.ecs = ecs
         self._events = None
+        self._signals = None
         self._focus = None
 
     @property
@@ -33,6 +34,12 @@ class UIManager:
         if self._events is None:
             self._events = self.ecs.resources.events_manager
         return self._events
+
+    @property
+    def signals(self):
+        if self._signals is None:
+            self._signals = self.ecs.resources.signals_manager
+        return self._signals
 
     @property
     def focus(self):
@@ -94,8 +101,10 @@ class UIManager:
         self.focus.release(element)
 
     def connect(self, element, handlers):
-        # TODO: insert into ECS
-        return
+        self.signals.bind(element, handlers)
+
+    def emit(self, element, name, value=None):
+        self.signals.emit(element, name, value)
 
 
 class InputFocusManager:

@@ -50,10 +50,10 @@ class TextInput(
             # TODO: Show Cursor only if has focus and ready for input?
             self.cursor,
         ])
-        self.handlers.on_text_input.extend([
+        self.events_handlers.on_text_input.extend([
             handlers.TextInput(self.on_input),
         ])
-        self.handlers.on_key_press.extend([
+        self.events_handlers.on_key_press.extend([
             handlers.TextEdit(self.on_edit),
         ])
 
@@ -162,11 +162,11 @@ class ListBox(containers.List):
     def __init__(self, align=Align.TOP_LEFT):
         super().__init__(align=align)
         self.items = []
-        self.handlers.on_key_press.extend([
+        self.events_handlers.on_key_press.extend([
             handlers.NextPrevKeyPress('list.NEXT', 'list.PREV', self.on_focus_change),
             handlers.OnKeyPress('list.SELECT', self.on_select),
         ])
-        self.handlers.on_mouse_over.extend([
+        self.events_handlers.on_mouse_over.extend([
             handlers.MouseOver(self.on_mouse_over),
         ])
 

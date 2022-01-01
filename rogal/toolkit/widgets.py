@@ -174,5 +174,6 @@ class Window(
             height=self.content.height,
         )
         self.content = self._container
-        self.handlers.on_key_press.extend(on_key_press or [])
+        # TODO: Need to be moved somewhere else
+        self.events_handlers.on_key_press.extend(on_key_press or [])
 

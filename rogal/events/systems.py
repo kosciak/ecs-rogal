@@ -39,7 +39,7 @@ TODO:
 
 '''
 
-class EventsDispatchSystem(System):
+class EventsDispatcherSystem(System):
 
     TIMEOUT = 1./60/3
     # TIMEOUT = False
@@ -127,7 +127,7 @@ class EventsDispatchSystem(System):
                 self.dispatch(event)
 
 
-class EventsHandleSystem(System):
+class EventsHandlerSystem(System):
 
     INCLUDE_STATES = {
         RunState.WAIT_FOR_INPUT,
