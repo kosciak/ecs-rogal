@@ -1,3 +1,4 @@
+import functools
 
 """Rudimentary (X)Term sequence codes support.
 
@@ -208,11 +209,13 @@ class Mode:
     BRACKETED_PASTE = '?2004'       # Set bracketed paste mode
 
 
+@functools.lru_cache(maxsize=None)
 def csi(code, *parameters):
     """Build CSI sequence."""
     return '%s%s%s' % (EscapeSequence.CSI, SEPARATOR.join([f'{param}' for param in parameters]), code)
 
 
+@functools.lru_cache(maxsize=None)
 def ocs(*parameters, terminator=EscapeSequence.ST):
     """Build OCS sequence."""
     return '%s%s%s' % (EscapeSequence.OCS, SEPARATOR.join([f'{param}' for param in parameters]), terminator)

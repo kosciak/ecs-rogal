@@ -1,6 +1,7 @@
 import logging
 
 from ...console.core import Align
+from ...console.consoles import RGBConsole
 from ...console.panels import EMPTY_TILE, RootPanel
 
 from ..core import OutputWrapper
@@ -170,4 +171,41 @@ class TcodOutputWrapper(OutputWrapper):
     def render(self, panel):
         # TODO: Check options and resizing behaviour
         self.context.present(panel.console)
+
+
+class TcodNaiveOutputWrapper(OutputWrapper):
+
+    """Use RGBConsole and render using double buffering and prints."""
+
+    CONSOLE_CLS = RGBConsole
+
+    def __init__(self, context, colors_manager):
+        super().__init__(colors_manager)
+        self.context = context
+        self.console = None
+        self._prev_tiles = None
+
+    def create_panel(self, size):
+        console = self.create_console(size)
+        if self.console is None:
+            self.console = self.context.new_console(*size)
+        return self.ROOT_PANEL_CLS(console, self.colors_manager)
+
+    def render_whole(self, panel):
+        for x, y, ch, fg, bg in panel.console.tiles_gen(encode_ch=chr):
+            self.console.print(x, y, ch, fg=list(fg), bg=list(bg))
+
+    def render_diff(self, panel):
+        for x, y, ch, fg, bg in panel.console.tiles_diff_gen(self._prev_tiles, encode_ch=chr):
+            self.console.print(x, y, ch, fg=list(fg), bg=list(bg))
+
+    def render(self, panel):
+        if self._prev_tiles is None or not self._prev_tiles.shape == panel.console.tiles.shape:
+            self.render_whole(panel)
+        else:
+            self.render_diff(panel)
+
+        self._prev_tiles = panel.console.tiles.copy()
+
+        self.context.present(self.console)
 

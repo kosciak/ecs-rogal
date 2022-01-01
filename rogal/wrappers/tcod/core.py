@@ -15,6 +15,7 @@ from ..sdl.const import SDL_SystemCursor
 
 from .input import TcodSDLInputWrapper
 from .output import TcodOutputWrapper
+# from .output import TcodNaiveOutputWrapper
 
 
 log = logging.getLogger(__name__)
@@ -105,6 +106,7 @@ class TcodWrapper(IOWrapper):
 
         self._input = TcodSDLInputWrapper(sdl2, self.context)
         self._output = TcodOutputWrapper(self.context, self.colors_manager)
+        # self._output = TcodNaiveOutputWrapper(self.context, self.colors_manager)
 
     def terminate(self):
         self.context.close()

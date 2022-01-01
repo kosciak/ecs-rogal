@@ -57,11 +57,11 @@ class Console:
             return
 
         diff = self.tiles != other
-        # for x, y in np.nditer(diff.nonzero(), flags=['zerosize_ok', ]):
-        for x, y in np.transpose(diff.nonzero()):
-            tile = self.tiles[x, y]
+        # for y, x in np.nditer(diff.nonzero(), flags=['zerosize_ok', ]):
+        for y, x in np.transpose(diff.nonzero()):
+            tile = self.tiles[y, x]
             # yield int(y), int(x), *self.encode_tile_data(tile, encode_ch)
-            yield y, x, *self.encode_tile_data(tile, encode_ch)
+            yield x, y, *self.encode_tile_data(tile, encode_ch)
 
 
 class RGBConsole(Console):

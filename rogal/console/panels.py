@@ -252,6 +252,8 @@ class RootPanel(Panel):
         colors = self.get_fg_bg(colors)
         self.console.tiles[...] = (EMPTY_TILE, colors.fg, colors.bg)
 
+    # TODO: Don't draw/paint outside console!
+
     def _draw(self, ch, colors, position, size=None, *args, **kwargs):
         fg = self.get_color(colors and colors.fg)
         bg = self.get_color(colors and colors.bg)
