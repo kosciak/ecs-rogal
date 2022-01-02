@@ -15,6 +15,9 @@ from . import containers
 from . import decorations
 from . import renderers
 from . import widgets
+from . import labels
+from . import buttons
+from . import windows
 
 
 # TODO: Scrollable Panels?
@@ -45,14 +48,14 @@ class WidgetsBuilder:
             return
 
         label = self.create(
-            widgets.Label, style.pop('label', {}),
+            labels.Label, style.pop('label', {}),
             txt,
         )
         frame = self.create(
             basic.Frame, style.pop('frame', {}),
         )
         framed_label = self.create(
-            widgets.FramedLabel, style,
+            labels.FramedLabel, style,
             label=label,
             frame=frame,
         )
@@ -64,7 +67,7 @@ class WidgetsBuilder:
             basic.Frame, style.pop('frame', {}),
         )
         window = self.create(
-            widgets.Window, style,
+            windows.Window, style,
             content=content,
             frame=frame,
             on_key_press=on_key_press,
@@ -83,7 +86,7 @@ class WidgetsBuilder:
             basic.Frame, style.pop('frame', {}),
         )
         window = self.create(
-            widgets.Window, style,
+            windows.Window, style,
             content=content,
             # content=containers.Stack(),
             width=width,
@@ -109,7 +112,7 @@ class WidgetsBuilder:
 
     def create_button(self, style, content, callback, value):
         button = self.create(
-            widgets.Button, style,
+            buttons.Button, style,
             value, callback,
             content=content,
             # selected_colors=self.default_colors.invert(),
@@ -198,7 +201,7 @@ class WidgetsBuilder:
         callback = context['callback']
 
         msg = self.create(
-            widgets.Label, 'Dialog Label',
+            labels.Label, 'Dialog Label',
             msg,
         )
 
@@ -312,7 +315,7 @@ class WidgetsBuilder:
         items = [f'index: {i}' for i in range(10)]
 
         msg = self.create(
-            widgets.Label, 'Dialog Label',
+            labels.Label, 'Dialog Label',
             msg,
         )
 
@@ -396,7 +399,7 @@ class WidgetsBuilder:
             )
 
             # TODO: widgets.Screen?
-            widgets_layout = widgets.Window(
+            widgets_layout = windows.Window(
                 content=content,
                 frame=basic.Frame([]),
                 colors=None,
