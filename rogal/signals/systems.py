@@ -25,6 +25,8 @@ class SignalsHandlerSystem(System):
                     continue
                 if not name in handlers:
                     continue
-                for callback in handlers[name]:
+                for callback, data in handlers[name].items():
+                    if data is not None:
+                        value = data
                     callback(entity, value)
 

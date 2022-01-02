@@ -5,10 +5,10 @@ class SignalsEmitter:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.signals_handlers = collections.defaultdict(set)
+        self.signals_handlers = collections.defaultdict(dict)
 
-    def on(self, signal_name, handler):
-        self.signals_handlers[signal_name].add(handler)
+    def on(self, signal_name, handler, data=None):
+        self.signals_handlers[signal_name][handler] = data
         if self.manager:
             self.manager.connect(
                 self.element,
@@ -16,7 +16,7 @@ class SignalsEmitter:
             )
 
     def off(self, signal_name, handler):
-        self.signals_handlers[signal_name].discard(handler)
+        self.signals_handlers[signal_name].pop(handler, None)
         if self.manager:
             self.manager.connect(
                 self.element,

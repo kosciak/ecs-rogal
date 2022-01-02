@@ -23,5 +23,8 @@ class SignalsManager:
         self.queue.put(signal)
 
     def bind(self, entity, handlers):
-        self.ecs.manage(OnSignal).insert(entity, handlers)
+        if handlers:
+            self.ecs.manage(OnSignal).insert(entity, handlers)
+        else:
+            self.ecs.manage(OnSignal).remove(entity)
 

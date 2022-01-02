@@ -92,19 +92,22 @@ class UIManager:
     def bind(self, element, **handlers):
         self.events.bind(element, **handlers)
 
+    def connect(self, element, handlers):
+        self.signals.bind(element, handlers)
+
+    # TODO: What about connecting to element (as an entity in ECS), not an instance?
+
+    def emit(self, element, name, value=None):
+        self.signals.emit(element, name, value)
+
     def grab_focus(self, element):
         self.focus.grab(element)
 
     # TODO: get_focus -> just set current InputFocus value, not higher one!
+    #       switch_focus?
 
     def release_focus(self, element):
         self.focus.release(element)
-
-    def connect(self, element, handlers):
-        self.signals.bind(element, handlers)
-
-    def emit(self, element, name, value=None):
-        self.signals.emit(element, name, value)
 
 
 class InputFocusManager:
