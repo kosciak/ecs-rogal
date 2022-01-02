@@ -65,8 +65,7 @@ class Stateful:
             self.select()
 
 
-# TODO: Split into MouseHoverable, MouseClickable, MouseScrollable
-class MouseOperated(Stateful):
+class Clickable(Stateful):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -79,6 +78,24 @@ class MouseOperated(Stateful):
         self.events_handlers.on_mouse_up.extend([
             handlers.MouseLeftButton(self.on_release),
         ])
+
+    def on_press(self, element, position, *args, **kwargs):
+        self.emit('pressed')
+        self.press(position)
+
+    def on_release(self, element, position, *args, **kwargs):
+        self.emit('released')
+        self.release(position)
+
+    def on_click(self, element, position, *args, **kwargs):
+        self.emit('activated')
+        self.activate()
+
+
+class Hoverable(Stateful):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.events_handlers.on_mouse_in.extend([
             handlers.MouseIn(self.on_enter),
         ])
@@ -88,7 +105,6 @@ class MouseOperated(Stateful):
         self.events_handlers.on_mouse_out.extend([
             handlers.MouseOut(self.on_leave),
         ])
-        # TODO: Mouse Wheel events
 
     # TODO: Instead of calling methods, emit signals?
 
@@ -104,21 +120,11 @@ class MouseOperated(Stateful):
         self.emit('leave')
         self.leave()
 
-    def on_press(self, element, position, *args, **kwargs):
-        self.emit('pressed')
-        self.press(position)
-
-    def on_release(self, element, position, *args, **kwargs):
-        self.emit('released')
-        self.release(position)
-
-    def on_click(self, element, position, *args, **kwargs):
-        self.emit('activated')
-        self.activate()
-
     def hover(self, position):
         if not self.is_hovered and not self.is_pressed:
             self.enter()
+
+# TODO: Scrollable?
 
 
 class WithHotkey(Stateful):

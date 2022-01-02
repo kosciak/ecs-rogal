@@ -31,6 +31,7 @@ class UIElement:
         self.renderer = None
         # TODO: Move event_handlers to separate class/mixin?
         self.events_handlers = DefaultAttrDict(list)
+        # TODO: Store element, panel or offset/size?
 
     @property
     def align(self):

@@ -25,9 +25,8 @@ class Widget:
         return super().layout(manager, element, panel, z_order)
 
     def redraw(self):
-        if self.manager is None:
-            return
-        self.manager.redraw(self.element)
+        if self.manager:
+            self.manager.redraw(self.element)
 
 
 class Label(
@@ -74,7 +73,8 @@ class Button(
         Widget,
         signals.SignalsEmitter,
         states.Activable,
-        states.MouseOperated,
+        states.Hoverable,
+        states.Clickable,
         decorations.Padded,
     ):
 
@@ -143,6 +143,8 @@ class ButtonsRow(
 
 class Window(
         Widget,
+        signals.SignalsEmitter,
+        states.Hoverable,
         containers.WithContainer,
         decorations.WithFramedContent,
         decorations.WithClearedContent,
