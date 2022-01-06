@@ -23,18 +23,44 @@ Button:
     width: 8
 
 
+.checkbox:
+  fg: FG
+  bg: BG
+  padding:
+    top: 1
+  frame:
+    decorations: HORIZONTAL_BRACKETS_SQUARE
+  label:
+    fg: GREEN
+    width: 1
+
+
+.radio:
+  fg: FG
+  bg: BG
+  padding:
+    top: 1
+  frame:
+    decorations: HORIZONTAL_BRACKETS_ROUND
+  label:
+    fg: RED
+    width: 1
+
+
 ButtonsRow:
   align: BOTTOM_CENTER
 
 
 .title:
-  align: TOP_CENTER
+  align: TOP_LEFT
   fg: FG
   bg: BG
   padding: [0, 1]
   frame:
     decorations: HORIZONTAL_DSLINE
   label:
+    align: LEFT
+    width: 10
     padding: [0, 1]
 
 

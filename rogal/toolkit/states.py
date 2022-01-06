@@ -7,7 +7,7 @@ class WidgetState(Enum):
     HOVERED = auto()
     PRESSED = auto()
     FOCUSED = auto()
-    SELECTED = auto()
+    # SELECTED = auto()
     # TODO: DISABLED
 
 
@@ -52,17 +52,17 @@ class Stateful:
     def unfocus(self):
         self.states.discard(WidgetState.FOCUSED)
 
-    def select(self):
-        self.states.add(WidgetState.SELECTED)
+    # def select(self):
+    #     self.states.add(WidgetState.SELECTED)
 
-    def unselect(self):
-        self.states.discard(WidgetState.SELECTED)
+    # def unselect(self):
+    #     self.states.discard(WidgetState.SELECTED)
 
-    def toggle(self):
-        if self.is_selected:
-            self.unselect()
-        else:
-            self.select()
+    # def toggle(self):
+    #     if self.is_selected:
+    #         self.unselect()
+    #     else:
+    #         self.select()
 
 
 class Clickable(Stateful):
@@ -71,6 +71,7 @@ class Clickable(Stateful):
         super().__init__(*args, **kwargs)
         self.events_handlers.on_mouse_click.extend([
             handlers.MouseLeftButton(self.on_click),
+            # TODO: Right-click?
         ])
         self.events_handlers.on_mouse_press.extend([
             handlers.MouseLeftButton(self.on_press),

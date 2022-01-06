@@ -36,7 +36,7 @@ class FramedLabel(
         super().__init__(
             content=self.label,
             frame=frame,
-            align=align,
+            # align=align,
             colors=colors,
             padding=padding,
         )

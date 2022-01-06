@@ -110,11 +110,41 @@ class WidgetsBuilder:
 
         return window
 
+    def create_toggle_button(self, style, label_style, labels):
+        content = []
+        for label in labels:
+            label = self.create_framed_label(
+                self.get_style(label_style),
+                label,
+            )
+            content.append(label)
+
+        button = self.create(
+            buttons.ToggleButton, style,
+            content=content,
+        )
+        return button
+
+    def create_checkbox(self, style):
+        button = self.create_toggle_button(
+            style, '.checkbox',
+            [' ', 'x'],
+        )
+        return button
+
+    def create_radio(self, style):
+        button = self.create_toggle_button(
+            style, '.radio',
+            [' ', 'o'],
+        )
+        return button
+
     def create_button(self, style, content, callback, value):
         button = self.create(
             buttons.Button, style,
-            value, callback,
             content=content,
+            callback=callback,
+            value=value,
             # selected_colors=self.default_colors.invert(),
             press_colors=Colors(
                 bg="bg",
@@ -213,6 +243,12 @@ class WidgetsBuilder:
                 ['Yes', True],
             ],
         )
+        # buttons_row.append(
+        #     self.create_checkbox('Button')
+        # )
+        # buttons_row.append(
+        #     self.create_radio('Button')
+        # )
 
         progress_bar = self.create(
             basic.ProgressBarAnimatedDemo, 'ProgressBar',
