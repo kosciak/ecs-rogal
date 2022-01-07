@@ -26,8 +26,6 @@ Button:
 .checkbox:
   fg: FG
   bg: BG
-  padding:
-    top: 1
   frame:
     decorations: HORIZONTAL_BRACKETS_SQUARE
   label:
@@ -38,13 +36,16 @@ Button:
 .radio:
   fg: FG
   bg: BG
-  padding:
-    top: 1
   frame:
     decorations: HORIZONTAL_BRACKETS_ROUND
   label:
     fg: RED
     width: 1
+
+
+.label:
+  fg: FG
+  bg: BG
 
 
 ButtonsRow:

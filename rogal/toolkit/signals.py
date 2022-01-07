@@ -27,9 +27,9 @@ class SignalsEmitter:
         self.manager.emit(self.element, signal_name, value)
 
     def layout(self, manager, element, panel, z_order):
-        return super().layout(manager, element, panel, z_order)
         manager.connect(
             element,
             self.signals_handlers,
         )
+        return super().layout(manager, element, panel, z_order)
 

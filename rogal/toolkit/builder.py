@@ -119,23 +119,28 @@ class WidgetsBuilder:
             )
             content.append(label)
 
+        return content
+
+    def create_checkbox(self, style):
+        content = self.create_toggle_button(
+            style, '.checkbox',
+            [' ', 'x'],
+        )
         button = self.create(
-            buttons.ToggleButton, style,
+            buttons.CheckButton, style,
             content=content,
         )
         return button
 
-    def create_checkbox(self, style):
-        button = self.create_toggle_button(
-            style, '.checkbox',
-            [' ', 'x'],
-        )
-        return button
-
-    def create_radio(self, style):
-        button = self.create_toggle_button(
+    def create_radio(self, style, group):
+        content = self.create_toggle_button(
             style, '.radio',
             [' ', 'o'],
+        )
+        button = self.create(
+            buttons.RadioButton, style,
+            content=content,
+            group=group,
         )
         return button
 
@@ -243,12 +248,50 @@ class WidgetsBuilder:
                 ['Yes', True],
             ],
         )
-        # buttons_row.append(
-        #     self.create_checkbox('Button')
-        # )
-        # buttons_row.append(
-        #     self.create_radio('Button')
-        # )
+
+        checkbox = self.create_checkbox('Button')
+        checkbox_label = self.create(
+            buttons.Label, self.get_style('Button'),
+            content = self.create(
+                labels.Label, self.get_style('.label'),
+                'checkbox',
+            )
+        )
+        checkbox.set_label(checkbox_label)
+
+        radio_group = buttons.ButtonsGroup()
+        radio1 = self.create_radio('Button', radio_group)
+        radio1_label = self.create(
+            buttons.Label, self.get_style('Button'),
+            content = self.create(
+                labels.Label, self.get_style('.label'),
+                'radio 1',
+            )
+        )
+        radio1.set_label(radio1_label)
+
+        radio2 = self.create_radio('Button', radio_group)
+        radio2_label = self.create(
+            buttons.Label, self.get_style('Button'),
+            content = self.create(
+                labels.Label, self.get_style('.label'),
+                'radio 2',
+            )
+        )
+        radio2.set_label(radio2_label)
+
+
+        toggle_buttons = containers.List([
+            containers.Row([
+                checkbox, checkbox_label,
+            ], align=Align.LEFT),
+            containers.Row([
+                radio1, radio1_label,
+            ], align=Align.LEFT),
+            containers.Row([
+                radio2, radio2_label,
+            ], align=Align.LEFT),
+        ], align=Align.TOP)
 
         progress_bar = self.create(
             basic.ProgressBarAnimatedDemo, 'ProgressBar',
@@ -266,6 +309,7 @@ class WidgetsBuilder:
             # progress_bar,
             # spinner,
             msg,
+            toggle_buttons,
             buttons_row,
         ], align=Align.TOP)
 
