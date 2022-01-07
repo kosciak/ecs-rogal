@@ -1,5 +1,7 @@
 from ..geometry import Position, Size
 
+from ..console.core import Align
+
 from . import core
 
 
@@ -82,7 +84,9 @@ class Row(core.Container, core.UIElement):
 
     """
 
-    def __init__(self, content=None, *, align):
+    def __init__(self, content=None, *, align=None):
+        if align is None:
+            align = Align.LEFT
         super().__init__(
             content=content,
             align=align
@@ -137,7 +141,9 @@ class List(core.Container, core.UIElement):
 
     """
 
-    def __init__(self, content=None, *, align):
+    def __init__(self, content=None, *, align=None):
+        if align is None:
+            align = Align.TOP
         super().__init__(
             content=content,
             align=align
