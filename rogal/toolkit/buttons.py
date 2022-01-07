@@ -110,11 +110,11 @@ class WithLabel:
 
 class ToggleButton(BaseButton):
 
-    def __init__(self, content, value=0, *,
+    def __init__(self, content, value=None, *,
                  padding=None,
                 ):
         self._buttons = content
-        self._value = value
+        self._value = value or 0
         super().__init__(
             content=self._buttons[self._value],
             padding=padding,
@@ -148,11 +148,12 @@ class CheckButton(WithLabel, ToggleButton):
 
 class RadioButton(WithLabel, ToggleButton):
 
-    def __init__(self, content, group, *,
+    def __init__(self, content, group, value=None, *,
                  padding=None,
                 ):
         super().__init__(
             content=content,
+            value=value,
             padding=padding,
         )
         group.add(self)
@@ -178,6 +179,7 @@ class ButtonsGroup:
         if not value:
             return
         for button in self.buttons:
+            # Turn off other buttons
             if not button.element == element:
                 button.value = 0
 
