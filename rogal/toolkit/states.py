@@ -71,7 +71,10 @@ class Clickable(Stateful):
         super().__init__(*args, **kwargs)
         self.events_handlers.on_mouse_click.extend([
             handlers.MouseLeftButton(self.on_click),
-            # TODO: Right-click?
+            handlers.MouseRightButton(self.on_right_click),
+            handlers.MouseMiddleButton(self.on_middle_click),
+            handlers.MouseX1Button(self.on_x1_click),
+            handlers.MouseX2Button(self.on_x2_click),
         ])
         self.events_handlers.on_mouse_press.extend([
             handlers.MouseLeftButton(self.on_press),
@@ -80,17 +83,29 @@ class Clickable(Stateful):
             handlers.MouseLeftButton(self.on_release),
         ])
 
-    def on_press(self, element, position, *args, **kwargs):
+    def on_press(self, element, position):
         self.emit('pressed')
         self.press(position)
 
-    def on_release(self, element, position, *args, **kwargs):
+    def on_release(self, element, position):
         self.emit('released')
         self.release(position)
 
-    def on_click(self, element, position, *args, **kwargs):
+    def on_click(self, element, position):
         self.emit('activated')
         self.activate()
+
+    def on_right_click(self, element, position):
+        pass
+
+    def on_middle_click(self, element, position):
+        pass
+
+    def on_x1_click(self, element, position):
+        pass
+
+    def on_x2_click(self, element, position):
+        pass
 
 
 class Hoverable(Stateful):
@@ -109,15 +124,15 @@ class Hoverable(Stateful):
 
     # TODO: Instead of calling methods, emit signals?
 
-    def on_enter(self, element, *args, **kwargs):
+    def on_enter(self, element, value):
         self.emit('enter')
         self.enter()
 
-    def on_over(self, element, position, *args, **kwargs):
+    def on_over(self, element, position):
         self.emit('hovered', position)
         self.hover(position)
 
-    def on_leave(self, element, *args, **kwargs):
+    def on_leave(self, element, value):
         self.emit('leave')
         self.leave()
 
