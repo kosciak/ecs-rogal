@@ -1,11 +1,6 @@
 from ..data import data_store, parsers
 
 
-NESTED_ELEMENTS = [
-    'Frame',
-    'Label',
-]
-
 def parse_ui_style(data):
     if not data:
         return {}
@@ -30,8 +25,9 @@ def parse_ui_style(data):
         separator=parsers.parse_separator(data.get('separator')),
     )
 
-    for element in NESTED_ELEMENTS:
-        if element in data:
+    # Parsing nested elements - checking if first letter is capitalized
+    for element in data.keys():
+        if element[0].isupper():
             style[element] = parsers.parse_ui_style(data.get(element))
 
     style = {

@@ -1,6 +1,6 @@
 import time
 
-from ..collections .attrdict import DefaultAttrDict
+from ..collections.attrdict import AttrDict, DefaultAttrDict
 from ..geometry import Position, Size
 
 from ..console.core import Align
@@ -23,9 +23,11 @@ class UIElement:
     DEFAULT_Z_ORDER = 0
 
     def __init__(self, *, align=None, width=None, height=None):
-        self._align = align
-        self._width = width
-        self._height = height
+        self.style = AttrDict(
+            align=align,
+            width=width,
+            height=height,
+        )
         # TODO: get rid of default_z_order, it doesn't make much sense...
         self.default_z_order = self.DEFAULT_Z_ORDER
         self.renderer = None
@@ -35,31 +37,31 @@ class UIElement:
 
     @property
     def align(self):
-        if self._align is not None:
-            return self._align
+        if self.style.align is not None:
+            return self.style.align
         return self.DEFAULT_ALIGN
 
     @align.setter
     def align(self, align):
-        self._align = align
+        self.style.align = align
 
     @property
     def width(self):
         """Return element's fixed width or 0 if whole available space should be used."""
-        return self._width or self.FULL_SIZE
+        return self.style.width or self.FULL_SIZE
 
     @width.setter
     def width(self, width):
-        self._width = width
+        self.style.width = width
 
     @property
     def height(self):
         """Return element's fixed height or 0 if whole available space should be used."""
-        return self._height or self.FULL_SIZE
+        return self.style.height or self.FULL_SIZE
 
     @height.setter
     def height(self, height):
-        self._height = height
+        self.style.height = height
 
     def get_size(self, available):
         """Return element's size based on available space."""

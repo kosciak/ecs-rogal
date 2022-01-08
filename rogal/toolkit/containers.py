@@ -19,20 +19,20 @@ class Bin(core.UIElement):
 
     @core.UIElement.align.getter
     def align(self):
-        if self._align is not None:
-            return self._align
+        if self.style.align is not None:
+            return self.style.align
         return self.content.align
 
     @core.UIElement.width.getter
     def width(self):
-        if self._width is not None:
-            return self._width
+        if self.style.width is not None:
+            return self.style.width
         return self.content.width
 
     @core.UIElement.height.getter
     def height(self):
-        if self._height is not None:
-            return self._height
+        if self.style.height is not None:
+            return self.style.height
         return self.content.height
 
     def layout_content(self, manager, parent, panel, z_order):
@@ -96,8 +96,8 @@ class Row(core.Container, core.UIElement):
 
     @core.UIElement.width.getter
     def width(self):
-        if self._width is not None:
-            return self._width
+        if self.style.width is not None:
+            return self.style.width
         widths = [child.width for child in self.content]
         if self.FULL_SIZE in widths:
             return self.FULL_SIZE
@@ -105,8 +105,8 @@ class Row(core.Container, core.UIElement):
 
     @core.UIElement.height.getter
     def height(self):
-        if self._height is not None:
-            return self._height
+        if self.style.height is not None:
+            return self.style.height
         heights = [child.height for child in self.content]
         if self.FULL_SIZE in heights:
             return self.FULL_SIZE
@@ -155,8 +155,8 @@ class List(core.Container, core.UIElement):
 
     @core.UIElement.width.getter
     def width(self):
-        if self._width is not None:
-            return self._width
+        if self.style.width is not None:
+            return self.style.width
         widths = [child.width for child in self.content]
         if self.FULL_SIZE in widths:
             return self.FULL_SIZE
@@ -165,8 +165,8 @@ class List(core.Container, core.UIElement):
 
     @core.UIElement.height.getter
     def height(self):
-        if self._height is not None:
-            return self._height
+        if self.style.height is not None:
+            return self.style.height
         heights = [child.height for child in self.content]
         if self.FULL_SIZE in heights:
             return self.FULL_SIZE

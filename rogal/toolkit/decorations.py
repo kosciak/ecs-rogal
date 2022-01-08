@@ -33,8 +33,8 @@ class Padded(containers.Bin):
 
     @containers.Bin.width.getter
     def width(self):
-        if self._width is not None:
-            return self._width
+        if self.style.width is not None:
+            return self.style.width
         width = self.content.width
         if width:
             return width + self.padding.left + self.padding.right
@@ -42,20 +42,20 @@ class Padded(containers.Bin):
 
     @containers.Bin.height.getter
     def height(self):
-        if self._height is not None:
-            return self._height
+        if self.style.height is not None:
+            return self.style.height
         height = self.content.height
         if height:
             return height + self.padding.top + self.padding.bottom
         return self.FULL_SIZE
 
     def get_size(self, available):
-        width = self._width
+        width = self.style.width
         if width is None:
             width = self.content.width
         if not width:
             width = available.width - self.padding.left - self.padding.right
-        height = self._height
+        height = self.style.height
         if height is None:
             height = self.content.height
         if not height:
@@ -113,8 +113,8 @@ class Framed(containers.Bin):
 
     @containers.Bin.width.getter
     def width(self):
-        if self._width is not None:
-            return self._width
+        if self.style.width is not None:
+            return self.style.width
         width = self.content.width
         if width:
             return width + self.frame.extents.width
@@ -122,8 +122,8 @@ class Framed(containers.Bin):
 
     @containers.Bin.height.getter
     def height(self):
-        if self._height is not None:
-            return self._height
+        if self.style.height is not None:
+            return self.style.height
         height = self.content.height
         if height:
             return height + self.frame.extents.height
