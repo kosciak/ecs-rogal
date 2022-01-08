@@ -77,7 +77,7 @@ class WidgetsBuilder:
             self.get_style('.title'),
             txt=title,
         )
-        window.append(title)
+        window.title = title
 
         return window
 
@@ -97,13 +97,17 @@ class WidgetsBuilder:
             self.get_style('.title'),
             txt=title,
         )
-        window.append(title)
+        window.title = title
 
-        close_button = self.create_framed_label(
-            self.get_style('.close_button'),
-            txt='X',
+        close_button = self.create(
+            buttons.Label, {},
+            content=self.create_framed_label(
+                self.get_style('.close_button'),
+                txt='X',
+            ),
         )
-        window.append(close_button)
+        window.overlay.close_button = close_button
+        close_button.on('clicked', window.on_close)
 
         return window
 
@@ -250,7 +254,7 @@ class WidgetsBuilder:
 
         checkbox = self.create_checkbox('Button')
         checkbox_label = self.create(
-            buttons.Label, self.get_style('Button'),
+            buttons.Label, {},
             content = self.create(
                 labels.Label, self.get_style('.label'),
                 'checkbox',
@@ -261,7 +265,7 @@ class WidgetsBuilder:
         radio_group = buttons.ButtonsGroup()
         radio1 = self.create_radio('Button', radio_group, value=1)
         radio1_label = self.create(
-            buttons.Label, self.get_style('Button'),
+            buttons.Label, {},
             content = self.create(
                 labels.Label, self.get_style('.label'),
                 'radio 1',
@@ -271,7 +275,7 @@ class WidgetsBuilder:
 
         radio2 = self.create_radio('Button', radio_group)
         radio2_label = self.create(
-            buttons.Label, self.get_style('Button'),
+            buttons.Label, {},
             content = self.create(
                 labels.Label, self.get_style('.label'),
                 'radio 2',

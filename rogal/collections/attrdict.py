@@ -30,3 +30,10 @@ class NestedAttrDict(DefaultAttrDict):
     def __init__(self, *args, **kwargs):
         super().__init__(NestedAttrDict, *args, **kwargs)
 
+
+class OrderedAttrDict(AttrMixin, collections.OrderedDict):
+
+    """Ordered dictionary with attributes access."""
+
+    pass
+
