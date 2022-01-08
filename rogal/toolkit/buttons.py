@@ -1,5 +1,4 @@
 from . import decorations
-from . import signals
 from . import states
 from . import widgets
 
@@ -7,7 +6,6 @@ from . import widgets
 # TODO: Consider: multiple Labels associated with each state, change content on state change?
 class BaseButton(
         widgets.Widget,
-        signals.SignalsEmitter,
         states.Hoverable,
         states.Clickable,
         decorations.Padded,
@@ -142,6 +140,8 @@ class ToggleButton(BaseButton):
         self.next()
 
 
+# TODO: Rename to IndicatorButton?
+#       And CheckButton / RadioButton would be Indicator+Label inside single Widget?
 class CheckButton(WithLabel, ToggleButton):
     pass
 

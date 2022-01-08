@@ -48,11 +48,11 @@ class WidgetsBuilder:
             return
 
         label = self.create(
-            labels.Label, style.pop('label', {}),
+            labels.Label, style.pop('Label', {}),
             txt,
         )
         frame = self.create(
-            basic.Frame, style.pop('frame', {}),
+            basic.Frame, style.pop('Frame', {}),
         )
         framed_label = self.create(
             labels.FramedLabel, style,
@@ -64,7 +64,7 @@ class WidgetsBuilder:
 
     def create_window(self, style, content, title=None, on_key_press=None):
         frame = self.create(
-            basic.Frame, style.pop('frame', {}),
+            basic.Frame, style.pop('Frame', {}),
         )
         window = self.create(
             windows.Window, style,
@@ -81,16 +81,13 @@ class WidgetsBuilder:
 
         return window
 
-    def create_modal_window(self, style, content, width=None, height=None, title=None, on_key_press=None):
+    def create_modal_window(self, style, content, title=None, on_key_press=None):
         frame = self.create(
-            basic.Frame, style.pop('frame', {}),
+            basic.Frame, style.pop('Frame', {}),
         )
         window = self.create(
             windows.Window, style,
             content=content,
-            # content=containers.Stack(),
-            width=width,
-            height=height,
             frame=frame,
             on_key_press=on_key_press,
         )
@@ -121,7 +118,7 @@ class WidgetsBuilder:
 
         return content
 
-    def create_checkbox(self, style):
+    def create_checkbox(self, style, value=None):
         content = self.create_toggle_button(
             style, '.checkbox',
             [' ', 'x'],
@@ -129,10 +126,11 @@ class WidgetsBuilder:
         button = self.create(
             buttons.CheckButton, style,
             content=content,
+            value=value,
         )
         return button
 
-    def create_radio(self, style, group):
+    def create_radio(self, style, group, value=None):
         content = self.create_toggle_button(
             style, '.radio',
             [' ', 'o'],
@@ -141,6 +139,7 @@ class WidgetsBuilder:
             buttons.RadioButton, style,
             content=content,
             group=group,
+            value=value,
         )
         return button
 
@@ -260,7 +259,7 @@ class WidgetsBuilder:
         checkbox.set_label(checkbox_label)
 
         radio_group = buttons.ButtonsGroup()
-        radio1 = self.create_radio('Button', radio_group)
+        radio1 = self.create_radio('Button', radio_group, value=1)
         radio1_label = self.create(
             buttons.Label, self.get_style('Button'),
             content = self.create(
@@ -284,14 +283,14 @@ class WidgetsBuilder:
         toggle_buttons = containers.List([
             containers.Row([
                 checkbox, checkbox_label,
-            ], align=Align.LEFT),
+            ]),
             containers.Row([
                 radio1, radio1_label,
-            ], align=Align.LEFT),
+            ]),
             containers.Row([
                 radio2, radio2_label,
-            ], align=Align.LEFT),
-        ], align=Align.TOP)
+            ]),
+        ])
 
         progress_bar = self.create(
             basic.ProgressBarAnimatedDemo, 'ProgressBar',
@@ -305,26 +304,20 @@ class WidgetsBuilder:
             basic.Spinner, 'Spinner',
         )
 
-        content = containers.List([
-            # progress_bar,
-            # spinner,
-            msg,
-            toggle_buttons,
-            buttons_row,
-        ], align=Align.TOP)
-
-        # content = containers.Stack([
-        #     # progress_bar,
-        #     # spinner,
-        #     msg,
-        #     buttons_row,
-        # ])
+        content = containers.List(
+            content=[
+                # progress_bar,
+                # spinner,
+                msg,
+                toggle_buttons,
+                buttons_row,
+            ],
+            width=40,
+        )
 
         window = self.create_modal_window(
             self.get_style('Window.modal'),
             content=content,
-            width=40,
-            # height=6,
             title=title,
             on_key_press=[
                 handlers.YesNoKeyPress(callback),

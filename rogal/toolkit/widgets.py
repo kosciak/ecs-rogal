@@ -7,7 +7,9 @@ from . import states
 from . import signals
 
 
-class Widget:
+class Widget(
+        signals.SignalsEmitter,
+    ):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -26,6 +28,10 @@ class Widget:
     def redraw(self):
         if self.manager:
             self.manager.redraw(self.element)
+
+    def destroy(self):
+        self.manager.destroy(self.element)
+        self.emit('destroyed')
 
 
 # TODO: rename to PaddedRow? It could be used for anything, not only Buttons

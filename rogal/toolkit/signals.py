@@ -7,6 +7,9 @@ class SignalsEmitter:
         super().__init__(*args, **kwargs)
         self.signals_handlers = collections.defaultdict(dict)
 
+    def emit(self, signal_name, value=None):
+        self.manager.emit(self.element, signal_name, value)
+
     def on(self, signal_name, handler, data=None):
         self.signals_handlers[signal_name][handler] = data
         if self.manager:
@@ -22,9 +25,6 @@ class SignalsEmitter:
                 self.element,
                 self.signals_handlers
             )
-
-    def emit(self, signal_name, value=None):
-        self.manager.emit(self.element, signal_name, value)
 
     def layout(self, manager, element, panel, z_order):
         manager.connect(

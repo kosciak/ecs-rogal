@@ -1,13 +1,11 @@
 from . import containers
 from . import decorations
-from . import signals
 from . import states
 from . import widgets
 
 
 class Window(
         widgets.Widget,
-        signals.SignalsEmitter,
         states.Hoverable,
         containers.WithContainer,
         decorations.WithFramedContent,
@@ -16,30 +14,29 @@ class Window(
     ):
 
     def __init__(self, content, frame, colors, *,
-                 align=None, width=None, height=None, padding=None,
+                 align=None,
+                 padding=None,
                  on_key_press=None,):
         self.contents = content
-        # NOTE: Instead of using set_width / set_height we use 
-        #       containers.Bin to force width and size of window's contents
-        content = containers.Bin(
-            content=self.contents,
-            width=width,
-            height=height,
-        )
         super().__init__(
-            content=content,
+            content=self.contents,
             align=align,
             frame=frame,
             colors=colors,
             padding=padding,
         )
-        # Replace Cleared(Framed(content)) with Stack
-        self._container = containers.Stack(
-            content=self.content,
-            width=self.content.width,
-            height=self.content.height,
-        )
-        self.content = self._container
-        # TODO: Need to be moved somewhere else
+        self._container = containers.Stack()
+
+        # TODO: Need to be moved somewhere else, just use signals?
         self.events_handlers.on_key_press.extend(on_key_press or [])
+
+    def layout_content(self, manager, parent, panel, z_order):
+        # Layout padded, framed, cleared contents...
+        z_order = super().layout_content(manager, parent, panel, z_order)
+        # ... and all overlayed elements
+        return self._container.layout_content(manager, parent, panel, z_order)
+
+# TODO: WindowContent(Stack) with named attributes (OrderedDict?) And width/height from first layer?
+#       window.attach('title', title)
+#       window.attach('name', element)
 

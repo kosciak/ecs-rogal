@@ -84,12 +84,14 @@ class Row(core.Container, core.UIElement):
 
     """
 
-    def __init__(self, content=None, *, align=None):
+    def __init__(self, content=None, *, align=None, width=None, height=None):
         if align is None:
             align = Align.LEFT
         super().__init__(
             content=content,
-            align=align
+            align=align,
+            width=width,
+            height=height,
         )
 
     @core.UIElement.width.getter
@@ -141,12 +143,14 @@ class List(core.Container, core.UIElement):
 
     """
 
-    def __init__(self, content=None, *, align=None):
+    def __init__(self, content=None, *, align=None, width=None, height=None):
         if align is None:
             align = Align.TOP
         super().__init__(
             content=content,
-            align=align
+            align=align,
+            width=width,
+            height=height,
         )
 
     @core.UIElement.width.getter
