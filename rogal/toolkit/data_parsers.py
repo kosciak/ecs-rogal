@@ -2,8 +2,8 @@ from ..data import data_store, parsers
 
 
 NESTED_ELEMENTS = [
-    'frame',
-    'label',
+    'Frame',
+    'Label',
 ]
 
 def parse_ui_style(data):

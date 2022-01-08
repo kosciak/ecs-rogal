@@ -1,7 +1,7 @@
 Window:
   fg: FG
   bg: BG
-  frame:
+  Frame:
     decorations: DSLINE
 
 Window.modal:
@@ -16,9 +16,9 @@ Button:
 .button:
   fg: FG
   bg: BG
-  frame:
+  Frame:
     decorations: LINE
-  label:
+  Label:
     align: CENTER
     width: 8
 
@@ -26,9 +26,9 @@ Button:
 .checkbox:
   fg: FG
   bg: BG
-  frame:
+  Frame:
     decorations: HORIZONTAL_BRACKETS_SQUARE
-  label:
+  Label:
     fg: GREEN
     width: 1
 
@@ -36,9 +36,9 @@ Button:
 .radio:
   fg: FG
   bg: BG
-  frame:
+  Frame:
     decorations: HORIZONTAL_BRACKETS_ROUND
-  label:
+  Label:
     fg: RED
     width: 1
 
@@ -57,9 +57,9 @@ ButtonsRow:
   fg: FG
   bg: BG
   padding: [0, 1]
-  frame:
+  Frame:
     decorations: HORIZONTAL_DSLINE
-  label:
+  Label:
     align: LEFT
     width: 10
     padding: [0, 1]
@@ -70,7 +70,7 @@ ButtonsRow:
   fg: FG
   bg: BG
   padding: [0, 1]
-  frame:
+  Frame:
     decorations: HORIZONTAL_BRACKETS_SQUARE
 
 
