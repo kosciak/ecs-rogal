@@ -77,32 +77,24 @@ class Text(TextRenderer, core.UIElement):
 
 class WithTextContent:
 
-    def __init__(self, content, *args, **kwargs):
-        self.text = content
+    def __init__(self, txt, align=None, width=None, *args, **kwargs):
+        self._text = Text(
+            txt=txt,
+            align=align,
+            width=width,
+        )
         super().__init__(
-            content=self.text,
+            content=self._text,
             *args, **kwargs,
         )
 
-    def _text(self, text, *, align=None, width=None):
-        if isinstance(text, str):
-            text = Text(
-                txt=text,
-            )
-        # TODO: Don't like setting text.<property> here...
-        if align is not None:
-            text.align = align
-        if width is not None:
-            text.width = width
-        return text
-
     @property
     def txt(self):
-        return self.text.txt
+        return self._text.txt
 
     @txt.setter
     def txt(self, txt):
-        self.text.txt = txt
+        self._text.txt = txt
         self.redraw();
 
 

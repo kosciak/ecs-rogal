@@ -88,11 +88,10 @@ class WithPaddedContent:
         self._padded = Padded(
             content=content,
             padding=padding,
-            align=align, # TODO: !! Not sure why twice...
+            align=align,
         )
         super().__init__(
             content=self._padded,
-            align=align, # TODO: !! Not sure why twice...
             *args, **kwargs,
         )
 
@@ -148,15 +147,17 @@ class Framed(containers.Bin):
 
 class WithFramedContent:
 
-    def __init__(self, content, frame, align=None, *args, **kwargs):
+    def __init__(self, content, frame,
+                 align=None, width=None, height=None, *args, **kwargs):
         self._framed = Framed(
             content=content,
             frame=frame,
             align=align,
+            width=width,
+            height=height,
         )
         super().__init__(
             content=self._framed,
-            align=align,
             *args, **kwargs,
         )
 

@@ -11,11 +11,14 @@ class Label(
         decorations.Padded,
     ):
 
-    def __init__(self, text, *,
-                 align=None, width=None, colors=None, padding=None):
-        text = self._text(text, align=align, width=width)
+    def __init__(self, txt, *,
+                 align=None, width=None, height=None,
+                 colors=None, padding=None):
         super().__init__(
-            content=text,
+            txt=txt,
+            align=align,
+            width=width,
+            height=height,
             padding=padding,
             colors=colors,
         )
@@ -23,7 +26,6 @@ class Label(
 
 class FramedLabel(
         widgets.Widget,
-        basic.WithTextContent,
         decorations.WithFramedContent,
         decorations.WithClearedContent,
         decorations.WithPostProcessedContent,
@@ -31,12 +33,15 @@ class FramedLabel(
     ):
 
     def __init__(self, label, frame, *,
-                 align=None, width=None, colors=None, padding=None):
-        self.label = self._text(label, align=align, width=width)
+                 align=None, width=None, height=None,
+                 colors=None, padding=None):
+        self.label = label
         super().__init__(
             content=self.label,
             frame=frame,
-            # align=align,
+            align=align,
+            width=width,
+            height=height,
             colors=colors,
             padding=padding,
         )
