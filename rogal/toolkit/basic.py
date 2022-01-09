@@ -1,3 +1,5 @@
+import collections
+
 from ..geometry import Position, Size
 
 from ..console.core import Align, Glyph
@@ -34,14 +36,18 @@ class Text(TextRenderer, core.UIElement):
 
     def __init__(self, txt, *, align=None, width=None, colors=None):
         self.txt = txt
-        self.colors = colors
         self.txt_size = self.get_txt_size(self.txt)
-        if width is None:
-            width = self.txt_size.width
         super().__init__(
             align=align,
             width=width,
         )
+        self.colors = colors
+
+    @core.UIElement.width.getter
+    def width(self):
+        if self.style.width is not None:
+            return self.style.width
+        return self.txt_size.width
 
     @core.UIElement.height.getter
     def height(self):
@@ -64,6 +70,7 @@ class WithTextContent:
             text = Text(
                 txt=text,
             )
+        # TODO: Don't like setting text.<property> here...
         if align is not None:
             text.align = align
         if width is not None:
@@ -80,95 +87,145 @@ class WithTextContent:
         self.redraw();
 
 
+class Decorations(collections.namedtuple(
+    'Decorations', [
+        'left', 'right',
+        'top', 'bottom',
+        'tl', 'tr',
+        'bl', 'br',
+    ])):
+
+    __slots__ = ()
+
+    def __new__(cls,
+        left=None, right=None,
+        top=None, bottom=None,
+        top_left=None, top_right=None,
+        bottom_left=None, bottom_right=None
+    ):
+        return super().__new__(
+            cls,
+            Glyph(left), Glyph(right),
+            Glyph(top), Glyph(bottom),
+            Glyph(top_left), Glyph(top_right),
+            Glyph(bottom_left), Glyph(bottom_right),
+        )
+
+    @property
+    def top_left(self):
+        return self.tl or self.top or self.left
+
+    @property
+    def top_right(self):
+        return self.tr or self.top or self.right
+
+    @property
+    def bottom_left(self):
+        return self.bl or self.bottom or self.left
+
+    @property
+    def bottom_right(self):
+        return self.br or self.bottom or self.right
+
+Decorations.NONE = Decorations()
+
+
 class Frame(core.Renderer, core.UIElement):
 
     """Frame decorations."""
 
     def __init__(self, decorations, *, colors=None):
         super().__init__()
-        self.left = None
-        self.right = None
-        self.top = None
-        self.bottom = None
-        self._top_left = None
-        self._top_right = None
-        self._bottom_left = None
-        self._bottom_right = None
-        self._parse_decorations(*decorations)
-        self.colors = colors
-
-        self.inner_offset = Position(
-            self.left and 1 or 0,
-            self.top and 1 or 0,
-        )
-        self.extents = Size(
-            self.inner_offset.x + (self.right and 1 or 0),
-            self.inner_offset.y + (self.bottom and 1 or 0)
-        )
-
-    def _parse_decorations(self,
-        left=None, right=None,
-        top=None, bottom=None,
-        top_left=None, top_right=None,
-        bottom_left=None, bottom_right=None
-    ):
-        self.left = Glyph(left)
-        self.right = Glyph(right)
-        self.top = Glyph(top)
-        self.bottom = Glyph(bottom)
-        self._top_left = Glyph(top_left)
-        self._top_right = Glyph(top_right)
-        self._bottom_left = Glyph(bottom_left)
-        self._bottom_right = Glyph(bottom_right)
-
-    @property
-    def top_left(self):
-        return self._top_left or self.top or self.left
-
-    @property
-    def top_right(self):
-        return self._top_right or self.top or self.right
-
-    @property
-    def bottom_left(self):
-        return self._bottom_left or self.bottom or self.left
-
-    @property
-    def bottom_right(self):
-        return self._bottom_right or self.bottom or self.right
-
-    def update(self, colors=None, **kwargs):
-        return Frame(
-            kwargs.get('top', self.top), kwargs.get('bottom', self.bottom),
-            kwargs.get('left', self.left), kwargs.get('right', self.right),
-            kwargs.get('top_left', self._top_left), kwargs.get('top_right', self._top_right),
-            kwargs.get('bottom_left', self._bottom_left), kwargs.get('bottom_right', self._bottom_right),
+        self.style.update(
+            decorations=decorations or Decorations.NONE,
             colors=colors,
         )
 
+    @property
+    def decorations(self):
+        return self.style.decorations
+
+    @decorations.setter
+    def decorations(self, decorations):
+        self.style.decorations = decorations
+
+    @property
+    def colors(self):
+        return self.style.colors
+
+    @colors.setter
+    def colors(self, colors):
+        self.style.colors = colors
+
+    @property
+    def inner_offset(self):
+        inner_offset = Position(
+            self.decorations.left and 1 or 0,
+            self.decorations.top and 1 or 0,
+        )
+        return inner_offset
+
+    @property
+    def extents(self):
+        offset = self.inner_offset
+        extents = Size(
+            offset.x + (self.decorations.right and 1 or 0),
+            offset.y + (self.decorations.bottom and 1 or 0)
+        )
+        return extents
+
     def get_inner_panel(self, panel):
+        offset = self.inner_offset
+        extents = self.extents
         return panel.create_panel(
-            self.inner_offset,
-            Size(panel.width-self.extents.width, panel.height-self.extents.height)
+            offset,
+            Size(panel.width-extents.width, panel.height-extents.height)
         )
 
     def render(self, panel, timestamp):
-        if self.top is not None:
-            panel.draw(self.top, self.colors, Position(1, 0), Size(panel.width-2, 1))
-        if self.top is not None:
-            panel.draw(self.bottom, self.colors, Position(1, panel.height-1), Size(panel.width-2, 1))
-        if self.left is not None:
-            panel.draw(self.left, self.colors, Position(0, 1), Size(1, panel.height-2))
-        if self.right is not None:
-            panel.draw(self.right, self.colors, Position(panel.width-1, 1), Size(1, panel.height-2))
+        if self.decorations.top is not None:
+            panel.draw(
+                self.decorations.top, self.colors,
+                Position(1, 0), Size(panel.width-2, 1),
+            )
+        if self.decorations.bottom is not None:
+            panel.draw(
+                self.decorations.bottom, self.colors,
+                Position(1, panel.height-1), Size(panel.width-2, 1),
+            )
+        if self.decorations.left is not None:
+            panel.draw(
+                self.decorations.left, self.colors,
+                Position(0, 1), Size(1, panel.height-2),
+            )
+        if self.decorations.right is not None:
+            panel.draw(
+                self.decorations.right, self.colors,
+                Position(panel.width-1, 1), Size(1, panel.height-2),
+            )
 
-        panel.draw(self.top_left, self.colors, Position(0, 0))
-        panel.draw(self.top_right, self.colors, Position(panel.width-1, 0))
-        panel.draw(self.bottom_left, self.colors, Position(0, panel.height-1))
-        panel.draw(self.bottom_right, self.colors, Position(panel.width-1, panel.height-1))
+        panel.draw(
+            self.decorations.top_left, self.colors,
+            Position(0, 0),
+        )
+        panel.draw(
+            self.decorations.top_right, self.colors,
+            Position(panel.width-1, 0),
+        )
+        panel.draw(
+            self.decorations.bottom_left, self.colors,
+            Position(0, panel.height-1),
+        )
+        panel.draw(
+            self.decorations.bottom_right, self.colors,
+            Position(panel.width-1, panel.height-1),
+        )
 
     def __nonzero__(self):
-        return any(self.top, self.bottom, self.left, self.right)
+        return any(
+            self.decorations.top, self.decorations.bottom,
+            self.decorations.left, self.decorations.right,
+        )
 
 
 class Cursor(core.Renderer, core.UIElement):

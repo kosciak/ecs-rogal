@@ -22,14 +22,23 @@ class Padded(containers.Bin):
     """Adds padding to it's content."""
 
     def __init__(self, content, padding, *, align=None, width=None, height=None):
-        self.padding = padding or Padding.ZERO
         super().__init__(
             content=content,
             align=align,
             width=width,
             height=height,
         )
+        self.padding = padding or Padding.ZERO
+        # TODO: Need to rework default_z_order!
         self.default_z_order = self.content.default_z_order
+
+    @property
+    def padding(self):
+        return self.style.padding
+
+    @padding.setter
+    def padding(self, padding):
+        self.style.padding = padding
 
     @containers.Bin.width.getter
     def width(self):
@@ -102,13 +111,13 @@ class Framed(containers.Bin):
     """Renders frame around content."""
 
     def __init__(self, content, frame, *, align=None, width=None, height=None):
-        self.frame = frame
         super().__init__(
             content=content,
             align=align,
             width=width,
             height=height,
         )
+        self.frame = frame
         # TODO: Consider using multiple nested frames?
 
     @containers.Bin.width.getter

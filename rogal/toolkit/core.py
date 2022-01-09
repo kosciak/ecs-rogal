@@ -41,6 +41,7 @@ class UIElement:
             return self.style.align
         return self.DEFAULT_ALIGN
 
+    # TODO: Is it necessary to have those setters? Maybe some self.restyle(style) ?
     @align.setter
     def align(self, align):
         self.style.align = align

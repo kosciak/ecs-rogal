@@ -1,4 +1,12 @@
+from .basic import Decorations
+
 from ..data import data_store, parsers
+
+
+def parse_decorations(data):
+    glyphs = parsers.parse_glyphs_sequence(data)
+    if glyphs:
+        return Decorations(*glyphs)
 
 
 def parse_ui_style(data):
@@ -38,7 +46,7 @@ def parse_ui_style(data):
 
 
 data_store.register('bitmasks', parsers.parse_glyphs_sequence)
-data_store.register('decorations', parsers.parse_glyphs_sequence)
+data_store.register('decorations', parse_decorations)
 data_store.register('progress_bars', parsers.parse_glyphs_sequence)
 data_store.register('separators', parsers.parse_glyphs_sequence)
 data_store.register('spinners', parsers.parse_frames_sequence)
