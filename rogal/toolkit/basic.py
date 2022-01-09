@@ -35,13 +35,32 @@ class Text(TextRenderer, core.UIElement):
     """Text widget and renderer."""
 
     def __init__(self, txt, *, align=None, width=None, colors=None):
-        self.txt = txt
-        self.txt_size = self.get_txt_size(self.txt)
+        self._txt = txt
+        self.txt_size = self.get_txt_size(self._txt)
         super().__init__(
             align=align,
             width=width,
         )
-        self.colors = colors
+        self.style.update(
+            colors=colors,
+        )
+
+    @property
+    def txt(self):
+        return self._txt
+
+    @txt.setter
+    def txt(self, txt):
+        self._txt = txt
+        self.txt_size = self.get_txt_size(self._txt)
+
+    @property
+    def colors(self):
+        return self.style.colors
+
+    @colors.setter
+    def colors(self, colors):
+        self.style.colors = colors
 
     @core.UIElement.width.getter
     def width(self):
@@ -228,6 +247,7 @@ class Frame(core.Renderer, core.UIElement):
         )
 
 
+# TODO: Needs rewrite!
 class Cursor(core.Renderer, core.UIElement):
 
     def __init__(self, *, glyph=None, colors=None, position=None, blinking=None):
@@ -257,13 +277,46 @@ class Spinner(core.Animated, TextRenderer, core.UIElement):
     def __init__(self, colors, frames, *, duration=None, frame_duration=None, align=None):
         if duration is None and frame_duration is None:
             frame_duration = self.DEFAULT_FRAME_DURATION
-        self.txt_size = self.get_frames_txt_size(frames)
         super().__init__(
             duration=duration, frame_duration=frame_duration,
-            width=self.txt_size.width, height=self.txt_size.height, align=align,
+            # width=self.txt_size.width,
+            # height=self.txt_size.height,
+            align=align,
         )
-        self.colors = colors
-        self.frames = frames
+        self.style.update(
+            frames = frames,
+            colors = colors,
+        )
+        self.txt_size = self.get_frames_txt_size(self.style.frames)
+
+    @property
+    def frames(self):
+        return self.style.frames
+
+    @frames.setter
+    def frames(self, frames):
+        self.style.frames = frames
+        self.txt_size = self.get_frames_txt_size(self.style.frames)
+
+    @core.UIElement.width.getter
+    def width(self):
+        if self.style.width is not None:
+            return self.style.width
+        return self.txt_size.width
+
+    @core.UIElement.width.getter
+    def height(self):
+        if self.style.height is not None:
+            return self.style.height
+        return self.txt_size.height
+
+    @property
+    def colors(self):
+        return self.style.colors
+
+    @colors.setter
+    def colors(self, colors):
+        self.style.colors = colors
 
     def get_frames_txt_size(self, frames):
         frame_sizes = [self.get_txt_size(frame) for frame in frames]
@@ -282,22 +335,21 @@ class Spinner(core.Animated, TextRenderer, core.UIElement):
         self.render_txt(panel, frame, self.colors)
 
 
-class ProgressBar(core.Renderer, core.UIElement):
+class ProgressBarSegments(collections.namedtuple(
+    'ProgressBarSegments', [
+        'empty',
+        'full',
+        'fractions',
+    ])):
 
-    def __init__(self, value, segments, colors, *, reverse=False, align=None, width=None, height=1):
-        super().__init__(
-            align=align,
-            width=width,
-            height=height,
-        )
-        self.colors = colors
-        self.value = value # float value from 0.0 to 1.0
-        self.full = str(segments[-1])
-        self.fractions = self.get_fractions(segments[1:-1])
-        self.empty = str(segments[0])
-        self.reverse = reverse
+    def __new__(cls, segments):
+        empty = str(segments[0])
+        fractions = cls.get_fractions(segments[1:-1])
+        full = str(segments[-1])
+        return super().__new__(cls, empty, full, fractions)
 
-    def get_fractions(self, segments):
+    @staticmethod
+    def get_fractions(segments):
         segments = segments or []
         fraction_value = 1. / (len(segments)+1)
         fractions = [
@@ -307,24 +359,56 @@ class ProgressBar(core.Renderer, core.UIElement):
         fractions.reverse()
         return fractions
 
+
+class ProgressBar(core.Renderer, core.UIElement):
+
+    def __init__(self, value, segments, colors, *, reverse=False, align=None, width=None, height=1):
+        super().__init__(
+            align=align,
+            width=width,
+            height=height,
+        )
+        self.value = value # float value from 0.0 to 1.0
+        self.style.update(
+            segments=segments,
+            colors=colors,
+            reverse=reverse,
+        )
+
+    @property
+    def segments(self):
+        return self.style.segments
+
+    @segments.setter
+    def segments(self, segments):
+        self.style.segments = segments
+
+    @property
+    def colors(self):
+        return self.style.colors
+
+    @colors.setter
+    def colors(self, colors):
+        self.style.colors = colors
+
     def render(self, panel, timestamp):
         width = panel.width * self.value
 
         fulls_num = int(width)
         rest = width - fulls_num
-        if not self.fractions:
+        if not self.segments.fractions:
             fulls_num += round(rest)
-        txt = self.full*fulls_num
+        txt = self.segments.full*fulls_num
 
-        for value, segment in self.fractions:
+        for value, segment in self.segments.fractions:
             if rest >= value:
                 txt += segment
                 break
 
         empty_num = panel.width - len(txt)
-        txt += self.empty * empty_num
+        txt += self.segments.empty * empty_num
 
-        if self.reverse:
+        if self.style.reverse:
             txt = txt[::-1]
 
         if self.height > 1:

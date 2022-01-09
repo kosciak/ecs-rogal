@@ -1,3 +1,5 @@
+import collections
+
 from ..geometry import Position, Size
 
 from ..console.core import Glyph
@@ -5,34 +7,66 @@ from ..console.core import Glyph
 from . import core
 
 
+class SeparatorSegments(collections.namedtuple(
+    'SeparatorSegments', [
+        'middle',
+        'start',
+        'end',
+    ])):
+
+    __slots__ = ()
+
+    def __new__(cls, segments):
+        middle = Glyph(segments[0])
+        if len(segments) > 1:
+            start = Glyph(segments[1])
+            end = Glyph(segments[-1])
+        else:
+            start = None
+            end = None
+        return super().__new__(cls, middle, start, end)
+
+
 class Separator(core.Renderer, core.UIElement):
 
-    def __init__(self, separator, *, colors=None, align=None, width=None, height=None):
+    def __init__(self, segments, *, colors=None, align=None, width=None, height=None):
         super().__init__(
             align=align,
             width=width,
             height=height,
         )
-        self.separator = Glyph(separator[0])
-        if len(separator) > 1:
-            self.start = Glyph(separator[1])
-            self.end = Glyph(separator[-1])
-        else:
-            self.start = None
-            self.end = None
-        self.colors = colors
+        self.style.update(
+            segments=segments,
+            colors=colors,
+        )
+
+    @property
+    def segments(self):
+        return self.style.segments
+
+    @segments.setter
+    def segments(self, segments):
+        self.style.segments = segments
+
+    @property
+    def colors(self):
+        return self.style.colors
+
+    @colors.setter
+    def colors(self, colors):
+        self.style.colors = colors
 
     def render(self, panel, timestamp):
-        panel.fill(self.separator, self.colors)
-        if self.start is not None:
-            panel.draw(self.start, self.colors, Position.ZERO)
+        panel.fill(self.segments.middle, self.colors)
+        if self.segments.start is not None:
+            panel.draw(self.segments.start, self.colors, Position.ZERO)
 
 
 class HorizontalSeparator(Separator):
 
-    def __init__(self, separator, *, colors=None, align=None, width=None):
+    def __init__(self, segments, *, colors=None, align=None, width=None):
         super().__init__(
-            separator,
+            segments,
             colors=colors,
             align=align,
             width=width or 0,
@@ -51,15 +85,15 @@ class HorizontalSeparator(Separator):
 
     def render(self, panel, timestamp):
         super().render(panel, timestamp)
-        if self.end is not None:
-            panel.draw(self.end, self.colors, Position(panel.width-1, 0))
+        if self.segments.end is not None:
+            panel.draw(self.segments.end, self.colors, Position(panel.width-1, 0))
 
 
 class VerticalSeparator(Separator):
 
-    def __init__(self, separator, *, colors=None, align=None, height=None):
+    def __init__(self, segments, *, colors=None, align=None, height=None):
         super().__init__(
-            separator,
+            segments,
             colors=colors,
             align=align,
             width=1,
@@ -78,6 +112,6 @@ class VerticalSeparator(Separator):
 
     def render(self, panel, timestamp):
         super().render(panel, timestamp)
-        if self.end is not None:
-            panel.draw(self.end, self.colors, Position(0, panel.height-1))
+        if self.segments.end is not None:
+            panel.draw(self.segments.end, self.colors, Position(0, panel.height-1))
 

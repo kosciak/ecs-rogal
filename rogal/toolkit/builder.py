@@ -13,6 +13,7 @@ from .stylesheets import StylesheetsManager
 from . import basic
 from . import containers
 from . import decorations
+from . import separators
 from . import renderers
 from . import widgets
 from . import labels
@@ -217,16 +218,16 @@ class WidgetsBuilder:
 
         return list_item
 
-    def create_list_separator(self):
+    def create_horizontal_separator(self):
         separator = decorations.Padded(
-            content=basic.HorizontalSeparator(
-                [0x2500, 0x251c, 0x2524, ],
+            content=separators.HorizontalSeparator(
+                separators.SeparatorSegments([0x2500, 0x251c, 0x2524, ]),
             ),
             padding=Padding(0, -1),
         )
 
-        # separator = basic.HorizontalSeparator(
-        #     '-><',
+        # separator = separators.HorizontalSeparator(
+        #     separators.SeparatorSegments('-><'),
         #     width=10,
         #     align=Align.CENTER,
         # )
@@ -308,10 +309,13 @@ class WidgetsBuilder:
             basic.Spinner, 'Spinner',
         )
 
+        separator = self.create_horizontal_separator()
+
         content = containers.List(
             content=[
                 # progress_bar,
                 # spinner,
+                # separator,
                 msg,
                 toggle_buttons,
                 buttons_row,
@@ -421,7 +425,7 @@ class WidgetsBuilder:
         for index, item in enumerate(items):
             if index == len(items) / 2:
                 items_list.append_separator(
-                    self.create_list_separator()
+                    self.create_horizontal_separator()
                 )
             key_binding = string.ascii_lowercase[index]
             items_list.append_item(
