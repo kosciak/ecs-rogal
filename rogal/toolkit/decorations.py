@@ -182,16 +182,20 @@ class Cleared(containers.Bin):
             width=width,
             height=height,
         )
-        self.renderer = renderers.ClearPanel(
+        self.style.update(
             colors=colors,
+        )
+        self.renderer = renderers.ClearPanel(
+            colors=self.style.colors,
         )
 
     @property
     def colors(self):
-        return self.renderer.colors
+        return self.style.colors
 
     @colors.setter
     def colors(self, colors):
+        self.style.colors = colors
         self.renderer.colors = colors
 
 
