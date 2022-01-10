@@ -27,13 +27,13 @@ class Bin(core.UIElement):
     def width(self):
         if self.style.width is not None:
             return self.style.width
-        return self.content.width
+        return self.content.min_width
 
     @core.UIElement.height.getter
     def height(self):
         if self.style.height is not None:
             return self.style.height
-        return self.content.height
+        return self.content.min_height
 
     def layout_content(self, manager, parent, panel, z_order):
         element = manager.create_child(parent)
@@ -98,7 +98,7 @@ class Row(core.Container, core.UIElement):
     def width(self):
         if self.style.width is not None:
             return self.style.width
-        widths = [child.width for child in self.content]
+        widths = [child.min_width for child in self.content]
         if self.FULL_SIZE in widths:
             return self.FULL_SIZE
         return sum(widths)
@@ -107,7 +107,7 @@ class Row(core.Container, core.UIElement):
     def height(self):
         if self.style.height is not None:
             return self.style.height
-        heights = [child.height for child in self.content]
+        heights = [child.min_height for child in self.content]
         if self.FULL_SIZE in heights:
             return self.FULL_SIZE
         heights.append(self.FULL_SIZE)
@@ -116,7 +116,7 @@ class Row(core.Container, core.UIElement):
     def layout_content(self, manager, parent, panel, z_order):
         z_orders = [z_order, ]
         position = Position.ZERO
-        widths = [child.width for child in self.content]
+        widths = [child.min_width for child in self.content]
         calc_widths = calc_sizes(panel.width, widths)
         for i, child in enumerate(self.content):
             element = manager.create_child(parent)
@@ -157,7 +157,7 @@ class List(core.Container, core.UIElement):
     def width(self):
         if self.style.width is not None:
             return self.style.width
-        widths = [child.width for child in self.content]
+        widths = [child.min_width for child in self.content]
         if self.FULL_SIZE in widths:
             return self.FULL_SIZE
         widths.append(self.FULL_SIZE)
@@ -167,7 +167,7 @@ class List(core.Container, core.UIElement):
     def height(self):
         if self.style.height is not None:
             return self.style.height
-        heights = [child.height for child in self.content]
+        heights = [child.min_height for child in self.content]
         if self.FULL_SIZE in heights:
             return self.FULL_SIZE
         return sum(heights)
@@ -175,7 +175,7 @@ class List(core.Container, core.UIElement):
     def layout_content(self, manager, parent, panel, z_order):
         z_orders = [z_order, ]
         position = Position.ZERO
-        heights = [child.height for child in self.content]
+        heights = [child.min_height for child in self.content]
         calc_heights = calc_sizes(panel.height, heights)
         for i, child in enumerate(self.content):
             element = manager.create_child(parent)

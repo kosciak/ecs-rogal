@@ -296,7 +296,7 @@ class Spinner(core.Animated, TextRenderer, core.UIElement):
             return self.style.width
         return self.txt_size.width
 
-    @core.UIElement.width.getter
+    @core.UIElement.height.getter
     def height(self):
         if self.style.height is not None:
             return self.style.height

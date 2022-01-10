@@ -64,6 +64,16 @@ class UIElement:
     def height(self, height):
         self.style.height = height
 
+    @property
+    def min_width(self):
+        """Minimal total width (for example width+padding)."""
+        return self.width
+
+    @property
+    def min_height(self):
+        """Minimal total height (for example height+padding)."""
+        return self.height
+
     def get_size(self, available):
         """Return element's size based on available space."""
         # TODO: Allow float values? width = .75, height = .5 of available size?

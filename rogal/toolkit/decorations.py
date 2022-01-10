@@ -40,33 +40,25 @@ class Padded(containers.Bin):
     def padding(self, padding):
         self.style.padding = padding
 
-    @containers.Bin.width.getter
-    def width(self):
-        if self.style.width is not None:
-            return self.style.width
-        width = self.content.width
+    @property
+    def min_width(self):
+        width = self.width
         if width:
             return width + self.padding.left + self.padding.right
         return self.FULL_SIZE
 
-    @containers.Bin.height.getter
-    def height(self):
-        if self.style.height is not None:
-            return self.style.height
-        height = self.content.height
+    @property
+    def min_height(self):
+        height = self.height
         if height:
             return height + self.padding.top + self.padding.bottom
         return self.FULL_SIZE
 
     def get_size(self, available):
-        width = self.style.width
-        if width is None:
-            width = self.content.width
+        width = self.width
         if not width:
             width = available.width - self.padding.left - self.padding.right
-        height = self.style.height
-        if height is None:
-            height = self.content.height
+        height = self.height
         if not height:
             height = available.height - self.padding.top - self.padding.bottom
         size = Size(width, height)
@@ -123,7 +115,7 @@ class Framed(containers.Bin):
     def width(self):
         if self.style.width is not None:
             return self.style.width
-        width = self.content.width
+        width = self.content.min_width
         if width:
             return width + self.frame.extents.width
         return self.FULL_SIZE
@@ -132,7 +124,7 @@ class Framed(containers.Bin):
     def height(self):
         if self.style.height is not None:
             return self.style.height
-        height = self.content.height
+        height = self.content.min_height
         if height:
             return height + self.frame.extents.height
         return self.FULL_SIZE
@@ -148,7 +140,8 @@ class Framed(containers.Bin):
 class WithFramedContent:
 
     def __init__(self, content, frame,
-                 align=None, width=None, height=None, *args, **kwargs):
+                 align=None, width=None, height=None,
+                 *args, **kwargs):
         self._framed = Framed(
             content=content,
             frame=frame,
@@ -201,7 +194,8 @@ class Cleared(containers.Bin):
 
 class WithClearedContent:
 
-    def __init__(self, content, colors, *args, **kwargs):
+    def __init__(self, content, colors,
+                 *args, **kwargs):
         self._cleared = Cleared(
             content=content,
             colors=colors,
@@ -253,7 +247,8 @@ class PostProcessed(containers.Bin):
 
 class WithPostProcessedContent:
 
-    def __init__(self, content, post_renderers=None, *args, **kwargs):
+    def __init__(self, content, post_renderers=None,
+                 *args, **kwargs):
         self._post_processed = PostProcessed(
             content=content,
             post_renderers=post_renderers,
