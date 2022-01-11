@@ -3,6 +3,7 @@ from ..geometry import Position, Size
 from ..console.core import Padding
 
 from . import core
+from . import basic
 from . import containers
 from . import renderers
 
@@ -108,7 +109,7 @@ class Framed(containers.Bin):
             width=width,
             height=height,
         )
-        self.frame = frame
+        self.frame = frame or basic.Frame(decorations=basic.Decorations.NONE)
         # TODO: Consider using multiple nested frames?
 
     @containers.Bin.width.getter

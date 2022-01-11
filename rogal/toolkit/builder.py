@@ -100,58 +100,85 @@ class WidgetsBuilder:
         )
         window.title = title
 
-        close_button = self.create(
-            buttons.Label, {},
-            content=self.create_framed_label(
-                self.get_style('.close_button'),
-                txt='X',
-            ),
+        close_button = self.create_label_button(
+            self.get_style('.close_button'),
+            txt='X',
         )
         window.overlay.close_button = close_button
         close_button.on('clicked', window.on_close)
 
         return window
 
-    def create_toggle_button(self, style, label_style, labels):
+    def create_toggle_labels(self, style, toggle_labels):
         content = []
-        for label in labels:
-            label = self.create_framed_label(
-                self.get_style(label_style),
-                label,
+        for txt in toggle_labels:
+            label = self.create(
+                labels.Label, style,
+                txt,
             )
             content.append(label)
-
         return content
 
     def create_checkbox(self, style, value=None):
-        content = self.create_toggle_button(
-            style, '.checkbox',
+        labels = self.create_toggle_labels(
+            style.pop('Label', {}),
             [' ', 'x'],
+        )
+        frame = self.create(
+            basic.Frame, style.pop('Frame', {}),
         )
         button = self.create(
             buttons.CheckButton, style,
-            content=content,
+            content=labels,
+            frame=frame,
             value=value,
         )
         return button
 
     def create_radio(self, style, group, value=None):
-        content = self.create_toggle_button(
-            style, '.radio',
+        labels = self.create_toggle_labels(
+            style.pop('Label', {}),
             [' ', 'o'],
+        )
+        frame = self.create(
+            basic.Frame, style.pop('Frame', {}),
         )
         button = self.create(
             buttons.RadioButton, style,
-            content=content,
+            content=labels,
+            frame=frame,
             group=group,
             value=value,
         )
         return button
 
-    def create_button(self, style, content, callback, value):
+    def create_label_button(self, style, txt):
+        label = self.create(
+            labels.Label, style.pop('Label', {}),
+            txt,
+        )
+        frame = self.create(
+            basic.Frame, style.pop('Frame', {}),
+        )
+        button = self.create(
+            buttons.Label, style,
+            content=label,
+            frame=frame,
+        )
+        return button
+
+    def create_button(self, style, txt, callback, value):
+        label = self.create(
+            labels.Label, style.pop('Label', {}),
+            txt,
+        )
+        frame = self.create(
+            basic.Frame, style.pop('Frame', {}),
+        )
         button = self.create(
             buttons.Button, style,
-            content=content,
+            content=label,
+            frame=frame,
             callback=callback,
             value=value,
             # selected_colors=self.default_colors.invert(),
@@ -170,13 +197,9 @@ class WidgetsBuilder:
             widgets.ButtonsRow, style,
         )
         for text, value in buttons:
-            content = self.create_framed_label(
+            button = self.create_button(
                 self.get_style('.button'),
                 text,
-            )
-            button = self.create_button(
-                self.get_style('Button'),
-                content,
                 callback, value,
             )
             buttons_row.append(button)
@@ -253,37 +276,35 @@ class WidgetsBuilder:
             ],
         )
 
-        checkbox = self.create_checkbox('Button')
-        checkbox_label = self.create(
-            buttons.Label, {},
-            content = self.create(
-                labels.Label, self.get_style('.label'),
-                'checkbox',
-            )
+        checkbox = self.create_checkbox(
+            self.get_style('.checkbox'),
+        )
+        checkbox_label = self.create_label_button(
+            self.get_style('.label'),
+            'checkbox',
         )
         checkbox.set_label(checkbox_label)
 
         radio_group = buttons.ButtonsGroup()
-        radio1 = self.create_radio('Button', radio_group, value=1)
-        radio1_label = self.create(
-            buttons.Label, {},
-            content = self.create(
-                labels.Label, self.get_style('.label'),
-                'radio 1',
-            )
+        radio1 = self.create_radio(
+            self.get_style('.radio'),
+            radio_group, value=1,
+        )
+        radio1_label = self.create_label_button(
+            self.get_style('.label'),
+            'radio 1',
         )
         radio1.set_label(radio1_label)
 
-        radio2 = self.create_radio('Button', radio_group)
-        radio2_label = self.create(
-            buttons.Label, {},
-            content = self.create(
-                labels.Label, self.get_style('.label'),
-                'radio 2',
-            )
+        radio2 = self.create_radio(
+            self.get_style('.radio'),
+            radio_group,
+        )
+        radio2_label = self.create_label_button(
+            self.get_style('.label'),
+            'radio 2',
         )
         radio2.set_label(radio2_label)
-
 
         toggle_buttons = containers.List([
             containers.Row([
@@ -309,15 +330,14 @@ class WidgetsBuilder:
             basic.Spinner, 'Spinner',
         )
 
-        separator = self.create_horizontal_separator()
-
         content = containers.List(
             content=[
                 # progress_bar,
                 # spinner,
-                # separator,
                 msg,
+                self.create_horizontal_separator(),
                 toggle_buttons,
+                self.create_horizontal_separator(),
                 buttons_row,
             ],
             width=40,

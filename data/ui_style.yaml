@@ -9,13 +9,10 @@ Window.modal:
   padding: [10, 3]
 
 
-Button:
-  padding: [0, 1]
-
-
 .button:
   fg: FG
   bg: BG
+  padding: [0, 1]
   Frame:
     decorations: LINE
   Label:
@@ -26,6 +23,7 @@ Button:
 .checkbox:
   fg: FG
   bg: BG
+  padding: [0, 1]
   Frame:
     decorations: HORIZONTAL_BRACKETS_SQUARE
   Label:
@@ -36,6 +34,7 @@ Button:
 .radio:
   fg: FG
   bg: BG
+  padding: [0, 1]
   Frame:
     decorations: HORIZONTAL_BRACKETS_ROUND
   Label:
@@ -60,7 +59,7 @@ ButtonsRow:
   Frame:
     decorations: HORIZONTAL_DSLINE
   Label:
-    align: LEFT
+    align: RIGHT
     width: 10
     padding: [0, 1]
 

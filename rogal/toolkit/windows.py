@@ -1,5 +1,3 @@
-from ..collections.attrdict import OrderedAttrDict
-
 from . import containers
 from . import decorations
 from . import states
@@ -7,25 +5,18 @@ from . import widgets
 
 
 class Window(
-        widgets.Widget,
         states.Hoverable,
-        decorations.WithFramedContent,
-        decorations.WithClearedContent,
-        decorations.Padded,
+        widgets.WithOverlay,
+        widgets.FramedWidget,
     ):
 
     def __init__(self, content, frame, colors, *,
                  align=None, width=None, height=None,
                  padding=None,
                  on_key_press=None,):
-        self.contents = content
-        self.overlay = OrderedAttrDict()
         super().__init__(
-            content=self.contents,
-            align=align,
-            width=width,
-            height=height,
-            frame=frame,
+            content=content, frame=frame,
+            align=align, width=width, height=height,
             colors=colors,
             padding=padding,
         )
@@ -42,17 +33,21 @@ class Window(
         self.overlay.title = title
         self.overlay.move_to_end('title', last=False)
 
-    def layout_content(self, manager, parent, panel, z_order):
-        # Layout padded, framed, cleared contents...
-        z_order = super().layout_content(manager, parent, panel, z_order)
-
-        # ... and all overlayed elements
-        for child in self.overlay.values():
-            element = manager.create_child(parent)
-            z_order = child.layout(manager, element, panel, z_order+1)
-        return z_order
+    def close(self):
+        self.destroy()
 
     def on_close(self, source, value):
         # NOTE: Handler for close button "click" signals, DiscardKeyPress events, etc
-        self.destroy()
+        self.close()
+
+
+class DialogWindow(Window):
+
+    def add_button(self, button, value):
+        self.buttons.append(button)
+        button.on('clicked', self.on_button_clicked, value)
+
+    def on_button_clicked(self, source, value):
+        self.emit('response', value)
+        self.close()
 

@@ -92,6 +92,7 @@ class UIElement:
         return panel
 
     def layout(self, manager, element, panel, z_order):
+        # TODO: Split creation/insertion and layout (as just positioning on panel)?
         z_order = z_order or self.default_z_order
         panel = self.get_layout_panel(panel)
         manager.insert(

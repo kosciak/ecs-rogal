@@ -1,3 +1,5 @@
+from ..collections.attrdict import OrderedAttrDict
+
 from . import core
 from . import basic
 from . import containers
@@ -32,6 +34,59 @@ class Widget(
     def destroy(self):
         self.manager.destroy(self.element)
         self.emit('destroyed')
+
+
+# TODO: FramedWidget? as base for Buttons, Windows?
+class FramedWidget(
+        Widget,
+        decorations.WithFramedContent,
+        decorations.WithClearedContent,
+        decorations.WithPostProcessedContent,
+        decorations.Padded,
+    ):
+
+    def __init__(self, content, *,
+                 frame=None,
+                 align=None, width=None, height=None,
+                 colors=None, padding=None,
+                ):
+        super().__init__(
+            content=content,
+            frame=frame,
+            align=align,
+            width=width,
+            height=height,
+            colors=colors,
+            padding=padding,
+        )
+        self._inner = self._framed
+
+    @property
+    def contents(self):
+        return self._inner.content
+
+    @contents.setter
+    def contents(self, button):
+        self._inner.content = button
+        self.redraw()
+
+
+# TODO: Consider moving to decorations
+class WithOverlay:
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.overlay = OrderedAttrDict()
+
+    def layout_content(self, manager, parent, panel, z_order):
+        # Layout padded, framed, cleared contents...
+        z_order = super().layout_content(manager, parent, panel, z_order)
+
+        # ... and all overlayed elements
+        for child in self.overlay.values():
+            element = manager.create_child(parent)
+            z_order = child.layout(manager, element, panel, z_order+1)
+        return z_order
 
 
 # TODO: rename to PaddedRow? It could be used for anything, not only Buttons

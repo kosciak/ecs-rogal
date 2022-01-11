@@ -77,7 +77,9 @@ class Text(TextRenderer, core.UIElement):
 
 class WithTextContent:
 
-    def __init__(self, txt, align=None, width=None, *args, **kwargs):
+    def __init__(self, txt,
+                 align=None, width=None,
+                 *args, **kwargs):
         self._text = Text(
             txt=txt,
             align=align,
@@ -145,7 +147,7 @@ class Frame(core.Renderer, core.UIElement):
 
     """Frame decorations."""
 
-    def __init__(self, decorations, *, colors=None):
+    def __init__(self, decorations=None, *, colors=None):
         super().__init__()
         self.style.update(
             decorations=decorations or Decorations.NONE,

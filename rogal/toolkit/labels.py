@@ -22,26 +22,19 @@ class Label(
             padding=padding,
             colors=colors,
         )
+        self._inner = self._text
 
 
 class FramedLabel(
-        widgets.Widget,
-        decorations.WithFramedContent,
-        decorations.WithClearedContent,
-        decorations.WithPostProcessedContent,
-        decorations.Padded,
+        widgets.FramedWidget,
     ):
 
     def __init__(self, label, frame, *,
                  align=None, width=None, height=None,
                  colors=None, padding=None):
-        self.label = label
         super().__init__(
-            content=self.label,
-            frame=frame,
-            align=align,
-            width=width,
-            height=height,
+            content=label, frame=frame,
+            align=align, width=width, height=height,
             colors=colors,
             padding=padding,
         )
