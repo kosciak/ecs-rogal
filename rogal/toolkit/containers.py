@@ -9,11 +9,11 @@ class Bin(core.UIElement):
 
     """UIElement containing single content element."""
 
-    def __init__(self, content, *, align=None, width=None, height=None):
+    def __init__(self, content, *,
+                 align=None, width=None, height=None,
+                ):
         super().__init__(
-            align=align,
-            width=width,
-            height=height,
+            align=align, width=width, height=height,
         )
         self.content = content
 
@@ -84,14 +84,14 @@ class Row(core.Container, core.UIElement):
 
     """
 
-    def __init__(self, content=None, *, align=None, width=None, height=None):
+    def __init__(self, content=None, *,
+                 align=None, width=None, height=None,
+                ):
         if align is None:
             align = Align.LEFT
         super().__init__(
             content=content,
-            align=align,
-            width=width,
-            height=height,
+            align=align, width=width, height=height,
         )
 
     @core.UIElement.width.getter
@@ -143,14 +143,14 @@ class List(core.Container, core.UIElement):
 
     """
 
-    def __init__(self, content=None, *, align=None, width=None, height=None):
+    def __init__(self, content=None, *,
+                 align=None, width=None, height=None,
+                ):
         if align is None:
             align = Align.TOP
         super().__init__(
             content=content,
-            align=align,
-            width=width,
-            height=height,
+            align=align, width=width, height=height,
         )
 
     @core.UIElement.width.getter
@@ -193,7 +193,9 @@ class Split(core.Container, core.UIElement):
 
     """Container that renders elements on each side of splitted panel."""
 
-    def __init__(self, content=None, *, left=None, right=None, top=None, bottom=None):
+    def __init__(self, content=None, *,
+                 left=None, right=None, top=None, bottom=None,
+                ):
         super().__init__(content=content)
         self.left = left
         self.right = right

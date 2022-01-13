@@ -10,10 +10,12 @@ class Window(
         widgets.FramedWidget,
     ):
 
-    def __init__(self, content, frame, colors, *,
+    def __init__(self, content, frame=None, *,
                  align=None, width=None, height=None,
                  padding=None,
-                 on_key_press=None,):
+                 colors=None,
+                 on_key_press=None,
+                ):
         super().__init__(
             content=content, frame=frame,
             align=align, width=width, height=height,

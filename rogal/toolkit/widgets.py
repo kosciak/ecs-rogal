@@ -45,29 +45,32 @@ class FramedWidget(
         decorations.Padded,
     ):
 
-    def __init__(self, content, *,
-                 frame=None,
+    def __init__(self, content, frame=None, *,
                  align=None, width=None, height=None,
                  colors=None, padding=None,
                 ):
         super().__init__(
             content=content,
             frame=frame,
-            align=align,
-            width=width,
-            height=height,
+            align=align, width=width, height=height,
             colors=colors,
             padding=padding,
         )
         self._inner = self._framed
+
+    def set_style(self, **style):
+        contents_style = style.pop(self.contents.__class__.__name__, None)
+        if contents_style is not None:
+            self.contents.set_style(**contents_style)
+        super().set_style(**style)
 
     @property
     def contents(self):
         return self._inner.content
 
     @contents.setter
-    def contents(self, button):
-        self._inner.content = button
+    def contents(self, contents):
+        self._inner.content = contents
         self.redraw()
 
 

@@ -34,9 +34,10 @@ class WidgetsBuilder:
     def get_style(self, selectors):
         return self.stylesheets.get(selectors)
 
-    def create(self, element_cls, style, *args, **kwargs):
+    def create(self, element_cls, style=None, *args, **kwargs):
         if isinstance(style, str):
             style = self.get_style(style)
+        style = style or {}
         element = element_cls(
             *args,
             **kwargs,
@@ -44,35 +45,32 @@ class WidgetsBuilder:
         )
         return element
 
+    def set_style(self, element, style):
+        if isinstance(style, str):
+            style = self.get_style(style)
+        style = style or {}
+        element.set_style(**style)
+
     def create_framed_label(self, style, txt):
         if txt is None:
             return
 
-        label = self.create(
-            labels.Label, style.pop('Label', {}),
-            txt,
+        label = labels.Label(
+            txt=txt,
         )
-        frame = self.create(
-            basic.Frame, style.pop('Frame', {}),
-        )
-        framed_label = self.create(
-            labels.FramedLabel, style,
+        framed_label = labels.FramedLabel(
             label=label,
-            frame=frame,
         )
+        self.set_style(framed_label, style)
 
         return framed_label
 
     def create_window(self, style, content, title=None, on_key_press=None):
-        frame = self.create(
-            basic.Frame, style.pop('Frame', {}),
-        )
-        window = self.create(
-            windows.Window, style,
+        window = windows.Window(
             content=content,
-            frame=frame,
             on_key_press=on_key_press,
         )
+        self.set_style(window, style)
 
         title = self.create_framed_label(
             self.get_style('.title'),
@@ -83,15 +81,11 @@ class WidgetsBuilder:
         return window
 
     def create_modal_window(self, style, content, title=None, on_key_press=None):
-        frame = self.create(
-            basic.Frame, style.pop('Frame', {}),
-        )
-        window = self.create(
-            windows.Window, style,
+        window = windows.Window(
             content=content,
-            frame=frame,
             on_key_press=on_key_press,
         )
+        self.set_style(window, style)
         window.default_z_order=500
 
         title = self.create_framed_label(
@@ -112,73 +106,54 @@ class WidgetsBuilder:
     def create_toggle_labels(self, style, toggle_labels):
         content = []
         for txt in toggle_labels:
-            label = self.create(
-                labels.Label, style,
+            label = labels.Label(
                 txt,
             )
+            self.set_style(label, style)
             content.append(label)
         return content
 
     def create_checkbox(self, style, value=None):
         labels = self.create_toggle_labels(
-            style.pop('Label', {}),
+            style.get('Label', {}),
             [' ', 'x'],
         )
-        frame = self.create(
-            basic.Frame, style.pop('Frame', {}),
-        )
-        button = self.create(
-            buttons.CheckButton, style,
+        button = buttons.CheckButton(
             content=labels,
-            frame=frame,
             value=value,
         )
+        self.set_style(button, style)
         return button
 
     def create_radio(self, style, group, value=None):
         labels = self.create_toggle_labels(
-            style.pop('Label', {}),
+            style.get('Label', {}),
             [' ', 'o'],
         )
-        frame = self.create(
-            basic.Frame, style.pop('Frame', {}),
-        )
-        button = self.create(
-            buttons.RadioButton, style,
+        button = buttons.RadioButton(
             content=labels,
-            frame=frame,
             group=group,
             value=value,
         )
+        self.set_style(button, style)
         return button
 
     def create_label_button(self, style, txt):
-        label = self.create(
-            labels.Label, style.pop('Label', {}),
-            txt,
+        label = labels.Label(
+            txt=txt,
         )
-        frame = self.create(
-            basic.Frame, style.pop('Frame', {}),
-        )
-        button = self.create(
-            buttons.Label, style,
+        button = buttons.Label(
             content=label,
-            frame=frame,
         )
+        self.set_style(button, style)
         return button
 
     def create_button(self, style, txt, callback, value):
-        label = self.create(
-            labels.Label, style.pop('Label', {}),
+        label = labels.Label(
             txt,
         )
-        frame = self.create(
-            basic.Frame, style.pop('Frame', {}),
-        )
-        button = self.create(
-            buttons.Button, style,
+        button = buttons.Button(
             content=label,
-            frame=frame,
             callback=callback,
             value=value,
             # selected_colors=self.default_colors.invert(),
@@ -190,12 +165,12 @@ class WidgetsBuilder:
                 renderers.InvertColors(),
             ],
         )
+        self.set_style(button, style)
         return button
 
     def create_buttons_row(self, style, callback, buttons):
-        buttons_row = self.create(
-            widgets.ButtonsRow, style,
-        )
+        buttons_row = widgets.ButtonsRow()
+
         for text, value in buttons:
             button = self.create_button(
                 self.get_style('.button'),
@@ -203,6 +178,8 @@ class WidgetsBuilder:
                 callback, value,
             )
             buttons_row.append(button)
+
+        self.set_style(buttons_row, style)
         return buttons_row
 
     def create_text_input(self, width, text=None):
@@ -502,7 +479,7 @@ class WidgetsBuilder:
             # TODO: widgets.Screen?
             widgets_layout = windows.Window(
                 content=content,
-                frame=basic.Frame([]),
+                frame=basic.Frame(),
                 colors=None,
             )
 

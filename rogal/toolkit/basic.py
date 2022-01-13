@@ -34,7 +34,10 @@ class Text(TextRenderer, core.UIElement):
 
     """Text widget and renderer."""
 
-    def __init__(self, txt, *, align=None, width=None, colors=None):
+    def __init__(self, txt, *,
+                 align=None, width=None, height=None,
+                 colors=None,
+                ):
         self._txt = txt
         self.txt_size = self.get_txt_size(self._txt)
         super().__init__(
@@ -44,6 +47,12 @@ class Text(TextRenderer, core.UIElement):
         self.style.update(
             colors=colors,
         )
+
+    def set_style(self, *, colors=None, **style):
+        self.style.update(
+            colors=colors,
+        )
+        super().set_style(**style)
 
     @property
     def txt(self):
@@ -70,6 +79,8 @@ class Text(TextRenderer, core.UIElement):
 
     @core.UIElement.height.getter
     def height(self):
+        if self.style.height is not None:
+            return self.style.height
         return self.txt_size.height
 
     # TODO: Prevent from setting height? 
@@ -78,17 +89,23 @@ class Text(TextRenderer, core.UIElement):
 class WithTextContent:
 
     def __init__(self, txt,
-                 align=None, width=None,
+                 align=None, width=None, height=None,
                  *args, **kwargs):
         self._text = Text(
             txt=txt,
-            align=align,
-            width=width,
+            align=align, width=width, height=height,
         )
         super().__init__(
             content=self._text,
             *args, **kwargs,
         )
+
+    def set_style(self, *, align=None, width=None, height=None, **style):
+        self._text.set_style(
+            align=align,
+            width=width, height=height,
+        )
+        super().set_style(**style)
 
     @property
     def txt(self):
@@ -147,10 +164,20 @@ class Frame(core.Renderer, core.UIElement):
 
     """Frame decorations."""
 
-    def __init__(self, decorations=None, *, colors=None):
+    DEFAULT_DECORATIONS = Decorations.NONE
+
+    def __init__(self, *, decorations=None, colors=None):
         super().__init__()
         self.style.update(
-            decorations=decorations or Decorations.NONE,
+            decorations=decorations or self.DEFAULT_DECORATIONS,
+            colors=colors,
+        )
+
+    def set_style(self, *, decorations=None, colors=None, **style):
+        if decorations is None:
+            decorations = self.DEFAULT_DECORATIONS
+        self.style.update(
+            decorations=decorations,
             colors=colors,
         )
 
@@ -358,9 +385,7 @@ class ProgressBar(core.Renderer, core.UIElement):
 
     def __init__(self, value, segments, colors, *, reverse=False, align=None, width=None, height=1):
         super().__init__(
-            align=align,
-            width=width,
-            height=height,
+            align=align, width=width, height=height,
         )
         self.value = value # float value from 0.0 to 1.0
         self.style.update(

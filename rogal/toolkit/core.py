@@ -35,6 +35,19 @@ class UIElement:
         self.events_handlers = DefaultAttrDict(list)
         # TODO: Store element, panel or offset/size?
 
+    def set_style(self, *, align=None, width=None, height=None, **style):
+        if align is None:
+            align = self.DEFAULT_ALIGN
+        self.style.update(
+            align=align,
+            width=width, height=height,
+        )
+
+    def update_style(self, style):
+        for key in ['align', 'width', 'height']:
+            if key in style:
+                self.style[key] = style[key]
+
     @property
     def align(self):
         if self.style.align is not None:

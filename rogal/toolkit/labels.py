@@ -13,12 +13,11 @@ class Label(
 
     def __init__(self, txt, *,
                  align=None, width=None, height=None,
-                 colors=None, padding=None):
+                 colors=None, padding=None,
+                ):
         super().__init__(
             txt=txt,
-            align=align,
-            width=width,
-            height=height,
+            align=align, width=width, height=height,
             padding=padding,
             colors=colors,
         )
@@ -29,13 +28,22 @@ class FramedLabel(
         widgets.FramedWidget,
     ):
 
-    def __init__(self, label, frame, *,
+    def __init__(self, label, frame=None, *,
                  align=None, width=None, height=None,
-                 colors=None, padding=None):
+                 colors=None, padding=None,
+                ):
         super().__init__(
             content=label, frame=frame,
             align=align, width=width, height=height,
             colors=colors,
             padding=padding,
         )
+
+    @property
+    def label(self):
+        return self.contents
+
+    @label.setter
+    def label(self, label):
+        self.contents = contents
 
