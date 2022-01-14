@@ -103,19 +103,17 @@ class WidgetsBuilder:
 
         return window
 
-    def create_toggle_labels(self, style, toggle_labels):
+    def create_toggle_labels(self, toggle_labels):
         content = []
         for txt in toggle_labels:
             label = labels.Label(
                 txt,
             )
-            self.set_style(label, style)
             content.append(label)
         return content
 
     def create_checkbox(self, style, value=None):
         labels = self.create_toggle_labels(
-            style.get('Label', {}),
             [' ', 'x'],
         )
         button = buttons.CheckButton(
@@ -127,7 +125,6 @@ class WidgetsBuilder:
 
     def create_radio(self, style, group, value=None):
         labels = self.create_toggle_labels(
-            style.get('Label', {}),
             [' ', 'o'],
         )
         button = buttons.RadioButton(

@@ -102,6 +102,13 @@ class ToggleButton(BaseButton):
             padding=padding,
         )
 
+    def set_style(self, **style):
+        contents_style = style.pop(self.contents.__class__.__name__, None)
+        if contents_style is not None:
+            for button in self._buttons:
+                button.set_style(**contents_style)
+        super(widgets.FramedWidget, self).set_style(**style)
+
     @property
     def value(self):
         return self._value

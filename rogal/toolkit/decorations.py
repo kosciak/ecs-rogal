@@ -196,34 +196,28 @@ class Cleared(containers.Bin):
             content=content,
             align=align, width=width, height=height,
         )
-        self.style.update(
-            colors=colors,
-        )
         self.renderer = renderers.ClearPanel(
-            colors=self.style.colors,
+            colors=colors,
         )
 
     def set_style(self, *, colors=None, **style):
-        # TODO: Set style of renderer (renderers are UIElements after all)?
-        self.style.update(
+        self.renderer.set_style(
             colors=colors,
         )
-        self.renderer.colors = colors
         super().set_style(**style)
 
     @property
     def colors(self):
-        return self.style.colors
+        return self.renderer.style.colors
 
     @colors.setter
     def colors(self, colors):
-        self.style.colors = colors
-        self.renderer.colors = colors
+        self.renderer.style.colors = colors
 
 
 class WithClearedContent:
 
-    def __init__(self, content, colors,
+    def __init__(self, content, colors=None,
                  *args, **kwargs):
         self._cleared = Cleared(
             content=content,

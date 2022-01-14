@@ -15,9 +15,20 @@ class Chain(core.Renderer):
 
 class ClearPanel(core.Renderer):
 
-    def __init__(self, colors, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.colors = colors
+    def __init__(self, colors=None):
+        super().__init__()
+        self.style.update(
+            colors=colors,
+        )
+
+    def set_style(self, *, colors=None, **style):
+        self.style.update(
+            colors=colors,
+        )
+
+    @property
+    def colors(self):
+        return self.style.colors
 
     def render(self, panel, timestamp):
         panel.clear(self.colors)
@@ -25,12 +36,24 @@ class ClearPanel(core.Renderer):
 
 class PaintPanel(core.Renderer):
 
-    def __init__(self, colors, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.colors = colors
+    def __init__(self, colors=None):
+        super().__init__()
+        self.style.update(
+            colors=colors,
+        )
+
+    def set_style(self, *, colors=None, **style):
+        self.style.update(
+            colors=colors,
+        )
+
+    @property
+    def colors(self):
+        return self.style.colors
 
     def render(self, panel, timestamp):
-        panel.paint(self.colors, Position.ZERO, panel.size)
+        if self.colors:
+            panel.paint(self.colors, Position.ZERO, panel.size)
 
 
 # TODO: FillPanel(core.Renderer):

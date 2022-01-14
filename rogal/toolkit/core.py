@@ -9,12 +9,18 @@ from ..console.core import Align
 """Console UI Toolkit core building blocks."""
 
 
+class Styled:
+
+    def __init__(self):
+        self.style = AttrDict()
+
+
 class ZOrder:
     BASE = 1
     MODAL = 100
 
 
-class UIElement:
+class UIElement(Styled):
 
     """Abstract UI element that can be layouted on a panel."""
 
@@ -23,7 +29,8 @@ class UIElement:
     DEFAULT_Z_ORDER = 0
 
     def __init__(self, *, align=None, width=None, height=None):
-        self.style = AttrDict(
+        super().__init__()
+        self.style.update(
             align=align,
             width=width,
             height=height,
@@ -160,7 +167,7 @@ class Container:
         yield from self.content
 
 
-class Renderer:
+class Renderer(Styled):
 
     """Mixin for UIElements that renders it's contents on panel."""
 
