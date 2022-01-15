@@ -44,18 +44,6 @@ class FramedWidget(
         decorations.Padded,
     ):
 
-    def __init__(self, content, frame=None, *,
-                 align=None, width=None, height=None,
-                 colors=None, padding=None,
-                ):
-        super().__init__(
-            content=content,
-            frame=frame,
-            align=align, width=width, height=height,
-            colors=colors,
-            padding=padding,
-        )
-
     def set_style(self, **style):
         contents_style = style.pop(self.contents.__class__.__name__, None)
         if contents_style is not None:
@@ -76,8 +64,8 @@ class FramedWidget(
 class WithOverlay:
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         self.overlay = OrderedAttrDict()
+        super().__init__(*args, **kwargs)
 
     def layout_content(self, manager, parent, panel, z_order):
         # Layout padded, framed, cleared contents...
@@ -97,14 +85,19 @@ class ButtonsRow(
         decorations.Padded,
     ):
 
-    def __init__(self, buttons=None, *,
-                 align=None, padding=None):
+    def __init__(self, buttons=None, **style):
         self._container = containers.Row(
             content=buttons,
-            align=align,
         )
         super().__init__(
             content=self._container,
-            padding=padding,
+            **style,
         )
+        # NOTE: width, height, align are set to self (Padded), not to container!
+
+#     def set_style(self, *, align=None, **style):
+#         self._container.set_style(
+#             align=align,
+#         )
+#         super().set_style(**style)
 

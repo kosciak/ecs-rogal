@@ -19,18 +19,14 @@ class Button(
     # TODO: callbacks should be replaced with signals!
 
     def __init__(self, content, callback, value, *,
-                 frame=None,
-                 align=None, width=None, height=None,
-                 colors=None, padding=None,
                  selected_colors=None, press_colors=None,
                  selected_renderers=None,
+                 **style,
                 ):
         super().__init__(
-            content=content, frame=frame,
-            align=align, width=width, height=height,
-            colors=colors,
-            padding=padding,
+            content=content,
             callback=callback, value=value,
+            **style,
         )
         # TODO: Those settings should be changed using styles!
         self.default_colors = self.colors
@@ -75,7 +71,6 @@ class Label(BaseButton):
         self.emit('clicked')
 
 
-
 class WithLabel:
 
     def set_label(self, label):
@@ -87,19 +82,12 @@ class WithLabel:
 
 class ToggleButton(BaseButton):
 
-    def __init__(self, content, value=None, *,
-                 frame=None,
-                 align=None, width=None, height=None,
-                 colors=None, padding=None,
-                ):
+    def __init__(self, content, value=None, **style):
         self._buttons = content
         self._value = value or 0
         super().__init__(
             content=self._buttons[self._value],
-            frame=frame,
-            align=align, width=width, height=height,
-            colors=colors,
-            padding=padding,
+            **style,
         )
 
     def set_style(self, **style):
@@ -139,17 +127,11 @@ class CheckButton(WithLabel, ToggleButton):
 
 class RadioButton(WithLabel, ToggleButton):
 
-    def __init__(self, content, group, value=None, *,
-                 frame=None,
-                 align=None, width=None, height=None,
-                 colors=None, padding=None,
-                ):
+    def __init__(self, content, group, value=None, **style):
         super().__init__(
             value=value,
-            content=content, frame=frame,
-            align=align, width=width, height=height,
-            colors=colors,
-            padding=padding,
+            content=content,
+            **style,
         )
         group.add(self)
 

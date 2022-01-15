@@ -15,11 +15,8 @@ class Chain(core.Renderer):
 
 class ClearPanel(core.Renderer):
 
-    def __init__(self, colors=None):
-        super().__init__()
-        self.style.update(
-            colors=colors,
-        )
+    def __init__(self, **style):
+        super().__init__(style)
 
     def set_style(self, *, colors=None, **style):
         self.style.update(
@@ -36,11 +33,8 @@ class ClearPanel(core.Renderer):
 
 class PaintPanel(core.Renderer):
 
-    def __init__(self, colors=None):
-        super().__init__()
-        self.style.update(
-            colors=colors,
-        )
+    def __init__(self, **style):
+        super().__init__(style)
 
     def set_style(self, *, colors=None, **style):
         self.style.update(

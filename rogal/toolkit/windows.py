@@ -10,17 +10,13 @@ class Window(
         widgets.FramedWidget,
     ):
 
-    def __init__(self, content, frame=None, *,
-                 align=None, width=None, height=None,
-                 padding=None,
-                 colors=None,
+    def __init__(self, content, *,
                  on_key_press=None,
+                 **style,
                 ):
         super().__init__(
-            content=content, frame=frame,
-            align=align, width=width, height=height,
-            colors=colors,
-            padding=padding,
+            content=content,
+            **style,
         )
 
         # TODO: Need to be moved somewhere else, just use signals?

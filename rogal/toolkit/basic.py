@@ -34,19 +34,10 @@ class Text(TextRenderer, core.UIElement):
 
     """Text widget and renderer."""
 
-    def __init__(self, txt, *,
-                 align=None, width=None, height=None,
-                 colors=None,
-                ):
+    def __init__(self, txt, **style):
         self._txt = txt
         self.txt_size = self.get_txt_size(self._txt)
-        super().__init__(
-            align=align,
-            width=width,
-        )
-        self.style.update(
-            colors=colors,
-        )
+        super().__init__(**style)
 
     def set_style(self, *, colors=None, **style):
         self.style.update(
@@ -67,13 +58,13 @@ class Text(TextRenderer, core.UIElement):
     def colors(self):
         return self.style.colors
 
-    @core.UIElement.width.getter
+    @property
     def width(self):
         if self.style.width is not None:
             return self.style.width
         return self.txt_size.width
 
-    @core.UIElement.height.getter
+    @property
     def height(self):
         if self.style.height is not None:
             return self.style.height
@@ -84,16 +75,13 @@ class Text(TextRenderer, core.UIElement):
 
 class WithTextContent:
 
-    def __init__(self, txt,
-                 align=None, width=None, height=None,
-                 *args, **kwargs):
+    def __init__(self, txt, **style):
         self._text = Text(
             txt=txt,
-            align=align, width=width, height=height,
         )
         super().__init__(
             content=self._text,
-            *args, **kwargs,
+            **style,
         )
 
     def set_style(self, *, align=None, width=None, height=None, **style):
@@ -161,13 +149,6 @@ class Frame(core.Renderer, core.UIElement):
     """Frame decorations."""
 
     DEFAULT_DECORATIONS = Decorations.NONE
-
-    def __init__(self, *, decorations=None, colors=None):
-        super().__init__()
-        self.style.update(
-            decorations=decorations or self.DEFAULT_DECORATIONS,
-            colors=colors,
-        )
 
     def set_style(self, *, decorations=None, colors=None, **style):
         if decorations is None:
@@ -309,13 +290,13 @@ class Spinner(core.Animated, TextRenderer, core.UIElement):
         self.style.frames = frames
         self.txt_size = self.get_frames_txt_size(self.style.frames)
 
-    @core.UIElement.width.getter
+    @property
     def width(self):
         if self.style.width is not None:
             return self.style.width
         return self.txt_size.width
 
-    @core.UIElement.height.getter
+    @property
     def height(self):
         if self.style.height is not None:
             return self.style.height

@@ -32,20 +32,17 @@ class UIElement(Styled):
 
     """Abstract UI element that can be layouted on a panel."""
 
+    DEFAULT_Z_ORDER = 0
     DEFAULT_ALIGN = Align.TOP_LEFT
     FULL_SIZE = 0
-    DEFAULT_Z_ORDER = 0
+    DEFAULT_WIDTH = FULL_SIZE
+    DEFAULT_HEIGHT = FULL_SIZE
 
-    # def __init__(self, *, align=None, width=None, height=None):
     def __init__(self, *, renderer=None, **style):
         if not hasattr(self, 'renderer'):
+            # TODO: Move to Renderable!
             self.renderer = renderer
         super().__init__(style)
-        # self.style.update(
-        #     align=align,
-        #     width=width,
-        #     height=height,
-        # )
         # TODO: get rid of default_z_order, it doesn't make much sense...
         self.default_z_order = self.DEFAULT_Z_ORDER
         # TODO: Move event_handlers to separate class/mixin?
@@ -74,12 +71,12 @@ class UIElement(Styled):
     @property
     def width(self):
         """Return element's fixed width or 0 if whole available space should be used."""
-        return self.style.width or self.FULL_SIZE
+        return self.style.width or self.DEFAULT_WIDTH
 
     @property
     def height(self):
         """Return element's fixed height or 0 if whole available space should be used."""
-        return self.style.height or self.FULL_SIZE
+        return self.style.height or self.DEFAULT_HEIGHT
 
     @property
     def min_width(self):
@@ -116,7 +113,7 @@ class UIElement(Styled):
             element,
             panel=panel,
             z_order=z_order,
-            renderer=self.renderer,
+            renderer=self.renderer, # TODO: Move to Renderable
         )
         manager.bind(
             element,
@@ -169,8 +166,8 @@ class Renderer(Styled):
     """Mixin for UIElements that renders it's contents on panel."""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         self.renderer = self
+        super().__init__(*args, **kwargs)
 
     def render(self, panel, timestamp):
         raise NotImplementedError()

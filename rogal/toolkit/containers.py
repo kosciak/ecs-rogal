@@ -9,27 +9,23 @@ class Bin(core.UIElement):
 
     """UIElement containing single content element."""
 
-    def __init__(self, content, *,
-                 align=None, width=None, height=None,
-                ):
-        super().__init__(
-            align=align, width=width, height=height,
-        )
+    def __init__(self, content, **style):
         self.content = content
+        super().__init__(**style)
 
-    @core.UIElement.align.getter
+    @property
     def align(self):
         if self.style.align is not None:
             return self.style.align
         return self.content.align
 
-    @core.UIElement.width.getter
+    @property
     def width(self):
         if self.style.width is not None:
             return self.style.width
         return self.content.min_width
 
-    @core.UIElement.height.getter
+    @property
     def height(self):
         if self.style.height is not None:
             return self.style.height
@@ -84,18 +80,8 @@ class Row(core.Container, core.UIElement):
 
     """
 
-    def __init__(self, content=None, *,
-                 align=None, width=None, height=None,
-                ):
-        if align is None:
-            align = Align.LEFT
-        super().__init__(
-            content=content,
-            align=align, width=width, height=height,
-        )
-
-    @core.UIElement.width.getter
-    def width(self):
+    @property
+    def min_width(self):
         if self.style.width is not None:
             return self.style.width
         widths = [child.min_width for child in self.content]
@@ -103,8 +89,8 @@ class Row(core.Container, core.UIElement):
             return self.FULL_SIZE
         return sum(widths)
 
-    @core.UIElement.height.getter
-    def height(self):
+    @property
+    def min_height(self):
         if self.style.height is not None:
             return self.style.height
         heights = [child.min_height for child in self.content]
@@ -143,18 +129,8 @@ class List(core.Container, core.UIElement):
 
     """
 
-    def __init__(self, content=None, *,
-                 align=None, width=None, height=None,
-                ):
-        if align is None:
-            align = Align.TOP
-        super().__init__(
-            content=content,
-            align=align, width=width, height=height,
-        )
-
-    @core.UIElement.width.getter
-    def width(self):
+    @property
+    def min_width(self):
         if self.style.width is not None:
             return self.style.width
         widths = [child.min_width for child in self.content]
@@ -163,8 +139,8 @@ class List(core.Container, core.UIElement):
         widths.append(self.FULL_SIZE)
         return max(widths)
 
-    @core.UIElement.height.getter
-    def height(self):
+    @property
+    def min_height(self):
         if self.style.height is not None:
             return self.style.height
         heights = [child.min_height for child in self.content]

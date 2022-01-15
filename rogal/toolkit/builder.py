@@ -60,8 +60,8 @@ class WidgetsBuilder:
         )
         framed_label = labels.FramedLabel(
             label=label,
+            **style,
         )
-        self.set_style(framed_label, style)
 
         return framed_label
 
@@ -69,8 +69,8 @@ class WidgetsBuilder:
         window = windows.Window(
             content=content,
             on_key_press=on_key_press,
+            **style,
         )
-        self.set_style(window, style)
 
         title = self.create_framed_label(
             self.get_style('.title'),
@@ -84,8 +84,8 @@ class WidgetsBuilder:
         window = windows.Window(
             content=content,
             on_key_press=on_key_press,
+            **style,
         )
-        self.set_style(window, style)
         window.default_z_order=500
 
         title = self.create_framed_label(
@@ -119,8 +119,8 @@ class WidgetsBuilder:
         button = buttons.CheckButton(
             content=labels,
             value=value,
+            **style,
         )
-        self.set_style(button, style)
         return button
 
     def create_radio(self, style, group, value=None):
@@ -131,8 +131,8 @@ class WidgetsBuilder:
             content=labels,
             group=group,
             value=value,
+            **style,
         )
-        self.set_style(button, style)
         return button
 
     def create_label_button(self, style, txt):
@@ -141,8 +141,8 @@ class WidgetsBuilder:
         )
         button = buttons.Label(
             content=label,
+            **style,
         )
-        self.set_style(button, style)
         return button
 
     def create_button(self, style, txt, callback, value):
@@ -161,12 +161,12 @@ class WidgetsBuilder:
             selected_renderers=[
                 renderers.InvertColors(),
             ],
+            **style,
         )
-        self.set_style(button, style)
         return button
 
     def create_buttons_row(self, style, callback, buttons):
-        buttons_row = widgets.ButtonsRow()
+        buttons_row = widgets.ButtonsRow(**style)
 
         for text, value in buttons:
             button = self.create_button(
@@ -176,7 +176,7 @@ class WidgetsBuilder:
             )
             buttons_row.append(button)
 
-        self.set_style(buttons_row, style)
+        # self.set_style(buttons_row, style)
         return buttons_row
 
     def create_text_input(self, width, text=None):
@@ -218,7 +218,9 @@ class WidgetsBuilder:
     def create_horizontal_separator(self):
         separator = decorations.Padded(
             content=separators.HorizontalSeparator(
-                separators.SeparatorSegments([0x2500, 0x251c, 0x2524, ]),
+                segments=separators.SeparatorSegments([
+                    0x2500, 0x251c, 0x2524,
+                ]),
             ),
             padding=Padding(0, -1),
         )
@@ -236,10 +238,11 @@ class WidgetsBuilder:
         msg = context['msg']
         callback = context['callback']
 
-        msg = self.create(
-            labels.Label, 'Dialog Label',
-            msg,
+        msg = labels.Label(
+            txt=msg,
+            **self.get_style('Dialog Label'),
         )
+        # self.set_style(msg, 'Dialog Label')
 
         buttons_row = self.create_buttons_row(
             self.get_style('ButtonsRow'),
@@ -476,7 +479,6 @@ class WidgetsBuilder:
             # TODO: widgets.Screen?
             widgets_layout = windows.Window(
                 content=content,
-                frame=basic.Frame(),
                 colors=None,
             )
 

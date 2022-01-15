@@ -30,17 +30,6 @@ class SeparatorSegments(collections.namedtuple(
 # TODO: add widgets.WithOverlay?
 class Separator(core.Renderer, core.UIElement):
 
-    def __init__(self, segments, *, colors=None, align=None, width=None, height=None):
-        super().__init__(
-            align=align,
-            width=width,
-            height=height,
-        )
-        self.style.update(
-            segments=segments,
-            colors=colors,
-        )
-
     def set_style(self, *, segments=None, colors=None, **style):
         self.style.update(
             segments=segments,
@@ -64,23 +53,16 @@ class Separator(core.Renderer, core.UIElement):
 
 class HorizontalSeparator(Separator):
 
-    def __init__(self, segments, *, colors=None, align=None, width=None):
-        super().__init__(
-            segments,
-            colors=colors,
-            align=align,
-            width=width or 0,
-            height=1,
-        )
+    DEFAULT_HEIGHT = 1
 
-    @Separator.width.getter
+    @property
     def width(self):
         return 0
 
     def get_size(self, available):
         return Size(
             self.style.width or available.width,
-            1,
+            self.height,
         )
 
     def render(self, panel, timestamp):
@@ -91,22 +73,15 @@ class HorizontalSeparator(Separator):
 
 class VerticalSeparator(Separator):
 
-    def __init__(self, segments, *, colors=None, align=None, height=None):
-        super().__init__(
-            segments,
-            colors=colors,
-            align=align,
-            width=1,
-            height=height or 0,
-        )
+    DEFAULT_WIDTH = 1
 
-    @Separator.width.getter
+    @property
     def height(self):
         return 0
 
     def get_size(self, available):
         return Size(
-            1,
+            self.width,
             self.style.height or available.height,
         )
 
