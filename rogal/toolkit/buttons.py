@@ -40,25 +40,25 @@ class Button(
 
     def enter(self):
         super().enter()
-        self.colors = self.selected_colors
+        self._cleared.renderer.style.colors = self.selected_colors
         self.post_renderers = self.selected_renderers
         # self.redraw();
 
     def leave(self):
         super().leave()
-        self.colors = self.default_colors
+        self._cleared.renderer.style.colors = self.default_colors
         self.post_renderers = []
         # self.redraw()
 
     def press(self, position):
         super().press(position)
-        self.colors = self.press_colors
+        self._cleared.renderer.style.colors = self.press_colors
         self.post_renderers = self.selected_renderers
         # self.redraw()
 
     def release(self, position):
         super().release(position)
-        self.colors = self.selected_colors
+        self._cleared.renderer.style.colors = self.selected_colors
         self.post_renderers = self.selected_renderers
         # self.redraw();
 

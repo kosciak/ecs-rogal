@@ -32,7 +32,9 @@ class Padded(containers.Bin):
             content=content,
             align=align, width=width, height=height,
         )
-        self.padding = padding or self.DEFAULT_PADDING
+        self.style.update(
+            padding = padding or self.DEFAULT_PADDING,
+        )
         # TODO: Need to rework default_z_order!
         self.default_z_order = self.content.default_z_order
 
@@ -47,10 +49,6 @@ class Padded(containers.Bin):
     @property
     def padding(self):
         return self.style.padding
-
-    @padding.setter
-    def padding(self, padding):
-        self.style.padding = padding
 
     @property
     def min_width(self):
@@ -103,11 +101,6 @@ class WithPaddedContent:
     def padding(self):
         return self._padded.padding
 
-    @padding.setter
-    def padding(self, padding):
-        self._padded.padding = padding
-        # TODO: self.redraw() ?
-
 
 class Framed(containers.Bin):
 
@@ -116,15 +109,15 @@ class Framed(containers.Bin):
     def __init__(self, content, frame=None, *,
                  align=None, width=None, height=None,
                 ):
+        self.frame = frame or basic.Frame()
         super().__init__(
             content=content,
             align=align, width=width, height=height,
         )
-        self.frame = frame or basic.Frame()
         # TODO: Consider using multiple nested frames?
 
     def set_style(self, Frame=None, **style):
-        Frame = Frame or {}
+        Frame = Frame or {} # TODO: if Frame is not None: ???
         self.frame.set_style(**Frame)
         super().set_style(**style)
 
@@ -179,11 +172,6 @@ class WithFramedContent:
     def frame(self):
         return self._framed.frame
 
-    @frame.setter
-    def frame(self, frame):
-        self._framed.frame = frame
-        # TODO: self.redraw() ?
-
 
 class Cleared(containers.Bin):
 
@@ -192,12 +180,12 @@ class Cleared(containers.Bin):
     def __init__(self, content, colors, *,
                  align=None, width=None, height=None,
                 ):
+        self.renderer = renderers.ClearPanel(
+            colors=colors,
+        )
         super().__init__(
             content=content,
             align=align, width=width, height=height,
-        )
-        self.renderer = renderers.ClearPanel(
-            colors=colors,
         )
 
     def set_style(self, *, colors=None, **style):
@@ -209,10 +197,6 @@ class Cleared(containers.Bin):
     @property
     def colors(self):
         return self.renderer.style.colors
-
-    @colors.setter
-    def colors(self, colors):
-        self.renderer.style.colors = colors
 
 
 class WithClearedContent:
@@ -237,10 +221,6 @@ class WithClearedContent:
     @property
     def colors(self):
         return self._cleared.colors
-
-    @colors.setter
-    def colors(self, colors):
-        self._cleared.colors = colors
 
 
 class PostProcessed(containers.Bin):

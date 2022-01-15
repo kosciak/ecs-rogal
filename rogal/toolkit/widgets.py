@@ -36,7 +36,6 @@ class Widget(
         self.emit('destroyed')
 
 
-# TODO: FramedWidget? as base for Buttons, Windows?
 class FramedWidget(
         Widget,
         decorations.WithFramedContent,
@@ -56,7 +55,6 @@ class FramedWidget(
             colors=colors,
             padding=padding,
         )
-        self._inner = self._framed
 
     def set_style(self, **style):
         contents_style = style.pop(self.contents.__class__.__name__, None)
@@ -66,11 +64,11 @@ class FramedWidget(
 
     @property
     def contents(self):
-        return self._inner.content
+        return self._framed.content
 
     @contents.setter
     def contents(self, contents):
-        self._inner.content = contents
+        self._framed.content = contents
         self.redraw()
 
 

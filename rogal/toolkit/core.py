@@ -9,15 +9,23 @@ from ..console.core import Align
 """Console UI Toolkit core building blocks."""
 
 
-class Styled:
-
-    def __init__(self):
-        self.style = AttrDict()
-
-
 class ZOrder:
     BASE = 1
     MODAL = 100
+
+
+class Styled:
+
+    def __init__(self, style=None):
+        self.style = AttrDict()
+        if style is not None:
+            self.set_style(**style)
+
+    def set_style(self, **style):
+        self.style.update(style)
+
+
+# TODO: Renderable
 
 
 class UIElement(Styled):
@@ -28,16 +36,18 @@ class UIElement(Styled):
     FULL_SIZE = 0
     DEFAULT_Z_ORDER = 0
 
-    def __init__(self, *, align=None, width=None, height=None):
-        super().__init__()
-        self.style.update(
-            align=align,
-            width=width,
-            height=height,
-        )
+    # def __init__(self, *, align=None, width=None, height=None):
+    def __init__(self, *, renderer=None, **style):
+        if not hasattr(self, 'renderer'):
+            self.renderer = renderer
+        super().__init__(style)
+        # self.style.update(
+        #     align=align,
+        #     width=width,
+        #     height=height,
+        # )
         # TODO: get rid of default_z_order, it doesn't make much sense...
         self.default_z_order = self.DEFAULT_Z_ORDER
-        self.renderer = None
         # TODO: Move event_handlers to separate class/mixin?
         self.events_handlers = DefaultAttrDict(list)
         # TODO: Store element, panel or offset/size?
@@ -61,28 +71,15 @@ class UIElement(Styled):
             return self.style.align
         return self.DEFAULT_ALIGN
 
-    # TODO: Is it necessary to have those setters? Maybe some self.restyle(style) ?
-    @align.setter
-    def align(self, align):
-        self.style.align = align
-
     @property
     def width(self):
         """Return element's fixed width or 0 if whole available space should be used."""
         return self.style.width or self.FULL_SIZE
 
-    @width.setter
-    def width(self, width):
-        self.style.width = width
-
     @property
     def height(self):
         """Return element's fixed height or 0 if whole available space should be used."""
         return self.style.height or self.FULL_SIZE
-
-    @height.setter
-    def height(self, height):
-        self.style.height = height
 
     @property
     def min_width(self):

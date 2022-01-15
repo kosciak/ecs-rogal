@@ -67,10 +67,6 @@ class Text(TextRenderer, core.UIElement):
     def colors(self):
         return self.style.colors
 
-    @colors.setter
-    def colors(self, colors):
-        self.style.colors = colors
-
     @core.UIElement.width.getter
     def width(self):
         if self.style.width is not None:
@@ -185,17 +181,9 @@ class Frame(core.Renderer, core.UIElement):
     def decorations(self):
         return self.style.decorations
 
-    @decorations.setter
-    def decorations(self, decorations):
-        self.style.decorations = decorations
-
     @property
     def colors(self):
         return self.style.colors
-
-    @colors.setter
-    def colors(self, colors):
-        self.style.colors = colors
 
     @property
     def inner_offset(self):
@@ -310,6 +298,8 @@ class Spinner(core.Animated, TextRenderer, core.UIElement):
         )
         self.txt_size = self.get_frames_txt_size(self.style.frames)
 
+    # TODO: set_style
+
     @property
     def frames(self):
         return self.style.frames
@@ -334,10 +324,6 @@ class Spinner(core.Animated, TextRenderer, core.UIElement):
     @property
     def colors(self):
         return self.style.colors
-
-    @colors.setter
-    def colors(self, colors):
-        self.style.colors = colors
 
     def get_frames_txt_size(self, frames):
         frame_sizes = [self.get_txt_size(frame) for frame in frames]
@@ -394,21 +380,21 @@ class ProgressBar(core.Renderer, core.UIElement):
             reverse=reverse,
         )
 
+    def set_style(self, *, segments=None, colors=None, reverse=None, **style):
+        self.style.update(
+            segments=segments,
+            colors=colors,
+            reverse=reverse or False,
+        )
+        super().set_style(**style)
+
     @property
     def segments(self):
         return self.style.segments
 
-    @segments.setter
-    def segments(self, segments):
-        self.style.segments = segments
-
     @property
     def colors(self):
         return self.style.colors
-
-    @colors.setter
-    def colors(self, colors):
-        self.style.colors = colors
 
     def render(self, panel, timestamp):
         width = panel.width * self.value

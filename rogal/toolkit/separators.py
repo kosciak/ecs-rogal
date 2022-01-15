@@ -41,21 +41,20 @@ class Separator(core.Renderer, core.UIElement):
             colors=colors,
         )
 
+    def set_style(self, *, segments=None, colors=None, **style):
+        self.style.update(
+            segments=segments,
+            colors=colors,
+        )
+        super().set_style(**style)
+
     @property
     def segments(self):
         return self.style.segments
 
-    @segments.setter
-    def segments(self, segments):
-        self.style.segments = segments
-
     @property
     def colors(self):
         return self.style.colors
-
-    @colors.setter
-    def colors(self, colors):
-        self.style.colors = colors
 
     def render(self, panel, timestamp):
         panel.fill(self.segments.middle, self.colors)
