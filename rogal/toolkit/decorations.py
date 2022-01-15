@@ -157,14 +157,14 @@ class WithFramedContent:
         return self._framed.frame
 
 
-class Cleared(containers.Bin):
+class Cleared(core.Renderable, containers.Bin):
 
     """Clears content area."""
 
     def __init__(self, content, **style):
-        self.renderer = renderers.ClearPanel()
         super().__init__(
             content=content,
+            renderer=renderers.ClearPanel(),
             **style,
         )
 

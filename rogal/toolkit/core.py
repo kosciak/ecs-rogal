@@ -16,7 +16,8 @@ class ZOrder:
 
 class Styled:
 
-    def __init__(self, style=None):
+    def __init__(self, *, style=None, **kwargs):
+        super().__init__(**kwargs)
         self.style = AttrDict()
         if style is not None:
             self.set_style(**style)
@@ -25,7 +26,19 @@ class Styled:
         self.style.update(style)
 
 
-# TODO: Renderable
+class Renderable:
+
+    def __init__(self, *, renderer, **kwargs):
+        self.renderer = renderer
+        super().__init__(**kwargs)
+
+    def layout(self, manager, element, panel, z_order):
+        z_order = super().layout(manager, element, panel, z_order)
+        manager.insert(
+            element,
+            renderer=self.renderer,
+        )
+        return z_order
 
 
 class UIElement(Styled):
@@ -38,11 +51,10 @@ class UIElement(Styled):
     DEFAULT_WIDTH = FULL_SIZE
     DEFAULT_HEIGHT = FULL_SIZE
 
-    def __init__(self, *, renderer=None, **style):
-        if not hasattr(self, 'renderer'):
-            # TODO: Move to Renderable!
-            self.renderer = renderer
-        super().__init__(style)
+    def __init__(self, **style):
+        super().__init__(
+            style=style,
+        )
         # TODO: get rid of default_z_order, it doesn't make much sense...
         self.default_z_order = self.DEFAULT_Z_ORDER
         # TODO: Move event_handlers to separate class/mixin?
@@ -113,7 +125,6 @@ class UIElement(Styled):
             element,
             panel=panel,
             z_order=z_order,
-            renderer=self.renderer, # TODO: Move to Renderable
         )
         manager.bind(
             element,
@@ -161,13 +172,15 @@ class Container:
         yield from self.content
 
 
-class Renderer(Styled):
+class Renderer(Renderable, Styled):
 
     """Mixin for UIElements that renders it's contents on panel."""
 
     def __init__(self, *args, **kwargs):
-        self.renderer = self
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            renderer=self,
+            *args, **kwargs,
+        )
 
     def render(self, panel, timestamp):
         raise NotImplementedError()

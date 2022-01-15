@@ -6,6 +6,7 @@ from . import core
 class Chain(core.Renderer):
 
     def __init__(self, renderers=None):
+        super().__init__()
         self.renderers = renderers or []
 
     def render(self, panel, timestamp):
@@ -14,9 +15,6 @@ class Chain(core.Renderer):
 
 
 class ClearPanel(core.Renderer):
-
-    def __init__(self, **style):
-        super().__init__(style)
 
     def set_style(self, *, colors=None, **style):
         self.style.update(
@@ -32,9 +30,6 @@ class ClearPanel(core.Renderer):
 
 
 class PaintPanel(core.Renderer):
-
-    def __init__(self, **style):
-        super().__init__(style)
 
     def set_style(self, *, colors=None, **style):
         self.style.update(

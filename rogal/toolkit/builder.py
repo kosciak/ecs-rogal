@@ -295,12 +295,12 @@ class WidgetsBuilder:
             ]),
         ])
 
-        progress_bar = self.create(
-            basic.ProgressBarAnimatedDemo, 'ProgressBar',
+        progress_bar = basic.ProgressBarAnimatedDemo(
             value=.75,
             width=24,
             # height=3,
             frame_duration=150,
+            **self.get_style('ProgressBar'),
         )
 
         spinner = self.create(
@@ -309,7 +309,7 @@ class WidgetsBuilder:
 
         content = containers.List(
             content=[
-                # progress_bar,
+                progress_bar,
                 # spinner,
                 msg,
                 self.create_horizontal_separator(),

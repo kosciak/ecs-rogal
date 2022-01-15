@@ -350,16 +350,11 @@ class ProgressBarSegments(collections.namedtuple(
 
 class ProgressBar(core.Renderer, core.UIElement):
 
-    def __init__(self, value, segments, colors, *, reverse=False, align=None, width=None, height=1):
-        super().__init__(
-            align=align, width=width, height=height,
-        )
+    DEFAULT_HEIGHT = 1
+
+    def __init__(self, value, **style):
         self.value = value # float value from 0.0 to 1.0
-        self.style.update(
-            segments=segments,
-            colors=colors,
-            reverse=reverse,
-        )
+        super().__init__(**style)
 
     def set_style(self, *, segments=None, colors=None, reverse=None, **style):
         self.style.update(
