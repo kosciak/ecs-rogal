@@ -60,8 +60,14 @@ def parse_padding(data):
 def parse_colors(data):
     if data is None:
         return None
-    fg = data.get('fg')
-    bg = data.get('bg')
+    if isinstance(data, dict):
+        fg = data.get('fg')
+        bg = data.get('bg')
+    if isinstance(data, (list, tuple)):
+        fg = data[0]
+        bg = None
+        if len(data) > 1:
+            bg = data[1]
     return Colors(fg, bg)
 
 
