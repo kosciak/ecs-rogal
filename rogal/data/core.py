@@ -24,10 +24,17 @@ class Data:
             for key, value in loader.load().items():
                 self._data[key] = self.parse(value)
 
-    def get(self, key, default=None, /):
+    @property
+    def data(self):
         if self._data is None:
             self._load()
-        return self._data.get(key, default or (self._default and self._default()))
+        return self._data
+
+    def get(self, key, default=None, /):
+        return self.data.get(
+            key,
+            default or (self._default and self._default())
+        )
 
     def parse(self, data):
         # If it's a name just return data, parse otherwise
@@ -41,9 +48,7 @@ class Data:
         return self.get(key)
 
     def __iter__(self):
-        if self._data is None:
-            self._load()
-        yield from self._data
+        yield from self.data
 
 
 class DataParsers(AttrDict):
