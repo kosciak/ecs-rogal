@@ -19,6 +19,14 @@ Window.modal:
     align: CENTER
     width: 8
 
+.button:hover:
+  fg: BG
+  bg: FG
+
+.button:active:
+  fg: BG
+  bg: BRIGHT_WHITE
+
 
 .checkbox:
   fg: FG

@@ -30,7 +30,7 @@ def parse_ui_style(data):
         width=data.get('width'),
         height=data.get('height'),
         align=parsers.parse_align(data.get('align')),
-        colors=parsers.parse_colors(data),
+        colors=parsers.parse_colors(data.get('colors') or data),
         # Decorations
         padding=parsers.parse_padding(data.get('padding')),
         decorations=parsers.parse_decorations(data.get('decorations')),
@@ -47,9 +47,9 @@ def parse_ui_style(data):
     )
 
     # Parsing nested elements - checking if first letter is capitalized
-    for element in data.keys():
-        if element[0].isupper():
-            style[element] = parsers.parse_ui_style(data.get(element))
+    for key in data.keys():
+        if not key.islower():
+            style[key] = parsers.parse_ui_style(data.get(key))
 
     style = {
         key: value for key, value in style.items()

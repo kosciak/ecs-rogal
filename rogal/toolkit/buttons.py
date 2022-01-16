@@ -18,45 +18,29 @@ class Button(
 
     # TODO: callbacks should be replaced with signals!
 
-    def __init__(self, content, callback, value, *,
-                 selected_colors=None, press_colors=None,
-                 selected_renderers=None,
-                 **style,
-                ):
+    def __init__(self, content, callback, value, **style):
         super().__init__(
             content=content,
             callback=callback, value=value,
             **style,
         )
-        # TODO: Those settings should be changed using styles!
-        self.default_colors = self.colors
-        self.selected_colors = selected_colors or self.default_colors
-        self.press_colors = press_colors or self.selected_colors
-        self.selected_renderers = list(selected_renderers or [])
 
     def enter(self):
         super().enter()
-        self._cleared.renderer.style.colors = self.selected_colors
-        self.post_renderers = self.selected_renderers
-        # self.redraw();
+        # TODO: self.manager.set_pseudoclass(); move it to States?
+        self.manager.set_style(self.element, '.button:hover')
 
     def leave(self):
         super().leave()
-        self._cleared.renderer.style.colors = self.default_colors
-        self.post_renderers = []
-        # self.redraw()
+        self.manager.set_style(self.element, '.button')
 
     def press(self, position):
         super().press(position)
-        self._cleared.renderer.style.colors = self.press_colors
-        self.post_renderers = self.selected_renderers
-        # self.redraw()
+        self.manager.set_style(self.element, '.button:active')
 
     def release(self, position):
         super().release(position)
-        self._cleared.renderer.style.colors = self.selected_colors
-        self.post_renderers = self.selected_renderers
-        # self.redraw();
+        self.manager.set_style(self.element, '.button:hover')
 
     def activate(self):
         self.emit('clicked')

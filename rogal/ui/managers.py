@@ -25,9 +25,16 @@ class UIManager:
 
     def __init__(self, ecs):
         self.ecs = ecs
+        self._stylesheets = None
         self._events = None
         self._signals = None
         self._focus = None
+
+    @property
+    def stylesheets(self):
+        if self._stylesheets is None:
+            self._stylesheets = self.ecs.resources.stylesheets_manager
+        return self._stylesheets
 
     @property
     def events(self):
@@ -64,6 +71,14 @@ class UIManager:
             ParentUIElement(parent),
         )
         return element
+
+    # TODO: Rename to set_pseudoclass()
+    def set_style(self, element, selector):
+        # TODO: set pseudoclass (to UIStyle component), and add Restyle flag
+        # TODO: restyling should be done in separate system
+        widget = self.ecs.manage(UIWidget).get(element)
+        style = self.stylesheets.get(selector)
+        widget.widget.set_style(**style)
 
     def redraw(self, element):
         # TODO: redraw without destroying contents?

@@ -19,6 +19,7 @@ from .ecs import ECS
 from .ui.managers import UIManager
 from .ui.managers import InputFocusManager
 from .toolkit.builder import WidgetsBuilder
+from .toolkit.stylesheets import StylesheetsManager
 from .events.managers import EventsManager
 from .signals.managers import SignalsManager
 
@@ -124,6 +125,8 @@ def run(wrapper):
 
     ecs.resources.events_manager = EventsManager(ecs)
     ecs.resources.events_manager.add_source(ecs.resources.wrapper)
+
+    ecs.resources.stylesheets_manager = StylesheetsManager(ecs)
 
     ecs.resources.widgets_builder = WidgetsBuilder(ecs)
 

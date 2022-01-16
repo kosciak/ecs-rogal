@@ -42,6 +42,7 @@ class CreateUIElementsSystem(System):
         needs_layout = self.ecs.manage(NeedsLayout)
         for element, create in to_create:
             widget = self.builder.build(
+                # TODO: pass element to builder?
                 create.widget_type, create.context,
             )
             widgets.insert(element, widget)
@@ -102,7 +103,7 @@ class UISystem(System):
 class LayoutSytem(UISystem):
 
     INCLUDE_STATES = {
-        RunState.PRE_RUN, # TODO: Not sure why it MUST be enabled during PRE_RUN...
+        # RunState.PRE_RUN, # TODO: Not sure why it MUST be enabled during PRE_RUN...
         RunState.RENDER,
     }
 
@@ -118,6 +119,8 @@ class LayoutSytem(UISystem):
             if panel is None:
                 content.layout(ui_manager, element, panel=self.root, z_order=0)
             else:
+                # TODO: This works ONLY if we are redrawing children, but not widget itself
+                #       for example after resizing it! It would need panel from it's parent!
                 content.layout_content(ui_manager, element, panel=panel.panel, z_order=panel.z_order)
 
         needs_layout.clear()

@@ -9,7 +9,6 @@ from .. import render
 
 from ..console.core import Align, Padding, Colors
 
-from .stylesheets import StylesheetsManager
 from . import basic
 from . import containers
 from . import decorations
@@ -28,8 +27,14 @@ class WidgetsBuilder:
 
     def __init__(self, ecs):
         self.ecs = ecs
-        self.stylesheets = StylesheetsManager()
-        self.default_colors = Colors("fg", "bg")
+        self._stylesheets = None
+        self.default_colors = Colors("fg", "bg") # TODO: Remove
+
+    @property
+    def stylesheets(self):
+        if self._stylesheets is None:
+            self._stylesheets = self.ecs.resources.stylesheets_manager
+        return self._stylesheets
 
     def get_style(self, selectors):
         return self.stylesheets.get(selectors)
@@ -153,14 +158,6 @@ class WidgetsBuilder:
             content=label,
             callback=callback,
             value=value,
-            # selected_colors=self.default_colors.invert(),
-            press_colors=Colors(
-                bg="bg",
-                fg="BRIGHT_WHITE"
-            ),
-            selected_renderers=[
-                renderers.InvertColors(),
-            ],
             **style,
         )
         return button
