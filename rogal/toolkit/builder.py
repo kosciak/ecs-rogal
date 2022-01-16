@@ -303,13 +303,13 @@ class WidgetsBuilder:
             **self.get_style('ProgressBar'),
         )
 
-        spinner = self.create(
-            basic.Spinner, 'Spinner',
+        spinner = basic.Spinner(
+            **self.get_style('Spinner'),
         )
 
         content = containers.List(
             content=[
-                progress_bar,
+                # progress_bar,
                 # spinner,
                 msg,
                 self.create_horizontal_separator(),
@@ -476,10 +476,8 @@ class WidgetsBuilder:
                 bottom=12,
             )
 
-            # TODO: widgets.Screen?
-            widgets_layout = windows.Window(
+            widgets_layout = widgets.Screen(
                 content=content,
-                colors=None,
             )
 
         if widget_type == 'MAIN_MENU':

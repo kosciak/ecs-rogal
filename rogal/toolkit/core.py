@@ -69,11 +69,6 @@ class UIElement(Styled):
             width=width, height=height,
         )
 
-    def update_style(self, style):
-        for key in ['align', 'width', 'height']:
-            if key in style:
-                self.style[key] = style[key]
-
     @property
     def align(self):
         if self.style.align is not None:

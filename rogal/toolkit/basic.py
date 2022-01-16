@@ -70,8 +70,6 @@ class Text(TextRenderer, core.UIElement):
             return self.style.height
         return self.txt_size.height
 
-    # TODO: Prevent from setting height? 
-
 
 class WithTextContent:
 
@@ -237,7 +235,7 @@ class Frame(core.Renderer, core.UIElement):
         )
 
 
-# TODO: Needs rewrite!
+# TODO: Needs major rewrite!
 class Cursor(core.Renderer, core.UIElement):
 
     def __init__(self, *, glyph=None, colors=None, position=None, blinking=None):
@@ -264,31 +262,27 @@ class Spinner(core.Animated, TextRenderer, core.UIElement):
 
     DEFAULT_FRAME_DURATION = 100
 
-    def __init__(self, colors, frames, *, duration=None, frame_duration=None, align=None):
+    def __init__(self, *, duration=None, frame_duration=None, **style):
         if duration is None and frame_duration is None:
             frame_duration = self.DEFAULT_FRAME_DURATION
+        self.txt_size = None
         super().__init__(
-            duration=duration, frame_duration=frame_duration,
-            # width=self.txt_size.width,
-            # height=self.txt_size.height,
-            align=align,
+            duration=duration,
+            frame_duration=frame_duration,
+            **style,
         )
+
+    def set_style(self, *, frames=None, colors=None, **style):
         self.style.update(
-            frames = frames,
-            colors = colors,
+            frames=frames,
+            colors=colors,
         )
         self.txt_size = self.get_frames_txt_size(self.style.frames)
-
-    # TODO: set_style
+        super().set_style(**style)
 
     @property
     def frames(self):
         return self.style.frames
-
-    @frames.setter
-    def frames(self, frames):
-        self.style.frames = frames
-        self.txt_size = self.get_frames_txt_size(self.style.frames)
 
     @property
     def width(self):

@@ -101,3 +101,15 @@ class ButtonsRow(
 #         )
 #         super().set_style(**style)
 
+
+class Screen(
+        Widget,
+        decorations.WithClearedContent,
+        decorations.WithPostProcessedContent,
+        containers.Stack,
+    ):
+
+    # TODO: bind OnKeyPress('actions.QUIT')
+
+    pass
+
