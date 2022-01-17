@@ -23,7 +23,7 @@ class Widget(
         self.element = element
         manager.insert(
             element,
-            ui_widget=self,
+            content=self,
         )
         return super().layout(manager, element, panel, z_order)
 

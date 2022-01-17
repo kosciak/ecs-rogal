@@ -11,8 +11,8 @@ from ..ecs.run_state import RunState
 from .components import (
     CreateUIElement, DestroyUIElement, DestroyUIElementContent,
     ParentUIElement,
-    UIWidget,
-    NeedsLayout,
+    UIElement,
+    UIElementChanged,
     UIPanel,
     UIRenderer,
     InputFocus, HasInputFocus, GrabInputFocus,
@@ -38,15 +38,15 @@ class CreateUIElementsSystem(System):
         if not to_create:
             return
 
-        widgets = self.ecs.manage(UIWidget)
-        needs_layout = self.ecs.manage(NeedsLayout)
+        elements = self.ecs.manage(UIElement)
+        changed = self.ecs.manage(UIElementChanged)
         for element, create in to_create:
-            widget = self.builder.build(
+            content = self.builder.build(
                 # TODO: pass element to builder?
                 create.widget_type, create.context,
             )
-            widgets.insert(element, widget)
-            needs_layout.insert(element)
+            elements.insert(element, content)
+            changed.insert(element)
 
         to_create.clear()
 
@@ -108,13 +108,13 @@ class LayoutSytem(UISystem):
     }
 
     def run(self):
-        needs_layout = self.ecs.manage(NeedsLayout)
-        if not needs_layout:
+        changed = self.ecs.manage(UIElementChanged)
+        if not changed:
             return
         ui_manager = self.ecs.resources.ui_manager
-        widgets = self.ecs.manage(UIWidget)
+        elements = self.ecs.manage(UIElement)
         panels = self.ecs.manage(UIPanel)
-        for element, content in self.ecs.join(needs_layout.entities, widgets):
+        for element, content in self.ecs.join(changed.entities, elements):
             panel = panels.get(element)
             if panel is None:
                 content.layout(ui_manager, element, panel=self.root, z_order=0)
@@ -123,7 +123,7 @@ class LayoutSytem(UISystem):
                 #       for example after resizing it! It would need panel from it's parent!
                 content.layout_content(ui_manager, element, panel=panel.panel, z_order=panel.z_order)
 
-        needs_layout.clear()
+        changed.clear()
 
 
 class InputFocusSystem(System):
@@ -173,11 +173,11 @@ class OnScreenFocusSystem(System):
 
     def run(self):
         self.focus_manager.clear_positions()
-        widgets = self.ecs.manage(UIWidget)
+        elements = self.ecs.manage(UIElement)
         panels = self.ecs.manage(UIPanel)
-        # NOTE: Use only UIWidgets, we don't want renderers that might have higher z_order to mask widgets
-        for widget, panel in sorted(self.ecs.join(widgets.entities, panels), key=lambda e: e[1].z_order):
-            self.focus_manager.update_positions(widget, panel.panel)
+        # NOTE: Use only UIElements, we don't want renderers that might have higher z_order to mask widgets
+        for element, panel in sorted(self.ecs.join(elements.entities, panels), key=lambda e: e[1].z_order):
+            self.focus_manager.update_positions(element, panel.panel)
 
 
 class RenderSystem(UISystem):

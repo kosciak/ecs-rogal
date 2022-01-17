@@ -16,8 +16,9 @@ class ZOrder:
 
 class Styled:
 
-    def __init__(self, *, style=None, **kwargs):
+    def __init__(self, *, selector=None, style=None, **kwargs):
         super().__init__(**kwargs)
+        self.selector = selector # TODO: Insert into UIStyle component
         self.style = AttrDict()
         if style is not None:
             self.set_style(**style)
@@ -136,6 +137,20 @@ class UIElement(Styled):
         return z_order
 
 
+class Renderer(Renderable, Styled):
+
+    """Mixin for UIElements that renders it's contents on panel."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            renderer=self,
+            *args, **kwargs,
+        )
+
+    def render(self, panel, timestamp):
+        raise NotImplementedError()
+
+
 class Container:
 
     """Mixin for UIElements containers with multiple child elements."""
@@ -165,20 +180,6 @@ class Container:
 
     def __iter__(self):
         yield from self.content
-
-
-class Renderer(Renderable, Styled):
-
-    """Mixin for UIElements that renders it's contents on panel."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            renderer=self,
-            *args, **kwargs,
-        )
-
-    def render(self, panel, timestamp):
-        raise NotImplementedError()
 
 
 class Animated:

@@ -10,10 +10,10 @@ from ..toolkit.core import ZOrder
 from .components import (
     CreateUIElement, DestroyUIElement, DestroyUIElementContent,
     ParentUIElement,
-    UIWidget,
-    NeedsLayout,
-    UIPanel,
+    UIElement, UIElementChanged,
+    UIStyle, UIStyleChanged,
     UIRenderer,
+    UIPanel,
     GrabInputFocus, InputFocus, HasInputFocus,
 )
 
@@ -74,34 +74,40 @@ class UIManager:
 
     # TODO: Rename to set_pseudoclass()
     def set_style(self, element, selector):
-        # TODO: set pseudoclass (to UIStyle component), and add Restyle flag
         # TODO: restyling should be done in separate system
-        widget = self.ecs.manage(UIWidget).get(element)
+        content = self.ecs.manage(UIElement).get(element)
         style = self.stylesheets.get(selector)
-        widget.widget.set_style(**style)
+        content.content.set_style(**style)
+        # TODO: set pseudoclass (to UIStyle component), and add Restyle flag
+        self.ecs.manage(UIStyleChanged).insert(element)
 
     def redraw(self, element):
         # TODO: redraw without destroying contents?
         self.ecs.manage(DestroyUIElementContent).insert(element)
-        self.ecs.manage(NeedsLayout).insert(element)
+        self.ecs.manage(UIElementChanged).insert(element)
 
     def insert(self, element, *,
-               ui_widget=None,
+               content=None,
+               renderer=None,
+               selector=None,
                panel=None,
                z_order=None,
-               renderer=None,
               ):
-        if ui_widget:
-            self.ecs.manage(UIWidget).insert(
-                element, ui_widget,
-            )
-        if panel:
-            self.ecs.manage(UIPanel).insert(
-                element, panel, z_order or ZOrder.BASE,
+        if content:
+            self.ecs.manage(UIElement).insert(
+                element, content,
             )
         if renderer:
             self.ecs.manage(UIRenderer).insert(
                 element, renderer,
+            )
+        if selector:
+            self.ecs.manage(UIStyle).insert(
+                element, selector,
+            )
+        if panel:
+            self.ecs.manage(UIPanel).insert(
+                element, panel, z_order or ZOrder.BASE,
             )
 
     def bind(self, element, **handlers):
