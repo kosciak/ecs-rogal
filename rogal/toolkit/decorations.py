@@ -24,13 +24,13 @@ class Padded(containers.Bin):
 
     DEFAULT_PADDING = Padding.ZERO
 
-    def set_style(self, *, padding=None, **style):
+    def set_style(self, *, padding=None, **kwargs):
         if padding is None:
             padding = self.DEFAULT_PADDING
         self.style.update(
             padding=padding,
         )
-        super().set_style(**style)
+        super().set_style(**kwargs)
 
     @property
     def padding(self):
@@ -72,13 +72,13 @@ class WithPaddedContent:
     # NOTE: You might just want to subclass Padded instead of using WithPaddedContent and Bin
     #       If you put Padded inside Bin, then Bin will get panel of content size + padding!
 
-    def __init__(self, content, **style):
+    def __init__(self, content, **kwargs):
         self._padded = Padded(
             content=content,
         )
         super().__init__(
             content=self._padded,
-            **style,
+            **kwargs,
         )
 
     def set_style(self, *, padding=None, **style):
@@ -96,11 +96,11 @@ class Framed(containers.Bin):
 
     """Renders frame around content."""
 
-    def __init__(self, content, **style):
+    def __init__(self, content, **kwargs):
         self.frame = basic.Frame()
         super().__init__(
             content=content,
-            **style,
+            **kwargs,
         )
         # TODO: Consider using multiple nested frames?
 
@@ -137,13 +137,13 @@ class Framed(containers.Bin):
 
 class WithFramedContent:
 
-    def __init__(self, content, **style):
+    def __init__(self, content, **kwargs):
         self._framed = Framed(
             content=content,
         )
         super().__init__(
             content=self._framed,
-            **style,
+            **kwargs,
         )
 
     def set_style(self, Frame=None, **style):
@@ -161,11 +161,11 @@ class Cleared(core.Renderable, containers.Bin):
 
     """Clears content area."""
 
-    def __init__(self, content, **style):
+    def __init__(self, content, **kwargs):
         super().__init__(
             content=content,
             renderer=renderers.ClearPanel(),
-            **style,
+            **kwargs,
         )
 
     def set_style(self, *, colors=None, **style):
@@ -181,13 +181,13 @@ class Cleared(core.Renderable, containers.Bin):
 
 class WithClearedContent:
 
-    def __init__(self, content, **style):
+    def __init__(self, content, **kwargs):
         self._cleared = Cleared(
             content=content,
         )
         super().__init__(
             content=self._cleared,
-            **style,
+            **kwargs,
         )
 
     def set_style(self, *, colors=None, **style):
@@ -235,16 +235,14 @@ class PostProcessed(containers.Bin):
 
 class WithPostProcessedContent:
 
-    def __init__(self, content, *,
-                 post_renderers=None,
-                 **style):
+    def __init__(self, content, *, post_renderers=None, **kwargs):
         self._post_processed = PostProcessed(
             content=content,
             post_renderers=post_renderers,
         )
         super().__init__(
             content=self._post_processed,
-            **style,
+            **kwargs,
         )
 
     @property

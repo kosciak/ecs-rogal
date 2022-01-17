@@ -44,9 +44,9 @@ class WidgetsBuilder:
             style = self.get_style(style)
         style = style or {}
         element = element_cls(
+            style=style,
             *args,
             **kwargs,
-            **style,
         )
         return element
 
@@ -56,7 +56,7 @@ class WidgetsBuilder:
         style = style or {}
         element.set_style(**style)
 
-    def create_framed_label(self, style, txt):
+    def create_framed_label(self, txt, selector=None):
         if txt is None:
             return
 
@@ -65,43 +65,46 @@ class WidgetsBuilder:
         )
         framed_label = labels.FramedLabel(
             label=label,
-            **style,
+            selector=selector,
+            style=self.get_style(selector),
         )
 
         return framed_label
 
-    def create_window(self, style, content, title=None, on_key_press=None):
+    def create_window(self, content, title=None, on_key_press=None, selector=None):
         window = windows.Window(
             content=content,
             on_key_press=on_key_press,
-            **style,
+            selector=selector,
+            style=self.get_style(selector),
         )
 
         title = self.create_framed_label(
-            self.get_style('.title'),
             txt=title,
+            selector='.title',
         )
         window.title = title
 
         return window
 
-    def create_modal_window(self, style, content, title=None, on_key_press=None):
+    def create_modal_window(self, content, title=None, on_key_press=None, selector=None):
         window = windows.Window(
             content=content,
             on_key_press=on_key_press,
-            **style,
+            selector=selector,
+            style=self.get_style(selector),
         )
         window.default_z_order=500
 
         title = self.create_framed_label(
-            self.get_style('.title'),
             txt=title,
+            selector='.title',
         )
         window.title = title
 
         close_button = self.create_label_button(
-            self.get_style('.close_button'),
             txt='X',
+            selector='.close_button',
         )
         window.overlay.close_button = close_button
         close_button.on('clicked', window.on_close)
@@ -117,18 +120,19 @@ class WidgetsBuilder:
             content.append(label)
         return content
 
-    def create_checkbox(self, style, value=None):
+    def create_checkbox(self, value=None, selector=None):
         labels = self.create_toggle_labels(
             [' ', 'x'],
         )
         button = buttons.CheckButton(
             content=labels,
             value=value,
-            **style,
+            selector=selector,
+            style=self.get_style(selector),
         )
         return button
 
-    def create_radio(self, style, group, value=None):
+    def create_radio(self, group, value=None, selector=None):
         labels = self.create_toggle_labels(
             [' ', 'o'],
         )
@@ -136,21 +140,23 @@ class WidgetsBuilder:
             content=labels,
             group=group,
             value=value,
-            **style,
+            selector=selector,
+            style=self.get_style(selector),
         )
         return button
 
-    def create_label_button(self, style, txt):
+    def create_label_button(self, txt, selector=None):
         label = labels.Label(
             txt=txt,
         )
         button = buttons.Label(
             content=label,
-            **style,
+            selector=selector,
+            style=self.get_style(selector),
         )
         return button
 
-    def create_button(self, style, txt, callback, value):
+    def create_button(self, txt, callback, value, selector=None):
         label = labels.Label(
             txt,
         )
@@ -158,22 +164,25 @@ class WidgetsBuilder:
             content=label,
             callback=callback,
             value=value,
-            **style,
+            selector=selector,
+            style=self.get_style(selector),
         )
         return button
 
-    def create_buttons_row(self, style, callback, buttons):
-        buttons_row = widgets.ButtonsRow(**style)
+    def create_buttons_row(self, callback, buttons, selector=None):
+        buttons_row = widgets.ButtonsRow(
+            selector=selector,
+            style=self.get_style(selector),
+        )
 
         for text, value in buttons:
             button = self.create_button(
-                self.get_style('.button'),
                 text,
                 callback, value,
+                selector='.button',
             )
             buttons_row.append(button)
 
-        # self.set_style(buttons_row, style)
         return buttons_row
 
     def create_text_input(self, width, text=None):
@@ -212,14 +221,18 @@ class WidgetsBuilder:
 
         return list_item
 
-    def create_horizontal_separator(self):
+    def create_horizontal_separator(self, selector=None):
         separator = decorations.Padded(
             content=separators.HorizontalSeparator(
-                segments=separators.SeparatorSegments([
-                    0x2500, 0x251c, 0x2524,
-                ]),
+                style=dict(
+                    segments=separators.SeparatorSegments([
+                        0x2500, 0x251c, 0x2524,
+                    ]),
+                ),
             ),
-            padding=Padding(0, -1),
+            style=dict(
+                padding=Padding(0, -1),
+            ),
         )
 
         # separator = separators.HorizontalSeparator(
@@ -237,46 +250,45 @@ class WidgetsBuilder:
 
         msg = labels.Label(
             txt=msg,
-            **self.get_style('Dialog Label'),
+            style=self.get_style('Dialog Label'),
         )
-        # self.set_style(msg, 'Dialog Label')
 
         buttons_row = self.create_buttons_row(
-            self.get_style('ButtonsRow'),
             callback=callback,
             buttons=[
                 ['No',  False],
                 ['Yes', True],
             ],
+            selector='ButtonsRow',
         )
 
         checkbox = self.create_checkbox(
-            self.get_style('.checkbox'),
+            selector='.checkbox',
         )
         checkbox_label = self.create_label_button(
-            self.get_style('.label'),
             'checkbox',
+            selector='.label',
         )
         checkbox.set_label(checkbox_label)
 
         radio_group = buttons.ButtonsGroup()
         radio1 = self.create_radio(
-            self.get_style('.radio'),
             radio_group, value=1,
+            selector='.radio',
         )
         radio1_label = self.create_label_button(
-            self.get_style('.label'),
             'radio 1',
+            selector='.label',
         )
         radio1.set_label(radio1_label)
 
         radio2 = self.create_radio(
-            self.get_style('.radio'),
             radio_group,
+            selector='.radio',
         )
         radio2_label = self.create_label_button(
-            self.get_style('.label'),
             'radio 2',
+            selector='.label',
         )
         radio2.set_label(radio2_label)
 
@@ -294,14 +306,12 @@ class WidgetsBuilder:
 
         progress_bar = basic.ProgressBarAnimatedDemo(
             value=.75,
-            width=24,
-            # height=3,
             frame_duration=150,
-            **self.get_style('ProgressBar'),
+            style=self.get_style('ProgressBar'),
         )
 
         spinner = basic.Spinner(
-            **self.get_style('Spinner'),
+            style=self.get_style('Spinner'),
         )
 
         content = containers.List(
@@ -314,17 +324,19 @@ class WidgetsBuilder:
                 self.create_horizontal_separator(),
                 buttons_row,
             ],
-            width=40,
+            style=dict(
+                width=40,
+            ),
         )
 
         window = self.create_modal_window(
-            self.get_style('Window.modal'),
             content=content,
             title=title,
             on_key_press=[
                 handlers.YesNoKeyPress(callback),
                 handlers.DiscardKeyPress(callback),
             ],
+            selector='Window.modal',
         )
 
         return window
@@ -350,16 +362,15 @@ class WidgetsBuilder:
         ])
 
         buttons_row = self.create_buttons_row(
-            self.get_style('ButtonsRow'),
             callback=callback,
             buttons=[
                 ['Cancel', False],
                 ['OK',     text_input],
             ],
+            selector='ButtonsRow',
         )
 
         window = self.create_modal_window(
-            self.get_style('Window, Window.modal'),
             width=40,
             height=6,
             title=title,
@@ -367,6 +378,7 @@ class WidgetsBuilder:
                 handlers.OnKeyPress('common.SUBMIT', callback, text_input),
                 handlers.DiscardKeyPress(callback),
             ],
+            selector='Window.modal',
         )
 
         window.extend([
@@ -395,21 +407,21 @@ class WidgetsBuilder:
         )
 
         buttons_row = self.create_buttons_row(
-            self.get_style('ButtonsRow'),
             callback=callback,
             buttons=[
                 ['Cancel', False],
             ],
+            selector='ButtonsRow',
         )
 
         window = self.create_modal_window(
-            self.get_style('Window, Window.modal'),
             width=20,
             height= msg.height+buttons.height+len(items)+4,
             title=title,
             on_key_press=[
                 handlers.DiscardKeyPress(callback),
             ],
+            selector='Window.modal',
         )
 
         items_list = widgets.ListBox(
@@ -454,15 +466,15 @@ class WidgetsBuilder:
 
         if widget_type == 'IN_GAME':
             camera = self.create_window(
-                self.get_style('Window'),
                 content=render.Camera(self.ecs),
                 title='mapcam',
+                selector='Window',
             )
 
             msg_log = self.create_window(
-                self.get_style('Window'),
                 content=render.MessageLog(),
                 title='logs',
+                selector='Window',
             )
 
             content = containers.Split(

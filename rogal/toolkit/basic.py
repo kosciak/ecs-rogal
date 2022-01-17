@@ -34,10 +34,10 @@ class Text(TextRenderer, core.UIElement):
 
     """Text widget and renderer."""
 
-    def __init__(self, txt, **style):
+    def __init__(self, txt, **kwargs):
         self._txt = txt
         self.txt_size = self.get_txt_size(self._txt)
-        super().__init__(**style)
+        super().__init__(**kwargs)
 
     def set_style(self, *, colors=None, **style):
         self.style.update(
@@ -73,13 +73,13 @@ class Text(TextRenderer, core.UIElement):
 
 class WithTextContent:
 
-    def __init__(self, txt, **style):
+    def __init__(self, txt, **kwargs):
         self._text = Text(
             txt=txt,
         )
         super().__init__(
             content=self._text,
-            **style,
+            **kwargs,
         )
 
     def set_style(self, *, align=None, width=None, height=None, **style):
@@ -262,14 +262,14 @@ class Spinner(core.Animated, TextRenderer, core.UIElement):
 
     DEFAULT_FRAME_DURATION = 100
 
-    def __init__(self, *, duration=None, frame_duration=None, **style):
+    def __init__(self, *, duration=None, frame_duration=None, **kwargs):
         if duration is None and frame_duration is None:
             frame_duration = self.DEFAULT_FRAME_DURATION
         self.txt_size = None
         super().__init__(
             duration=duration,
             frame_duration=frame_duration,
-            **style,
+            **kwargs,
         )
 
     def set_style(self, *, frames=None, colors=None, **style):
@@ -346,9 +346,9 @@ class ProgressBar(core.Renderer, core.UIElement):
 
     DEFAULT_HEIGHT = 1
 
-    def __init__(self, value, **style):
+    def __init__(self, value, **kwargs):
         self.value = value # float value from 0.0 to 1.0
-        super().__init__(**style)
+        super().__init__(**kwargs)
 
     def set_style(self, *, segments=None, colors=None, reverse=None, **style):
         self.style.update(

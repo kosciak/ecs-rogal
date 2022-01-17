@@ -18,11 +18,11 @@ class Button(
 
     # TODO: callbacks should be replaced with signals!
 
-    def __init__(self, content, callback, value, **style):
+    def __init__(self, content, callback, value, **kwargs):
         super().__init__(
             content=content,
             callback=callback, value=value,
-            **style,
+            **kwargs,
         )
 
     def enter(self):
@@ -66,12 +66,12 @@ class WithLabel:
 
 class ToggleButton(BaseButton):
 
-    def __init__(self, content, value=None, **style):
+    def __init__(self, content, value=None, **kwargs):
         self._buttons = content
         self._value = value or 0
         super().__init__(
             content=self._buttons[self._value],
-            **style,
+            **kwargs,
         )
 
     def set_style(self, **style):
@@ -111,11 +111,11 @@ class CheckButton(WithLabel, ToggleButton):
 
 class RadioButton(WithLabel, ToggleButton):
 
-    def __init__(self, content, group, value=None, **style):
+    def __init__(self, content, group, value=None, **kwargs):
         super().__init__(
             value=value,
             content=content,
-            **style,
+            **kwargs,
         )
         group.add(self)
 

@@ -85,13 +85,13 @@ class ButtonsRow(
         decorations.Padded,
     ):
 
-    def __init__(self, buttons=None, **style):
+    def __init__(self, buttons=None, **kwargs):
         self._container = containers.Row(
             content=buttons,
         )
         super().__init__(
             content=self._container,
-            **style,
+            **kwargs,
         )
         # NOTE: width, height, align are set to self (Padded), not to container!
 

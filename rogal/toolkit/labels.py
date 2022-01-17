@@ -11,10 +11,10 @@ class Label(
         decorations.Padded,
     ):
 
-    def __init__(self, txt, **style):
+    def __init__(self, txt, **kwargs):
         super().__init__(
             txt=txt,
-            **style,
+            **kwargs,
         )
         self._inner = self._text
 
@@ -23,10 +23,10 @@ class FramedLabel(
         widgets.FramedWidget,
     ):
 
-    def __init__(self, label, **style):
+    def __init__(self, label, **kwargs):
         super().__init__(
             content=label,
-            **style,
+            **kwargs,
         )
 
     @property

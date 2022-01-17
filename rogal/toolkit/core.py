@@ -20,8 +20,8 @@ class Styled:
         super().__init__(**kwargs)
         self.selector = selector # TODO: Insert into UIStyle component
         self.style = AttrDict()
-        if style is not None:
-            self.set_style(**style)
+        style = style or {}
+        self.set_style(**style)
 
     def set_style(self, **style):
         self.style.update(style)
@@ -52,10 +52,8 @@ class UIElement(Styled):
     DEFAULT_WIDTH = FULL_SIZE
     DEFAULT_HEIGHT = FULL_SIZE
 
-    def __init__(self, **style):
-        super().__init__(
-            style=style,
-        )
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # TODO: get rid of default_z_order, it doesn't make much sense...
         self.default_z_order = self.DEFAULT_Z_ORDER
         # TODO: Move event_handlers to separate class/mixin?
@@ -141,10 +139,10 @@ class Renderer(Renderable, Styled):
 
     """Mixin for UIElements that renders it's contents on panel."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(
             renderer=self,
-            *args, **kwargs,
+            **kwargs,
         )
 
     def render(self, panel, timestamp):
@@ -155,13 +153,13 @@ class Container:
 
     """Mixin for UIElements containers with multiple child elements."""
 
-    def __init__(self, content=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, content=None, **kwargs):
         self.content = []
         if isinstance(content, (list, tuple)):
             self.extend(content)
         elif content is not None:
             self.append(content)
+        super().__init__(**kwargs)
 
     def append(self, element):
         self.content.append(element)
@@ -186,8 +184,8 @@ class Animated:
 
     """Mixin for UIElements which appearance depends on timestamp."""
 
-    def __init__(self, duration=None, frame_duration=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *, duration=None, frame_duration=None, **kwargs):
+        super().__init__(**kwargs)
         self._duration = duration
         self._frame_duration = frame_duration
         self._frames_num = None

@@ -9,9 +9,9 @@ class Bin(core.UIElement):
 
     """UIElement containing single content element."""
 
-    def __init__(self, content, **style):
+    def __init__(self, content, **kwargs):
         self.content = content
-        super().__init__(**style)
+        super().__init__(**kwargs)
 
     @property
     def align(self):
