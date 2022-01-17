@@ -72,13 +72,12 @@ class UIManager:
         )
         return element
 
-    # TODO: Rename to set_pseudoclass()
-    def set_style(self, element, selector):
-        # TODO: restyling should be done in separate system
-        content = self.ecs.manage(UIElement).get(element)
-        style = self.stylesheets.get(selector)
-        content.content.set_style(**style)
-        # TODO: set pseudoclass (to UIStyle component), and add Restyle flag
+    # TODO: Rename to set_pseudoclass() ??
+    def set_style(self, element, selector, pseudoclass=None):
+        self.ecs.manage(UIStyle).insert(
+            element,
+            selector, pseudoclass,
+        )
         self.ecs.manage(UIStyleChanged).insert(element)
 
     def redraw(self, element):

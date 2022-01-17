@@ -11,8 +11,8 @@ from ..ecs.run_state import RunState
 from .components import (
     CreateUIElement, DestroyUIElement, DestroyUIElementContent,
     ParentUIElement,
-    UIElement,
-    UIElementChanged,
+    UIElement, UIElementChanged,
+    UIStyle, UIStyleChanged,
     UIPanel,
     UIRenderer,
     InputFocus, HasInputFocus, GrabInputFocus,
@@ -83,11 +83,31 @@ class DestroyUIElementsSystem(System):
         to_destroy.clear()
 
 
+class StyleSystem(System):
+
+    INCLUDE_STATES = {
+        RunState.RENDER,
+    }
+
+    def __init__(self, ecs):
+        super().__init__(ecs)
+        self.stylesheets = self.ecs.resources.stylesheets_manager
+
+    def run(self):
+        changed = self.ecs.manage(UIStyleChanged)
+        if not changed:
+            return
+        styles = self.ecs.manage(UIStyle)
+        elements = self.ecs.manage(UIElement)
+        for element, content, style in self.ecs.join(changed.entities, elements, styles):
+            content.content.set_style(**self.stylesheets.get(style.selector))
+        changed.clear()
+
+
 class UISystem(System):
 
     def __init__(self, ecs):
         super().__init__(ecs)
-
         self.wrapper = self.ecs.resources.wrapper
         self._root = None
 
@@ -107,22 +127,24 @@ class LayoutSytem(UISystem):
         RunState.RENDER,
     }
 
+    def __init__(self, ecs):
+        super().__init__(ecs)
+        self.ui_manager = self.ecs.resources.ui_manager
+
     def run(self):
         changed = self.ecs.manage(UIElementChanged)
         if not changed:
             return
-        ui_manager = self.ecs.resources.ui_manager
         elements = self.ecs.manage(UIElement)
         panels = self.ecs.manage(UIPanel)
         for element, content in self.ecs.join(changed.entities, elements):
             panel = panels.get(element)
             if panel is None:
-                content.layout(ui_manager, element, panel=self.root, z_order=0)
+                content.layout(self.ui_manager, element, panel=self.root, z_order=0)
             else:
                 # TODO: This works ONLY if we are redrawing children, but not widget itself
                 #       for example after resizing it! It would need panel from it's parent!
-                content.layout_content(ui_manager, element, panel=panel.panel, z_order=panel.z_order)
-
+                content.layout_content(self.ui_manager, element, panel=panel.panel, z_order=panel.z_order)
         changed.clear()
 
 

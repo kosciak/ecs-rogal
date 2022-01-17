@@ -26,6 +26,8 @@ class Styled:
     def set_style(self, **style):
         self.style.update(style)
 
+    # TODO: set_pseudoclass() ?
+
 
 class Renderable:
 

@@ -28,19 +28,19 @@ class Button(
     def enter(self):
         super().enter()
         # TODO: self.manager.set_pseudoclass(); move it to States?
-        self.manager.set_style(self.element, '.button:hover')
+        self.manager.set_style(self.element, self.selector, 'hover')
 
     def leave(self):
         super().leave()
-        self.manager.set_style(self.element, '.button')
+        self.manager.set_style(self.element, self.selector)
 
     def press(self, position):
         super().press(position)
-        self.manager.set_style(self.element, '.button:active')
+        self.manager.set_style(self.element, self.selector, 'active')
 
     def release(self, position):
         super().release(position)
-        self.manager.set_style(self.element, '.button:hover')
+        self.manager.set_style(self.element, self.selector, 'hover')
 
     def activate(self):
         self.emit('clicked')
