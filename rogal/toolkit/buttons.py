@@ -102,6 +102,10 @@ class ToggleButton(BaseButton):
     def activate(self):
         self.next()
 
+    def __iter__(self):
+        yield from super().__iter__()
+        yield from (button for button in self._buttons if not button.element)
+
 
 # TODO: Rename to IndicatorButton?
 #       And CheckButton / RadioButton would be Indicator+Label inside single Widget?

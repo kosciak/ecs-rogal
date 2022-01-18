@@ -1,6 +1,6 @@
 import time
 
-from ..collections.attrdict import AttrDict, DefaultAttrDict
+from ..collections.attrdict import AttrDict
 from ..geometry import Position, Size
 
 from ..console.core import Align
@@ -16,12 +16,22 @@ class ZOrder:
 
 class Styled:
 
+    """Mixin for styles and stylesheets integration."""
+
     def __init__(self, *, selector=None, style=None, **kwargs):
         super().__init__(**kwargs)
-        self.selector = selector # TODO: Insert into UIStyle component
+        self.selector = selector
         self.style = AttrDict()
+        # NOTE: call set_style even if style is None for defaults to be set correctly
         style = style or {}
         self.set_style(**style)
+
+    def insert(self, manager, element):
+        super().insert(manager, self.element)
+        manager.insert(
+            element,
+            selector=self.selector,
+        )
 
     def set_style(self, **style):
         self.style.update(style)
@@ -29,24 +39,13 @@ class Styled:
     # TODO: set_pseudoclass() ?
 
 
-class Renderable:
+class Layoutable(Styled):
 
-    def __init__(self, *, renderer, **kwargs):
-        self.renderer = renderer
-        super().__init__(**kwargs)
+    """Base class for elements that can be layouted on the panel.
 
-    def layout(self, manager, element, panel, z_order):
-        z_order = super().layout(manager, element, panel, z_order)
-        manager.insert(
-            element,
-            renderer=self.renderer,
-        )
-        return z_order
+    Calculating (sub)panel based on width/height and align.
 
-
-class UIElement(Styled):
-
-    """Abstract UI element that can be layouted on a panel."""
+    """
 
     DEFAULT_Z_ORDER = 0
     DEFAULT_ALIGN = Align.TOP_LEFT
@@ -58,9 +57,6 @@ class UIElement(Styled):
         super().__init__(**kwargs)
         # TODO: get rid of default_z_order, it doesn't make much sense...
         self.default_z_order = self.DEFAULT_Z_ORDER
-        # TODO: Move event_handlers to separate class/mixin?
-        self.events_handlers = DefaultAttrDict(list)
-        # TODO: Store element, panel or offset/size?
 
     def set_style(self, *, align=None, width=None, height=None, **style):
         if align is None:
@@ -106,40 +102,58 @@ class UIElement(Styled):
         return size
 
     def get_layout_panel(self, panel):
-        if not (self.width or self.height):
-            return panel
         size = self.get_size(panel)
-        position = panel.get_position(size, self.align)
-        panel = panel.create_panel(position, size)
+        if not size == panel.size:
+            position = panel.get_position(size, self.align)
+            panel = panel.create_panel(position, size)
         return panel
 
-    def layout(self, manager, element, panel, z_order):
-        # TODO: Split creation/insertion and layout (as just positioning on panel)?
+    def layout(self, manager, panel, z_order):
         z_order = z_order or self.default_z_order
         panel = self.get_layout_panel(panel)
         manager.insert(
-            element,
+            self.element,
             panel=panel,
             z_order=z_order,
         )
-        manager.bind(
-            element,
-            **self.events_handlers,
-        )
-        if self.events_handlers:
-            # TODO: Not sure about this...
-            #       No need to grab focus for mouse only handlers
-            manager.grab_focus(element)
+        # TODO: return panel, z_order
+        return self.layout_content(manager, panel, z_order)
 
-        return self.layout_content(manager, element, panel, z_order)
-
-    def layout_content(self, manager, parent, panel, z_order):
+    def layout_content(self, manager, panel, z_order):
         return z_order
+
+
+class UIElement(Layoutable):
+
+    """Abstract UI element."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.element = None
+
+    def insert(self, manager, element):
+        self.element = element
+
+
+class Renderable:
+
+    """Mixin for elements with renderer."""
+
+    def __init__(self, *, renderer, **kwargs):
+        self.renderer = renderer
+        super().__init__(**kwargs)
+
+    def insert(self, manager, element):
+        super().insert(manager, element)
+        manager.insert(
+            element,
+            renderer=self.renderer,
+        )
 
 
 class Renderer(Renderable, Styled):
 
-    """Mixin for UIElements that renders it's contents on panel."""
+    """Mixin for elements that render it's contents on a panel."""
 
     def __init__(self, **kwargs):
         super().__init__(
@@ -153,41 +167,32 @@ class Renderer(Renderable, Styled):
 
 class Container:
 
-    """Mixin for UIElements containers with multiple child elements."""
+    """Mixin for containers with child element(s)."""
 
-    def __init__(self, content=None, **kwargs):
-        self.content = []
-        if isinstance(content, (list, tuple)):
-            self.extend(content)
-        elif content is not None:
-            self.append(content)
-        super().__init__(**kwargs)
+    def insert(self, manager, element):
+        super().insert(manager, element)
+        for child in self:
+            child.insert(
+                manager,
+                manager.create_child(element),
+            )
 
-    def append(self, element):
-        self.content.append(element)
+    # TODO: layout(self, manager, panel, z_order):
 
-    def extend(self, elements):
-        self.content.extend(elements)
-
-    def remove(self, element):
-        self.content.remove(element)
-
-    def layout_content(self, manager, parent, panel, z_order):
+    def layout_content(self, manager, panel, z_order):
         raise NotImplementedError()
 
-    def __len__(self):
-        return len(self.content)
-
     def __iter__(self):
-        yield from self.content
+        raise NotImplementedError()
 
 
 class Animated:
 
-    """Mixin for UIElements which appearance depends on timestamp."""
+    """Mixin for elements which appearance depends on timestamp."""
 
     def __init__(self, *, duration=None, frame_duration=None, **kwargs):
         super().__init__(**kwargs)
+        # TODO: Store settings in style
         self._duration = duration
         self._frame_duration = frame_duration
         self._frames_num = None

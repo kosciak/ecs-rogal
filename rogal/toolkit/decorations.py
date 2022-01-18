@@ -105,7 +105,7 @@ class Framed(containers.Bin):
         # TODO: Consider using multiple nested frames?
 
     def set_style(self, Frame=None, **style):
-        Frame = Frame or {} # TODO: if Frame is not None: ???
+        Frame = Frame or {}
         self.frame.set_style(**Frame)
         super().set_style(**style)
 
@@ -127,12 +127,14 @@ class Framed(containers.Bin):
             return height + self.frame.extents.height
         return self.FULL_SIZE
 
-    def layout_content(self, manager, parent, panel, z_order):
-        element = manager.create_child(parent)
-        self.frame.layout(manager, element, panel, z_order+1)
-        element = manager.create_child(parent)
+    def layout_content(self, manager, panel, z_order):
+        self.frame.layout(manager, panel, z_order+1)
         panel = self.frame.get_inner_panel(panel)
-        return self.content.layout(manager, element, panel, z_order+2)
+        return self.content.layout(manager, panel, z_order+2)
+
+    def __iter__(self):
+        yield from super().__iter__()
+        yield self.frame
 
 
 class WithFramedContent:
@@ -201,26 +203,25 @@ class WithClearedContent:
         return self._cleared.colors
 
 
+# TODO: Needs fixing!
 class PostProcessed(containers.Bin):
 
     """Adds list of post_renderers that alter already rendered element."""
 
     def __init__(self, content, post_renderers=None):
-        # TODO: Store it style somehow
+        # TODO: Store in style somehow
         self.post_renderer = renderers.Chain(post_renderers)
         super().__init__(
             content=content,
         )
 
-    def layout_content(self, manager, parent, panel, z_order):
-        z_order = super().layout_content(manager, parent, panel, z_order)
-        element = manager.create_child(parent)
+    def layout_content(self, manager, panel, z_order):
+        z_order = super().layout_content(manager, panel, z_order)
         z_order += 1
         manager.insert(
-            element,
+            this.post_renderer.element,
             panel=panel,
             z_order=z_order,
-            renderer=self.post_renderer,
         )
         return z_order
 
@@ -231,6 +232,10 @@ class PostProcessed(containers.Bin):
     @post_renderers.setter
     def post_renderers(self, post_renderers):
         self.post_renderer.renderers = post_renderers or []
+
+    def __iter__(self):
+        yield from super().__iter__()
+        yield self.post_renderer
 
 
 class WithPostProcessedContent:

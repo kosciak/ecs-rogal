@@ -2,6 +2,8 @@ from enum import Enum, auto
 
 from ..events import handlers
 
+from .handlers import HandleEvents
+
 
 class WidgetState(Enum):
     HOVERED = auto()
@@ -65,7 +67,7 @@ class Stateful:
     #         self.select()
 
 
-class Clickable(Stateful):
+class Clickable(Stateful, HandleEvents):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -108,7 +110,7 @@ class Clickable(Stateful):
         pass
 
 
-class Hoverable(Stateful):
+class Hoverable(Stateful, HandleEvents):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -143,7 +145,7 @@ class Hoverable(Stateful):
 # TODO: Scrollable?
 
 
-class WithHotkey(Stateful):
+class WithHotkey(Stateful, HandleEvents):
 
     def __init__(self, ecs, key_binding, *args, **kwargs):
         super().__init__(*args, **kwargs)

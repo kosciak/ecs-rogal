@@ -5,27 +5,25 @@ from . import basic
 from . import containers
 from . import decorations
 from . import renderers
+from . import handlers
 from . import states
-from . import signals
 
 
 class Widget(
-        signals.SignalsEmitter,
+        handlers.EmitsSignals,
     ):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.element = None
         self.manager = None
 
-    def layout(self, manager, element, panel, z_order):
+    def insert(self, manager, element):
         self.manager = manager
-        self.element = element
+        super().insert(manager, element)
         manager.insert(
             element,
             content=self,
         )
-        return super().layout(manager, element, panel, z_order)
 
     def redraw(self):
         if self.manager:
@@ -40,7 +38,7 @@ class FramedWidget(
         Widget,
         decorations.WithFramedContent,
         decorations.WithClearedContent,
-        decorations.WithPostProcessedContent,
+        # decorations.WithPostProcessedContent,
         decorations.Padded,
     ):
 
@@ -67,15 +65,18 @@ class WithOverlay:
         self.overlay = OrderedAttrDict()
         super().__init__(*args, **kwargs)
 
-    def layout_content(self, manager, parent, panel, z_order):
+    def layout_content(self, manager, panel, z_order):
         # Layout padded, framed, cleared contents...
-        z_order = super().layout_content(manager, parent, panel, z_order)
+        z_order = super().layout_content(manager, panel, z_order)
 
         # ... and all overlayed elements
         for child in self.overlay.values():
-            element = manager.create_child(parent)
-            z_order = child.layout(manager, element, panel, z_order+1)
+            z_order = child.layout(manager, panel, z_order+1)
         return z_order
+
+    def __iter__(self):
+        yield from super().__iter__()
+        yield from self.overlay.values()
 
 
 # TODO: rename to PaddedRow? It could be used for anything, not only Buttons
@@ -105,7 +106,7 @@ class ButtonsRow(
 class Screen(
         Widget,
         decorations.WithClearedContent,
-        decorations.WithPostProcessedContent,
+        # decorations.WithPostProcessedContent,
         containers.Stack,
     ):
 

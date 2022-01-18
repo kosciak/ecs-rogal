@@ -22,16 +22,29 @@ from .components import (
 log = logging.getLogger(__name__)
 
 
+class ChildrenGetter:
+
+    def get_children(self, parents):
+        parent_elements = self.ecs.manage(ParentUIElement)
+        children = set()
+        for element, parent in parent_elements:
+            if parent in parents:
+                children.add(element)
+        if children:
+            children.update(self.get_children(children))
+        return children
+
+
 class CreateUIElementsSystem(System):
 
     INCLUDE_STATES = {
-        RunState.PRE_RUN,
         RunState.RENDER,
     }
 
     def __init__(self, ecs):
         super().__init__(ecs)
         self.builder = self.ecs.resources.widgets_builder
+        self.ui_manager = self.ecs.resources.ui_manager
 
     def run(self):
         to_create = self.ecs.manage(CreateUIElement)
@@ -45,42 +58,30 @@ class CreateUIElementsSystem(System):
                 # TODO: pass element to builder?
                 create.widget_type, create.context,
             )
+            content.insert(self.ui_manager, element)
             elements.insert(element, content)
             changed.insert(element)
 
         to_create.clear()
 
 
-class DestroyUIElementsSystem(System):
+class DestroyUIElementsSystem(ChildrenGetter, System):
 
     INCLUDE_STATES = {
         RunState.RENDER,
     }
 
-    def get_children(self, parents):
-        parent_elements = self.ecs.manage(ParentUIElement)
-        children = set()
-        for element, parent in parent_elements:
-            if parent in parents:
-                children.add(element)
-        if children:
-            children.update(self.get_children(children))
-        return children
-
     def run(self):
         to_destroy = self.ecs.manage(DestroyUIElement)
-        if to_destroy:
-            parents = set(to_destroy.entities)
-            self.ecs.remove(*parents)
-            children = self.get_children(parents)
-            self.ecs.remove(*children)
-        to_destroy.clear()
-
-        to_destroy = self.ecs.manage(DestroyUIElementContent)
-        if to_destroy:
-            children = self.get_children(to_destroy.entities)
-            self.ecs.remove(*children)
-        to_destroy.clear()
+        to_destroy_contents = self.ecs.manage(DestroyUIElementContent)
+        if (not to_destroy) and (not to_destroy_contents):
+            return
+        self.ecs.remove(
+            *self.get_children(to_destroy_contents.entities),
+            *self.get_children(to_destroy.entities),
+            *to_destroy.entities,
+        )
+        to_destroy_contents.clear()
 
 
 class StyleSystem(System):
@@ -120,10 +121,9 @@ class UISystem(System):
         return self._root
 
 
-class LayoutSytem(UISystem):
+class LayoutSytem(ChildrenGetter, UISystem):
 
     INCLUDE_STATES = {
-        # RunState.PRE_RUN, # TODO: Not sure why it MUST be enabled during PRE_RUN...
         RunState.RENDER,
     }
 
@@ -137,14 +137,19 @@ class LayoutSytem(UISystem):
             return
         elements = self.ecs.manage(UIElement)
         panels = self.ecs.manage(UIPanel)
+
+        # Remove UIPanel from all child elements
+        children = self.get_children(changed.entities)
+        panels.remove(*children)
+
         for element, content in self.ecs.join(changed.entities, elements):
             panel = panels.get(element)
             if panel is None:
-                content.layout(self.ui_manager, element, panel=self.root, z_order=0)
+                content.layout(self.ui_manager, panel=self.root, z_order=0)
             else:
                 # TODO: This works ONLY if we are redrawing children, but not widget itself
                 #       for example after resizing it! It would need panel from it's parent!
-                content.layout_content(self.ui_manager, element, panel=panel.panel, z_order=panel.z_order)
+                content.layout_content(self.ui_manager, panel=panel.panel, z_order=panel.z_order)
         changed.clear()
 
 

@@ -12,11 +12,11 @@ class Window(
 
     def __init__(self, content, *,
                  on_key_press=None,
-                 **style,
+                 **kwargs,
                 ):
         super().__init__(
             content=content,
-            **style,
+            **kwargs,
         )
 
         # TODO: Need to be moved somewhere else, just use signals?

@@ -7,7 +7,7 @@ class Label(
         widgets.Widget,
         basic.WithTextContent,
         decorations.WithClearedContent,
-        decorations.WithPostProcessedContent,
+        # decorations.WithPostProcessedContent,
         decorations.Padded,
     ):
 

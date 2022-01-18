@@ -27,11 +27,11 @@ class UIElement(Component):
     def __init__(self, content):
         self.content = content
 
-    def layout(self, ui_manager, parent, panel, z_order=0):
-        self.content.layout(ui_manager, parent, panel, z_order)
+    def layout(self, ui_manager, panel, z_order=0):
+        self.content.layout(ui_manager, panel, z_order)
 
-    def layout_content(self, ui_manager, parent, panel, z_order):
-        self.content.layout_content(ui_manager, parent, panel, z_order)
+    def layout_content(self, ui_manager, panel, z_order):
+        self.content.layout_content(ui_manager, panel, z_order)
 
 
 UIElementChanged = Flag('UIElementChanged')

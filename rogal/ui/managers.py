@@ -72,19 +72,6 @@ class UIManager:
         )
         return element
 
-    # TODO: Rename to set_pseudoclass() ??
-    def set_style(self, element, selector, pseudoclass=None):
-        self.ecs.manage(UIStyle).insert(
-            element,
-            selector, pseudoclass,
-        )
-        self.ecs.manage(UIStyleChanged).insert(element)
-
-    def redraw(self, element):
-        # TODO: redraw without destroying contents?
-        self.ecs.manage(DestroyUIElementContent).insert(element)
-        self.ecs.manage(UIElementChanged).insert(element)
-
     def insert(self, element, *,
                content=None,
                renderer=None,
@@ -108,6 +95,18 @@ class UIManager:
             self.ecs.manage(UIPanel).insert(
                 element, panel, z_order or ZOrder.BASE,
             )
+
+    # TODO: Rename to set_pseudoclass() ??
+    def set_style(self, element, selector, pseudoclass=None):
+        self.ecs.manage(UIStyle).insert(
+            element,
+            selector, pseudoclass,
+        )
+        self.ecs.manage(UIStyleChanged).insert(element)
+
+    def redraw(self, element):
+        # self.ecs.manage(DestroyUIElementContent).insert(element)
+        self.ecs.manage(UIElementChanged).insert(element)
 
     def bind(self, element, **handlers):
         self.events.bind(element, **handlers)

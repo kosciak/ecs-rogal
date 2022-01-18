@@ -95,6 +95,7 @@ TextInput:
 ProgressBar:
   fg: BASE_RED
   bg: WHITE
+  width: 24
   segments: BLOCKS_FADE_QUARTS
   reverse: true
 

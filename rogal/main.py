@@ -150,6 +150,7 @@ def run(wrapper):
         systems.ui.DestroyUIElementsSystem(ecs),
         systems.ui.CreateUIElementsSystem(ecs),
 
+        systems.ui.StyleSystem(ecs),
         systems.ui.LayoutSytem(ecs),
         systems.ui.RenderSystem(ecs),
 
