@@ -6,8 +6,8 @@ from . import widgets
 
 class Window(
         states.Hoverable,
-        widgets.WithOverlay,
         widgets.FramedWidget,
+        decorations.Overlayed,
     ):
 
     def __init__(self, content, *,

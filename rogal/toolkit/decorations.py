@@ -261,5 +261,44 @@ class WithPostProcessedContent:
         # TODO: self.redraw() ?
 
 
+class Overlayed(containers.Bin):
+
+    def __init__(self, content, **kwargs):
+        self._overlay = containers.NamedStack()
+        super().__init__(
+            content=content,
+            **kwargs,
+        )
+
+    @property
+    def overlay(self):
+        return self._overlay.content
+
+    def layout_content(self, manager, panel, z_order):
+        _, z_order = self.content.layout(manager, panel, z_order+1)
+        _, z_order = self._overlay.layout(manager, panel, z_order+1)
+        return z_order
+
+    def __iter__(self):
+        yield from super().__iter__()
+        yield self._overlay
+
+
+class WithOverlayedContent:
+
+    def __init__(self, content, **kwargs):
+        self._overlayed = Overlayed(
+            content=content,
+        )
+        super().__init__(
+            content=self._overlayed,
+            **kwargs,
+        )
+
+    @property
+    def overlay(self):
+        return self._overlayed.content
+
+
 # TODO: Consider: Positioned(content, position), need move(vector) and maybe move_to(position)
 

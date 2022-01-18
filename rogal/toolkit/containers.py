@@ -1,36 +1,10 @@
+from ..collections.attrdict import OrderedAttrDict
+
 from ..geometry import Position, Size
 
 from ..console.core import Align
 
 from . import core
-
-
-class MultiContainer(core.Container):
-
-    """Mixin for containers with multiple child elements."""
-
-    def __init__(self, content=None, **kwargs):
-        self.content = []
-        if isinstance(content, (list, tuple)):
-            self.extend(content)
-        elif content is not None:
-            self.append(content)
-        super().__init__(**kwargs)
-
-    def append(self, element):
-        self.content.append(element)
-
-    def extend(self, elements):
-        self.content.extend(elements)
-
-    def remove(self, element):
-        self.content.remove(element)
-
-    def __len__(self):
-        return len(self.content)
-
-    def __iter__(self):
-        yield from self.content
 
 
 class Bin(core.Container, core.UIElement):
@@ -67,7 +41,35 @@ class Bin(core.Container, core.UIElement):
         yield self.content
 
 
-class Stack(MultiContainer, core.UIElement):
+class ListContainer(core.Container):
+
+    """Mixin for containers with child elements stored in a list."""
+
+    def __init__(self, content=None, **kwargs):
+        self.content = []
+        if isinstance(content, (list, tuple)):
+            self.extend(content)
+        elif content is not None:
+            self.append(content)
+        super().__init__(**kwargs)
+
+    def append(self, element):
+        self.content.append(element)
+
+    def extend(self, elements):
+        self.content.extend(elements)
+
+    def remove(self, element):
+        self.content.remove(element)
+
+    def __len__(self):
+        return len(self.content)
+
+    def __iter__(self):
+        yield from self.content
+
+
+class Stack(ListContainer, core.UIElement):
 
     """Free form container where all children are stacked on top of each other.
 
@@ -80,6 +82,28 @@ class Stack(MultiContainer, core.UIElement):
         for child in self.content:
             _, z_order = child.layout(manager, panel, z_order+1)
         return z_order
+
+
+class NamedStack(core.Container, core.UIElement):
+
+    """Works like Stack, but content is an ordered dict."""
+
+    def __init__(self, content=None, **kwargs):
+        self.content = OrderedAttrDict()
+        if content:
+            self.content.update(content)
+        super().__init__(**kwargs)
+
+    def layout_content(self, manager, panel, z_order):
+        for child in self.content.values():
+            _, z_order = child.layout(manager, panel, z_order+1)
+        return z_order
+
+    def __len__(self):
+        return len(self.content)
+
+    def __iter__(self):
+        yield from self.content.values()
 
 
 def calc_sizes(available_size, sizes):
@@ -95,7 +119,7 @@ def calc_sizes(available_size, sizes):
     return [size or default_size for size in sizes]
 
 
-class Row(MultiContainer, core.UIElement):
+class Row(ListContainer, core.UIElement):
 
     """Horizontal container.
 
@@ -147,7 +171,7 @@ class Row(MultiContainer, core.UIElement):
 #     pass
 
 
-class List(MultiContainer, core.UIElement):
+class List(ListContainer, core.UIElement):
 
     """Vertical container.
 
@@ -190,7 +214,7 @@ class List(MultiContainer, core.UIElement):
         return max(z_orders)
 
 
-class Split(MultiContainer, core.UIElement):
+class Split(ListContainer, core.UIElement):
 
     """Container that renders elements on each side of splitted panel."""
 
@@ -217,7 +241,7 @@ class Split(MultiContainer, core.UIElement):
         return z_order
 
 
-class WithContainer:
+class WithListContainer:
 
     def append(self, element):
         self._container.append(element)

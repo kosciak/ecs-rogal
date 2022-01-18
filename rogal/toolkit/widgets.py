@@ -58,32 +58,10 @@ class FramedWidget(
         self.redraw()
 
 
-# TODO: Consider moving to decorations or containers
-# TODO: containers.Overlayed - content+containers.Overlay
-class WithOverlay:
-
-    def __init__(self, *args, **kwargs):
-        self.overlay = OrderedAttrDict()
-        super().__init__(*args, **kwargs)
-
-    def layout_content(self, manager, panel, z_order):
-        # Layout padded, framed, cleared contents...
-        z_order = super().layout_content(manager, panel, z_order)
-
-        # ... and all overlayed elements
-        for child in self.overlay.values():
-            _, z_order = child.layout(manager, panel, z_order+1)
-        return z_order
-
-    def __iter__(self):
-        yield from super().__iter__()
-        yield from self.overlay.values()
-
-
 # TODO: rename to PaddedRow? It could be used for anything, not only Buttons
 class ButtonsRow(
         Widget,
-        containers.WithContainer,
+        containers.WithListContainer,
         decorations.Padded,
     ):
 
