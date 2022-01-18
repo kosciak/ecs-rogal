@@ -116,11 +116,7 @@ class Layoutable(Styled):
             panel=panel,
             z_order=z_order,
         )
-        # TODO: return panel, z_order
-        return self.layout_content(manager, panel, z_order)
-
-    def layout_content(self, manager, panel, z_order):
-        return z_order
+        return panel, z_order
 
 
 class UIElement(Layoutable):
@@ -177,7 +173,10 @@ class Container:
                 manager.create_child(element),
             )
 
-    # TODO: layout(self, manager, panel, z_order):
+    def layout(self, manager, panel, z_order):
+        panel, z_order = super().layout(manager, panel, z_order)
+        z_order = self.layout_content(manager, panel, z_order)
+        return panel, z_order
 
     def layout_content(self, manager, panel, z_order):
         raise NotImplementedError()

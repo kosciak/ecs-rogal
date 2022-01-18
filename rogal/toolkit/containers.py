@@ -26,9 +26,6 @@ class MultiContainer(core.Container):
     def remove(self, element):
         self.content.remove(element)
 
-    def layout_content(self, manager, panel, z_order):
-        raise NotImplementedError()
-
     def __len__(self):
         return len(self.content)
 
@@ -63,7 +60,8 @@ class Bin(core.Container, core.UIElement):
         return self.content.min_height
 
     def layout_content(self, manager, panel, z_order):
-        return self.content.layout(manager, panel, z_order+1)
+        _, z_order = self.content.layout(manager, panel, z_order+1)
+        return z_order
 
     def __iter__(self):
         yield self.content
@@ -80,7 +78,7 @@ class Stack(MultiContainer, core.UIElement):
 
     def layout_content(self, manager, panel, z_order):
         for child in self.content:
-            z_order = child.layout(manager, panel, z_order+1)
+            _, z_order = child.layout(manager, panel, z_order+1)
         return z_order
 
 
@@ -137,7 +135,7 @@ class Row(MultiContainer, core.UIElement):
             # size = Size(calc_widths[i], child.height or panel.height)
             size = Size(calc_widths[i], panel.height)
             subpanel = panel.create_panel(position, size)
-            child_z_order = child.layout(manager, subpanel, z_order+1)
+            _, child_z_order = child.layout(manager, subpanel, z_order+1)
             z_orders.append(child_z_order or 0)
             position += Position(calc_widths[i], 0)
         return max(z_orders)
@@ -186,7 +184,7 @@ class List(MultiContainer, core.UIElement):
             #       for containers (e.g. Row) to work correctly
             size = Size(panel.width, calc_heights[i])
             subpanel = panel.create_panel(position, size)
-            child_z_order = child.layout(manager, subpanel, z_order+1)
+            _, child_z_order = child.layout(manager, subpanel, z_order+1)
             z_orders.append(child_z_order or 0)
             position += Position(0, calc_heights[i])
         return max(z_orders)
@@ -210,7 +208,7 @@ class Split(MultiContainer, core.UIElement):
         subpanels = panel.split(self.left, self.right, self.top, self.bottom)
         for i, child in enumerate(self.content):
             if child:
-                child_z_order = child.layout(manager, subpanels[i], z_order+1)
+                _, child_z_order = child.layout(manager, subpanels[i], z_order+1)
                 z_orders.append(child_z_order or 0)
             if i >= 2:
                 break

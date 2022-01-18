@@ -130,7 +130,8 @@ class Framed(containers.Bin):
     def layout_content(self, manager, panel, z_order):
         self.frame.layout(manager, panel, z_order+1)
         panel = self.frame.get_inner_panel(panel)
-        return self.content.layout(manager, panel, z_order+2)
+        _, zorder = self.content.layout(manager, panel, z_order+2)
+        return z_order
 
     def __iter__(self):
         yield from super().__iter__()

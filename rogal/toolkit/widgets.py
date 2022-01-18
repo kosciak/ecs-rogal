@@ -58,7 +58,8 @@ class FramedWidget(
         self.redraw()
 
 
-# TODO: Consider moving to decorations
+# TODO: Consider moving to decorations or containers
+# TODO: containers.Overlayed - content+containers.Overlay
 class WithOverlay:
 
     def __init__(self, *args, **kwargs):
@@ -71,7 +72,7 @@ class WithOverlay:
 
         # ... and all overlayed elements
         for child in self.overlay.values():
-            z_order = child.layout(manager, panel, z_order+1)
+            _, z_order = child.layout(manager, panel, z_order+1)
         return z_order
 
     def __iter__(self):
