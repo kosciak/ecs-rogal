@@ -204,7 +204,6 @@ class WithClearedContent:
         return self._cleared.colors
 
 
-# TODO: Needs fixing!
 class PostProcessed(containers.Bin):
 
     """Adds list of post_renderers that alter already rendered element."""
@@ -288,7 +287,7 @@ class WithOverlayedContent:
 
     @property
     def overlay(self):
-        return self._overlayed.content
+        return self._overlayed.overlay
 
 
 # TODO: Consider: Positioned(content, position), need move(vector) and maybe move_to(position)

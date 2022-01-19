@@ -34,11 +34,11 @@ class Widget(
         self.emit('destroyed')
 
 
-class FramedWidget(
+class WidgetWithClearedFramedContents(
         Widget,
         decorations.WithFramedContent,
         decorations.WithClearedContent,
-        decorations.Padded,
+        # decorations.Padded,
     ):
 
     def set_style(self, **style):

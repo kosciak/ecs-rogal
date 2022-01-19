@@ -6,8 +6,12 @@ from . import widgets
 
 class Window(
         states.Hoverable,
-        widgets.FramedWidget,
-        decorations.Overlayed,
+        widgets.WidgetWithClearedFramedContents,
+        # decorations.WithFramedContent,
+        # decorations.WithClearedContent,
+        decorations.WithOverlayedContent,
+        decorations.WithPostProcessedContent,
+        decorations.Padded,
     ):
 
     def __init__(self, content, *,

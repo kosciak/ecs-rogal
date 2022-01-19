@@ -90,6 +90,7 @@ class WidgetsBuilder:
     def create_modal_window(self, content, title=None, on_key_press=None, selector=None):
         window = windows.Window(
             content=content,
+            # post_renderers=[renderers.InvertColors(), ],
             on_key_press=on_key_press,
             selector=selector,
             style=self.get_style(selector),

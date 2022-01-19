@@ -20,7 +20,10 @@ class Label(
 
 
 class FramedLabel(
-        widgets.FramedWidget,
+        widgets.WidgetWithClearedFramedContents,
+        # decorations.WithFramedContent,
+        # decorations.WithClearedContent,
+        decorations.Padded,
     ):
 
     def __init__(self, label, **kwargs):
