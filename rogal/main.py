@@ -153,6 +153,7 @@ def run(wrapper):
         systems.ui.StyleSystem(ecs),
         systems.ui.LayoutSytem(ecs),
         systems.ui.RenderSystem(ecs),
+        systems.ui.DisplaySystem(ecs),
 
         systems.ui.InputFocusSystem(ecs),
         systems.ui.OnScreenFocusSystem(ecs),

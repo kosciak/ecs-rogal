@@ -214,9 +214,6 @@ class RenderSystem(UISystem):
     }
 
     def run(self):
-        # Clear panel
-        self.root.clear()
-
         # Render all panels
         panels = self.ecs.manage(UIPanel)
         renderers = self.ecs.manage(UIRenderer)
@@ -231,6 +228,14 @@ class RenderSystem(UISystem):
             with perf.Perf(renderer.renderer.render):
                 renderer.render(panel.panel, timestamp)
 
+
+class DisplaySystem(UISystem):
+
+    INCLUDE_STATES = {
+        RunState.RENDER,
+    }
+
+    def run(self):
         # Show rendered panel
         with perf.Perf(self.wrapper.render):
             self.wrapper.render(self.root)
