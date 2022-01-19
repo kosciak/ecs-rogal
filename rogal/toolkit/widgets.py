@@ -38,7 +38,6 @@ class FramedWidget(
         Widget,
         decorations.WithFramedContent,
         decorations.WithClearedContent,
-        # decorations.WithPostProcessedContent,
         decorations.Padded,
     ):
 

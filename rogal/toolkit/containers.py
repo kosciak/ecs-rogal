@@ -7,7 +7,7 @@ from ..console.core import Align
 from . import core
 
 
-class Bin(core.Container, core.UIElement):
+class Bin(core.Container, core.WithSize):
 
     """Container with only one child element."""
 
@@ -69,7 +69,7 @@ class ListContainer(core.Container):
         yield from self.content
 
 
-class Stack(ListContainer, core.UIElement):
+class Stack(ListContainer, core.WithSize):
 
     """Free form container where all children are stacked on top of each other.
 
@@ -84,7 +84,7 @@ class Stack(ListContainer, core.UIElement):
         return z_order
 
 
-class NamedStack(core.Container, core.UIElement):
+class NamedStack(core.Container, core.WithSize):
 
     """Works like Stack, but content is an ordered dict."""
 
@@ -119,7 +119,7 @@ def calc_sizes(available_size, sizes):
     return [size or default_size for size in sizes]
 
 
-class Row(ListContainer, core.UIElement):
+class Row(ListContainer, core.WithSize):
 
     """Horizontal container.
 
@@ -171,7 +171,7 @@ class Row(ListContainer, core.UIElement):
 #     pass
 
 
-class List(ListContainer, core.UIElement):
+class List(ListContainer, core.WithSize):
 
     """Vertical container.
 
@@ -214,7 +214,7 @@ class List(ListContainer, core.UIElement):
         return max(z_orders)
 
 
-class Split(ListContainer, core.UIElement):
+class Split(ListContainer, core.WithSize):
 
     """Container that renders elements on each side of splitted panel."""
 

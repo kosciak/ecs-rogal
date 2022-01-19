@@ -11,7 +11,7 @@ from . import renderers
 """Most basic UI elements - building blocks for more complicated ones."""
 
 
-class TextRenderer(core.Renderer):
+class TextRenderer(core.WithSize, core.Renderer):
 
     def get_txt_size(self, txt):
         lines = txt.splitlines() or ['', ]
@@ -30,7 +30,7 @@ class TextRenderer(core.Renderer):
         self.render_txt(panel, self.txt, self.colors)
 
 
-class Text(TextRenderer, core.UIElement):
+class Text(TextRenderer):
 
     """Text widget and renderer."""
 
@@ -142,7 +142,7 @@ class Decorations(collections.namedtuple(
 Decorations.NONE = Decorations()
 
 
-class Frame(core.Renderer, core.UIElement):
+class Frame(core.Styled, core.Renderer):
 
     """Frame decorations."""
 
@@ -258,7 +258,7 @@ class Cursor(core.Renderer, core.UIElement):
             panel.invert(self.position)
 
 
-class Spinner(core.Animated, TextRenderer, core.UIElement):
+class Spinner(core.Animated, TextRenderer):
 
     DEFAULT_FRAME_DURATION = 100
 
@@ -342,7 +342,7 @@ class ProgressBarSegments(collections.namedtuple(
         return fractions
 
 
-class ProgressBar(core.Renderer, core.UIElement):
+class ProgressBar(core.WithSize, core.Renderer):
 
     DEFAULT_HEIGHT = 1
 

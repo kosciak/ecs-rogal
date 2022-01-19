@@ -14,6 +14,31 @@ class ZOrder:
     MODAL = 100
 
 
+class UIElement:
+
+    """Base UI element."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.element = None
+
+    def insert(self, manager, element):
+        self.element = element
+
+
+class Layoutable(UIElement):
+
+    """Base class for elements that can be layouted on the panel."""
+
+    def layout(self, manager, panel, z_order):
+        manager.insert(
+            self.element,
+            panel=panel,
+            z_order=z_order,
+        )
+        return panel, z_order
+
+
 class Styled:
 
     """Mixin for styles and stylesheets integration."""
@@ -27,7 +52,7 @@ class Styled:
         self.set_style(**style)
 
     def insert(self, manager, element):
-        super().insert(manager, self.element)
+        super().insert(manager, element)
         manager.insert(
             element,
             selector=self.selector,
@@ -39,13 +64,9 @@ class Styled:
     # TODO: set_pseudoclass() ?
 
 
-class Layoutable(Styled):
+class WithSize(Styled, Layoutable):
 
-    """Base class for elements that can be layouted on the panel.
-
-    Calculating (sub)panel based on width/height and align.
-
-    """
+    """Layoutable based on width/height and align."""
 
     DEFAULT_Z_ORDER = 0
     DEFAULT_ALIGN = Align.TOP_LEFT
@@ -119,18 +140,6 @@ class Layoutable(Styled):
         return panel, z_order
 
 
-class UIElement(Layoutable):
-
-    """Abstract UI element."""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.element = None
-
-    def insert(self, manager, element):
-        self.element = element
-
-
 class Renderable:
 
     """Mixin for elements with renderer."""
@@ -147,7 +156,7 @@ class Renderable:
         )
 
 
-class Renderer(Renderable, Styled):
+class Renderer(Renderable, Layoutable):
 
     """Mixin for elements that render it's contents on a panel."""
 

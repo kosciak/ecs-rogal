@@ -28,7 +28,7 @@ class SeparatorSegments(collections.namedtuple(
 
 
 # TODO: add decorations.Overlayed?
-class Separator(core.Renderer, core.UIElement):
+class Separator(core.WithSize, core.Renderer):
 
     def set_style(self, *, segments=None, colors=None, **style):
         self.style.update(

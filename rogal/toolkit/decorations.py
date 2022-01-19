@@ -216,23 +216,14 @@ class PostProcessed(containers.Bin):
             content=content,
         )
 
-    def layout_content(self, manager, panel, z_order):
-        z_order = super().layout_content(manager, panel, z_order)
-        z_order += 1
-        manager.insert(
-            this.post_renderer.element,
-            panel=panel,
-            z_order=z_order,
-        )
-        return z_order
-
     @property
     def post_renderers(self):
         return self.post_renderer.renderers
 
-    @post_renderers.setter
-    def post_renderers(self, post_renderers):
-        self.post_renderer.renderers = post_renderers or []
+    def layout_content(self, manager, panel, z_order):
+        _, z_order = self.content.layout(manager, panel, z_order+1)
+        _, z_order = self.post_renderer.layout(manager, panel, z_order+1)
+        return z_order
 
     def __iter__(self):
         yield from super().__iter__()

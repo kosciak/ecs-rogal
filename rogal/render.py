@@ -34,7 +34,7 @@ SCROLLABLE_CAMERA = False
 SHOW_BOUNDARIES = True
 
 
-class Camera(WithPositionMixin, core.Renderer, core.UIElement):
+class Camera(WithPositionMixin, core.WithSize, core.Renderer):
 
     def __init__(self, ecs,
                  scrollable=SCROLLABLE_CAMERA, show_boundaries=SHOW_BOUNDARIES):
@@ -278,7 +278,7 @@ class Camera(WithPositionMixin, core.Renderer, core.UIElement):
             self.draw_entities(panel, location.level_id, coverage, revealed, visible)
 
 
-class MessageLog(core.Renderer, core.UIElement):
+class MessageLog(core.WithSize, core.Renderer):
 
     def render(self, panel, timestamp):
         """Render logging records."""

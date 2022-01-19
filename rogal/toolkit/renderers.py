@@ -14,7 +14,7 @@ class Chain(core.Renderer):
             renderer.render(panel, timestamp)
 
 
-class ClearPanel(core.Renderer):
+class ClearPanel(core.Styled, core.Renderer):
 
     def set_style(self, *, colors=None, **style):
         self.style.update(
@@ -26,10 +26,10 @@ class ClearPanel(core.Renderer):
         return self.style.colors
 
     def render(self, panel, timestamp):
-        panel.clear(self.colors)
+        panel.clear(self.style.colors)
 
 
-class PaintPanel(core.Renderer):
+class PaintPanel(core.Styled, core.Renderer):
 
     def set_style(self, *, colors=None, **style):
         self.style.update(
@@ -42,7 +42,7 @@ class PaintPanel(core.Renderer):
 
     def render(self, panel, timestamp):
         if self.colors:
-            panel.paint(self.colors, Position.ZERO, panel.size)
+            panel.paint(self.style.colors, Position.ZERO, panel.size)
 
 
 # TODO: FillPanel(core.Renderer):
