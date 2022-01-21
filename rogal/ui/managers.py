@@ -9,7 +9,7 @@ from ..toolkit.core import ZOrder
 
 from .components import (
     CreateUIElement, DestroyUIElement, DestroyUIElementContent,
-    ParentUIElement,
+    ParentUIElements, ChildUIElements,
     UIElement, UIElementChanged,
     UIStyle, UIStyleChanged,
     UIRenderer,
@@ -67,9 +67,20 @@ class UIManager:
         self.ecs.manage(DestroyUIElement).insert(element)
 
     def create_child(self, parent):
-        element = self.ecs.create(
-            ParentUIElement(parent),
+        element = self.ecs.create()
+
+        child_elements = self.ecs.manage(ChildUIElements)
+        child_elements.insert(element, [])
+
+        parent_elements = self.ecs.manage(ParentUIElements)
+        parents = parent_elements.insert(
+            element,
+            [parent, *parent_elements.get(parent, [])]
         )
+        for parent in parents:
+            parent_children = child_elements.get(parent)
+            parent_children.add(element)
+
         return element
 
     def insert(self, element, *,
@@ -83,6 +94,7 @@ class UIManager:
             self.ecs.manage(UIElement).insert(
                 element, content,
             )
+            self.ecs.manage(UIElementChanged).insert(element)
         if renderer:
             self.ecs.manage(UIRenderer).insert(
                 element, renderer,
@@ -134,7 +146,6 @@ class InputFocusManager:
     def __init__(self, ecs):
         self.ecs = ecs
         self._positions = None
-        self.parents = collections.defaultdict(EntitiesSet)
         # TODO: consider adding pixel_positions ??
 
     @property
@@ -156,17 +167,6 @@ class InputFocusManager:
     def release(self, element):
         self.ecs.manage(InputFocus).remove(element)
 
-    def get_parents_gen(self, entity):
-        parents = self.ecs.manage(ParentUIElement)
-        while entity:
-            yield entity
-            entity = parents.get(entity)
-
-    def get_parents(self, entity):
-        if not entity in self.parents:
-            self.parents[entity].update(self.get_parents_gen(entity))
-        return self.parents[entity]
-
     def update_positions(self, entity, panel):
         self.positions[panel.x : panel.x2, panel.y : panel.y2] = entity.bytes
 
@@ -178,13 +178,19 @@ class InputFocusManager:
         return Entity(self.positions[position].tobytes())
 
     def get_entities(self, position=None):
+        # TODO: Generator with correct order of parents instead of EntitiesSet?
         entities = EntitiesSet()
+        parent_elements = self.ecs.manage(ParentUIElements)
         if position is None:
             has_focus = self.ecs.manage(HasInputFocus)
+            # for entity, parents in self.ecs.join(has_focus.entities, parent_elements):
             for entity in has_focus.entities:
-                entities.update(self.get_parents(entity))
+                entities.add(entity)
+                parents = parent_elements.get(entity, []) # TODO: Should be removed after all input handlers are bound to UIElements
+                entities.update(parents)
         else:
             entity = self.get_entity(position)
-            entities.update(self.get_parents(entity))
+            entities.add(entity)
+            entities.update(parent_elements.get(entity, []))
         return entities
 

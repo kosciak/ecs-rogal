@@ -10,7 +10,7 @@ from ..ecs.run_state import RunState
 
 from .components import (
     CreateUIElement, DestroyUIElement, DestroyUIElementContent,
-    ParentUIElement,
+    ParentUIElements, ChildUIElements,
     UIElement, UIElementChanged,
     UIStyle, UIStyleChanged,
     UIPanel,
@@ -20,19 +20,6 @@ from .components import (
 
 
 log = logging.getLogger(__name__)
-
-
-class ChildrenGetter:
-
-    def get_children(self, parents):
-        parent_elements = self.ecs.manage(ParentUIElement)
-        children = set()
-        for element, parent in parent_elements:
-            if parent in parents:
-                children.add(element)
-        if children:
-            children.update(self.get_children(children))
-        return children
 
 
 class CreateUIElementsSystem(System):
@@ -51,37 +38,45 @@ class CreateUIElementsSystem(System):
         if not to_create:
             return
 
-        elements = self.ecs.manage(UIElement)
-        changed = self.ecs.manage(UIElementChanged)
+        parent_elements = self.ecs.manage(ParentUIElements)
+        child_elements = self.ecs.manage(ChildUIElements)
         for element, create in to_create:
             content = self.builder.build(
                 # TODO: pass element to builder?
                 create.widget_type, create.context,
             )
-            content.insert(self.ui_manager, element)
-            elements.insert(element, content)
-            changed.insert(element)
+            if content:
+                parent_elements.insert(element, [])
+                child_elements.insert(element, [])
+                content.insert(self.ui_manager, element)
 
         to_create.clear()
 
 
-class DestroyUIElementsSystem(ChildrenGetter, System):
+class DestroyUIElementsSystem(System):
 
     INCLUDE_STATES = {
         RunState.RENDER,
     }
 
     def run(self):
-        to_destroy = self.ecs.manage(DestroyUIElement)
-        to_destroy_contents = self.ecs.manage(DestroyUIElementContent)
-        if (not to_destroy) and (not to_destroy_contents):
-            return
+        children_to_remove = set()
+        child_elements = self.ecs.manage(ChildUIElements)
+
+        destroy = self.ecs.manage(DestroyUIElement)
+        if destroy:
+            for element, children in self.ecs.join(destroy.entities, child_elements):
+                children_to_remove.update(children)
+
+        destroy_contents = self.ecs.manage(DestroyUIElementContent)
+        for element, children in self.ecs.join(destroy_contents.entities, child_elements):
+            children_to_remove.update(children)
+
         self.ecs.remove(
-            *self.get_children(to_destroy_contents.entities),
-            *self.get_children(to_destroy.entities),
-            *to_destroy.entities,
+            *children_to_remove,
+            *destroy.entities,
         )
-        to_destroy_contents.clear()
+        destroy_contents.clear()
 
 
 class StyleSystem(System):
@@ -121,7 +116,7 @@ class UISystem(System):
         return self._root
 
 
-class LayoutSytem(ChildrenGetter, UISystem):
+class LayoutSytem(UISystem):
 
     INCLUDE_STATES = {
         RunState.RENDER,
@@ -136,13 +131,11 @@ class LayoutSytem(ChildrenGetter, UISystem):
         if not changed:
             return
         elements = self.ecs.manage(UIElement)
+        child_elements = self.ecs.manage(ChildUIElements)
         panels = self.ecs.manage(UIPanel)
 
-        # Remove UIPanel from all child elements
-        children = self.get_children(changed.entities)
-        panels.remove(*children)
-
-        for element, content in self.ecs.join(changed.entities, elements):
+        for element, children, content in self.ecs.join(changed.entities, child_elements, elements):
+            panels.remove(*children)
             panel = panels.get(element)
             if panel is None:
                 content.layout(self.ui_manager, panel=self.root, z_order=0)
@@ -199,6 +192,7 @@ class OnScreenFocusSystem(System):
         self.focus_manager = self.ecs.resources.focus_manager
 
     def run(self):
+        # TODO Run only if something has changed
         self.focus_manager.clear_positions()
         elements = self.ecs.manage(UIElement)
         panels = self.ecs.manage(UIPanel)

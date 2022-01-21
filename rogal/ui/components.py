@@ -1,7 +1,7 @@
 import functools
 
 from ..ecs import Component
-from ..ecs.components import Flag, Int, EntityReference
+from ..ecs.components import Flag, Int, List, EntityReference, EntitiesRefs
 
 
 # TODO: Rename widget_* to element_*
@@ -13,12 +13,13 @@ class CreateUIElement(Component):
         self.context = context or {}
 
 
+ParentUIElements = List('ParentUIElements')
+ChildUIElements = EntitiesRefs('ChildUIElements') # TODO: Descendants? These are ALL children, added recursively
+
+
 DestroyUIElement = Flag('DestroyUIElement')
 
 DestroyUIElementContent = Flag('DestroyUIElementContent')
-
-
-ParentUIElement = EntityReference('ParentUIElement')
 
 
 class UIElement(Component):
