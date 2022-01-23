@@ -117,7 +117,6 @@ class UIManager:
         self.ecs.manage(UIStyleChanged).insert(element)
 
     def redraw(self, element):
-        # self.ecs.manage(DestroyUIElementContent).insert(element)
         self.ecs.manage(UIElementChanged).insert(element)
 
     def bind(self, element, **handlers):
@@ -185,18 +184,24 @@ class InputFocusManager:
             return
         return Entity(self.positions[position].tobytes())
 
-    def get_focused(self):
+    def propagate_from_position(self, position):
+        target = self.get_position(position)
+        yield from self.propagate_from(target)
+
+    def propagate_from_focused(self):
+        # TODO: Generator with correct order of parents instead of EntitiesSet?
         # TODO: Return single entity that is focused, use propagate_from() to get parents
+        #       OR maybe propaget NOT based on parents for focued? Whatever works
         #       Right now Actor can be focused, so it won't work like that
         #       Need to completely redesign keeping track of focus
-        # TODO: Generator with correct order of parents instead of EntitiesSet?
         entities = EntitiesSet()
         parent_elements = self.ecs.manage(ParentUIElements)
         has_focus = self.ecs.manage(HasInputFocus)
         # for entity, parents in self.ecs.join(has_focus.entities, parent_elements):
         for entity in has_focus.entities:
             entities.add(entity)
-            parents = parent_elements.get(entity, []) # TODO: Should be removed after all input handlers are bound to UIElements
+            # TODO: Should be removed after all input handlers are bound to UIElements
+            parents = parent_elements.get(entity, [])
             entities.update(parents)
         return entities
 

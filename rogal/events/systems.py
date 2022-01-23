@@ -48,7 +48,7 @@ class EventsDispatcherSystem(System):
         super().__init__(ecs)
         self.wrapper = self.ecs.resources.wrapper
         self.timeout = self.TIMEOUT
-        self.focus_manager = self.ecs.resources.focus_manager
+        self.focus = self.ecs.resources.focus_manager
 
     def on_quit(self, event):
         self.ecs.create(
@@ -79,43 +79,37 @@ class EventsDispatcherSystem(System):
                 break
 
     def dispatch_from_focused(self, event, component):
-        entities = self.focus_manager.get_focused()
-        # TODO: target = self.focus_manager.get_focused() + propagate_from(target)
-        self.dispatch_to_entities(event, component, *entities)
-
-    def dispatch_from_position(self, position, event, component):
-        target = self.focus_manager.get_position(position)
         self.dispatch_to_entities(
             event, component,
-            *self.focus_manager.propagate_from(target)
+            *self.focus.propagate_from_focused()
+        )
+
+    def dispatch_from_position(self, position, event, component):
+        self.dispatch_to_entities(
+            event, component,
+            *self.focus.propagate_from_position(position)
         )
 
     def dispatch_mouse_button(self, event, component):
         self.dispatch_from_position(event.position, event, component)
 
     def dispatch_mouse_motion(self, event):
-        # TODO: Include parents, and bubble right away?
-        curr = self.focus_manager.get_position(event.position)
-        prev = self.focus_manager.get_position(event.prev_position)
-        curr_entities = set(self.focus_manager.propagate_from(curr))
-        prev_entities = set(self.focus_manager.propagate_from(prev))
+        curr_entities = set(self.focus.propagate_from_position(event.position))
+        prev_entities = set(self.focus.propagate_from_position(event.prev_position))
 
         in_entities = curr_entities - prev_entities
         self.dispatch_to_entities(
-            # event, MouseInEvents,
             event, OnMouseIn,
             *in_entities
         )
 
         self.dispatch_to_entities(
-            # event, MouseOverEvents,
             event, OnMouseOver,
-            *self.focus_manager.propagate_from(curr)
+            *self.focus.propagate_from_position(event.position)
         )
 
         out_entities = prev_entities - curr_entities
         self.dispatch_to_entities(
-            # event, MouseOutEvents,
             event, OnMouseOut,
             *out_entities
         )
