@@ -13,7 +13,7 @@ from .components import (
     ParentUIElements, ChildUIElements,
     UIElement, UIElementChanged,
     UIStyle, UIStyleChanged,
-    UIPanel,
+    UILayout, UILayoutChanged,
     UIRenderer,
     InputFocus, HasInputFocus, GrabInputFocus,
 )
@@ -127,23 +127,26 @@ class LayoutSytem(UISystem):
         self.ui_manager = self.ecs.resources.ui_manager
 
     def run(self):
-        changed = self.ecs.manage(UIElementChanged)
-        if not changed:
+        changed_elements = self.ecs.manage(UIElementChanged)
+        if not changed_elements:
             return
         elements = self.ecs.manage(UIElement)
         child_elements = self.ecs.manage(ChildUIElements)
-        panels = self.ecs.manage(UIPanel)
+        layouts = self.ecs.manage(UILayout)
+        changed_layouts = self.ecs.manage(UILayoutChanged)
+        changed_layouts.clear()
 
-        for element, children, content in self.ecs.join(changed.entities, child_elements, elements):
-            panels.remove(*children)
-            panel = panels.get(element)
-            if panel is None:
+        for element, children, content in self.ecs.join(changed_elements.entities, child_elements, elements):
+            layouts.remove(*children)
+            layout = layouts.get(element)
+            if layout is None:
                 content.layout(self.ui_manager, panel=self.root, z_order=0)
             else:
                 # TODO: This works ONLY if we are redrawing children, but not widget itself
                 #       for example after resizing it! It would need panel from it's parent!
-                content.layout_content(self.ui_manager, panel=panel.panel, z_order=panel.z_order)
-        changed.clear()
+                content.layout_content(self.ui_manager, panel=layout.panel, z_order=layout.z_order)
+            changed_layouts.insert(element)
+        changed_elements.clear()
 
 
 class InputFocusSystem(System):
@@ -192,13 +195,15 @@ class OnScreenFocusSystem(System):
         self.focus_manager = self.ecs.resources.focus_manager
 
     def run(self):
-        # TODO Run only if something has changed
+        changed_layouts = self.ecs.manage(UILayoutChanged)
+        if not changed_layouts:
+            return
         self.focus_manager.clear_positions()
         elements = self.ecs.manage(UIElement)
-        panels = self.ecs.manage(UIPanel)
+        layouts = self.ecs.manage(UILayout)
         # NOTE: Use only UIElements, we don't want renderers that might have higher z_order to mask widgets
-        for element, panel in sorted(self.ecs.join(elements.entities, panels), key=lambda e: e[1].z_order):
-            self.focus_manager.update_positions(element, panel.panel)
+        for element, layout in sorted(self.ecs.join(elements.entities, layouts), key=lambda e: e[1].z_order):
+            self.focus_manager.update_positions(element, layout.panel)
 
 
 class RenderSystem(UISystem):
@@ -209,18 +214,18 @@ class RenderSystem(UISystem):
 
     def run(self):
         # Render all panels
-        panels = self.ecs.manage(UIPanel)
+        layouts = self.ecs.manage(UILayout)
         renderers = self.ecs.manage(UIRenderer)
         # NOTE: Using monotonic timestamp in miliseconds as render timestamp, 
         #       this way all effects depending on time (blinking, fading, etc)
         #       are going to be synchronized
         timestamp = time.monotonic_ns() // 1e6
-        for panel, renderer in sorted(
-            self.ecs.join(panels, renderers),
-            key=itemgetter(0) # Sort by panel.z_order
+        for layout, renderer in sorted(
+            self.ecs.join(layouts, renderers),
+            key=itemgetter(0) # Sort by layout.z_order
         ):
             with perf.Perf(renderer.renderer.render):
-                renderer.render(panel.panel, timestamp)
+                renderer.render(layout.panel, timestamp)
 
 
 class DisplaySystem(UISystem):

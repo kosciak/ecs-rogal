@@ -13,7 +13,7 @@ from .components import (
     UIElement, UIElementChanged,
     UIStyle, UIStyleChanged,
     UIRenderer,
-    UIPanel,
+    UILayout,
     GrabInputFocus, InputFocus, HasInputFocus,
 )
 
@@ -104,7 +104,7 @@ class UIManager:
                 element, selector,
             )
         if panel:
-            self.ecs.manage(UIPanel).insert(
+            self.ecs.manage(UILayout).insert(
                 element, panel, z_order or ZOrder.BASE,
             )
 
@@ -170,27 +170,33 @@ class InputFocusManager:
     def update_positions(self, entity, panel):
         self.positions[panel.x : panel.x2, panel.y : panel.y2] = entity.bytes
 
-    def get_entity(self, position):
+    def propagate_from(self, entity):
+        if not entity:
+            return
+        yield entity
+        parent_elements = self.ecs.manage(ParentUIElements)
+        for parent in parent_elements.get(entity, []):
+            yield parent
+
+    def get_position(self, position):
         # NOTE: On terminal position might be outside root console!
         max_x, max_y = self.positions.shape
         if position.x >= max_x or position.y >= max_y:
             return
         return Entity(self.positions[position].tobytes())
 
-    def get_entities(self, position=None):
+    def get_focused(self):
+        # TODO: Return single entity that is focused, use propagate_from() to get parents
+        #       Right now Actor can be focused, so it won't work like that
+        #       Need to completely redesign keeping track of focus
         # TODO: Generator with correct order of parents instead of EntitiesSet?
         entities = EntitiesSet()
         parent_elements = self.ecs.manage(ParentUIElements)
-        if position is None:
-            has_focus = self.ecs.manage(HasInputFocus)
-            # for entity, parents in self.ecs.join(has_focus.entities, parent_elements):
-            for entity in has_focus.entities:
-                entities.add(entity)
-                parents = parent_elements.get(entity, []) # TODO: Should be removed after all input handlers are bound to UIElements
-                entities.update(parents)
-        else:
-            entity = self.get_entity(position)
+        has_focus = self.ecs.manage(HasInputFocus)
+        # for entity, parents in self.ecs.join(has_focus.entities, parent_elements):
+        for entity in has_focus.entities:
             entities.add(entity)
-            entities.update(parent_elements.get(entity, []))
+            parents = parent_elements.get(entity, []) # TODO: Should be removed after all input handlers are bound to UIElements
+            entities.update(parents)
         return entities
 

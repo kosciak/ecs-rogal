@@ -159,7 +159,6 @@ def run(wrapper):
         systems.ui.OnScreenFocusSystem(ecs),
 
         systems.events.EventsDispatcherSystem(ecs),
-        systems.events.EventsHandlerSystem(ecs),
 
         systems.signals.SignalsHandlerSystem(ecs),
 

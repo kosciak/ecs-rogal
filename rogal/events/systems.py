@@ -11,14 +11,10 @@ from ..events import EventType
 
 from ..components import WantsToQuit
 
+from ..ui.components import ParentUIElements
+
 from .components import (
     EventsSource,
-    TextInputEvents,
-    KeyPressEvents, KeyUpEvents,
-    MousePressEvents, MouseClickEvents, MouseUpEvents,
-    MouseInEvents, MouseOverEvents, MouseOutEvents,
-    MouseWheelEvents,
-    QuitEvents,
     OnTextInput,
     OnKeyPress, OnKeyUp,
     OnMousePress, OnMouseClick, OnMouseUp,
@@ -35,7 +31,7 @@ TODO:
 - keyboard input focus and mouse input focus should be separate
 - only single "thing" can have keyboard focus
 - but multiple ones (if not overlapping) can have mouse focus
-- mouse wheel should work only for widgets that are hovered
+- mouse wheel should work only for widgets that are hovered(?? maybe focused?)
 
 '''
 
@@ -59,38 +55,70 @@ class EventsDispatcherSystem(System):
             WantsToQuit,
         )
 
-    def dispatch_to_entities(self, event, entities, component):
+    def handle_event(self, entity, event, handlers):
+        propagate = True
+        for callback in handlers:
+            if callback(entity, event) is False:
+                propagate = False
+        return propagate
+
+    def dispatch_to_entities(self, event, component, *entities):
+        # NOTE: Handle events directly so we maintain correct events order
+        #       and we can keep track of targets propagation order
+        # Entities should be sorted - direct target, followed by parents
+        # if handler returns False propagation to next entity stops
         if not entities:
             return
-        manager = self.ecs.manage(component)
+        event_handlers = self.ecs.manage(component)
         for entity in entities:
-            events = manager.get(entity)
-            if not events:
-                events = manager.insert(entity)
-            events.append(event)
+            handlers = event_handlers.get(entity)
+            if not handlers:
+                continue
+            propagate = self.handle_event(entity, event, handlers)
+            if not propagate:
+                break
 
-    def dispatch_has_focus(self, event, component):
-        entities = self.focus_manager.get_entities()
-        self.dispatch_to_entities(event, entities, component)
+    def dispatch_from_focused(self, event, component):
+        entities = self.focus_manager.get_focused()
+        # TODO: target = self.focus_manager.get_focused() + propagate_from(target)
+        self.dispatch_to_entities(event, component, *entities)
 
-    def dispatch_focus_position(self, position, event, component):
-        entities = self.focus_manager.get_entities(position)
-        self.dispatch_to_entities(event, entities, component)
+    def dispatch_from_position(self, position, event, component):
+        target = self.focus_manager.get_position(position)
+        self.dispatch_to_entities(
+            event, component,
+            *self.focus_manager.propagate_from(target)
+        )
 
     def dispatch_mouse_button(self, event, component):
-        self.dispatch_focus_position(event.position, event, component)
+        self.dispatch_from_position(event.position, event, component)
 
     def dispatch_mouse_motion(self, event):
-        current_entities = self.focus_manager.get_entities(event.position)
-        prev_entities = self.focus_manager.get_entities(event.prev_position)
+        # TODO: Include parents, and bubble right away?
+        curr = self.focus_manager.get_position(event.position)
+        prev = self.focus_manager.get_position(event.prev_position)
+        curr_entities = set(self.focus_manager.propagate_from(curr))
+        prev_entities = set(self.focus_manager.propagate_from(prev))
 
-        self.dispatch_to_entities(event, current_entities, MouseOverEvents)
+        in_entities = curr_entities - prev_entities
+        self.dispatch_to_entities(
+            # event, MouseInEvents,
+            event, OnMouseIn,
+            *in_entities
+        )
 
-        out_entities = prev_entities - current_entities
-        self.dispatch_to_entities(event, out_entities, MouseOutEvents)
+        self.dispatch_to_entities(
+            # event, MouseOverEvents,
+            event, OnMouseOver,
+            *self.focus_manager.propagate_from(curr)
+        )
 
-        in_entities = current_entities - prev_entities
-        self.dispatch_to_entities(event, in_entities, MouseInEvents)
+        out_entities = prev_entities - curr_entities
+        self.dispatch_to_entities(
+            # event, MouseOutEvents,
+            event, OnMouseOut,
+            *out_entities
+        )
 
     def dispatch(self, event):
         log.debug(f'Event: {event}')
@@ -98,26 +126,26 @@ class EventsDispatcherSystem(System):
         if event.type == EventType.QUIT:
             self.on_quit(event)
         elif event.type == EventType.TEXT_INPUT:
-            self.dispatch_has_focus(event, TextInputEvents)
+            self.dispatch_from_focused(event, OnTextInput)
         elif event.type == EventType.KEY_PRESS:
             # self.keys.update(press_event=event)
-            self.dispatch_has_focus(event, KeyPressEvents)
+            self.dispatch_from_focused(event, OnKeyPress)
         elif event.type == EventType.KEY_UP:
             # self.keys.update(up_event=event)
-            self.dispatch_has_focus(event, KeyUpEvents)
+            self.dispatch_from_focused(event, OnKeyUp)
         elif event.type == EventType.MOUSE_BUTTON_PRESS:
             # self.mouse.update(press_event=event)
-            self.dispatch_mouse_button(event, MousePressEvents)
+            self.dispatch_mouse_button(event, OnMousePress)
         elif event.type == EventType.MOUSE_BUTTON_UP:
             if event.is_click:
-                self.dispatch_mouse_button(event, MouseClickEvents)
-            self.dispatch_mouse_button(event, MouseUpEvents)
+                self.dispatch_mouse_button(event, OnMouseClick)
+            self.dispatch_mouse_button(event, OnMouseUp)
             # self.mouse.update(up_event=event)
         elif event.type == EventType.MOUSE_MOTION:
             # self.mouse.update(motion_event=event)
             self.dispatch_mouse_motion(event)
         elif event.type == EventType.MOUSE_WHEEL:
-            self.dispatch_has_focus(event, MouseWheelEvents)
+            self.dispatch_from_focused(event, OnMouseWheel)
 
     def run(self):
         # Get events from sources and dispatch them to all valid entities
@@ -125,41 +153,4 @@ class EventsDispatcherSystem(System):
         for source, events_gen in events_sources:
             for event in events_gen(self.timeout):
                 self.dispatch(event)
-
-
-class EventsHandlerSystem(System):
-
-    INCLUDE_STATES = {
-        RunState.WAIT_FOR_INPUT,
-    }
-
-    EVENTS_HANDLERS = [
-        (TextInputEvents, OnTextInput),
-        (KeyPressEvents, OnKeyPress),
-        (KeyUpEvents, OnKeyUp),
-        (MousePressEvents, OnMousePress),
-        (MouseClickEvents, OnMouseClick),
-        (MouseUpEvents, OnMouseUp),
-        (MouseInEvents, OnMouseIn),
-        (MouseOverEvents, OnMouseOver),
-        (MouseOutEvents, OnMouseOut),
-        (MouseWheelEvents, OnMouseWheel),
-        (QuitEvents, OnQuit),
-    ]
-
-    def run(self):
-        for events_component, handlers_component in self.EVENTS_HANDLERS:
-            event_queues = self.ecs.manage(events_component)
-            if not event_queues:
-                continue
-            event_handlers = self.ecs.manage(handlers_component)
-            if not event_handlers:
-                continue
-            for entity, events, handlers in self.ecs.join(self.ecs.entities, event_queues, event_handlers):
-                for event in events:
-                    for callback in handlers:
-                        # TODO: Some return value to prevent further handling of an event?
-                        #       For example to stop other widgets to use same key?
-                        callback(entity, event)
-            event_queues.clear()
 

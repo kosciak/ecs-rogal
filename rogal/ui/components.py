@@ -57,7 +57,7 @@ UIStyleChanged = Flag('UIStyleChanged')
 
 
 @functools.total_ordering
-class UIPanel(Component):
+class UILayout(Component):
     __slots__ = ('panel', 'z_order', )
 
     def __init__(self, panel, z_order):
@@ -66,6 +66,9 @@ class UIPanel(Component):
 
     def __lt__(self, other):
         return self.z_order < other.z_order
+
+
+UILayoutChanged = Flag('UILayoutChanged')
 
 
 class UIRenderer(Component):

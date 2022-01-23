@@ -29,8 +29,13 @@ Each Handler should just return simple value, no fancy logic here.
 
 class EventHandler:
 
-    def __init__(self, callback):
+    PROPAGATE_EVENTS = False
+
+    def __init__(self, callback, propagate=None):
         self.callback = callback
+        if propagate is None:
+            propagate = self.PROPAGATE_EVENTS
+        self.propagate = propagate
 
     def handle(self, event):
         raise NotImplementedError()
@@ -39,6 +44,9 @@ class EventHandler:
         value = self.handle(event)
         if value is not None:
             self.callback(entity, value)
+            if not self.propagate:
+                return False
+        return event
 
 
 class KeyPressHandler(EventHandler):
@@ -239,6 +247,8 @@ class MouseX2Button(MouseButtonEvent):
 
 class MouseOver(EventHandler):
 
+    PROPAGATE_EVENTS = True
+
     def handle(self, event):
         return event.position
 
@@ -246,11 +256,15 @@ class MouseOver(EventHandler):
 # TODO: OBSOLETE as they always return True, just use callback instead?
 class MouseIn(EventHandler):
 
+    PROPAGATE_EVENTS = True
+
     def handle(self, event):
         return True
 
 
 class MouseOut(EventHandler):
+
+    PROPAGATE_EVENTS = True
 
     def handle(self, event):
         return True
