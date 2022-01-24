@@ -103,18 +103,24 @@ class UIManager:
             self.ecs.manage(UIStyle).insert(
                 element, selector,
             )
+            self.ecs.manage(UIStyleChanged).insert(element)
         if panel:
             self.ecs.manage(UILayout).insert(
                 element, panel, z_order or ZOrder.BASE,
             )
 
-    # TODO: Rename to set_pseudoclass() ??
-    def set_style(self, element, selector, pseudoclass=None):
-        self.ecs.manage(UIStyle).insert(
-            element,
-            selector, pseudoclass,
-        )
-        self.ecs.manage(UIStyleChanged).insert(element)
+    def update_style(self, element, selector, pseudo_class=None):
+        styles = self.ecs.manage(UIStyle)
+        style_changed = False
+        style = styles.get(element)
+        if style is None:
+            style = styles.insert(element, '')
+        if not (style.base == selector and style.pseudo_class == pseudo_class):
+            style.base = selector
+            style.pseudo_class = pseudo_class
+            style_changed = True
+        if style_changed:
+            self.ecs.manage(UIStyleChanged).insert(element)
 
     def redraw(self, element):
         self.ecs.manage(UIElementChanged).insert(element)

@@ -5,6 +5,7 @@ from ..ecs.components import Flag, Int, List, EntityReference, EntitiesRefs
 
 
 # TODO: Rename widget_* to element_*
+# TODO: Rename CreateUIElement to BuildUIElement?
 class CreateUIElement(Component):
     __slots__ = ('widget_type', 'context', )
 
@@ -39,16 +40,16 @@ UIElementChanged = Flag('UIElementChanged')
 
 
 class UIStyle(Component):
-    __slots__ = ('base', 'pseudoclass', )
+    __slots__ = ('base', 'pseudo_class', )
 
-    def __init__(self, base, pseudoclass=None):
+    def __init__(self, base, pseudo_class=None):
         self.base = base # TODO: Consider splitting into type, class(es)
-        self.pseudoclass = pseudoclass
+        self.pseudo_class = pseudo_class
 
     @property
     def selector(self):
-        if self.pseudoclass:
-            return f'{self.base}:{self.pseudoclass}'
+        if self.pseudo_class:
+            return f'{self.base}:{self.pseudo_class}'
         else:
             return self.base
 

@@ -15,6 +15,7 @@ Pseudo-classes:
  :active    - mouse pressed
  :focus     - with keyboard focus
  :checked   - toggle button with value > 0
+ :disabled
 
 """
 

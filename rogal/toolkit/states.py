@@ -2,18 +2,18 @@ from enum import Enum, auto
 
 from ..events import handlers
 
-from .handlers import HandleEvents
+from .handlers import HandleEvents, EmitsSignals
 
 
-class WidgetState(Enum):
+class State(Enum):
     HOVERED = auto()
-    PRESSED = auto()
+    ACTIVE = auto()
     FOCUSED = auto()
     # SELECTED = auto()
     # TODO: DISABLED
 
 
-class Stateful:
+class Stateful(EmitsSignals):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -21,50 +21,66 @@ class Stateful:
 
     @property
     def is_hovered(self):
-        return WidgetState.HOVERED in self.states
+        return State.HOVERED in self.states
 
     @property
-    def is_pressed(self):
-        return WidgetState.PRESSED in self.states
+    def is_active(self):
+        return State.ACTIVE in self.states
 
     @property
     def is_focused(self):
-        return WidgetState.FOCUSED in self.states
+        return State.FOCUSED in self.states
 
     @property
     def is_selected(self):
-        return WidgetState.SELECTED in self.states
+        return State.SELECTED in self.states
+
+    def update_style(self):
+        # Read: https://bitsofco.de/when-do-the-hover-focus-and-active-pseudo-classes-apply/
+        pseudo_class = None
+        if self.is_active:
+            pseudo_class = 'active'
+        elif self.is_hovered:
+            pseudo_class = 'hover'
+        elif self.is_focused:
+            pseudo_class = 'focus'
+        self.manager.update_style(self.element, self.selector, pseudo_class)
 
     def enter(self):
-        self.states.add(WidgetState.HOVERED)
+        self.states.add(State.HOVERED)
+        self.emit('enter')
+        self.update_style()
+
+    def hover(self, position):
+        if not self.is_hovered:
+            self.enter()
+        self.emit('hovered', position)
+        self.update_style()
 
     def leave(self):
-        self.states.discard(WidgetState.HOVERED)
-        self.states.discard(WidgetState.PRESSED)
+        self.states.discard(State.ACTIVE)
+        self.states.discard(State.HOVERED)
+        self.emit('leave')
+        self.update_style()
 
     def press(self, position):
-        self.states.add(WidgetState.PRESSED)
+        self.states.add(State.ACTIVE)
+        self.emit('pressed')
+        self.update_style()
 
     def release(self, position):
-        self.states.discard(WidgetState.PRESSED)
+        self.states.discard(State.ACTIVE)
+        self.emit('released')
+        self.update_style()
 
     def focus(self):
-        self.states.add(WidgetState.FOCUSED)
+        self.states.add(State.FOCUSED)
+        self.emit('focus')
+        self.update_style()
 
-    def unfocus(self):
-        self.states.discard(WidgetState.FOCUSED)
-
-    # def select(self):
-    #     self.states.add(WidgetState.SELECTED)
-
-    # def unselect(self):
-    #     self.states.discard(WidgetState.SELECTED)
-
-    # def toggle(self):
-    #     if self.is_selected:
-    #         self.unselect()
-    #     else:
-    #         self.select()
+    def blur(self):
+        self.states.discard(State.FOCUSED)
+        self.update_style()
 
 
 class Clickable(Stateful, HandleEvents):
@@ -85,16 +101,16 @@ class Clickable(Stateful, HandleEvents):
             handlers.MouseLeftButton(self.on_release),
         ])
 
+    def activate(self):
+        self.emit('activated')
+
     def on_press(self, element, position):
-        self.emit('pressed')
         self.press(position)
 
     def on_release(self, element, position):
-        self.emit('released')
         self.release(position)
 
     def on_click(self, element, position):
-        self.emit('activated')
         self.activate()
 
     def on_right_click(self, element, position):
@@ -124,23 +140,14 @@ class Hoverable(Stateful, HandleEvents):
             handlers.MouseOut(self.on_leave),
         ])
 
-    # TODO: Instead of calling methods, emit signals?
-
     def on_enter(self, element, value):
-        self.emit('enter')
         self.enter()
 
     def on_over(self, element, position):
-        self.emit('hovered', position)
         self.hover(position)
 
     def on_leave(self, element, value):
-        self.emit('leave')
         self.leave()
-
-    def hover(self, position):
-        if not self.is_hovered and not self.is_pressed:
-            self.enter()
 
 # TODO: Scrollable?
 

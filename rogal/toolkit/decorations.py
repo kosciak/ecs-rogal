@@ -264,6 +264,8 @@ class Overlayed(containers.Bin):
     def overlay(self):
         return self._overlay.content
 
+    # TODO: set_style() -> use overlay names?
+
     def layout_content(self, manager, panel, z_order):
         _, z_order = self.content.layout(manager, panel, z_order+1)
         _, z_order = self._overlay.layout(manager, panel, z_order+1)

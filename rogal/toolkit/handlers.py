@@ -14,8 +14,7 @@ class HandleEvents:
             **self.events_handlers,
         )
         if self.events_handlers:
-            # TODO: Not sure about this...
-            #       No need to grab focus for mouse only handlers
+            # TODO: No need to grab focus for mouse only handlers
             manager.grab_focus(element)
 
 
