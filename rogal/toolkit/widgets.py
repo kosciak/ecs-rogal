@@ -34,29 +34,6 @@ class Widget(
         self.emit('destroyed')
 
 
-class WidgetWithClearedFramedContents(
-        Widget,
-        decorations.WithFramedContent,
-        decorations.WithClearedContent,
-        # decorations.Padded,
-    ):
-
-    def set_style(self, **style):
-        contents_style = style.pop(self.contents.__class__.__name__, None)
-        if contents_style is not None:
-            self.contents.set_style(**contents_style)
-        super().set_style(**style)
-
-    @property
-    def contents(self):
-        return self._framed.content
-
-    @contents.setter
-    def contents(self, contents):
-        self._framed.content = contents
-        self.redraw()
-
-
 # TODO: rename to PaddedRow? It could be used for anything, not only Buttons
 class ButtonsRow(
         Widget,

@@ -6,9 +6,10 @@ from . import widgets
 
 class Window(
         states.Hoverable,
-        widgets.WidgetWithClearedFramedContents,
-        # decorations.WithFramedContent,
-        # decorations.WithClearedContent,
+        widgets.Widget,
+        decorations.WithContents,
+        decorations.WithFramedContent,
+        decorations.WithClearedContent,
         decorations.WithOverlayedContent,
         decorations.WithPostProcessedContent,
         decorations.Padded,

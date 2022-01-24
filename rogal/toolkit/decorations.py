@@ -290,5 +290,34 @@ class WithOverlayedContent:
         return self._overlayed.overlay
 
 
+class WithContents:
+
+    def __init__(self, content, **kwargs):
+        self._contents = content
+        super().__init__(
+            content=content,
+            **kwargs,
+        )
+
+    def set_style(self, **style):
+        contents_style = style.pop(self._contents.__class__.__name__, None)
+        if contents_style is not None:
+            self._contents.set_style(**contents_style)
+        super().set_style(**style)
+
+    @property
+    def contents(self):
+        return self._contents
+
+    @contents.setter
+    def contents(self, contents):
+        container = self
+        while not container.content == self._contents:
+            container = container.content
+        container.content = contents
+        self._contents = contents
+        self.redraw()
+
+
 # TODO: Consider: Positioned(content, position), need move(vector) and maybe move_to(position)
 

@@ -67,13 +67,15 @@ class EventsDispatcherSystem(System):
         #       and we can keep track of targets propagation order
         # Entities should be sorted - direct target, followed by parents
         # if handler returns False propagation to next entity stops
+        event_handlers = self.ecs.manage(component)
+        entities = [
+            entity for entity in entities
+            if entity in event_handlers
+        ]
         if not entities:
             return
-        event_handlers = self.ecs.manage(component)
         for entity in entities:
             handlers = event_handlers.get(entity)
-            if not handlers:
-                continue
             propagate = self.handle_event(entity, event, handlers)
             if not propagate:
                 break

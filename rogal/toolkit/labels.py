@@ -20,9 +20,10 @@ class Label(
 
 
 class FramedLabel(
-        widgets.WidgetWithClearedFramedContents,
-        # decorations.WithFramedContent,
-        # decorations.WithClearedContent,
+        widgets.Widget,
+        decorations.WithContents,
+        decorations.WithFramedContent,
+        decorations.WithClearedContent,
         decorations.Padded,
     ):
 

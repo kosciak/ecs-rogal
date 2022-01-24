@@ -6,9 +6,10 @@ from . import widgets
 class BaseButton(
         states.Hoverable,
         states.Clickable,
-        widgets.WidgetWithClearedFramedContents,
-        # decorations.WithFramedContent,
-        # decorations.WithClearedContent,
+        widgets.Widget,
+        decorations.WithContents,
+        decorations.WithFramedContent,
+        decorations.WithClearedContent,
         decorations.WithPostProcessedContent,
         decorations.Padded,
     ):
@@ -83,7 +84,7 @@ class ToggleButton(BaseButton):
         if contents_style is not None:
             for button in self._buttons:
                 button.set_style(**contents_style)
-        super(widgets.WidgetWithClearedFramedContents, self).set_style(**style)
+        super(decorations.WithContents, self).set_style(**style)
 
     @property
     def value(self):
