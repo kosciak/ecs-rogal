@@ -33,9 +33,7 @@ class EventHandler:
 
     def __init__(self, callback, propagate=None):
         self.callback = callback
-        if propagate is None:
-            propagate = self.PROPAGATE_EVENTS
-        self.propagate = propagate
+        self.propagate = propagate or self.PROPAGATE_EVENTS
 
     def handle(self, event):
         raise NotImplementedError()
@@ -43,8 +41,12 @@ class EventHandler:
     def __call__(self, entity, event):
         value = self.handle(event)
         if value is not None:
-            self.callback(entity, value)
-            if not self.propagate:
+            # Return value from callback can override self.propagate setting
+            # If False - stop propagation, if True - force propagation
+            propagate = self.callback(entity, value)
+            if propagate is None:
+                propagate = self.propagate
+            if not propagate:
                 return False
         return event
 
@@ -61,8 +63,8 @@ class KeyPressHandler(EventHandler):
 
 class OnKeyPress(KeyPressHandler):
 
-    def __init__(self, key_binding, callback, value=None):
-        super().__init__(callback)
+    def __init__(self, key_binding, callback, value=None, propagate=None):
+        super().__init__(callback, propagate)
         self.key_bindings = self.get_key_bindings(key_binding)
         if not self.key_bindings:
             self.key_bindings = {Key.parse(key_binding), }
@@ -87,8 +89,8 @@ class DirectionKeyPress(KeyPressHandler):
 
 class NextPrevKeyPress(KeyPressHandler):
 
-    def __init__(self, next_key_binding, prev_prev_binding, callback):
-        super().__init__(callback)
+    def __init__(self, next_key_binding, prev_prev_binding, callback, propagate=None):
+        super().__init__(callback, propagate)
         self.next_key_bindings = self.get_key_bindings(next_key_binding)
         self.prev_key_bindings = self.get_key_bindings(prev_prev_binding)
 
@@ -130,8 +132,8 @@ class DiscardKeyPress(KeyPressHandler):
 
 class IndexKeypressHandler(KeyPressHandler):
 
-    def __init__(self, callback, size=None):
-        super().__init__(callback)
+    def __init__(self, callback, size=None, propagate=None):
+        super().__init__(callback, propagate)
         self.size = size
 
 
@@ -218,8 +220,8 @@ class MouseButtonEvent(EventHandler):
 
     BUTTONS = {}
 
-    def __init__(self, callback, value=None):
-        super().__init__(callback)
+    def __init__(self, callback, value=None, propagate=None):
+        super().__init__(callback, propagate)
         self.value = value
 
     def handle(self, event):
