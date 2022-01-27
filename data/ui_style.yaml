@@ -4,9 +4,10 @@ Window:
   Frame:
     decorations: DSLINE
 
-Window.modal:
+Window.dialog:
   align: TOP_CENTER
   padding: [10, 3]
+  width: 40
 
 
 .button:
@@ -55,7 +56,7 @@ Window.modal:
   bg: BG
 
 
-ButtonsRow:
+Dialog ButtonsRow:
   align: BOTTOM_CENTER
 
 

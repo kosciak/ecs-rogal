@@ -9,13 +9,19 @@ class HandleEvents:
 
     def insert(self, manager, element):
         super().insert(manager, element)
-        manager.bind(
+        manager.events.bind(
             element,
             **self.events_handlers,
         )
+        # TODO: No need to grab focus for mouse only handlers
         if self.events_handlers:
-            # TODO: No need to grab focus for mouse only handlers
             manager.grab_focus(element)
+
+    def bind(self, event_name, handler):
+        self.events_handlers[f'on_{event_name}'].append(handler)
+        # TODO: if self.manager: self.manager.bind??
+        #       Event handlers should be registered before insertion, 
+        #       and should not change...
 
 
 class EmitsSignals:
@@ -26,27 +32,14 @@ class EmitsSignals:
 
     def insert(self, manager, element):
         super().insert(manager, element)
-        manager.connect(
+        manager.signals.bind(
             element,
             self.signals_handlers,
         )
 
-    def emit(self, signal_name, value=None):
-        self.manager.emit(self.element, signal_name, value)
-
     def on(self, signal_name, handler, data=None):
         self.signals_handlers[signal_name][handler] = data
-        if self.manager:
-            self.manager.connect(
-                self.element,
-                self.signals_handlers
-            )
 
-    def off(self, signal_name, handler):
-        self.signals_handlers[signal_name].pop(handler, None)
-        if self.manager:
-            self.manager.connect(
-                self.element,
-                self.signals_handlers
-            )
+    def emit(self, signal_name, value=None):
+        self.manager.signals.emit(self.element, signal_name, value)
 

@@ -71,44 +71,42 @@ class WidgetsBuilder:
 
         return framed_label
 
-    def create_window(self, content, title=None, on_key_press=None, selector=None):
-        window = windows.Window(
-            content=content,
-            on_key_press=on_key_press,
-            selector=selector,
-            style=self.get_style(selector),
-        )
-
+    def create_window(self, content, title=None, selector=None):
         title = self.create_framed_label(
             txt=title,
             selector='.title',
         )
-        window.title = title
+
+        window = windows.Window(
+            content=content,
+            title=title,
+            selector=selector,
+            style=self.get_style(selector),
+        )
 
         return window
 
-    def create_modal_window(self, content, title=None, on_key_press=None, selector=None):
-        window = windows.Window(
-            content=content,
-            # post_renderers=[renderers.InvertColors(), ],
-            on_key_press=on_key_press,
-            selector=selector,
-            style=self.get_style(selector),
-        )
-        window.default_z_order=500
-
+    def create_dialog_window(self, content, title=None, response_key_handler=None, selector=None):
         title = self.create_framed_label(
             txt=title,
             selector='.title',
         )
-        window.title = title
 
         close_button = self.create_label_button(
             txt='X',
             selector='.close_button',
         )
-        window.overlay.close_button = close_button
-        close_button.on('clicked', window.on_close)
+
+        window = windows.DialogWindow(
+            content=content,
+            title=title,
+            close_button=close_button,
+            # post_renderers=[renderers.InvertColors(), ],
+            response_key_handler=response_key_handler,
+            selector=selector,
+            style=self.get_style(selector),
+        )
+        window.default_z_order=500
 
         return window
 
@@ -247,20 +245,10 @@ class WidgetsBuilder:
     def create_yes_no_prompt(self, context):
         title = context['title']
         msg = context['msg']
-        callback = context['callback']
 
         msg = labels.Label(
             txt=msg,
             style=self.get_style('Dialog Label'),
-        )
-
-        buttons_row = self.create_buttons_row(
-            callback=callback,
-            buttons=[
-                ['No',  False],
-                ['Yes', True],
-            ],
-            selector='ButtonsRow',
         )
 
         checkbox = self.create_checkbox(
@@ -323,24 +311,29 @@ class WidgetsBuilder:
                 self.create_horizontal_separator(),
                 toggle_buttons,
                 self.create_horizontal_separator(),
-                buttons_row,
             ],
-            style=dict(
-                width=40,
-            ),
         )
 
-        window = self.create_modal_window(
+        dialog = self.create_dialog_window(
             content=content,
             title=title,
-            on_key_press=[
-                handlers.YesNoKeyPress(callback),
-                handlers.DiscardKeyPress(callback),
-            ],
-            selector='Window.modal',
+            response_key_handler=handlers.YesNoKeyPress,
+            selector='Window.dialog',
         )
 
-        return window
+        dialog_buttons = [
+            ['No',  False],
+            ['Yes', True],
+        ]
+
+        for text, value in dialog_buttons:
+            button = self.create_label_button(
+                text,
+                selector='.button',
+            )
+            dialog.add_button(button, value)
+
+        return dialog
 
     def create_text_input_prompt(self, context):
         title = context['title']
@@ -371,7 +364,7 @@ class WidgetsBuilder:
             selector='ButtonsRow',
         )
 
-        window = self.create_modal_window(
+        window = self.create_dialog_window(
             width=40,
             height=6,
             title=title,
@@ -379,7 +372,7 @@ class WidgetsBuilder:
                 handlers.OnKeyPress('common.SUBMIT', callback, text_input),
                 handlers.DiscardKeyPress(callback),
             ],
-            selector='Window.modal',
+            selector='Window.dialog',
         )
 
         window.extend([
@@ -415,14 +408,14 @@ class WidgetsBuilder:
             selector='ButtonsRow',
         )
 
-        window = self.create_modal_window(
+        window = self.create_dialog_window(
             width=20,
             height= msg.height+buttons.height+len(items)+4,
             title=title,
             on_key_press=[
                 handlers.DiscardKeyPress(callback),
             ],
-            selector='Window.modal',
+            selector='Window.dialog',
         )
 
         items_list = widgets.ListBox(

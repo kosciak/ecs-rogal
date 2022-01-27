@@ -1,3 +1,6 @@
+from ..events import EventType
+from ..events import handlers
+
 from . import containers
 from . import decorations
 from . import states
@@ -16,6 +19,7 @@ class Window(
     ):
 
     def __init__(self, content, *,
+                 title=None,
                  on_key_press=None,
                  **kwargs,
                 ):
@@ -23,9 +27,13 @@ class Window(
             content=content,
             **kwargs,
         )
+        if title:
+            self.title = title
 
         # TODO: Need to be moved somewhere else, just use signals?
-        self.events_handlers.on_key_press.extend(on_key_press or [])
+        on_key_press = on_key_press or []
+        for handler in on_key_press:
+            self.bind(EventType.KEY_PRESS, handler)
 
     @property
     def title(self):
@@ -36,21 +44,66 @@ class Window(
         self.overlay.title = title
         self.overlay.move_to_end('title', last=False)
 
+
+class DialogWindow(
+        states.Focusable,
+        Window
+    ):
+
+    def __init__(self, content, *,
+                 close_button=None,
+                 response_key_handler=None,
+                 **kwargs,
+                ):
+        self.buttons = widgets.ButtonsRow(
+            selector='Dialog ButtonsRow',
+        )
+        content = containers.List(
+            content=[
+                content,
+                self.buttons,
+            ]
+        )
+        super().__init__(
+            content=content,
+            **kwargs,
+        )
+        if close_button:
+            self.close_button = close_button
+        self.bind(
+            EventType.KEY_PRESS,
+            handlers.DiscardKeyPress(self.on_close)
+        )
+        if response_key_handler:
+            self.bind(
+                EventType.KEY_PRESS,
+                response_key_handler(self.on_response)
+            )
+
     def close(self):
+        self.emit('close')
         self.destroy()
 
-    def on_close(self, source, value):
-        # NOTE: Handler for close button "click" signals, DiscardKeyPress events, etc
+    def response(self, value):
+        self.emit('response', value)
+        self.destroy()
+
+    def on_close(self, source, value=None):
         self.close()
 
+    def on_response(self, source, value):
+        self.response(value)
 
-class DialogWindow(Window):
+    @property
+    def close_button(self):
+        return self.overlay.close_button
+
+    @close_button.setter
+    def close_button(self, close_button):
+        self.overlay.close_button = close_button
+        close_button.on('clicked', self.on_close)
 
     def add_button(self, button, value):
         self.buttons.append(button)
-        button.on('clicked', self.on_button_clicked, value)
-
-    def on_button_clicked(self, source, value):
-        self.emit('response', value)
-        self.close()
+        button.on('clicked', self.on_response, value)
 

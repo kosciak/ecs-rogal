@@ -125,17 +125,7 @@ class UIManager:
     def redraw(self, element):
         self.ecs.manage(UIElementChanged).insert(element)
 
-    def bind(self, element, **handlers):
-        self.events.bind(element, **handlers)
-
-    def connect(self, element, handlers):
-        self.signals.bind(element, handlers)
-
-    # TODO: What about connecting to element (as an entity in ECS), not an instance?
-
-    def emit(self, element, name, value=None):
-        self.signals.emit(element, name, value)
-
+    # TODO: focus handling needs rework!
     def grab_focus(self, element):
         self.focus.grab(element)
 

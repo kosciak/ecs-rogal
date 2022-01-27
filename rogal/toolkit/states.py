@@ -9,7 +9,6 @@ class State(Enum):
     HOVERED = auto()
     ACTIVE = auto()
     FOCUSED = auto()
-    # SELECTED = auto()
     # TODO: DISABLED
 
 
@@ -152,6 +151,11 @@ class Hoverable(Stateful, HandleEvents):
 # TODO: Scrollable?
 
 
+class Focusable(Stateful, HandleEvents):
+    pass
+
+
+# TODO: OBSOLETE?
 class WithHotkey(Stateful, HandleEvents):
 
     def __init__(self, ecs, key_binding, *args, **kwargs):
@@ -164,6 +168,7 @@ class WithHotkey(Stateful, HandleEvents):
         self.activate()
 
 
+# TODO: OBSOLETE! Get rid of it! Use signals instead
 class Activable:
 
     def __init__(self, callback, value, *args, **kwargs):

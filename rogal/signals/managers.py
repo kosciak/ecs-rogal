@@ -25,6 +25,13 @@ class SignalsManager:
     def bind(self, entity, handlers):
         if handlers:
             self.ecs.manage(OnSignal).insert(entity, handlers)
-        else:
-            self.ecs.manage(OnSignal).remove(entity)
+
+    def on(self, entity, signal_name, handler, data=None):
+        handlers = self.ecs.manage(OnSignal).get(entity)
+        if not handlers:
+            handlers = self.ecs.manage(OnSignal).insert(entity, {})
+        signal_handlers = handlers.setdefault(signal_name, {})
+        signal_handlers[handler] = data
+
+    # TODO: def off(self, entity, signal_name, handler):
 

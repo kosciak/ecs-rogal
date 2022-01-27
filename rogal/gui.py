@@ -11,20 +11,22 @@ class Prompt:
 
     def __init__(self, ecs, context, callback, *args, **kwargs):
         self.ecs = ecs
-        self.ui_manager = self.ecs.resources.ui_manager
+        self.ui = self.ecs.resources.ui_manager
+        self.signals = self.ecs.resources.signals_manager
 
         self.window = None
         self.context = context
         self.callback = functools.partial(callback, *args, **kwargs)
-        self.context['callback'] = self.on_event
 
     def show(self):
-        self.window = self.ui_manager.create(self.WIDGET_TYPE, context=self.context)
+        self.window = self.ui.create(self.WIDGET_TYPE, context=self.context)
+        self.signals.on(self.window, 'close', self.on_response, False)
+        self.signals.on(self.window, 'response', self.on_response)
 
     def close(self):
-        self.ui_manager.destroy(self.window)
+        self.ui.destroy(self.window)
 
-    def on_event(self, entity, value):
+    def on_response(self, entity, value):
         raise NotImplementedError()
 
 
@@ -32,19 +34,19 @@ class YesNoPrompt(Prompt):
 
     WIDGET_TYPE = 'YES_NO_PROMPT'
 
-    def on_event(self, entity, value):
-        self.close()
+    def on_response(self, entity, value):
         if value is True:
             self.callback()
         if value is False:
             log.debug('Prompt closed...')
 
 
+# TODO: Rework with signals
 class TextInputPrompt(Prompt):
 
     WIDGET_TYPE = 'TEXT_INPUT_PROMPT'
 
-    def on_event(self, entity, value):
+    def on_response(self, entity, value):
         self.close()
         if value is False:
             log.debug('Prompt closed...')
@@ -53,11 +55,12 @@ class TextInputPrompt(Prompt):
             # self.callback(value.txt)
 
 
+# TODO: Rework with signals
 class AlphabeticSelectPrompt(Prompt):
 
     WIDGET_TYPE = 'ALPHABETIC_SELECT_PROMPT'
 
-    def on_event(self, entity, value):
+    def on_response(self, entity, value):
         self.close()
         if value is False:
             log.debug('Prompt closed...')

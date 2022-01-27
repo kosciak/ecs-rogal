@@ -117,6 +117,7 @@ class RadioButton(WithLabel, ToggleButton):
             self.value = 1
 
 
+# TODO: Rename to ToggleGroup?
 class ButtonsGroup:
 
     def __init__(self, buttons=None):
