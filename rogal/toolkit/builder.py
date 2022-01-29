@@ -86,7 +86,7 @@ class WidgetsBuilder:
 
         return window
 
-    def create_dialog_window(self, content, title=None, response_key_handler=None, selector=None):
+    def create_dialog_window(self, content, title=None, selector=None):
         title = self.create_framed_label(
             txt=title,
             selector='.title',
@@ -102,7 +102,6 @@ class WidgetsBuilder:
             title=title,
             close_button=close_button,
             # post_renderers=[renderers.InvertColors(), ],
-            response_key_handler=response_key_handler,
             selector=selector,
             style=self.get_style(selector),
         )
@@ -155,14 +154,12 @@ class WidgetsBuilder:
         )
         return button
 
-    def create_button(self, txt, callback, value, selector=None):
+    def create_button(self, txt, selector=None):
         label = labels.Label(
             txt,
         )
         button = buttons.Button(
             content=label,
-            callback=callback,
-            value=value,
             selector=selector,
             style=self.get_style(selector),
         )
@@ -258,7 +255,7 @@ class WidgetsBuilder:
             'checkbox',
             selector='.label',
         )
-        checkbox.set_label(checkbox_label)
+        checkbox_label.assign(checkbox)
 
         radio_group = buttons.ButtonsGroup()
         radio1 = self.create_radio(
@@ -269,7 +266,7 @@ class WidgetsBuilder:
             'radio 1',
             selector='.label',
         )
-        radio1.set_label(radio1_label)
+        radio1_label.assign(radio1)
 
         radio2 = self.create_radio(
             radio_group,
@@ -279,7 +276,7 @@ class WidgetsBuilder:
             'radio 2',
             selector='.label',
         )
-        radio2.set_label(radio2_label)
+        radio2_label.assign(radio2)
 
         toggle_buttons = containers.List([
             containers.Row([
@@ -317,21 +314,20 @@ class WidgetsBuilder:
         dialog = self.create_dialog_window(
             content=content,
             title=title,
-            response_key_handler=handlers.YesNoKeyPress,
             selector='Window.dialog',
         )
 
         dialog_buttons = [
-            ['No',  False],
-            ['Yes', True],
+            ['No',  False, 'dialog.NO'],
+            ['Yes', True, 'dialog.YES'],
         ]
 
-        for text, value in dialog_buttons:
-            button = self.create_label_button(
+        for text, value, key_binding in dialog_buttons:
+            button = self.create_button(
                 text,
                 selector='.button',
             )
-            dialog.add_button(button, value)
+            dialog.add_button(button, value, key_binding)
 
         return dialog
 

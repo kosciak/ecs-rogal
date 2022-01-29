@@ -1,5 +1,6 @@
 from enum import Enum, auto
 
+from ..events import EventType
 from ..events import handlers
 
 from .handlers import HandleEvents, EmitsSignals
@@ -151,31 +152,21 @@ class Hoverable(Stateful, HandleEvents):
 # TODO: Scrollable?
 
 
-class Focusable(Stateful, HandleEvents):
+class Focusable(Stateful):
     pass
 
 
-# TODO: OBSOLETE?
-class WithHotkey(Stateful, HandleEvents):
+class Activable(Focusable, HandleEvents):
 
-    def __init__(self, ecs, key_binding, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.events_handlers.on_key_press.extend([
-            handlers.OnKeyPress(key_binding, self.on_hotkey),
-        ])
+        self.bind(
+            EventType.KEY_PRESS,
+            handlers.OnKeyPress('common.ACTIVATE', self.on_activate)
+        )
 
-    def on_hotkey(self, element, key, *args, **kwargs):
-        self.activate()
-
-
-# TODO: OBSOLETE! Get rid of it! Use signals instead
-class Activable:
-
-    def __init__(self, callback, value, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.callback = callback
-        self.value = value
-
-    def activate(self):
-        return self.callback(self.element, self.value)
+    def on_activate(self, element, value=None):
+        # TODO: Re-enable after sorting out focus setting and changing
+        print('ACTIVATED:', self)
+        # self.activate()
 

@@ -13,7 +13,10 @@ class BaseButton(
         decorations.WithPostProcessedContent,
         decorations.Padded,
     ):
-    pass
+
+    def activate(self):
+        super().activate()
+        self.emit('clicked')
 
 
 class Button(
@@ -21,36 +24,24 @@ class Button(
         BaseButton,
     ):
 
-    # TODO: callbacks should be replaced with signals!
-
-    def __init__(self, content, callback, value, **kwargs):
-        super().__init__(
-            content=content,
-            callback=callback, value=value,
-            **kwargs,
-        )
-
-    def activate(self):
-        super().activate()
-        self.emit('clicked')
+    pass
 
 
 class Label(BaseButton):
 
-    """Simple button without callback."""
+    """Simple label button."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.assigned_activables = []
+
+    def assign(self, activable):
+        self.assigned_activables.append(activable)
 
     def activate(self):
         super().activate()
-        self.emit('clicked')
-
-
-class WithLabel:
-
-    def set_label(self, label):
-        label.on('clicked', self.on_label_clicked)
-
-    def on_label_clicked(self, label, value):
-        self.activate()
+        for activable in self.assigned_activables:
+            activable.activate()
 
 
 class ToggleButton(BaseButton):
@@ -98,11 +89,11 @@ class ToggleButton(BaseButton):
 
 # TODO: Rename to IndicatorButton?
 #       And CheckButton / RadioButton would be Indicator+Label inside single Widget?
-class CheckButton(WithLabel, ToggleButton):
+class CheckButton(ToggleButton):
     pass
 
 
-class RadioButton(WithLabel, ToggleButton):
+class RadioButton(ToggleButton):
 
     def __init__(self, content, group, value=None, **kwargs):
         super().__init__(

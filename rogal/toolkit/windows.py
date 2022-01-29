@@ -52,7 +52,6 @@ class DialogWindow(
 
     def __init__(self, content, *,
                  close_button=None,
-                 response_key_handler=None,
                  **kwargs,
                 ):
         self.buttons = widgets.ButtonsRow(
@@ -72,13 +71,8 @@ class DialogWindow(
             self.close_button = close_button
         self.bind(
             EventType.KEY_PRESS,
-            handlers.DiscardKeyPress(self.on_close)
+            handlers.OnKeyPress('dialog.DISCARD', self.on_close)
         )
-        if response_key_handler:
-            self.bind(
-                EventType.KEY_PRESS,
-                response_key_handler(self.on_response)
-            )
 
     def close(self):
         self.emit('close')
@@ -103,7 +97,12 @@ class DialogWindow(
         self.overlay.close_button = close_button
         close_button.on('clicked', self.on_close)
 
-    def add_button(self, button, value):
+    def add_button(self, button, value, key_binding):
         self.buttons.append(button)
         button.on('clicked', self.on_response, value)
+        if key_binding:
+            self.bind(
+                EventType.KEY_PRESS,
+                handlers.OnKeyPress(key_binding, self.on_response, value)
+            )
 
