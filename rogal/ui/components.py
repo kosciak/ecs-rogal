@@ -29,11 +29,8 @@ class UIElement(Component):
     def __init__(self, content):
         self.content = content
 
-    def layout(self, ui_manager, panel, z_order=0):
-        self.content.layout(ui_manager, panel, z_order)
-
-    def layout_content(self, ui_manager, panel, z_order):
-        self.content.layout_content(ui_manager, panel, z_order)
+    def __getattr__(self, name):
+        return getattr(self.content, name)
 
 
 UIElementChanged = Flag('UIElementChanged')
@@ -78,8 +75,8 @@ class UIRenderer(Component):
     def __init__(self, renderer):
         self.renderer = renderer
 
-    def render(self, panel, timestamp):
-        self.renderer.render(panel, timestamp)
+    def __getattr__(self, name):
+        return getattr(self.renderer, name)
 
 
 # TODO: Keyboard input handling needs major redesign!
