@@ -3,7 +3,7 @@ from enum import Enum, auto
 from ..events import EventType
 from ..events import handlers
 
-from .handlers import HandleEvents, EmitsSignals
+from . import connectable
 
 
 class State(Enum):
@@ -13,7 +13,7 @@ class State(Enum):
     # TODO: DISABLED
 
 
-class Stateful(EmitsSignals):
+class Stateful(connectable.EmitsSignals):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -80,10 +80,11 @@ class Stateful(EmitsSignals):
 
     def blur(self):
         self.states.discard(State.FOCUSED)
+        # self.emit('blur')
         self.update_style()
 
 
-class Clickable(Stateful, HandleEvents):
+class Clickable(Stateful, connectable.HandleEvents):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -126,7 +127,7 @@ class Clickable(Stateful, HandleEvents):
         pass
 
 
-class Hoverable(Stateful, HandleEvents):
+class Hoverable(Stateful, connectable.HandleEvents):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -152,11 +153,38 @@ class Hoverable(Stateful, HandleEvents):
 # TODO: Scrollable?
 
 
-class Focusable(Stateful):
-    pass
+class Focusable(Stateful, connectable.HandleEvents):
+
+    def focus(self):
+        super().focus()
+        # TODO: Call manager.focus with get_focus(self.element)
+
+    def set_focus(self):
+        if not self.is_focused:
+            self.focus()
+        return True
 
 
-class Activable(Focusable, HandleEvents):
+class FucusableContainer(Focusable):
+
+    # TODO: for child in self.children: child.on('focus', self.on_child_focus)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.focused_child_element = None
+
+    def set_focus(self):
+        # TODO: Select child to focus, use focused_child_element if not None
+        return super().set_focus()
+
+    def on_child_focus(self, element, value=None):
+        if self.is_focused():
+            return
+        self.focused_child_element = element
+        self.focus()
+
+
+class Activable(Focusable, connectable.HandleEvents):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

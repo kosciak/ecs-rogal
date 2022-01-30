@@ -177,6 +177,8 @@ class Container:
     def insert(self, manager, element):
         super().insert(manager, element)
         for child in self:
+            if child.element:
+                continue
             child.insert(
                 manager,
                 manager.create_child(element),

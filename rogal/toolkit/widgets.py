@@ -5,12 +5,12 @@ from . import basic
 from . import containers
 from . import decorations
 from . import renderers
-from . import handlers
+from . import connectable
 from . import states
 
 
 class Widget(
-        handlers.EmitsSignals,
+        connectable.EmitsSignals,
     ):
 
     def __init__(self, *args, **kwargs):
@@ -37,7 +37,7 @@ class Widget(
 # TODO: rename to PaddedRow? It could be used for anything, not only Buttons
 class ButtonsRow(
         Widget,
-        containers.WithListContainer,
+        containers.WithListContainer, # TODO: Consider if needed...
         decorations.Padded,
     ):
 

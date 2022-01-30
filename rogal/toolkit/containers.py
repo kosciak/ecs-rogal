@@ -256,5 +256,6 @@ class WithListContainer:
         return len(self._container)
 
     def __iter__(self):
+        # TODO: This might / should(?) mess up Container.insert() logic relying on __iter__
         yield from self._container
 
