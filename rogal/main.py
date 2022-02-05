@@ -139,6 +139,7 @@ def run(wrapper):
     # Register systems
     # NOTE: Systems are run in order they were registered
     for system in [
+
         # Core engine related systems
 
         systems.real_time.TTLSystem(ecs),
@@ -147,6 +148,7 @@ def run(wrapper):
         systems.run_state.RenderStateSystem(ecs),
         systems.run_state.AnimationsStateSystem(ecs),
 
+        # TODO: Move after EventsManager?
         systems.ui.DestroyUIElementsSystem(ecs),
         systems.ui.CreateUIElementsSystem(ecs),
 
@@ -155,12 +157,18 @@ def run(wrapper):
         systems.ui.RenderSystem(ecs),
         systems.ui.DisplaySystem(ecs),
 
-        systems.ui.InputFocusSystem(ecs),
+        systems.ui.InputFocusSystem(ecs), # TODO: OBSOLETE! Replace with GrabInputFocusSystem, BlurInputFocusSystem
         systems.ui.OnScreenFocusSystem(ecs),
 
         systems.events.EventsDispatcherSystem(ecs),
 
+        # NOTE: Event places GrabInputFocus component, need signals to propagate
+        # systems.ui.GrabInputFocusSystem(ecs)
+
         systems.signals.SignalsHandlerSystem(ecs),
+
+        # NOTE: Clear up HasFocus flags AFTER focus propagation using signals
+        # systems.ui.BlurInputFocusSystem(ecs),
 
         systems.commands.QuitSystem(ecs),
 

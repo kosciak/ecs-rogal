@@ -14,7 +14,7 @@ from .components import (
     UIStyle, UIStyleChanged,
     UIRenderer,
     UILayout,
-    GrabInputFocus, InputFocus, HasInputFocus,
+    GrabInputFocus, InputFocus, HasInputFocus, CurrentInputFocus,
 )
 
 
@@ -127,7 +127,7 @@ class UIManager:
 
     # TODO: focus handling needs rework!
     def grab_focus(self, element):
-        self.focus.grab(element)
+        self.focus.grab_focus(element)
 
     # TODO: get_focus -> just set current InputFocus value, not higher one!
     #       switch_focus?
@@ -141,6 +141,7 @@ class InputFocusManager:
     def __init__(self, ecs):
         self.ecs = ecs
         self._positions = None
+        self.input_focus = None
         # TODO: consider adding pixel_positions ??
 
     @property
@@ -152,25 +153,31 @@ class InputFocusManager:
 
     def clear_positions(self):
         self._positions = None
-        # self.parents.clear()
 
-    def grab(self, element):
+    def grab_focus(self, element):
         self.ecs.manage(GrabInputFocus).insert(element)
 
-    # TODO: get(self, element) -> change focus, grab without changing current priority
+    def has_focus(self, element):
+        self.ecs.manage(HasInputFocus).insert(element)
 
+    def set_input_focus(self, element):
+        self.input_focus = element
+
+    # TODO: Obsolete?
     def release(self, element):
         self.ecs.manage(InputFocus).remove(element)
 
     def update_positions(self, entity, panel):
         self.positions[panel.x : panel.x2, panel.y : panel.y2] = entity.bytes
 
-    def propagate_from(self, entity):
+    def propagate_from(self, entity, filter_by=None):
         if not entity:
             return
         yield entity
         parent_elements = self.ecs.manage(ParentUIElements)
         for parent in parent_elements.get(entity, []):
+            if filter_by is not None and not parent in filter_by:
+                continue
             yield parent
 
     def get_position(self, position):
@@ -182,12 +189,13 @@ class InputFocusManager:
 
     def propagate_from_position(self, position):
         target = self.get_position(position)
-        yield from self.propagate_from(target)
+        filter_by = self.ecs.manage(UIElement)
+        yield from self.propagate_from(target, filter_by)
 
     def propagate_from_focused(self):
         # TODO: Generator with correct order of parents instead of EntitiesSet?
         # TODO: Return single entity that is focused, use propagate_from() to get parents
-        #       OR maybe propaget NOT based on parents for focued? Whatever works
+        #       OR maybe propagate NOT based on parents for focued? Whatever works
         #       Right now Actor can be focused, so it won't work like that
         #       Need to completely redesign keeping track of focus
         entities = EntitiesSet()

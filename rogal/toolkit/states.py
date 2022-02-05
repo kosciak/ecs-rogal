@@ -13,7 +13,7 @@ class State(Enum):
     # TODO: DISABLED
 
 
-class Stateful(connectable.EmitsSignals):
+class Stateful(connectable.SignalsEmitter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -84,7 +84,7 @@ class Stateful(connectable.EmitsSignals):
         self.update_style()
 
 
-class Clickable(Stateful, connectable.HandleEvents):
+class Clickable(Stateful, connectable.EventsHandler):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -127,7 +127,7 @@ class Clickable(Stateful, connectable.HandleEvents):
         pass
 
 
-class Hoverable(Stateful, connectable.HandleEvents):
+class Hoverable(Stateful, connectable.EventsHandler):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -153,16 +153,17 @@ class Hoverable(Stateful, connectable.HandleEvents):
 # TODO: Scrollable?
 
 
-class Focusable(Stateful, connectable.HandleEvents):
+class Focusable(Stateful, connectable.EventsHandler):
 
     def focus(self):
         super().focus()
-        # TODO: Call manager.focus with get_focus(self.element)
+        self.manager.has_focus(self.element)
 
     def set_focus(self):
+        # TODO: Check for is_disabled or other conditions preventing being focused?
         if not self.is_focused:
             self.focus()
-        return True
+        return self.element
 
 
 class FucusableContainer(Focusable):
@@ -174,17 +175,23 @@ class FucusableContainer(Focusable):
         self.focused_child_element = None
 
     def set_focus(self):
-        # TODO: Select child to focus, use focused_child_element if not None
-        return super().set_focus()
+        if not super().set_focus():
+            return
+        focused_element = self.set_child_focus() or self.element
+        return focused_element
+
+    def set_child_focus(self):
+        # TODO: Select child to focus, use focused_child_element if not None (check if still valid!)
+        return False
 
     def on_child_focus(self, element, value=None):
-        if self.is_focused():
-            return
         self.focused_child_element = element
-        self.focus()
+        if not self.is_focused:
+            # NOTE: This will emit signal handled by parent
+            self.focus()
 
 
-class Activable(Focusable, connectable.HandleEvents):
+class Activable(Focusable, connectable.EventsHandler):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

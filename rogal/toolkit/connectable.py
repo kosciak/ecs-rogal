@@ -1,7 +1,7 @@
 from ..collections.attrdict import DefaultAttrDict
 
 
-class HandleEvents:
+class EventsHandler:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -24,7 +24,7 @@ class HandleEvents:
         #       and should not change...
 
 
-class EmitsSignals:
+class SignalsEmitter:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

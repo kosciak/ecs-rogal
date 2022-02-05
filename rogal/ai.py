@@ -106,7 +106,7 @@ class PlayerInput(TakeActionHandler):
 
     def set_event_handlers(self, actor):
         self.events.bind(actor, on_key_press=self.on_key_press)
-        self.focus.grab(actor)
+        self.focus.grab_focus(actor)
 
     def remove_event_handlers(self, actor):
         self.events.unbind(actor, on_key_press=self.on_key_press)

@@ -86,3 +86,5 @@ GrabInputFocus = Flag('GrabInputFocus')
 
 HasInputFocus = Flag('HasInputFocus')
 
+CurrentInputFocus = Flag('CurrentInputFocus')
+

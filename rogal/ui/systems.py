@@ -184,15 +184,50 @@ class InputFocusSystem(System):
             has_focus.insert(entity)
 
 
-class OnScreenFocusSystem(System):
+class FocusSystem(System):
 
     INCLUDE_STATES = {
-        RunState.RENDER,
+        RunState.RENDER, # Maybe: RunState.WAIT_FOR_INPUT ?
     }
 
     def __init__(self, ecs):
         super().__init__(ecs)
         self.focus_manager = self.ecs.resources.focus_manager
+
+
+class GrabInputFocusSystem(FocusSystem):
+
+    def run(self):
+        grab_focus = self.ecs.manage(GrabInputFocus)
+        if not grab_focus:
+            return
+        elements = self.ecs.manage(UIElement)
+        for element, content in self.ecs.join(grab_focus.entities, elements):
+            self.focus_manager.set_input_focus(
+                content.set_focus(),
+            )
+        grab_focus.clear()
+
+
+class BlurInputFocus(FocusSystem):
+
+    def run(self):
+        has_focus = self.ecs.manage(HasInputFocus)
+        if not has_focus:
+            return
+        elements = self.ecs.manage(UIElement)
+        to_blur = set()
+        focused = self.focus_manager.propagate_from_focused()
+        for element, content in self.ecs.join(has_focus.entities, elements):
+            if not element in focused:
+                content.blur()
+                to_blur.add(element)
+        has_focus.remove(
+            *to_blur,
+        )
+
+
+class OnScreenFocusSystem(FocusSystem):
 
     def run(self):
         changed_layouts = self.ecs.manage(UILayoutChanged)

@@ -21,14 +21,17 @@ list:
   SELECT:   [ENTER, KP_ENTER, ]
 
 common:
+  ACTIVATE: [SPACE, ENTER, KP_ENTER, ]
+  PREV:     [Shift-TAB, ]
+  NEXT:     [TAB, ]
+
+dialog:
   CONFIRM:  [SPACE, ENTER, KP_ENTER, ]
   DISCARD:  [ESCAPE, ]
   SUBMIT:   [ENTER, KP_ENTER, ]
   MORE:     [SPACE, ENTER, KP_ENTER, ]
   'YES':    [y, Y, ]
   'NO':     [n, N, ]
-  NEXT:     [TAB, ]
-  PREV:     [Shift-TAB, ]
 
 directions: 
   N:  [UP,        k,  KP_8, ]
