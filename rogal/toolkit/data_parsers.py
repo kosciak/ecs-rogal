@@ -64,7 +64,7 @@ data_store.register('progress_bars', parse_progress_bar_segments)
 data_store.register('separators', parsers.parse_glyphs_sequence)
 # data_store.register('separators', parse_separator_segments)
 data_store.register('spinners', parsers.parse_frames_sequence)
-data_store.register('ui_style', parse_ui_style, default=dict)
+data_store.register('ui_style', parse_ui_style)
 
 parsers.register('decorations', data_store.decorations.parse)
 parsers.register('progress_bar', data_store.progress_bars.parse)

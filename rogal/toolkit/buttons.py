@@ -27,6 +27,7 @@ class Button(
     pass
 
 
+# TODO: Rename to LabelButton, so it won't clash with labels.Label?
 class Label(BaseButton):
 
     """Simple label button."""
