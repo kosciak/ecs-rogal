@@ -14,7 +14,7 @@ class CreateUIElement(Component):
         self.context = context or {}
 
 
-ParentUIElements = List('ParentUIElements')
+ParentUIElements = List('ParentUIElements') # TODO: UIPath? From root element to element itself
 ChildUIElements = EntitiesRefs('ChildUIElements') # TODO: Descendants? These are ALL children, added recursively
 
 
@@ -23,6 +23,7 @@ DestroyUIElement = Flag('DestroyUIElement')
 DestroyUIElementContent = Flag('DestroyUIElementContent')
 
 
+# TODO: rename to UIWidget, combine with UIStyle (and use stylesheets.Selector)
 class UIElement(Component):
     __slots__ = ('content', )
 
@@ -33,6 +34,7 @@ class UIElement(Component):
         return getattr(self.content, name)
 
 
+# TODO: rename to UIContentChanged
 UIElementChanged = Flag('UIElementChanged')
 
 

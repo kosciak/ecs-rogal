@@ -274,10 +274,13 @@ class Spinner(core.Animated, TextRenderer):
 
     def set_style(self, *, frames=None, colors=None, **style):
         self.style.update(
-            frames=frames,
+            frames=frames or [],
             colors=colors,
         )
-        self.txt_size = self.get_frames_txt_size(self.style.frames)
+        if self.style.frames:
+            self.txt_size = self.get_frames_txt_size(self.style.frames)
+        else:
+            self.txt_size = Size(0, 0)
         super().set_style(**style)
 
     @property

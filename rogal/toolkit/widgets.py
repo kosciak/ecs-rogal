@@ -13,8 +13,9 @@ class Widget(
         connectable.SignalsEmitter,
     ):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, selector=None, **kwargs):
+        super().__init__(**kwargs)
+        self.selector = f'{self.__class__.__name__}{selector or ""}'
         self.manager = None
 
     def insert(self, manager, element):
@@ -23,6 +24,7 @@ class Widget(
         manager.insert(
             element,
             content=self,
+            selector=self.selector,
         )
 
     def redraw(self):

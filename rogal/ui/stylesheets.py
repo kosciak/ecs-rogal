@@ -103,8 +103,8 @@ class Selector:
         return Selector(
             match.group('element'),
             id=match.group('id'),
-            classes=match.group('class') and [match.group('class'), ],
-            pseudo_classes=match.group('pseudo_class') and [match.group('pseudo_class'), ],
+            classes=match.group('class') and match.group('class').split('.'),
+            pseudo_classes=match.group('pseudo_class') and match.group('pseudo_class').split(':'),
         )
 
     def __repr__(self):
@@ -114,9 +114,9 @@ class Selector:
         if self.id:
             r.append(f'#{self.id}')
         if self.classes:
-            r.append(f'.{"|".join(self.classes)}')
+            r.append(f'.{".".join(self.classes)}')
         if self.pseudo_classes:
-            r.append(f':{"|".join(self.pseudo_classes)}')
+            r.append(f':{":".join(self.pseudo_classes)}')
         r = ''.join(r)
         return f'<Selector "{r}">'
 
@@ -174,9 +174,10 @@ class StylesheetsManager:
         if self._rules is None:
             rules = []
             for selectors, style in data_store.ui_style.data.items():
-                rules.append(
-                    Rule(style, selectors)
-                )
+                for selectors in selectors.split(', '):
+                    rules.append(
+                        Rule(style, selectors)
+                    )
             self._rules = rules
         return self._rules
 
@@ -213,6 +214,7 @@ class StylesheetsManager:
     def get(self, selector):
         style = {}
         matched_rules = self.get_matched_rules(selector)
+        # print(selector, matched_rules)
         for rule in matched_rules:
             style = self.merge_styles(style, rule.style)
         return style

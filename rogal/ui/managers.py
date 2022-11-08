@@ -25,16 +25,9 @@ class UIManager:
 
     def __init__(self, ecs):
         self.ecs = ecs
-        self._stylesheets = None
         self._events = None
         self._signals = None
         self._focus = None
-
-    @property
-    def stylesheets(self):
-        if self._stylesheets is None:
-            self._stylesheets = self.ecs.resources.stylesheets_manager
-        return self._stylesheets
 
     @property
     def events(self):
@@ -70,12 +63,15 @@ class UIManager:
         element = self.ecs.create()
 
         child_elements = self.ecs.manage(ChildUIElements)
-        child_elements.insert(element, [])
+        child_elements.insert(element)
 
         parent_elements = self.ecs.manage(ParentUIElements)
-        parents = parent_elements.insert(
-            element,
-            [parent, *parent_elements.get(parent, [])]
+        parents = parent_elements.get(parent, [])
+        parent_elements.insert(
+            element, [
+                *parents,
+                element,
+            ]
         )
         for parent in parents:
             parent_children = child_elements.get(parent)
@@ -95,15 +91,16 @@ class UIManager:
                 element, content,
             )
             self.ecs.manage(UIElementChanged).insert(element)
-        if renderer:
-            self.ecs.manage(UIRenderer).insert(
-                element, renderer,
-            )
+        # TODO: Combine UIElement and UIStyle into UIWidget?
         if selector:
             self.ecs.manage(UIStyle).insert(
                 element, selector,
             )
             self.ecs.manage(UIStyleChanged).insert(element)
+        if renderer:
+            self.ecs.manage(UIRenderer).insert(
+                element, renderer,
+            )
         if panel:
             self.ecs.manage(UILayout).insert(
                 element, panel, z_order or ZOrder.BASE,
@@ -175,7 +172,7 @@ class InputFocusManager:
             return
         yield entity
         parent_elements = self.ecs.manage(ParentUIElements)
-        for parent in parent_elements.get(entity, []):
+        for parent in reversed(parent_elements.get(entity, [])):
             if filter_by is not None and not parent in filter_by:
                 continue
             yield parent

@@ -37,11 +37,12 @@ class WidgetsBuilder:
         return self._stylesheets
 
     def get_style(self, selectors):
+        return None # TODO: Will crash on Spinner, ProgressBar
         return self.stylesheets.get(selectors)
 
     def create(self, element_cls, style=None, *args, **kwargs):
-        if isinstance(style, str):
-            style = self.get_style(style)
+        # if isinstance(style, str):
+        #     style = self.get_style(style)
         style = style or {}
         element = element_cls(
             style=style,
@@ -49,12 +50,6 @@ class WidgetsBuilder:
             **kwargs,
         )
         return element
-
-    def set_style(self, element, style):
-        if isinstance(style, str):
-            style = self.get_style(style)
-        style = style or {}
-        element.set_style(**style)
 
     def create_framed_label(self, txt, selector=None):
         if txt is None:
@@ -66,7 +61,6 @@ class WidgetsBuilder:
         framed_label = labels.FramedLabel(
             label=label,
             selector=selector,
-            style=self.get_style(selector),
         )
 
         return framed_label
@@ -81,7 +75,6 @@ class WidgetsBuilder:
             content=content,
             title=title,
             selector=selector,
-            style=self.get_style(selector),
         )
 
         return window
@@ -97,13 +90,12 @@ class WidgetsBuilder:
             selector='.close_button',
         )
 
-        window = windows.DialogWindow(
+        window = windows.Dialog(
             content=content,
             title=title,
             close_button=close_button,
             # post_renderers=[renderers.InvertColors(), ],
             selector=selector,
-            style=self.get_style(selector),
         )
         window.default_z_order=500
 
@@ -126,7 +118,6 @@ class WidgetsBuilder:
             content=labels,
             value=value,
             selector=selector,
-            style=self.get_style(selector),
         )
         return button
 
@@ -139,7 +130,6 @@ class WidgetsBuilder:
             group=group,
             value=value,
             selector=selector,
-            style=self.get_style(selector),
         )
         return button
 
@@ -150,7 +140,6 @@ class WidgetsBuilder:
         button = buttons.Label(
             content=label,
             selector=selector,
-            style=self.get_style(selector),
         )
         return button
 
@@ -161,14 +150,12 @@ class WidgetsBuilder:
         button = buttons.Button(
             content=label,
             selector=selector,
-            style=self.get_style(selector),
         )
         return button
 
     def create_buttons_row(self, callback, buttons, selector=None):
         buttons_row = widgets.ButtonsRow(
             selector=selector,
-            style=self.get_style(selector),
         )
 
         for text, value in buttons:
@@ -245,7 +232,7 @@ class WidgetsBuilder:
 
         msg = labels.Label(
             txt=msg,
-            style=self.get_style('Dialog Label'),
+            selector='.prompt',
         )
 
         checkbox = self.create_checkbox(
@@ -293,10 +280,12 @@ class WidgetsBuilder:
         progress_bar = basic.ProgressBarAnimatedDemo(
             value=.75,
             frame_duration=150,
+            # selector='ProgressBar',
             style=self.get_style('ProgressBar'),
         )
 
         spinner = basic.Spinner(
+            # selector='Spinner',
             style=self.get_style('Spinner'),
         )
 
@@ -314,7 +303,7 @@ class WidgetsBuilder:
         dialog = self.create_dialog_window(
             content=content,
             title=title,
-            selector='Window.dialog',
+            selector='.dialog',
         )
 
         dialog_buttons = [
@@ -357,7 +346,6 @@ class WidgetsBuilder:
                 ['Cancel', False],
                 ['OK',     text_input],
             ],
-            selector='ButtonsRow',
         )
 
         window = self.create_dialog_window(
@@ -368,7 +356,7 @@ class WidgetsBuilder:
                 handlers.OnKeyPress('common.SUBMIT', callback, text_input),
                 handlers.DiscardKeyPress(callback),
             ],
-            selector='Window.dialog',
+            selector='.dialog',
         )
 
         window.extend([
@@ -391,9 +379,9 @@ class WidgetsBuilder:
         callback = context['callback']
         items = [f'index: {i}' for i in range(10)]
 
-        msg = self.create(
-            labels.Label, 'Dialog Label',
-            msg,
+        msg = labels.Label(
+            txt=msg,
+            selector='.prompt',
         )
 
         buttons_row = self.create_buttons_row(
@@ -401,7 +389,6 @@ class WidgetsBuilder:
             buttons=[
                 ['Cancel', False],
             ],
-            selector='ButtonsRow',
         )
 
         window = self.create_dialog_window(
@@ -411,7 +398,7 @@ class WidgetsBuilder:
             on_key_press=[
                 handlers.DiscardKeyPress(callback),
             ],
-            selector='Window.dialog',
+            selector='.dialog',
         )
 
         items_list = widgets.ListBox(
@@ -458,13 +445,13 @@ class WidgetsBuilder:
             camera = self.create_window(
                 content=render.Camera(self.ecs),
                 title='mapcam',
-                selector='Window',
+                selector='#camera',
             )
 
             msg_log = self.create_window(
                 content=render.MessageLog(),
                 title='logs',
-                selector='Window',
+                selector='#logs',
             )
 
             content = containers.Split(

@@ -45,23 +45,13 @@ class Styled:
 
     def __init__(self, *, selector=None, style=None, **kwargs):
         super().__init__(**kwargs)
-        self.selector = selector
         self.style = AttrDict()
         # NOTE: call set_style even if style is None for defaults to be set correctly
         style = style or {}
         self.set_style(**style)
 
-    def insert(self, manager, element):
-        super().insert(manager, element)
-        manager.insert(
-            element,
-            selector=self.selector,
-        )
-
     def set_style(self, **style):
         self.style.update(style)
-
-    # TODO: set_pseudoclass() ?
 
 
 class WithSize(Styled, Layoutable):

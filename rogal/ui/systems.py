@@ -46,8 +46,10 @@ class CreateUIElementsSystem(System):
                 create.widget_type, create.context,
             )
             if content:
-                parent_elements.insert(element, [])
-                child_elements.insert(element, [])
+                parent_elements.insert(element, [
+                    element,
+                ])
+                child_elements.insert(element)
                 content.insert(self.ui_manager, element)
 
         to_create.clear()
@@ -79,7 +81,7 @@ class DestroyUIElementsSystem(System):
         destroy_contents.clear()
 
 
-class StyleSystem(System):
+class UpdateStyleSystem(System):
 
     INCLUDE_STATES = {
         RunState.RENDER,
@@ -95,8 +97,13 @@ class StyleSystem(System):
             return
         styles = self.ecs.manage(UIStyle)
         elements = self.ecs.manage(UIElement)
-        for element, content, style in self.ecs.join(changed.entities, elements, styles):
-            content.content.set_style(**self.stylesheets.get(style.selector))
+        parent_elements = self.ecs.manage(ParentUIElements)
+        for element, content, selector in self.ecs.join(changed.entities, elements, styles):
+            # print('>>>', selector.selector, content)
+            style = self.stylesheets.get(selector.selector)
+            if not style:
+                continue
+            content.content.set_style(**style)
         changed.clear()
 
 
@@ -209,7 +216,7 @@ class GrabInputFocusSystem(FocusSystem):
         grab_focus.clear()
 
 
-class BlurInputFocus(FocusSystem):
+class BlurInputFocusSystem(FocusSystem):
 
     def run(self):
         has_focus = self.ecs.manage(HasInputFocus)
@@ -227,7 +234,7 @@ class BlurInputFocus(FocusSystem):
         )
 
 
-class OnScreenFocusSystem(FocusSystem):
+class ScreenPositionFocusSystem(FocusSystem):
 
     def run(self):
         changed_layouts = self.ecs.manage(UILayoutChanged)

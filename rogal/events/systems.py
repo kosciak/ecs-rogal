@@ -11,8 +11,6 @@ from ..events import EventType
 
 from ..components import WantsToQuit
 
-from ..ui.components import ParentUIElements
-
 from .components import (
     EventsSource,
     OnTextInput,

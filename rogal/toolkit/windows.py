@@ -45,7 +45,7 @@ class Window(
         self.overlay.move_to_end('title', last=False)
 
 
-class DialogWindow(
+class Dialog(
         states.Focusable,
         Window
     ):
@@ -55,7 +55,7 @@ class DialogWindow(
                  **kwargs,
                 ):
         self.buttons = widgets.ButtonsRow(
-            selector='Dialog ButtonsRow',
+            # selector='Dialog ButtonsRow',
         )
         content = containers.List(
             content=[

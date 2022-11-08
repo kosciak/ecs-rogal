@@ -18,9 +18,12 @@ from .ecs import ECS
 
 from .ui.managers import UIManager
 from .ui.managers import InputFocusManager
+from .ui.stylesheets import StylesheetsManager
+
 from .toolkit.builder import WidgetsBuilder
-from .toolkit.stylesheets import StylesheetsManager
+
 from .events.managers import EventsManager
+
 from .signals.managers import SignalsManager
 
 from .colors.managers import ColorsManager
@@ -40,7 +43,6 @@ msg_log = logging.getLogger('rogal.messages')
 
 ENTITIES_DATA_FN = 'entities.yaml'
 TILESET_DATA_FN = 'tiles.yaml'
-KEY_BINDINGS_DATA_FN = 'keys.yaml'
 
 data_store.register_source(data='data.yaml')
 
@@ -141,7 +143,7 @@ def run(wrapper):
     for system in [
 
         # Core engine related systems
-
+        # NOTE: Input events and rendering MUST be done in main thread
         systems.real_time.TTLSystem(ecs),
 
         systems.run_state.ActionsLoopStateSystem(ecs),
@@ -152,13 +154,13 @@ def run(wrapper):
         systems.ui.DestroyUIElementsSystem(ecs),
         systems.ui.CreateUIElementsSystem(ecs),
 
-        systems.ui.StyleSystem(ecs),
+        systems.ui.UpdateStyleSystem(ecs),
         systems.ui.LayoutSytem(ecs),
         systems.ui.RenderSystem(ecs),
         systems.ui.DisplaySystem(ecs),
 
         systems.ui.InputFocusSystem(ecs), # TODO: OBSOLETE! Replace with GrabInputFocusSystem, BlurInputFocusSystem
-        systems.ui.OnScreenFocusSystem(ecs),
+        systems.ui.ScreenPositionFocusSystem(ecs),
 
         systems.events.EventsDispatcherSystem(ecs),
 
