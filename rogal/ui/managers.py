@@ -11,7 +11,7 @@ from .components import (
     CreateUIElement, DestroyUIElement, DestroyUIElementContent,
     ParentUIElements, ChildUIElements,
     UIElement, UIElementChanged,
-    UIStyle, UIStyleChanged,
+    UIStyleChanged,
     UIRenderer,
     UILayout,
     GrabInputFocus, InputFocus, HasInputFocus, CurrentInputFocus,
@@ -88,14 +88,9 @@ class UIManager:
               ):
         if content:
             self.ecs.manage(UIElement).insert(
-                element, content,
+                element, content, selector,
             )
             self.ecs.manage(UIElementChanged).insert(element)
-        # TODO: Combine UIElement and UIStyle into UIWidget?
-        if selector:
-            self.ecs.manage(UIStyle).insert(
-                element, selector,
-            )
             self.ecs.manage(UIStyleChanged).insert(element)
         if renderer:
             self.ecs.manage(UIRenderer).insert(
@@ -106,18 +101,19 @@ class UIManager:
                 element, panel, z_order or ZOrder.BASE,
             )
 
-    def update_style(self, element, selector, pseudo_class=None):
-        styles = self.ecs.manage(UIStyle)
-        style_changed = False
-        style = styles.get(element)
-        if style is None:
-            style = styles.insert(element, '')
-        if not (style.base == selector and style.pseudo_class == pseudo_class):
-            style.base = selector
-            style.pseudo_class = pseudo_class
-            style_changed = True
-        if style_changed:
-            self.ecs.manage(UIStyleChanged).insert(element)
+    def update_selector(self, element, pseudo_classes=None):
+        widgets = self.ecs.manage(UIElement)
+        widget = widgets.get(element)
+        pseudo_classes = set(pseudo_classes or [])
+        if widget.selector.pseudo_classes == pseudo_classes:
+            return
+        widget.selector.pseudo_classes = pseudo_classes
+
+        child_elements = self.ecs.manage(ChildUIElements)
+        style_changed = self.ecs.manage(UIStyleChanged)
+        style_changed.insert(element)
+        for child in child_elements.get(element):
+            style_changed.insert(child)
 
     def redraw(self, element):
         self.ecs.manage(UIElementChanged).insert(element)

@@ -3,6 +3,8 @@ import functools
 from ..ecs import Component
 from ..ecs.components import Flag, Int, List, EntityReference, EntitiesRefs
 
+from .stylesheets import Selector
+
 
 # TODO: Rename widget_* to element_*
 # TODO: Rename CreateUIElement to BuildUIElement?
@@ -25,10 +27,11 @@ DestroyUIElementContent = Flag('DestroyUIElementContent')
 
 # TODO: rename to UIWidget, combine with UIStyle (and use stylesheets.Selector)
 class UIElement(Component):
-    __slots__ = ('content', )
+    __slots__ = ('content', 'selector', )
 
-    def __init__(self, content):
+    def __init__(self, content, selector=None):
         self.content = content
+        self.selector = Selector.parse(selector)
 
     def __getattr__(self, name):
         return getattr(self.content, name)
@@ -36,21 +39,6 @@ class UIElement(Component):
 
 # TODO: rename to UIContentChanged
 UIElementChanged = Flag('UIElementChanged')
-
-
-class UIStyle(Component):
-    __slots__ = ('base', 'pseudo_class', )
-
-    def __init__(self, base, pseudo_class=None):
-        self.base = base # TODO: Consider splitting into type, class(es)
-        self.pseudo_class = pseudo_class
-
-    @property
-    def selector(self):
-        if self.pseudo_class:
-            return f'{self.base}:{self.pseudo_class}'
-        else:
-            return self.base
 
 
 UIStyleChanged = Flag('UIStyleChanged')

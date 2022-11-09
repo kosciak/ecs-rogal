@@ -39,7 +39,7 @@ SEPARATORS = [
 ]
 
 
-ELEMENT_PATTERN = re.compile(
+SELECTOR_PATTERN = re.compile(
     '^' +
     '(?P<element>[^#.:]+)?' +
     '(?:#(?P<id>[^.:]+))?' +
@@ -97,8 +97,8 @@ class Selector:
 
     @staticmethod
     def parse(selector):
-        match = ELEMENT_PATTERN.match(selector)
-        if not match:
+        match = SELECTOR_PATTERN.match(selector or '')
+        if not match and match.string:
             return
         return Selector(
             match.group('element'),
@@ -203,17 +203,16 @@ class StylesheetsManager:
                 )
         return merged
 
-    def get_matched_rules(self, selector):
-        path = list(parse_selectors(selector))
+    def get_matched_rules(self, selectors_path):
         matched_rules = [
             rule for rule in self.rules
-            if rule.match(path)
+            if rule.match(selectors_path)
         ]
         return sorted(matched_rules)
 
-    def get(self, selector):
+    def get(self, selectors_path):
         style = {}
-        matched_rules = self.get_matched_rules(selector)
+        matched_rules = self.get_matched_rules(selectors_path)
         # print(selector, matched_rules)
         for rule in matched_rules:
             style = self.merge_styles(style, rule.style)

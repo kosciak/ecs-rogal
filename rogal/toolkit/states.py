@@ -37,14 +37,14 @@ class Stateful(connectable.SignalsEmitter):
 
     def update_style(self):
         # Read: https://bitsofco.de/when-do-the-hover-focus-and-active-pseudo-classes-apply/
-        pseudo_class = None
+        pseudo_classes = []
         if self.is_active:
-            pseudo_class = 'active'
+            pseudo_classes = ['active', ]
         elif self.is_hovered:
-            pseudo_class = 'hover'
+            pseudo_classes = ['hover', ]
         elif self.is_focused:
-            pseudo_class = 'focus'
-        self.manager.update_style(self.element, self.selector, pseudo_class)
+            pseudo_classes = ['focus', ]
+        self.manager.update_selector(self.element, pseudo_classes=pseudo_classes)
 
     def enter(self):
         self.states.add(State.HOVERED)

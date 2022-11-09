@@ -12,7 +12,7 @@ from .components import (
     CreateUIElement, DestroyUIElement, DestroyUIElementContent,
     ParentUIElements, ChildUIElements,
     UIElement, UIElementChanged,
-    UIStyle, UIStyleChanged,
+    UIStyleChanged,
     UILayout, UILayoutChanged,
     UIRenderer,
     InputFocus, HasInputFocus, GrabInputFocus,
@@ -91,19 +91,28 @@ class UpdateStyleSystem(System):
         super().__init__(ecs)
         self.stylesheets = self.ecs.resources.stylesheets_manager
 
+    def get_selectors_path(self, element):
+        parent_elements = self.ecs.manage(ParentUIElements)
+        widgets = self.ecs.manage(UIElement)
+        selectors_path = [
+            widgets.get(parent).selector
+            for parent in parent_elements.get(element)
+            if parent in widgets
+        ]
+        return selectors_path
+
     def run(self):
         changed = self.ecs.manage(UIStyleChanged)
         if not changed:
             return
-        styles = self.ecs.manage(UIStyle)
-        elements = self.ecs.manage(UIElement)
-        parent_elements = self.ecs.manage(ParentUIElements)
-        for element, content, selector in self.ecs.join(changed.entities, elements, styles):
-            # print('>>>', selector.selector, content)
-            style = self.stylesheets.get(selector.selector)
+        widgets = self.ecs.manage(UIElement)
+        for element, widget in self.ecs.join(changed.entities, widgets):
+            selectors_path = self.get_selectors_path(element)
+            # print('>>>', selectors_path)
+            style = self.stylesheets.get(selectors_path)
             if not style:
                 continue
-            content.content.set_style(**style)
+            widget.set_style(**style)
         changed.clear()
 
 
@@ -137,21 +146,21 @@ class LayoutSytem(UISystem):
         changed_elements = self.ecs.manage(UIElementChanged)
         if not changed_elements:
             return
-        elements = self.ecs.manage(UIElement)
+        widgets = self.ecs.manage(UIElement)
         child_elements = self.ecs.manage(ChildUIElements)
         layouts = self.ecs.manage(UILayout)
         changed_layouts = self.ecs.manage(UILayoutChanged)
         changed_layouts.clear()
 
-        for element, children, content in self.ecs.join(changed_elements.entities, child_elements, elements):
+        for element, children, widget in self.ecs.join(changed_elements.entities, child_elements, widgets):
             layouts.remove(*children)
             layout = layouts.get(element)
             if layout is None:
-                content.layout(self.ui_manager, panel=self.root, z_order=0)
+                widget.layout(self.ui_manager, panel=self.root, z_order=0)
             else:
                 # TODO: This works ONLY if we are redrawing children, but not widget itself
                 #       for example after resizing it! It would need panel from it's parent!
-                content.layout_content(self.ui_manager, panel=layout.panel, z_order=layout.z_order)
+                widget.layout_content(self.ui_manager, panel=layout.panel, z_order=layout.z_order)
             changed_layouts.insert(element)
         changed_elements.clear()
 
@@ -208,10 +217,10 @@ class GrabInputFocusSystem(FocusSystem):
         grab_focus = self.ecs.manage(GrabInputFocus)
         if not grab_focus:
             return
-        elements = self.ecs.manage(UIElement)
-        for element, content in self.ecs.join(grab_focus.entities, elements):
+        widgets = self.ecs.manage(UIElement)
+        for element, widget in self.ecs.join(grab_focus.entities, widgets):
             self.focus_manager.set_input_focus(
-                content.set_focus(),
+                widget.set_focus(),
             )
         grab_focus.clear()
 
@@ -222,12 +231,12 @@ class BlurInputFocusSystem(FocusSystem):
         has_focus = self.ecs.manage(HasInputFocus)
         if not has_focus:
             return
-        elements = self.ecs.manage(UIElement)
+        widgets = self.ecs.manage(UIElement)
         to_blur = set()
         focused = self.focus_manager.propagate_from_focused()
-        for element, content in self.ecs.join(has_focus.entities, elements):
+        for element, widget in self.ecs.join(has_focus.entities, widgets):
             if not element in focused:
-                content.blur()
+                widget.blur()
                 to_blur.add(element)
         has_focus.remove(
             *to_blur,
@@ -241,10 +250,10 @@ class ScreenPositionFocusSystem(FocusSystem):
         if not changed_layouts:
             return
         self.focus_manager.clear_positions()
-        elements = self.ecs.manage(UIElement)
+        widgets = self.ecs.manage(UIElement)
         layouts = self.ecs.manage(UILayout)
         # NOTE: Use only UIElements, we don't want renderers that might have higher z_order to mask widgets
-        for element, layout in sorted(self.ecs.join(elements.entities, layouts), key=lambda e: e[1].z_order):
+        for element, layout in sorted(self.ecs.join(widgets.entities, layouts), key=lambda e: e[1].z_order):
             self.focus_manager.update_positions(element, layout.panel)
 
 
