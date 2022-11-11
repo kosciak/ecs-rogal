@@ -9,12 +9,11 @@ from ..ecs import System
 from ..ecs.run_state import RunState
 
 from .components import (
-    CreateUIElement, DestroyUIElement, DestroyUIElementContent,
-    ParentUIElements, ChildUIElements,
-    UIElement, UIElementChanged,
-    UIStyleChanged,
-    UILayout, UILayoutChanged,
-    UIRenderer,
+    CreateElement, DestroyElement, DestroyElementContent,
+    ElementPath, ChildElements,
+    Widget, ContentChanged, SelectorChanged,
+    Layout, LayoutChanged,
+    Renderer,
     InputFocus, HasInputFocus, GrabInputFocus,
 )
 
@@ -22,7 +21,7 @@ from .components import (
 log = logging.getLogger(__name__)
 
 
-class CreateUIElementsSystem(System):
+class CreateElementsSystem(System):
 
     INCLUDE_STATES = {
         RunState.RENDER,
@@ -34,19 +33,19 @@ class CreateUIElementsSystem(System):
         self.ui_manager = self.ecs.resources.ui_manager
 
     def run(self):
-        to_create = self.ecs.manage(CreateUIElement)
+        to_create = self.ecs.manage(CreateElement)
         if not to_create:
             return
 
-        parent_elements = self.ecs.manage(ParentUIElements)
-        child_elements = self.ecs.manage(ChildUIElements)
+        element_paths = self.ecs.manage(ElementPath)
+        child_elements = self.ecs.manage(ChildElements)
         for element, create in to_create:
             content = self.builder.build(
                 # TODO: pass element to builder?
                 create.widget_type, create.context,
             )
             if content:
-                parent_elements.insert(element, [
+                element_paths.insert(element, [
                     element,
                 ])
                 child_elements.insert(element)
@@ -55,7 +54,7 @@ class CreateUIElementsSystem(System):
         to_create.clear()
 
 
-class DestroyUIElementsSystem(System):
+class DestroyElementsSystem(System):
 
     INCLUDE_STATES = {
         RunState.RENDER,
@@ -63,14 +62,14 @@ class DestroyUIElementsSystem(System):
 
     def run(self):
         children_to_remove = set()
-        child_elements = self.ecs.manage(ChildUIElements)
+        child_elements = self.ecs.manage(ChildElements)
 
-        destroy = self.ecs.manage(DestroyUIElement)
+        destroy = self.ecs.manage(DestroyElement)
         if destroy:
             for element, children in self.ecs.join(destroy.entities, child_elements):
                 children_to_remove.update(children)
 
-        destroy_contents = self.ecs.manage(DestroyUIElementContent)
+        destroy_contents = self.ecs.manage(DestroyElementContent)
         for element, children in self.ecs.join(destroy_contents.entities, child_elements):
             children_to_remove.update(children)
 
@@ -92,28 +91,28 @@ class UpdateStyleSystem(System):
         self.stylesheets = self.ecs.resources.stylesheets_manager
 
     def get_selectors_path(self, element):
-        parent_elements = self.ecs.manage(ParentUIElements)
-        widgets = self.ecs.manage(UIElement)
+        element_paths = self.ecs.manage(ElementPath)
+        widgets = self.ecs.manage(Widget)
         selectors_path = [
-            widgets.get(parent).selector
-            for parent in parent_elements.get(element)
-            if parent in widgets
+            widgets.get(element).selector
+            for element in element_paths.get(element)
+            if element in widgets
         ]
         return selectors_path
 
     def run(self):
-        changed = self.ecs.manage(UIStyleChanged)
-        if not changed:
+        changed_selectors = self.ecs.manage(SelectorChanged)
+        if not changed_selectors:
             return
-        widgets = self.ecs.manage(UIElement)
-        for element, widget in self.ecs.join(changed.entities, widgets):
+        widgets = self.ecs.manage(Widget)
+        for element, widget in self.ecs.join(changed_selectors.entities, widgets):
             selectors_path = self.get_selectors_path(element)
             # print('>>>', selectors_path)
             style = self.stylesheets.get(selectors_path)
             if not style:
                 continue
             widget.set_style(**style)
-        changed.clear()
+        changed_selectors.clear()
 
 
 class UISystem(System):
@@ -143,16 +142,16 @@ class LayoutSytem(UISystem):
         self.ui_manager = self.ecs.resources.ui_manager
 
     def run(self):
-        changed_elements = self.ecs.manage(UIElementChanged)
-        if not changed_elements:
+        changed_contents = self.ecs.manage(ContentChanged)
+        if not changed_contents:
             return
-        widgets = self.ecs.manage(UIElement)
-        child_elements = self.ecs.manage(ChildUIElements)
-        layouts = self.ecs.manage(UILayout)
-        changed_layouts = self.ecs.manage(UILayoutChanged)
+        widgets = self.ecs.manage(Widget)
+        child_elements = self.ecs.manage(ChildElements)
+        layouts = self.ecs.manage(Layout)
+        changed_layouts = self.ecs.manage(LayoutChanged)
         changed_layouts.clear()
 
-        for element, children, widget in self.ecs.join(changed_elements.entities, child_elements, widgets):
+        for element, children, widget in self.ecs.join(changed_contents.entities, child_elements, widgets):
             layouts.remove(*children)
             layout = layouts.get(element)
             if layout is None:
@@ -162,7 +161,7 @@ class LayoutSytem(UISystem):
                 #       for example after resizing it! It would need panel from it's parent!
                 widget.layout_content(self.ui_manager, panel=layout.panel, z_order=layout.z_order)
             changed_layouts.insert(element)
-        changed_elements.clear()
+        changed_contents.clear()
 
 
 class InputFocusSystem(System):
@@ -217,7 +216,7 @@ class GrabInputFocusSystem(FocusSystem):
         grab_focus = self.ecs.manage(GrabInputFocus)
         if not grab_focus:
             return
-        widgets = self.ecs.manage(UIElement)
+        widgets = self.ecs.manage(Widget)
         for element, widget in self.ecs.join(grab_focus.entities, widgets):
             self.focus_manager.set_input_focus(
                 widget.set_focus(),
@@ -231,7 +230,7 @@ class BlurInputFocusSystem(FocusSystem):
         has_focus = self.ecs.manage(HasInputFocus)
         if not has_focus:
             return
-        widgets = self.ecs.manage(UIElement)
+        widgets = self.ecs.manage(Widget)
         to_blur = set()
         focused = self.focus_manager.propagate_from_focused()
         for element, widget in self.ecs.join(has_focus.entities, widgets):
@@ -246,13 +245,13 @@ class BlurInputFocusSystem(FocusSystem):
 class ScreenPositionFocusSystem(FocusSystem):
 
     def run(self):
-        changed_layouts = self.ecs.manage(UILayoutChanged)
+        changed_layouts = self.ecs.manage(LayoutChanged)
         if not changed_layouts:
             return
         self.focus_manager.clear_positions()
-        widgets = self.ecs.manage(UIElement)
-        layouts = self.ecs.manage(UILayout)
-        # NOTE: Use only UIElements, we don't want renderers that might have higher z_order to mask widgets
+        widgets = self.ecs.manage(Widget)
+        layouts = self.ecs.manage(Layout)
+        # NOTE: Use only Elements, we don't want renderers that might have higher z_order to mask widgets
         for element, layout in sorted(self.ecs.join(widgets.entities, layouts), key=lambda e: e[1].z_order):
             self.focus_manager.update_positions(element, layout.panel)
 
@@ -265,8 +264,8 @@ class RenderSystem(UISystem):
 
     def run(self):
         # Render all panels
-        layouts = self.ecs.manage(UILayout)
-        renderers = self.ecs.manage(UIRenderer)
+        layouts = self.ecs.manage(Layout)
+        renderers = self.ecs.manage(Renderer)
         # NOTE: Using monotonic timestamp in miliseconds as render timestamp, 
         #       this way all effects depending on time (blinking, fading, etc)
         #       are going to be synchronized

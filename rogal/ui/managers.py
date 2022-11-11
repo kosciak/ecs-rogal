@@ -8,12 +8,11 @@ from ..ecs.core import Entity, EntitiesSet
 from ..toolkit.core import ZOrder
 
 from .components import (
-    CreateUIElement, DestroyUIElement, DestroyUIElementContent,
-    ParentUIElements, ChildUIElements,
-    UIElement, UIElementChanged,
-    UIStyleChanged,
-    UIRenderer,
-    UILayout,
+    CreateElement, DestroyElement, DestroyElementContent,
+    ElementPath, ChildElements,
+    Widget, ContentChanged, SelectorChanged,
+    Renderer,
+    Layout,
     GrabInputFocus, InputFocus, HasInputFocus, CurrentInputFocus,
 )
 
@@ -49,7 +48,7 @@ class UIManager:
 
     def create(self, widget_type, context=None):
         widget = self.ecs.create(
-            CreateUIElement(
+            CreateElement(
                 widget_type=widget_type,
                 context=context,
             ),
@@ -57,23 +56,23 @@ class UIManager:
         return widget
 
     def destroy(self, element):
-        self.ecs.manage(DestroyUIElement).insert(element)
+        self.ecs.manage(DestroyElement).insert(element)
 
     def create_child(self, parent):
         element = self.ecs.create()
 
-        child_elements = self.ecs.manage(ChildUIElements)
+        child_elements = self.ecs.manage(ChildElements)
         child_elements.insert(element)
 
-        parent_elements = self.ecs.manage(ParentUIElements)
-        parents = parent_elements.get(parent, [])
-        parent_elements.insert(
+        element_paths = self.ecs.manage(ElementPath)
+        path = element_paths.get(parent, [])
+        element_paths.insert(
             element, [
-                *parents,
+                *path,
                 element,
             ]
         )
-        for parent in parents:
+        for parent in path[:-1]:
             parent_children = child_elements.get(parent)
             parent_children.add(element)
 
@@ -87,36 +86,36 @@ class UIManager:
                z_order=None,
               ):
         if content:
-            self.ecs.manage(UIElement).insert(
+            self.ecs.manage(Widget).insert(
                 element, content, selector,
             )
-            self.ecs.manage(UIElementChanged).insert(element)
-            self.ecs.manage(UIStyleChanged).insert(element)
+            self.ecs.manage(ContentChanged).insert(element)
+            self.ecs.manage(SelectorChanged).insert(element)
         if renderer:
-            self.ecs.manage(UIRenderer).insert(
+            self.ecs.manage(Renderer).insert(
                 element, renderer,
             )
         if panel:
-            self.ecs.manage(UILayout).insert(
+            self.ecs.manage(Layout).insert(
                 element, panel, z_order or ZOrder.BASE,
             )
 
     def update_selector(self, element, pseudo_classes=None):
-        widgets = self.ecs.manage(UIElement)
+        widgets = self.ecs.manage(Widget)
         widget = widgets.get(element)
         pseudo_classes = set(pseudo_classes or [])
         if widget.selector.pseudo_classes == pseudo_classes:
             return
         widget.selector.pseudo_classes = pseudo_classes
 
-        child_elements = self.ecs.manage(ChildUIElements)
-        style_changed = self.ecs.manage(UIStyleChanged)
-        style_changed.insert(element)
+        child_elements = self.ecs.manage(ChildElements)
+        changed_selectors = self.ecs.manage(SelectorChanged)
+        changed_selectors.insert(element)
         for child in child_elements.get(element):
-            style_changed.insert(child)
+            changed_selectors.insert(child)
 
     def redraw(self, element):
-        self.ecs.manage(UIElementChanged).insert(element)
+        self.ecs.manage(ContentChanged).insert(element)
 
     # TODO: focus handling needs rework!
     def grab_focus(self, element):
@@ -167,11 +166,11 @@ class InputFocusManager:
         if not entity:
             return
         yield entity
-        parent_elements = self.ecs.manage(ParentUIElements)
-        for parent in reversed(parent_elements.get(entity, [])):
-            if filter_by is not None and not parent in filter_by:
+        element_paths = self.ecs.manage(ElementPath)
+        for element in reversed(element_paths.get(entity, [])):
+            if filter_by is not None and not element in filter_by:
                 continue
-            yield parent
+            yield element
 
     def get_position(self, position):
         # NOTE: On terminal position might be outside root console!
@@ -182,7 +181,7 @@ class InputFocusManager:
 
     def propagate_from_position(self, position):
         target = self.get_position(position)
-        filter_by = self.ecs.manage(UIElement)
+        filter_by = self.ecs.manage(Widget)
         yield from self.propagate_from(target, filter_by)
 
     def propagate_from_focused(self):
@@ -191,14 +190,14 @@ class InputFocusManager:
         #       OR maybe propagate NOT based on parents for focued? Whatever works
         #       Right now Actor can be focused, so it won't work like that
         #       Need to completely redesign keeping track of focus
-        entities = EntitiesSet()
-        parent_elements = self.ecs.manage(ParentUIElements)
+        elements = EntitiesSet()
+        element_paths = self.ecs.manage(ElementPath)
         has_focus = self.ecs.manage(HasInputFocus)
-        # for entity, parents in self.ecs.join(has_focus.entities, parent_elements):
-        for entity in has_focus.entities:
-            entities.add(entity)
-            # TODO: Should be removed after all input handlers are bound to UIElements
-            parents = parent_elements.get(entity, [])
-            entities.update(parents)
-        return entities
+        # for entity, parents in self.ecs.join(has_focus.entities, element_paths):
+        for element in has_focus.entities:
+            # TODO: Should be removed after all input handlers are bound to Elements
+            elements.add(element)
+            path = element_paths.get(element, [])
+            elements.update(path)
+        return elements
 

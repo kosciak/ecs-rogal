@@ -7,8 +7,8 @@ from .stylesheets import Selector
 
 
 # TODO: Rename widget_* to element_*
-# TODO: Rename CreateUIElement to BuildUIElement?
-class CreateUIElement(Component):
+# TODO: Rename CreateElement to BuildElement?
+class CreateElement(Component):
     __slots__ = ('widget_type', 'context', )
 
     def __init__(self, widget_type, context=None):
@@ -16,17 +16,16 @@ class CreateUIElement(Component):
         self.context = context or {}
 
 
-ParentUIElements = List('ParentUIElements') # TODO: UIPath? From root element to element itself
-ChildUIElements = EntitiesRefs('ChildUIElements') # TODO: Descendants? These are ALL children, added recursively
+ElementPath = List('ElementPath')
+ChildElements = EntitiesRefs('ChildElements')
 
 
-DestroyUIElement = Flag('DestroyUIElement')
+DestroyElement = Flag('DestroyElement')
 
-DestroyUIElementContent = Flag('DestroyUIElementContent')
+DestroyElementContent = Flag('DestroyElementContent')
 
 
-# TODO: rename to UIWidget, combine with UIStyle (and use stylesheets.Selector)
-class UIElement(Component):
+class Widget(Component):
     __slots__ = ('content', 'selector', )
 
     def __init__(self, content, selector=None):
@@ -37,15 +36,12 @@ class UIElement(Component):
         return getattr(self.content, name)
 
 
-# TODO: rename to UIContentChanged
-UIElementChanged = Flag('UIElementChanged')
-
-
-UIStyleChanged = Flag('UIStyleChanged')
+ContentChanged = Flag('ContentChanged')
+SelectorChanged = Flag('SelectorChanged')
 
 
 @functools.total_ordering
-class UILayout(Component):
+class Layout(Component):
     __slots__ = ('panel', 'z_order', )
 
     def __init__(self, panel, z_order):
@@ -56,10 +52,10 @@ class UILayout(Component):
         return self.z_order < other.z_order
 
 
-UILayoutChanged = Flag('UILayoutChanged')
+LayoutChanged = Flag('LayoutChanged')
 
 
-class UIRenderer(Component):
+class Renderer(Component):
     __slots__ = ('renderer', )
 
     def __init__(self, renderer):

@@ -91,6 +91,11 @@ def run(wrapper):
     # ECS initialization
     ecs = ECS()
 
+    # TODO: Maybe instead of initialization in main
+    #       Just import package / submodule and call initialize(ecs) function
+    #       That will set up all resources, and register systems
+    #       Like: import ui; ui.initialize(ecs)
+
     # Spatial index
     ecs.resources.spatial = SpatialIndex(ecs)
 
@@ -151,8 +156,8 @@ def run(wrapper):
         systems.run_state.AnimationsStateSystem(ecs),
 
         # TODO: Move after EventsManager?
-        systems.ui.DestroyUIElementsSystem(ecs),
-        systems.ui.CreateUIElementsSystem(ecs),
+        systems.ui.DestroyElementsSystem(ecs),
+        systems.ui.CreateElementsSystem(ecs),
 
         systems.ui.UpdateStyleSystem(ecs),
         systems.ui.LayoutSytem(ecs),
