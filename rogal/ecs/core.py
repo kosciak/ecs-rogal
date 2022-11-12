@@ -97,9 +97,68 @@ class Component:
             return f'<{self.name} {param_values_txt}>'
 
 
+class EntitiesSet(set):
+
+    """Entities container, compatibile with JoinManager interface."""
+
+    __slots__ = ()
+
+    def get(self, entity):
+        # NOTE: It's assumed that get() is called inside JoinIterator that already knows if entity is present
+        return entity
+
+    @property
+    def entities(self):
+        return self
+
+
+class ComponentManager(dict):
+
+    __slots__ = ('component_type', )
+
+    def __init__(self, component_type):
+        super().__init__()
+        self.component_type = component_type
+
+    @property
+    def entities(self):
+        return EntitiesSet(self.keys())
+
+    def __iter__(self):
+        """Yield (entity, component) pairs.
+
+        If you only want entities - iterate over manager.entities instead
+
+        """
+        # NOTE: Iterating over values dict directly boosted performance significantly!
+        yield from self.items()
+
+    def insert(self, entity, *args, component=None, **kwargs):
+        if component is not None and not isinstance(component, self.component_type):
+            raise ValueError('Invalid component type!')
+        if component is None:
+            component = self.component_type(*args, **kwargs)
+        self[entity] = component
+        return component
+
+    def discard(self, entity):
+        # self.entities.discard(entity)
+        self.pop(entity, None)
+
+    def remove(self, *entities):
+        for entity in entities:
+            self.discard(entity)
+
+    def __rand__(self, other):
+        return other & self.keys()
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__}({self.component_type.__name__})>'
+
+
 class JoinIterator:
 
-    """Iterate through values of combined managers.
+    """Iterate through values of combined ComponentManagers and EntitiesSets
 
     Only entities / components that are present in all provided managers are returned.
 
@@ -114,12 +173,22 @@ class JoinIterator:
     def __iter__(self):
         if not all(self.managers):
             return
-        entities = set.intersection(*[
-            manager.entities
-            for manager in self.managers
-            # NOTE: No need to intersect with ALL entitites
-            if not manager is self.ignore
-        ])
+        # entities = set.intersection(*[
+        #     manager.entities
+        #     for manager in self.managers
+        #     # NOTE: No need to intersect with ALL entitites
+        #     if not manager is self.ignore
+        # ])
+
+        entities = None
+        for manager in sorted(self.managers, key=lambda m: len(m)):
+            if manager is self.ignore:
+                continue
+            if entities is None:
+                entities = EntitiesSet(manager.entities)
+                continue
+            entities &= manager
+
         # TODO: Consider filtering out FlagComponent no need to have element that is always True
         for entity in entities:
             values = [
@@ -127,85 +196,6 @@ class JoinIterator:
                 for manager in self.managers
             ]
             yield values
-
-
-class JoinableManager:
-
-    """Entity to value manager that can be used in JoinIterator."""
-
-    __slots__ = ('entities', '_values', )
-
-    def __init__(self):
-        # Keeping separate entities set and key-value dict gives slight performance boost.
-        self.entities = EntitiesSet()
-        self._values = {} # = {entity: value, }
-
-    def __len__(self):
-        return len(self._values)
-
-    def __contains__(self, entity):
-        return entity in self.entities
-
-    def get(self, entity, default=None):
-        return self._values.get(entity, default)
-
-    def __iter__(self):
-        """Yield (entity, component) pairs.
-
-        If you only want entities - iterate over manager.entities instead
-
-        """
-        # NOTE: Iterating over values dict directly boosted performance significantly!
-        yield from self._values.items()
-
-    def insert(self, entity, value):
-        self.entities.add(entity)
-        self._values[entity] = value
-
-    def discard(self, entity):
-        self.entities.discard(entity)
-        self._values.pop(entity, None)
-
-    def remove(self, *entities):
-        for entity in entities:
-            self.discard(entity)
-
-    def clear(self):
-        self.entities.clear()
-        self._values.clear()
-
-
-class EntitiesSet(set):
-
-    """Entities container, compatibile with JoinManager interface."""
-
-    def get(self, entity):
-        # NOTE: It's assumed that get() is called inside JoinIterator that already knows if entity is present
-        return entity
-
-    @property
-    def entities(self):
-        return self
-
-
-class ComponentManager(JoinableManager):
-
-    __slots__ = ('component_type', )
-
-    def __init__(self, component_type):
-        super().__init__()
-        self.component_type = component_type
-
-    def insert(self, entity, *args, component=None, **kwargs):
-        if component is not None and not isinstance(component, self.component_type):
-            raise ValueError('Invalid component type!')
-        if component is None:
-            component = self.component_type(*args, **kwargs)
-        super().insert(entity, component)
-        return component
-
-    def __repr__(self):
-        return f'<{self.__class__.__name__}({self.component_type.__name__})>'
 
 
 class System:
@@ -239,8 +229,9 @@ class SystemsManager:
         self.run_state = RunState.PRE_RUN # TODO: RENDER or WAIT_FOR_INPUT
         self.next_run_state = None
 
-    def register(self, system):
-        self.systems.append(system)
+    def register(self, *systems):
+        for system in systems:
+            self.systems.append(system)
 
     def run(self):
         # Run all systems that should run with given run_state
@@ -263,7 +254,9 @@ class SystemsManager:
 
 
 class ResourcesManager(AttrDict):
-    pass
+
+    def register(self, **kwargs):
+        self.update(**kwargs)
 
 
 class ECS:
@@ -345,9 +338,9 @@ class ECS:
         """
         yield from JoinIterator(self.entities, *managers)
 
-    def register(self, system):
+    def register(self, *systems):
         """Register System."""
-        self._systems.register(system)
+        self._systems.register(*systems)
 
     def run_once(self, *args, **kwargs):
         """Run Systems for given RunState."""
