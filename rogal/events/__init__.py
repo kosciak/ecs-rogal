@@ -32,3 +32,16 @@ from .controller import (
     JoyButtonUp,
 )
 
+from .managers import EventsManager
+from . import systems
+
+
+def initialize(ecs):
+    ecs.resources.register(
+        events_manager=EventsManager(ecs),
+    )
+
+    ecs.register(
+        systems.EventsDispatcherSystem(ecs),
+    )
+

@@ -16,23 +16,22 @@ from .procgen.dungeons import StaticLevel
 
 from .ecs import ECS
 
-from .ui.managers import UIManager
-from .ui.managers import InputFocusManager
-from .ui.stylesheets import StylesheetsManager
-
 from .toolkit.builder import WidgetsBuilder
 
 from .events.managers import EventsManager
 
-from .signals.managers import SignalsManager
-
 from .colors.managers import ColorsManager
+
 from .entities_spawner import EntitiesSpawner
 
 from .data.loaders import DataLoader
 from .tiles.tilesets import Tileset
 
 from .spatial.spatial_index import SpatialIndex
+
+from . import events
+from . import signals
+from . import ui
 
 from . import systems
 
@@ -101,6 +100,7 @@ def run(wrapper):
 
     # Tileset initialization
     ecs.resources.tileset = Tileset(DataLoader(TILESET_DATA_FN))
+    ecs.resources.colors_manager = ColorsManager(ecs.resources.tileset.palette)
 
     # Entities spawner initialization
     ecs.resources.spawner = EntitiesSpawner(ecs, DataLoader(ENTITIES_DATA_FN))
@@ -116,8 +116,6 @@ def run(wrapper):
     # for depth in range(1, 50):
     #     level, starting_position = level_generator.generate(depth=depth)
 
-    ecs.resources.colors_manager = ColorsManager(ecs.resources.tileset.palette)
-
     # Initialize Wrapper
     wrapper_cls = WRAPPERS[wrapper]
     ecs.resources.wrapper = wrapper_cls(
@@ -128,20 +126,17 @@ def run(wrapper):
         title='Rogal test'
     )
 
-    ecs.resources.signals_manager = SignalsManager(ecs)
-
-    ecs.resources.events_manager = EventsManager(ecs)
-    ecs.resources.events_manager.add_source(ecs.resources.wrapper)
-
-    ecs.resources.stylesheets_manager = StylesheetsManager(ecs)
-
-    ecs.resources.widgets_builder = WidgetsBuilder(ecs)
 
     # Console UI manager
-    ecs.resources.ui_manager = UIManager(ecs)
+    ui.initialize(ecs)
     ecs.resources.ui_manager.create('IN_GAME')
 
-    ecs.resources.focus_manager = InputFocusManager(ecs)
+    signals.initialize(ecs)
+
+    events.initialize(ecs)
+    ecs.resources.events_manager.add_source(ecs.resources.wrapper)
+
+    ecs.resources.widgets_builder = WidgetsBuilder(ecs)
 
     # Register systems
     # NOTE: Systems are run in order they were registered
@@ -154,28 +149,6 @@ def run(wrapper):
         systems.run_state.ActionsLoopStateSystem(ecs),
         systems.run_state.RenderStateSystem(ecs),
         systems.run_state.AnimationsStateSystem(ecs),
-
-        # TODO: Move after EventsManager?
-        systems.ui.DestroyElementsSystem(ecs),
-        systems.ui.CreateElementsSystem(ecs),
-
-        systems.ui.UpdateStyleSystem(ecs),
-        systems.ui.LayoutSytem(ecs),
-        systems.ui.RenderSystem(ecs),
-        systems.ui.DisplaySystem(ecs),
-
-        systems.ui.InputFocusSystem(ecs), # TODO: OBSOLETE! Replace with GrabInputFocusSystem, BlurInputFocusSystem
-        systems.ui.ScreenPositionFocusSystem(ecs),
-
-        systems.events.EventsDispatcherSystem(ecs),
-
-        # NOTE: Event places GrabInputFocus component, need signals to propagate
-        # systems.ui.GrabInputFocusSystem(ecs)
-
-        systems.signals.SignalsHandlerSystem(ecs),
-
-        # NOTE: Clear up HasFocus flags AFTER focus propagation using signals
-        # systems.ui.BlurInputFocusSystem(ecs),
 
         systems.commands.QuitSystem(ecs),
 

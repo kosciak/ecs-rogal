@@ -167,7 +167,8 @@ class InputFocusManager:
             return
         yield entity
         element_paths = self.ecs.manage(ElementPath)
-        for element in reversed(element_paths.get(entity, [])):
+        path = element_paths.get(entity, [])
+        for element in reversed(path[:-1]):
             if filter_by is not None and not element in filter_by:
                 continue
             yield element

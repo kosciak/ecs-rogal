@@ -29,8 +29,14 @@ class CreateElementsSystem(System):
 
     def __init__(self, ecs):
         super().__init__(ecs)
-        self.builder = self.ecs.resources.widgets_builder
+        self._builder = None
         self.ui_manager = self.ecs.resources.ui_manager
+
+    @property
+    def builder(self):
+        if self._builder is None:
+            self._builder = self.ecs.resources.widgets_builder
+        return self._builder
 
     def run(self):
         to_create = self.ecs.manage(CreateElement)
@@ -65,10 +71,10 @@ class DestroyElementsSystem(System):
         child_elements = self.ecs.manage(ChildElements)
 
         destroy = self.ecs.manage(DestroyElement)
-        if destroy:
-            for element, children in self.ecs.join(destroy.entities, child_elements):
-                children_to_remove.update(children)
+        for element, children in self.ecs.join(destroy.entities, child_elements):
+            children_to_remove.update(children)
 
+        # TODO: OBSOLETE? Doesn't seem to be used anywhere now...
         destroy_contents = self.ecs.manage(DestroyElementContent)
         for element, children in self.ecs.join(destroy_contents.entities, child_elements):
             children_to_remove.update(children)
@@ -80,7 +86,7 @@ class DestroyElementsSystem(System):
         destroy_contents.clear()
 
 
-class UpdateStyleSystem(System):
+class StyleSystem(System):
 
     INCLUDE_STATES = {
         RunState.RENDER,
@@ -251,7 +257,7 @@ class ScreenPositionFocusSystem(FocusSystem):
         self.focus_manager.clear_positions()
         widgets = self.ecs.manage(Widget)
         layouts = self.ecs.manage(Layout)
-        # NOTE: Use only Elements, we don't want renderers that might have higher z_order to mask widgets
+        # NOTE: Use only Widgets, we don't want renderers that might have higher z_order to mask widgets
         for element, layout in sorted(self.ecs.join(widgets.entities, layouts), key=lambda e: e[1].z_order):
             self.focus_manager.update_positions(element, layout.panel)
 
