@@ -13,10 +13,16 @@ class Widget(
         connectable.SignalsEmitter,
     ):
 
+    ELEMENT_TYPE = None
+
     def __init__(self, selector=None, **kwargs):
         super().__init__(**kwargs)
-        self.selector = f'{self.__class__.__name__}{selector or ""}'
+        self.selector = f'{self.element_type}{selector or ""}'
         self.manager = None
+
+    @property
+    def element_type(self):
+        return self.ELEMENT_TYPE or self.__class__.__name__
 
     def insert(self, manager, element):
         self.manager = manager

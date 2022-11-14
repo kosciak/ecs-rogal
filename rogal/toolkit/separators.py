@@ -57,13 +57,7 @@ class HorizontalSeparator(Separator):
 
     @property
     def width(self):
-        return 0
-
-    def get_size(self, available):
-        return Size(
-            self.style.width or available.width,
-            self.height,
-        )
+        return self.FULL_SIZE
 
     def render(self, panel, timestamp):
         super().render(panel, timestamp)
@@ -77,13 +71,7 @@ class VerticalSeparator(Separator):
 
     @property
     def height(self):
-        return 0
-
-    def get_size(self, available):
-        return Size(
-            self.width,
-            self.style.height or available.height,
-        )
+        return self.FULL_SIZE
 
     def render(self, panel, timestamp):
         super().render(panel, timestamp)

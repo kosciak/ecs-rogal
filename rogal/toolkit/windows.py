@@ -18,6 +18,8 @@ class Window(
         decorations.Padded,
     ):
 
+    ELEMENT_TYPE = 'Window'
+
     def __init__(self, content, *,
                  title=None,
                  on_key_press=None,

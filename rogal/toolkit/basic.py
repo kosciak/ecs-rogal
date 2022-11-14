@@ -184,9 +184,13 @@ class Frame(core.Styled, core.Renderer):
     def get_inner_panel(self, panel):
         offset = self.inner_offset
         extents = self.extents
+        size = Size(
+            panel.width-extents.width,
+            panel.height-extents.height,
+        )
         return panel.create_panel(
             offset,
-            Size(panel.width-extents.width, panel.height-extents.height)
+            size,
         )
 
     def render(self, panel, timestamp):

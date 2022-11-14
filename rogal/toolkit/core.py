@@ -103,12 +103,24 @@ class WithSize(Styled, Layoutable):
         """Minimal total height (for example height+padding)."""
         return self.height
 
+    def get_width(self, available):
+        width = self.width or self.DEFAULT_WIDTH
+        if width and width < 1.:
+            width = round(width*available)
+        return width
+
+    def get_height(self, available):
+        height = self.height or self.DEFAULT_WIDTH
+        if height and height < 1.:
+            height = round(height*available)
+        return height
+
     def get_size(self, available):
         """Return element's size based on available space."""
         # TODO: Allow float values? width = .75, height = .5 of available size?
         size = Size(
-            self.width or available.width,
-            self.height or available.height,
+            self.get_width(available.width) or available.width,
+            self.get_height(available.height) or available.height,
         )
         return size
 

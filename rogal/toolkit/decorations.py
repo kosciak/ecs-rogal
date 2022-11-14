@@ -51,14 +51,13 @@ class Padded(containers.Bin):
         return self.FULL_SIZE
 
     def get_size(self, available):
-        width = self.width
+        width = self.get_width(available.width)
         if not width:
             width = available.width - self.padding.left - self.padding.right
-        height = self.height
+        height = self.get_height(available.height)
         if not height:
             height = available.height - self.padding.top - self.padding.bottom
-        size = Size(width, height)
-        return size
+        return Size(width, height)
 
     def get_layout_panel(self, panel):
         size = self.get_size(panel)
