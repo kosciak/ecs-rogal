@@ -82,25 +82,54 @@ def print_charset(charset):
             row = []
 
 
-def run(wrapper):
-    # Generate seed and init RNG
-    seed = SEED or generate_seed()
-    rng.seed(seed, dump='rng')
+def initialize_wrapper(ecs, wrapper):
+    # Tileset initialization
+    ecs.resources.register(
+        tileset=Tileset(DataLoader(TILESET_DATA_FN)),
+    )
+    ecs.resources.register(
+        colors_manager=ColorsManager(ecs.resources.tileset.palette),
+    )
 
-    # ECS initialization
-    ecs = ECS()
+    # Initialize Wrapper
+    wrapper_cls = WRAPPERS[wrapper]
+    ecs.resources.register(
+        wrapper=wrapper_cls(
+            console_size=CONSOLE_SIZE,
+            colors_manager=ecs.resources.colors_manager,
+            tiles_sources=ecs.resources.tileset.tiles_sources,
+            resizable=False,
+            title='Rogal test'
+        ),
+    )
 
-    # TODO: Maybe instead of initialization in main
-    #       Just import package / submodule and call initialize(ecs) function
-    #       That will set up all resources, and register systems
-    #       Like: import ui; ui.initialize(ecs)
 
+def initialize_ui(ecs, inital_screen):
+    # Console UI manager
+    ui.initialize(ecs)
+
+    # Input events
+    events.initialize(ecs)
+    ecs.resources.events_manager.add_source(ecs.resources.wrapper)
+
+    # Signals handling
+    signals.initialize(ecs)
+
+    # Widgets builder
+    ecs.resources.register(
+        widgets_builder = WidgetsBuilder(ecs),
+    )
+
+    ecs.register(
+        systems.run_state.RenderStateSystem(ecs),
+    )
+
+    ecs.resources.ui_manager.create(inital_screen)
+
+
+def initialize_game(ecs, seed):
     # Spatial index
     ecs.resources.spatial = SpatialIndex(ecs)
-
-    # Tileset initialization
-    ecs.resources.tileset = Tileset(DataLoader(TILESET_DATA_FN))
-    ecs.resources.colors_manager = ColorsManager(ecs.resources.tileset.palette)
 
     # Entities spawner initialization
     ecs.resources.spawner = EntitiesSpawner(ecs, DataLoader(ENTITIES_DATA_FN))
@@ -116,38 +145,14 @@ def run(wrapper):
     # for depth in range(1, 50):
     #     level, starting_position = level_generator.generate(depth=depth)
 
-    # Initialize Wrapper
-    wrapper_cls = WRAPPERS[wrapper]
-    ecs.resources.wrapper = wrapper_cls(
-        console_size=CONSOLE_SIZE,
-        colors_manager=ecs.resources.colors_manager,
-        tiles_sources=ecs.resources.tileset.tiles_sources,
-        resizable=False,
-        title='Rogal test'
-    )
-
-
-    # Console UI manager
-    ui.initialize(ecs)
-    ecs.resources.ui_manager.create('IN_GAME')
-
-    signals.initialize(ecs)
-
-    events.initialize(ecs)
-    ecs.resources.events_manager.add_source(ecs.resources.wrapper)
-
-    ecs.resources.widgets_builder = WidgetsBuilder(ecs)
-
     # Register systems
     # NOTE: Systems are run in order they were registered
-    for system in [
-
+    ecs.register(
         # Core engine related systems
         # NOTE: Input events and rendering MUST be done in main thread
         systems.real_time.TTLSystem(ecs),
 
         systems.run_state.ActionsLoopStateSystem(ecs),
-        systems.run_state.RenderStateSystem(ecs),
         systems.run_state.AnimationsStateSystem(ecs),
 
         systems.commands.QuitSystem(ecs),
@@ -170,9 +175,20 @@ def run(wrapper):
         systems.awerness.RevealLevelSystem(ecs),
 
         systems.actions.ActionsPerformedSystem(ecs),
+    )
 
-    ]:
-        ecs.register(system)
+
+def run(wrapper):
+    # Generate seed and init RNG
+    seed = SEED or generate_seed()
+    rng.seed(seed, dump='rng')
+
+    # ECS initialization
+    ecs = ECS()
+
+    initialize_wrapper(ecs, wrapper)
+    initialize_ui(ecs, 'IN_GAME')
+    initialize_game(ecs, seed)
 
     # from .data import UnicodeBlocks
     from .data import Charsets
