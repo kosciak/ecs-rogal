@@ -26,11 +26,18 @@ class SeparatorSegments(collections.namedtuple(
             end = None
         return super().__new__(cls, middle, start, end)
 
+    @staticmethod
+    def parse(glyphs):
+        if glyphs:
+            return SeparatorSegments(glyphs)
+
 
 # TODO: add decorations.Overlayed?
 class Separator(core.WithSize, core.Renderer):
 
     def set_style(self, *, segments=None, colors=None, **style):
+        if (segments is not None) and (not isinstance(segments, SeparatorSegments)):
+            segments = SeparatorSegments.parse(segments)
         self.style.update(
             segments=segments,
             colors=colors,

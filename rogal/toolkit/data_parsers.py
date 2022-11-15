@@ -1,25 +1,10 @@
-from .basic import Decorations, ProgressBarSegments
-from .separators import SeparatorSegments
-
 from ..data import data_store, parsers
 
 
-def parse_decorations(data):
-    glyphs = parsers.parse_glyphs_sequence(data)
-    if glyphs:
-        return Decorations(*glyphs)
-
-
-def parse_progress_bar_segments(data):
-    glyphs = parsers.parse_glyphs_sequence(data)
-    if glyphs:
-        return ProgressBarSegments(glyphs)
-
-
-def parse_separator_segments(data):
-    glyphs = parsers.parse_glyphs_sequence(data)
-    if glyphs:
-        return SeparatorSegments(glyphs)
+def parse_size_value(data):
+    if isinstance(data, str) and data.endswith('%'):
+        return int(data[:data.find('%')]) / 100
+    return data
 
 
 def parse_ui_style(data):
@@ -27,8 +12,8 @@ def parse_ui_style(data):
         return {}
     style = dict(
         # Common style
-        width=data.get('width'),
-        height=data.get('height'),
+        width=parsers.parse_width(data.get('width')),
+        height=parsers.parse_height(data.get('height')),
         align=parsers.parse_align(data.get('align')),
         colors=parsers.parse_colors(data.get('colors') or data),
         # Decorations
@@ -59,12 +44,14 @@ def parse_ui_style(data):
 
 
 data_store.register('bitmasks', parsers.parse_glyphs_sequence)
-data_store.register('decorations', parse_decorations)
-data_store.register('progress_bars', parse_progress_bar_segments)
+data_store.register('decorations', parsers.parse_glyphs_sequence)
+data_store.register('progress_bars', parsers.parse_glyphs_sequence)
 data_store.register('separators', parsers.parse_glyphs_sequence)
-# data_store.register('separators', parse_separator_segments)
 data_store.register('spinners', parsers.parse_frames_sequence)
 data_store.register('ui_style', parse_ui_style)
+
+parsers.register('width', parse_size_value)
+parsers.register('height', parse_size_value)
 
 parsers.register('decorations', data_store.decorations.parse)
 parsers.register('progress_bar', data_store.progress_bars.parse)

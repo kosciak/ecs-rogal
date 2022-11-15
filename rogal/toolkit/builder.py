@@ -454,13 +454,10 @@ class WidgetsBuilder:
                 selector='#logs',
             )
 
-            content = containers.Split(
-                content=[
-                    camera,
-                    msg_log,
-                ],
-                bottom=12,
-            )
+            content = containers.List([
+                camera,
+                msg_log,
+            ])
 
             widgets_layout = widgets.Screen(
                 content=content,

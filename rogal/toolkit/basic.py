@@ -123,6 +123,11 @@ class Decorations(collections.namedtuple(
             Glyph(bottom_left), Glyph(bottom_right),
         )
 
+    @staticmethod
+    def parse(glyphs):
+        if glyphs:
+            return Decorations(*glyphs)
+
     @property
     def top_left(self):
         return self.tl or self.top or self.left
@@ -151,6 +156,8 @@ class Frame(core.Styled, core.Renderer):
     def set_style(self, *, decorations=None, colors=None, **style):
         if decorations is None:
             decorations = self.DEFAULT_DECORATIONS
+        if (decorations is not None) and (not isinstance(decorations, Decorations)):
+            decorations = Decorations.parse(decorations)
         self.style.update(
             decorations=decorations,
             colors=colors,
@@ -338,6 +345,11 @@ class ProgressBarSegments(collections.namedtuple(
         return super().__new__(cls, empty, full, fractions)
 
     @staticmethod
+    def parse(glyphs):
+        if glyphs:
+            return ProgressBarSegments(glyphs)
+
+    @staticmethod
     def get_fractions(segments):
         segments = segments or []
         fraction_value = 1. / (len(segments)+1)
@@ -358,6 +370,8 @@ class ProgressBar(core.WithSize, core.Renderer):
         super().__init__(**kwargs)
 
     def set_style(self, *, segments=None, colors=None, reverse=None, **style):
+        if (segments is not None) and (not isinstance(segments, ProgressBarSegments)):
+            segments = ProgressBarSegments.parse(segments)
         self.style.update(
             segments=segments,
             colors=colors,
