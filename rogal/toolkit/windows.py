@@ -48,7 +48,7 @@ class Window(
 
 
 class Dialog(
-        states.Focusable,
+        states.Focusable, # TODO: Move up to Window?
         Window
     ):
 

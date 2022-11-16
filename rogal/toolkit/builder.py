@@ -205,24 +205,9 @@ class WidgetsBuilder:
         return list_item
 
     def create_horizontal_separator(self, selector=None):
-        separator = decorations.Padded(
-            content=separators.HorizontalSeparator(
-                style=dict(
-                    segments=separators.SeparatorSegments([
-                        0x2500, 0x251c, 0x2524,
-                    ]),
-                ),
-            ),
-            style=dict(
-                padding=Padding(0, -1),
-            ),
+        separator = separators.HorizontalSeparator(
+            selector=selector or '.horizontal',
         )
-
-        # separator = separators.HorizontalSeparator(
-        #     separators.SeparatorSegments('-><'),
-        #     width=10,
-        #     align=Align.CENTER,
-        # )
 
         return separator
 

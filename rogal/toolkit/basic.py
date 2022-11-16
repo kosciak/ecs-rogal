@@ -429,3 +429,81 @@ class ProgressBarAnimatedDemo(core.Animated, ProgressBar):
         self.value = 1. - (frame_num)/self.frames_num
         super().render(panel, timestamp)
 
+
+class SeparatorSegments(collections.namedtuple(
+    'SeparatorSegments', [
+        'middle',
+        'start',
+        'end',
+    ])):
+
+    __slots__ = ()
+
+    def __new__(cls, segments):
+        middle = Glyph(segments[0])
+        if len(segments) > 1:
+            start = Glyph(segments[1])
+            end = Glyph(segments[-1])
+        else:
+            start = None
+            end = None
+        return super().__new__(cls, middle, start, end)
+
+    @staticmethod
+    def parse(glyphs):
+        if glyphs:
+            return SeparatorSegments(glyphs)
+
+
+class Separator(core.WithSize, core.Renderer):
+
+    def set_style(self, *, separator=None, colors=None, **style):
+        if (separator is not None) and (not isinstance(separator, SeparatorSegments)):
+            separator = SeparatorSegments.parse(separator)
+        self.style.update(
+            separator=separator,
+            colors=colors,
+        )
+        super().set_style(**style)
+
+    @property
+    def segments(self):
+        return self.style.separator
+
+    @property
+    def colors(self):
+        return self.style.colors
+
+    def render(self, panel, timestamp):
+        panel.fill(self.segments.middle, self.colors)
+        if self.segments.start is not None:
+            panel.draw(self.segments.start, self.colors, Position.ZERO)
+
+
+class HorizontalSeparator(Separator):
+
+    DEFAULT_HEIGHT = 1
+
+    @property
+    def width(self):
+        return self.style.width or self.FULL_SIZE
+
+    def render(self, panel, timestamp):
+        super().render(panel, timestamp)
+        if self.segments.end is not None:
+            panel.draw(self.segments.end, self.colors, Position(panel.width-1, 0))
+
+
+class VerticalSeparator(Separator):
+
+    DEFAULT_WIDTH = 1
+
+    @property
+    def height(self):
+        return self.style.height or self.FULL_SIZE
+
+    def render(self, panel, timestamp):
+        super().render(panel, timestamp)
+        if self.segments.end is not None:
+            panel.draw(self.segments.end, self.colors, Position(0, panel.height-1))
+
