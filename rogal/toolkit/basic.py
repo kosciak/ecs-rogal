@@ -11,7 +11,7 @@ from . import renderers
 """Most basic UI elements - building blocks for more complicated ones."""
 
 
-class TextRenderer(core.WithSize, core.Renderer):
+class TextRenderer(core.WithColors, core.WithSize, core.Renderer):
 
     def get_txt_size(self, txt):
         lines = txt.splitlines() or ['', ]
@@ -39,12 +39,6 @@ class Text(TextRenderer):
         self.txt_size = self.get_txt_size(self._txt)
         super().__init__(**kwargs)
 
-    def set_style(self, *, colors=None, **style):
-        self.style.update(
-            colors=colors,
-        )
-        super().set_style(**style)
-
     @property
     def txt(self):
         return self._txt
@@ -53,10 +47,6 @@ class Text(TextRenderer):
     def txt(self, txt):
         self._txt = txt
         self.txt_size = self.get_txt_size(self._txt)
-
-    @property
-    def colors(self):
-        return self.style.colors
 
     @property
     def width(self):
@@ -147,29 +137,25 @@ class Decorations(collections.namedtuple(
 Decorations.NONE = Decorations()
 
 
-class Frame(core.Styled, core.Renderer):
+class Frame(core.WithColors, core.Renderer):
 
     """Frame decorations."""
 
     DEFAULT_DECORATIONS = Decorations.NONE
 
-    def set_style(self, *, decorations=None, colors=None, **style):
+    def set_style(self, *, decorations=None, **style):
         if decorations is None:
             decorations = self.DEFAULT_DECORATIONS
         if (decorations is not None) and (not isinstance(decorations, Decorations)):
             decorations = Decorations.parse(decorations)
         self.style.update(
             decorations=decorations,
-            colors=colors,
         )
+        super().set_style(**style)
 
     @property
     def decorations(self):
         return self.style.decorations
-
-    @property
-    def colors(self):
-        return self.style.colors
 
     @property
     def inner_offset(self):
@@ -283,10 +269,9 @@ class Spinner(core.Animated, TextRenderer):
             **kwargs,
         )
 
-    def set_style(self, *, frames=None, colors=None, **style):
+    def set_style(self, *, frames=None, **style):
         self.style.update(
             frames=frames or [],
-            colors=colors,
         )
         if self.style.frames:
             self.txt_size = self.get_frames_txt_size(self.style.frames)
@@ -309,10 +294,6 @@ class Spinner(core.Animated, TextRenderer):
         if self.style.height is not None:
             return self.style.height
         return self.txt_size.height
-
-    @property
-    def colors(self):
-        return self.style.colors
 
     def get_frames_txt_size(self, frames):
         frame_sizes = [self.get_txt_size(frame) for frame in frames]
@@ -361,7 +342,7 @@ class ProgressBarSegments(collections.namedtuple(
         return fractions
 
 
-class ProgressBar(core.WithSize, core.Renderer):
+class ProgressBar(core.WithColors, core.WithSize, core.Renderer):
 
     DEFAULT_HEIGHT = 1
 
@@ -369,12 +350,11 @@ class ProgressBar(core.WithSize, core.Renderer):
         self.value = value # float value from 0.0 to 1.0
         super().__init__(**kwargs)
 
-    def set_style(self, *, segments=None, colors=None, reverse=None, **style):
+    def set_style(self, *, segments=None, reverse=None, **style):
         if (segments is not None) and (not isinstance(segments, ProgressBarSegments)):
             segments = ProgressBarSegments.parse(segments)
         self.style.update(
             segments=segments,
-            colors=colors,
             reverse=reverse or False,
         )
         super().set_style(**style)
@@ -382,10 +362,6 @@ class ProgressBar(core.WithSize, core.Renderer):
     @property
     def segments(self):
         return self.style.segments
-
-    @property
-    def colors(self):
-        return self.style.colors
 
     def render(self, panel, timestamp):
         width = panel.width * self.value
@@ -455,24 +431,19 @@ class SeparatorSegments(collections.namedtuple(
             return SeparatorSegments(glyphs)
 
 
-class Separator(core.WithSize, core.Renderer):
+class Separator(core.WithColors, core.WithSize, core.Renderer):
 
-    def set_style(self, *, separator=None, colors=None, **style):
+    def set_style(self, *, separator=None, **style):
         if (separator is not None) and (not isinstance(separator, SeparatorSegments)):
             separator = SeparatorSegments.parse(separator)
         self.style.update(
             separator=separator,
-            colors=colors,
         )
         super().set_style(**style)
 
     @property
     def segments(self):
         return self.style.separator
-
-    @property
-    def colors(self):
-        return self.style.colors
 
     def render(self, panel, timestamp):
         panel.fill(self.segments.middle, self.colors)

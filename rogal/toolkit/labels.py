@@ -3,6 +3,10 @@ from . import decorations
 from . import widgets
 
 
+# TODO: Consider renaming FramedLabel to Label
+#       and Label to Text
+#       Text - no padding, just text that can be styled with selector
+
 class Label(
         widgets.Widget,
         basic.WithTextContent,

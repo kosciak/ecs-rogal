@@ -82,7 +82,7 @@ class WithPaddedContent:
 
     def set_style(self, *, padding=None, **style):
         self._padded.set_style(
-            colors=colors,
+            padding=padding,
         )
         super().set_style(**style)
 
@@ -159,26 +159,15 @@ class WithFramedContent:
         return self._framed.frame
 
 
-class Cleared(core.Renderable, containers.Bin):
+class Cleared(renderers.ClearPanel, containers.Bin):
 
     """Clears content area."""
 
     def __init__(self, content, **kwargs):
         super().__init__(
             content=content,
-            renderer=renderers.ClearPanel(),
             **kwargs,
         )
-
-    def set_style(self, *, colors=None, **style):
-        self.renderer.set_style(
-            colors=colors,
-        )
-        super().set_style(**style)
-
-    @property
-    def colors(self):
-        return self.renderer.style.colors
 
 
 class WithClearedContent:

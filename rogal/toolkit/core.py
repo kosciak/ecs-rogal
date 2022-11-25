@@ -54,6 +54,19 @@ class Styled:
         self.style.update(style)
 
 
+class WithColors(Styled):
+
+    def set_style(self, *, colors=None, **style):
+        self.style.update(
+            colors=colors,
+        )
+        super().set_style(**style)
+
+    @property
+    def colors(self):
+        return self.style.colors
+
+
 class WithSize(Styled, Layoutable):
 
     """Layoutable based on width/height and align."""
