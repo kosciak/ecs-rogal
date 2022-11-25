@@ -3,7 +3,8 @@ from ..data import data_store, parsers
 
 def parse_size_value(data):
     if isinstance(data, str) and data.endswith('%'):
-        return int(data[:data.find('%')]) / 100
+        # TODO: What about 100%
+        return int(data[:data.find('%')]) / 100.
     return data
 
 

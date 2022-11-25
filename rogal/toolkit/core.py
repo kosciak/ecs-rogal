@@ -73,7 +73,7 @@ class WithSize(Styled, Layoutable):
 
     DEFAULT_Z_ORDER = 0
     DEFAULT_ALIGN = Align.TOP_LEFT
-    FULL_SIZE = 0
+    FULL_SIZE = 0 # TODO: Consider changing to -1
     DEFAULT_WIDTH = FULL_SIZE
     DEFAULT_HEIGHT = FULL_SIZE
 
@@ -83,8 +83,8 @@ class WithSize(Styled, Layoutable):
         self.default_z_order = self.DEFAULT_Z_ORDER
 
     def set_style(self, *, align=None, width=None, height=None, **style):
-        if align is None:
-            align = self.DEFAULT_ALIGN
+        # if align is None:
+        #     align = self.DEFAULT_ALIGN
         self.style.update(
             align=align,
             width=width, height=height,
@@ -92,9 +92,10 @@ class WithSize(Styled, Layoutable):
 
     @property
     def align(self):
-        if self.style.align is not None:
-            return self.style.align
-        return self.DEFAULT_ALIGN
+        align = self.style.align
+        if align is None:
+            align = self.DEFAULT_ALIGN
+        return align
 
     @property
     def width(self):
@@ -116,24 +117,24 @@ class WithSize(Styled, Layoutable):
         """Minimal total height (for example height+padding)."""
         return self.height
 
+    def _calc_size(self, size, available):
+        if size == self.FULL_SIZE:
+            size = available
+        if size and size < 1.:
+            size = round(size*available)
+        return size
+
     def get_width(self, available):
-        width = self.width or self.DEFAULT_WIDTH
-        if width and width < 1.:
-            width = round(width*available)
-        return width
+        return self._calc_size(self.width, available)
 
     def get_height(self, available):
-        height = self.height or self.DEFAULT_WIDTH
-        if height and height < 1.:
-            height = round(height*available)
-        return height
+        return self._calc_size(self.height, available)
 
     def get_size(self, available):
         """Return element's size based on available space."""
-        # TODO: Allow float values? width = .75, height = .5 of available size?
         size = Size(
-            self.get_width(available.width) or available.width,
-            self.get_height(available.height) or available.height,
+            self.get_width(available.width),
+            self.get_height(available.height),
         )
         return size
 
