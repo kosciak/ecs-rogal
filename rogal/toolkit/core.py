@@ -100,12 +100,18 @@ class WithSize(Styled, Layoutable):
     @property
     def width(self):
         """Return element's fixed width or 0 if whole available space should be used."""
-        return self.style.width or self.DEFAULT_WIDTH
+        width = self.style.width
+        if width is None:
+            width = self.DEFAULT_WIDTH
+        return width
 
     @property
     def height(self):
         """Return element's fixed height or 0 if whole available space should be used."""
-        return self.style.height or self.DEFAULT_HEIGHT
+        height = self.style.height
+        if height is None:
+            height = self.DEFAULT_HEIGHT
+        return height
 
     @property
     def min_width(self):
@@ -125,16 +131,16 @@ class WithSize(Styled, Layoutable):
         return size
 
     def get_width(self, available):
-        return self._calc_size(self.width, available)
+        return self._calc_size(self.width, available.width)
 
     def get_height(self, available):
-        return self._calc_size(self.height, available)
+        return self._calc_size(self.height, available.height)
 
     def get_size(self, available):
         """Return element's size based on available space."""
         size = Size(
-            self.get_width(available.width),
-            self.get_height(available.height),
+            self.get_width(available),
+            self.get_height(available),
         )
         return size
 

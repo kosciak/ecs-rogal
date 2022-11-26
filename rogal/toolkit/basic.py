@@ -22,6 +22,20 @@ class TextRenderer(core.WithColors, core.WithSize, core.Renderer):
         )
         return txt_size
 
+    @property
+    def min_width(self):
+        width = self.style.width
+        if width is None:
+            width = self.txt_size.width
+        return width
+
+    @property
+    def min_height(self):
+        height = self.style.height
+        if height is None:
+            height = self.txt_size.height
+        return height
+
     def render_txt(self, panel, txt, colors):
         position = panel.get_align_position(self.txt_size, self.align)
         panel.print(txt, position, colors=colors, align=self.align)
@@ -47,18 +61,6 @@ class Text(TextRenderer):
     def txt(self, txt):
         self._txt = txt
         self.txt_size = self.get_txt_size(self._txt)
-
-    @property
-    def width(self):
-        if self.style.width is not None:
-            return self.style.width
-        return self.txt_size.width
-
-    @property
-    def height(self):
-        if self.style.height is not None:
-            return self.style.height
-        return self.txt_size.height
 
 
 class WithTextContent:
@@ -283,17 +285,17 @@ class Spinner(core.Animated, TextRenderer):
     def frames(self):
         return self.style.frames
 
-    @property
-    def width(self):
-        if self.style.width is not None:
-            return self.style.width
-        return self.txt_size.width
+    # @property
+    # def width(self):
+    #     if self.style.width is not None:
+    #         return self.style.width
+    #     return self.txt_size.width
 
-    @property
-    def height(self):
-        if self.style.height is not None:
-            return self.style.height
-        return self.txt_size.height
+    # @property
+    # def height(self):
+    #     if self.style.height is not None:
+    #         return self.style.height
+    #     return self.txt_size.height
 
     def get_frames_txt_size(self, frames):
         frame_sizes = [self.get_txt_size(frame) for frame in frames]
@@ -455,10 +457,6 @@ class HorizontalSeparator(Separator):
 
     DEFAULT_HEIGHT = 1
 
-    @property
-    def width(self):
-        return self.style.width or self.FULL_SIZE
-
     def render(self, panel, timestamp):
         super().render(panel, timestamp)
         if self.segments.end is not None:
@@ -468,10 +466,6 @@ class HorizontalSeparator(Separator):
 class VerticalSeparator(Separator):
 
     DEFAULT_WIDTH = 1
-
-    @property
-    def height(self):
-        return self.style.height or self.FULL_SIZE
 
     def render(self, panel, timestamp):
         super().render(panel, timestamp)

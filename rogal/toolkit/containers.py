@@ -17,21 +17,24 @@ class Bin(core.Container, core.WithSize):
 
     @property
     def align(self):
-        if self.style.align is not None:
-            return self.style.align
-        return self.content.align
+        align = self.style.align
+        if align is None:
+            align = self.content.align
+        return align
 
     @property
     def width(self):
-        if self.style.width is not None:
-            return self.style.width
-        return self.content.min_width
+        width = self.style.width
+        if width is None:
+            width = self.content.min_width
+        return width
 
     @property
     def height(self):
-        if self.style.height is not None:
-            return self.style.height
-        return self.content.min_height
+        height = self.style.height
+        if height is None:
+            height = self.content.min_height
+        return height
 
     def layout_content(self, manager, panel, z_order):
         _, z_order = self.content.layout(manager, panel, z_order+1)

@@ -52,14 +52,14 @@ class Padded(containers.Bin):
 
     def get_width(self, available):
         if self.width == self.FULL_SIZE:
-            width = available - self.padding.left - self.padding.right
+            width = available.width - self.padding.left - self.padding.right
         else:
             width = super().get_width(available)
         return width
 
     def get_height(self, available):
         if self.height == self.FULL_SIZE:
-            height = available - self.padding.top - self.padding.bottom
+            height = available.height - self.padding.top - self.padding.bottom
         else:
             height = super().get_height(available)
         return height
@@ -115,6 +115,7 @@ class Framed(containers.Bin):
 
     @property
     def width(self):
+        # TODO: 
         if self.style.width is not None:
             return self.style.width
         width = self.content.min_width
@@ -124,6 +125,7 @@ class Framed(containers.Bin):
 
     @property
     def height(self):
+        # TODO: 
         if self.style.height is not None:
             return self.style.height
         height = self.content.min_height
