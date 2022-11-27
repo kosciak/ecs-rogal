@@ -23,17 +23,17 @@ class Bin(core.Container, core.WithSize):
         return align
 
     def get_min_width(self, available):
-        if self.style.width is None:
-            width = self.content.get_min_width(available)
-        else:
+        if self.style.width is not None:
             width = super().get_min_width(available)
+        else:
+            width = self.content.get_min_width(available)
         return width
 
     def get_min_height(self, available):
-        if self.style.height is None:
-            height = self.content.get_min_height(available)
-        else:
+        if self.style.height is not None:
             height = super().get_min_height(available)
+        else:
+            height = self.content.get_min_height(available)
         return height
 
     def layout_content(self, manager, panel, z_order):

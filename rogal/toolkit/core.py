@@ -83,8 +83,6 @@ class WithSize(Styled, Layoutable):
         self.default_z_order = self.DEFAULT_Z_ORDER
 
     def set_style(self, *, align=None, width=None, height=None, **style):
-        # if align is None:
-        #     align = self.DEFAULT_ALIGN
         self.style.update(
             align=align,
             width=width, height=height,
@@ -99,7 +97,7 @@ class WithSize(Styled, Layoutable):
 
     @property
     def width(self):
-        """Return element's fixed width or 0 if whole available space should be used."""
+        """Return element's declared width."""
         width = self.style.width
         if width is None:
             width = self.DEFAULT_WIDTH
@@ -107,7 +105,7 @@ class WithSize(Styled, Layoutable):
 
     @property
     def height(self):
-        """Return element's fixed height or 0 if whole available space should be used."""
+        """Return element's declared height."""
         height = self.style.height
         if height is None:
             height = self.DEFAULT_HEIGHT

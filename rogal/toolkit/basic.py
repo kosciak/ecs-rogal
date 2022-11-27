@@ -1,4 +1,6 @@
 import collections
+import functools
+import textwrap
 
 from ..geometry import Position, Size
 
@@ -11,34 +13,51 @@ from . import renderers
 """Most basic UI elements - building blocks for more complicated ones."""
 
 
+@functools.lru_cache(maxsize=None)
+def wrap_txt(txt, available):
+    wrapped = []
+    for line in txt.splitlines():
+        wrapped.extend(
+            textwrap.wrap(
+                line,
+                width=available.width,
+                max_lines=None, # TODO: Consider available.height
+            )
+        )
+    return wrapped
+
+
+@functools.lru_cache(maxsize=None)
+def get_txt_size(txt, available):
+    wrapped = wrap_txt(txt, available) or ['', ]
+    size = Size(
+        max(len(line) for line in wrapped),
+        len(wrapped)
+    )
+    return size
+
+
 class TextRenderer(core.WithColors, core.WithSize, core.Renderer):
 
-    def get_txt_size(self, txt):
-        # TODO: Use: textwrap.wrap(line, width) to make it dynamic
-        lines = txt.splitlines() or ['', ]
-        txt_size = Size(
-            max(len(line) for line in lines),
-            len(lines)
-        )
-        return txt_size
-
-    @property
-    def width(self):
-        # TODO: change to get_min_*(available) to make txt_size dynamic
-        width = self.style.width
-        if width is None:
-            width = self.txt_size.width
+    def get_min_width(self, available):
+        if self.style.width is not None:
+            width = super().get_min_width(available)
+        else:
+            txt_size = get_txt_size(self.txt, available)
+            width = txt_size.width
         return width
 
-    @property
-    def height(self):
-        height = self.style.height
-        if height is None:
-            height = self.txt_size.height
+    def get_min_height(self, available):
+        if self.style.height is not None:
+            height = super().get_min_height(available)
+        else:
+            txt_size = get_txt_size(self.txt, available)
+            height = txt_size.height
         return height
 
     def render_txt(self, panel, txt, colors):
-        position = panel.get_align_position(self.txt_size, self.align)
+        txt_size = get_txt_size(self.txt, panel)
+        position = panel.get_align_position(txt_size, self.align)
         panel.print(txt, position, colors=colors, align=self.align)
 
     def render(self, panel, timestamp):
@@ -50,18 +69,8 @@ class Text(TextRenderer):
     """Text widget and renderer."""
 
     def __init__(self, txt, **kwargs):
-        self._txt = txt
-        self.txt_size = self.get_txt_size(self._txt)
+        self.txt = txt
         super().__init__(**kwargs)
-
-    @property
-    def txt(self):
-        return self._txt
-
-    @txt.setter
-    def txt(self, txt):
-        self._txt = txt
-        self.txt_size = self.get_txt_size(self._txt)
 
 
 class WithTextContent:
@@ -258,6 +267,7 @@ class Cursor(core.Renderer, core.UIElement):
             panel.invert(self.position)
 
 
+# TODO: Needs rewrite? Changes in TextRenderer and txt_size calculations!
 class Spinner(core.Animated, TextRenderer):
 
     DEFAULT_FRAME_DURATION = 100
