@@ -4,10 +4,23 @@ Window:
   Frame:
     decorations: DSLINE
 
-Window.dialog:
+.dialog:
   align: TOP_CENTER
   padding: [10, 3]
   width: 40
+
+
+Separator.horizontal:
+  fg: FG
+  bg: BG
+  # width: 20
+  align: CENTER
+  separator: [0x2500, 0x251c, 0x2524]
+  padding: [0, -1]
+
+
+'#logs':
+  height: 12
 
 
 .button:
@@ -56,33 +69,46 @@ Window.dialog:
   bg: BG
 
 
-Dialog ButtonsRow:
+.dialog .reply_buttons:
   align: BOTTOM_CENTER
 
 
 .title:
   align: TOP_LEFT
   fg: FG
-  bg: BG
+  bg: green
   padding: [0, 1]
   Frame:
     decorations: HORIZONTAL_DSLINE
   Label:
     align: RIGHT
     width: 10
-    padding: [0, 1]
+    padding: [0, 2]
+
+Window:hover .title:
+  Label:
+    fg: red
+    # bg: BG
 
 
 .close_button:
   align: TOP_RIGHT
   fg: FG
-  bg: BG
+  bg: blue
   padding: [0, 1]
   Frame:
     decorations: HORIZONTAL_BRACKETS_SQUARE
 
+.close_button:hover:
+    fg: BG
+    bg: FG
 
-Dialog Label:
+.close_button:active:
+    fg: BG
+    bg: BRIGHT_WHITE
+
+
+.dialog .prompt:
   align: TOP_CENTER
   width: 0
   padding: [1, 0]
