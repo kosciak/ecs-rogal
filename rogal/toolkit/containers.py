@@ -1,3 +1,5 @@
+import functools
+
 from ..collections.attrdict import OrderedAttrDict
 
 from ..geometry import Position, Size
@@ -109,6 +111,7 @@ class NamedStack(core.Container, core.WithSize):
         yield from self.content.values()
 
 
+@functools.lru_cache(maxsize=None)
 def calc_sizes(available_size, sizes):
     if all(sizes):
         return sizes
@@ -149,7 +152,13 @@ class Row(ListContainer, core.WithSize):
         if self.style.height is not None:
             height = super().get_min_height(available)
         else:
-            heights = [child.get_min_height(available) for child in self.content]
+            widths = tuple(child.get_min_width(available) for child in self.content)
+            # NOTE: min_height might depend on given width so compute it first!
+            calc_widths = calc_sizes(available.width, widths)
+            heights = [
+                child.get_min_height(Size(calc_widths[i], available.height))
+                for i, child in enumerate(self.content)
+            ]
             if heights and not self.FULL_SIZE in heights:
                 height = max(heights)
             else:
@@ -159,7 +168,7 @@ class Row(ListContainer, core.WithSize):
     def layout_content(self, manager, panel, z_order):
         z_orders = [z_order, ]
         position = Position.ZERO
-        widths = [child.get_min_width(panel) for child in self.content]
+        widths = tuple(child.get_min_width(panel) for child in self.content)
         calc_widths = calc_sizes(panel.width, widths)
         for i, child in enumerate(self.content):
             # size = Size(calc_widths[i], child.height or panel.height)
@@ -210,7 +219,7 @@ class Column(ListContainer, core.WithSize):
     def layout_content(self, manager, panel, z_order):
         z_orders = [z_order, ]
         position = Position.ZERO
-        heights = [child.get_min_height(panel) for child in self.content]
+        heights = tuple(child.get_min_height(panel) for child in self.content)
         calc_heights = calc_sizes(panel.height, heights)
         for i, child in enumerate(self.content):
             # NOTE: Use whole panel.width instead of child.width 

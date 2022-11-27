@@ -24,17 +24,15 @@ def wrap_txt(txt, available):
                 max_lines=None, # TODO: Consider available.height
             )
         )
-    return wrapped
+    if not wrapped:
+        wrapped.append('')
 
-
-@functools.lru_cache(maxsize=None)
-def get_txt_size(txt, available):
-    wrapped = wrap_txt(txt, available) or ['', ]
     size = Size(
         max(len(line) for line in wrapped),
         len(wrapped)
     )
-    return size
+
+    return '\n'.join(wrapped), size
 
 
 class TextRenderer(core.WithColors, core.WithSize, core.Renderer):
@@ -43,21 +41,21 @@ class TextRenderer(core.WithColors, core.WithSize, core.Renderer):
         if self.style.width is not None:
             width = super().get_min_width(available)
         else:
-            txt_size = get_txt_size(self.txt, available)
-            width = txt_size.width
+            txt, size = wrap_txt(self.txt, available)
+            width = size.width
         return width
 
     def get_min_height(self, available):
         if self.style.height is not None:
             height = super().get_min_height(available)
         else:
-            txt_size = get_txt_size(self.txt, available)
-            height = txt_size.height
+            txt, size = wrap_txt(self.txt, available)
+            height = size.height
         return height
 
     def render_txt(self, panel, txt, colors):
-        txt_size = get_txt_size(self.txt, panel)
-        position = panel.get_align_position(txt_size, self.align)
+        txt, size = wrap_txt(self.txt, panel)
+        position = panel.get_align_position(size, self.align)
         panel.print(txt, position, colors=colors, align=self.align)
 
     def render(self, panel, timestamp):
