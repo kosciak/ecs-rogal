@@ -14,8 +14,8 @@ from . import renderers
 class TextRenderer(core.WithColors, core.WithSize, core.Renderer):
 
     def get_txt_size(self, txt):
+        # TODO: Use: textwrap.wrap(line, width) to make it dynamic
         lines = txt.splitlines() or ['', ]
-        # TODO: Use: textwrap.wrap(line, width)
         txt_size = Size(
             max(len(line) for line in lines),
             len(lines)
@@ -23,14 +23,15 @@ class TextRenderer(core.WithColors, core.WithSize, core.Renderer):
         return txt_size
 
     @property
-    def min_width(self):
+    def width(self):
+        # TODO: change to get_min_*(available) to make txt_size dynamic
         width = self.style.width
         if width is None:
             width = self.txt_size.width
         return width
 
     @property
-    def min_height(self):
+    def height(self):
         height = self.style.height
         if height is None:
             height = self.txt_size.height

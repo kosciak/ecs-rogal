@@ -13,7 +13,7 @@ from . import renderers
 <Decorated> class function as decorator around content.
 With<Decorated>Content is a mixin that exposes decorator attributes/methods.
 
-This way you can easily contruct more complex elements by stacking decorations.
+This way you can easily construct more complex elements by stacking decoration mixins.
 
 """
 
@@ -36,32 +36,28 @@ class Padded(containers.Bin):
     def padding(self):
         return self.style.padding
 
-    @property
-    def min_width(self):
-        width = self.width
-        if width:
-            return width + self.padding.left + self.padding.right
-        return self.FULL_SIZE
+    def get_min_width(self, available):
+        width = super().get_min_width(available)
+        if not width == self.FULL_SIZE:
+            width += self.padding.left + self.padding.right
+        return width
 
-    @property
-    def min_height(self):
-        height = self.height
-        if height:
-            return height + self.padding.top + self.padding.bottom
-        return self.FULL_SIZE
+    def get_min_height(self, available):
+        height = super().get_min_height(available)
+        if not height == self.FULL_SIZE:
+            height += self.padding.top + self.padding.bottom
+        return height
 
     def get_width(self, available):
-        if self.width == self.FULL_SIZE:
-            width = available.width - self.padding.left - self.padding.right
-        else:
-            width = super().get_width(available)
+        width = super().get_width(available)
+        if not width == self.FULL_SIZE:
+            width -= self.padding.left + self.padding.right
         return width
 
     def get_height(self, available):
-        if self.height == self.FULL_SIZE:
-            height = available.height - self.padding.top - self.padding.bottom
-        else:
-            height = super().get_height(available)
+        height = super().get_height(available)
+        if not height == self.FULL_SIZE:
+            height -= self.padding.top + self.padding.bottom
         return height
 
     def get_layout_panel(self, panel):
@@ -113,25 +109,17 @@ class Framed(containers.Bin):
         self.frame.set_style(**Frame)
         super().set_style(**style)
 
-    @property
-    def width(self):
-        # TODO: 
-        if self.style.width is not None:
-            return self.style.width
-        width = self.content.min_width
-        if width:
-            return width + self.frame.extents.width
-        return self.FULL_SIZE
+    def get_min_width(self, available):
+        width = super().get_min_width(available)
+        if not width == self.FULL_SIZE:
+            width += self.frame.extents.width
+        return width
 
-    @property
-    def height(self):
-        # TODO: 
-        if self.style.height is not None:
-            return self.style.height
-        height = self.content.min_height
-        if height:
-            return height + self.frame.extents.height
-        return self.FULL_SIZE
+    def get_min_height(self, available):
+        height = super().get_min_height(available)
+        if not height == self.FULL_SIZE:
+            height += self.frame.extents.height
+        return height
 
     def layout_content(self, manager, panel, z_order):
         self.frame.layout(manager, panel, z_order+1)

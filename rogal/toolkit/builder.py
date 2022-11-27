@@ -250,7 +250,7 @@ class WidgetsBuilder:
         )
         radio2_label.assign(radio2)
 
-        toggle_buttons = containers.List([
+        toggle_buttons = containers.Column([
             containers.Row([
                 checkbox, checkbox_label,
             ]),
@@ -274,7 +274,7 @@ class WidgetsBuilder:
             style=self.get_style('Spinner'),
         )
 
-        content = containers.List(
+        content = containers.Column(
             content=[
                 # progress_bar,
                 # spinner,
@@ -439,7 +439,7 @@ class WidgetsBuilder:
                 selector='#logs',
             )
 
-            content = containers.List([
+            content = containers.Column([
                 camera,
                 msg_log,
             ])

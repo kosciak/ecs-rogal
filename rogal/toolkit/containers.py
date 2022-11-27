@@ -22,18 +22,18 @@ class Bin(core.Container, core.WithSize):
             align = self.content.align
         return align
 
-    @property
-    def width(self):
-        width = self.style.width
-        if width is None:
-            width = self.content.min_width
+    def get_min_width(self, available):
+        if self.style.width is None:
+            width = self.content.get_min_width(available)
+        else:
+            width = super().get_min_width(available)
         return width
 
-    @property
-    def height(self):
-        height = self.style.height
-        if height is None:
-            height = self.content.min_height
+    def get_min_height(self, available):
+        if self.style.height is None:
+            height = self.content.get_min_height(available)
+        else:
+            height = super().get_min_height(available)
         return height
 
     def layout_content(self, manager, panel, z_order):
@@ -134,29 +134,32 @@ class Row(ListContainer, core.WithSize):
 
     """
 
-    @property
-    def min_width(self):
+    def get_min_width(self, available):
         if self.style.width is not None:
-            return self.style.width
-        widths = [child.min_width for child in self.content]
-        if self.FULL_SIZE in widths:
-            return self.FULL_SIZE
-        return sum(widths)
+            width = super().get_min_width(available)
+        else:
+            widths = [child.get_min_width(available) for child in self.content]
+            if self.FULL_SIZE in widths:
+                width = self.FULL_SIZE
+            else:
+                width = sum(widths)
+        return width
 
-    @property
-    def min_height(self):
+    def get_min_height(self, available):
         if self.style.height is not None:
-            return self.style.height
-        heights = [child.min_height for child in self.content]
-        if self.FULL_SIZE in heights:
-            return self.FULL_SIZE
-        heights.append(self.FULL_SIZE)
-        return max(heights)
+            height = super().get_min_height(available)
+        else:
+            heights = [child.get_min_height(available) for child in self.content]
+            if heights and not self.FULL_SIZE in heights:
+                height = max(heights)
+            else:
+                height = self.FULL_SIZE
+        return height
 
     def layout_content(self, manager, panel, z_order):
         z_orders = [z_order, ]
         position = Position.ZERO
-        widths = [child.min_width for child in self.content]
+        widths = [child.get_min_width(panel) for child in self.content]
         calc_widths = calc_sizes(panel.width, widths)
         for i, child in enumerate(self.content):
             # size = Size(calc_widths[i], child.height or panel.height)
@@ -174,7 +177,7 @@ class Row(ListContainer, core.WithSize):
 #     pass
 
 
-class List(ListContainer, core.WithSize):
+class Column(ListContainer, core.WithSize):
 
     """Vertical container.
 
@@ -182,29 +185,32 @@ class List(ListContainer, core.WithSize):
 
     """
 
-    @property
-    def min_width(self):
+    def get_min_width(self, available):
         if self.style.width is not None:
-            return self.style.width
-        widths = [child.min_width for child in self.content]
-        if self.FULL_SIZE in widths:
-            return self.FULL_SIZE
-        widths.append(self.FULL_SIZE)
-        return max(widths)
+            width = super().get_min_width(available)
+        else:
+            widths = [child.get_min_width(available) for child in self.content]
+            if widths and not self.FULL_SIZE in widths:
+                width = max(widths)
+            else:
+                width = self.FULL_SIZE
+        return width
 
-    @property
-    def min_height(self):
+    def get_min_height(self, available):
         if self.style.height is not None:
-            return self.style.height
-        heights = [child.min_height for child in self.content]
-        if self.FULL_SIZE in heights:
-            return self.FULL_SIZE
-        return sum(heights)
+            height = super().get_min_height(available)
+        else:
+            heights = [child.get_min_height(available) for child in self.content]
+            if self.FULL_SIZE in heights:
+                height = self.FULL_SIZE
+            else:
+                height = sum(heights)
+        return height
 
     def layout_content(self, manager, panel, z_order):
         z_orders = [z_order, ]
         position = Position.ZERO
-        heights = [child.min_height for child in self.content]
+        heights = [child.get_min_height(panel) for child in self.content]
         calc_heights = calc_sizes(panel.height, heights)
         for i, child in enumerate(self.content):
             # NOTE: Use whole panel.width instead of child.width 

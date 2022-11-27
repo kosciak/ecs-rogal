@@ -57,9 +57,9 @@ class Dialog(
                  **kwargs,
                 ):
         self.buttons = widgets.ButtonsRow(
-            # selector='Dialog ButtonsRow',
+            selector='.reply_buttons',
         )
-        content = containers.List(
+        content = containers.Column(
             content=[
                 content,
                 self.buttons,

@@ -113,31 +113,35 @@ class WithSize(Styled, Layoutable):
             height = self.DEFAULT_HEIGHT
         return height
 
-    @property
-    def min_width(self):
-        """Minimal total width (for example width+padding)."""
-        return self.width
-
-    @property
-    def min_height(self):
-        """Minimal total height (for example height+padding)."""
-        return self.height
-
     def _calc_size(self, size, available):
-        if size == self.FULL_SIZE:
-            size = available
-        if size and size < 1.:
-            size = round(size*available)
+        if size and size < 1. and not size == self.FULL_SIZE:
+            size = max(round(size*available), 1)
         return size
 
-    def get_width(self, available):
+    def get_min_width(self, available):
+        """Return minimal width or FULL_SIZE based on given available size."""
         return self._calc_size(self.width, available.width)
 
-    def get_height(self, available):
+    def get_min_height(self, available):
+        """Return minimal height or FULL_SIZE based on given available size."""
         return self._calc_size(self.height, available.height)
 
+    def get_width(self, available):
+        """Return calculated width based on given available size."""
+        width = self.get_min_width(available)
+        if width == self.FULL_SIZE:
+            width = available.width
+        return width
+
+    def get_height(self, available):
+        """Return calculated height based on given available size."""
+        height = self.get_min_height(available)
+        if height == self.FULL_SIZE:
+            height = available.height
+        return height
+
     def get_size(self, available):
-        """Return element's size based on available space."""
+        """Return calculated element's size based on available space."""
         size = Size(
             self.get_width(available),
             self.get_height(available),
