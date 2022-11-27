@@ -66,6 +66,10 @@ class Padded(containers.Bin):
         panel = panel.create_panel(position, size)
         return panel
 
+    def layout(self, manager, panel, z_order, recalc=True):
+        # NOTE: Always recalc panel for padding to work
+        return super().layout(manager, panel, z_order, recalc=True)
+
 
 class WithPaddedContent:
 
@@ -122,10 +126,13 @@ class Framed(containers.Bin):
         return height
 
     def layout_content(self, manager, panel, z_order):
-        self.frame.layout(manager, panel, z_order+1)
+        self.frame.layout(
+            manager, panel, z_order+1, recalc=False,
+        )
         panel = self.frame.get_inner_panel(panel)
-        _, zorder = self.content.layout(manager, panel, z_order+2)
-        return z_order
+        return super().layout_content(
+            manager, panel, z_order+2,
+        )
 
     def __iter__(self):
         yield from super().__iter__()
@@ -203,8 +210,12 @@ class PostProcessed(containers.Bin):
         return self.post_renderer.renderers
 
     def layout_content(self, manager, panel, z_order):
-        _, z_order = self.content.layout(manager, panel, z_order+1)
-        _, z_order = self.post_renderer.layout(manager, panel, z_order+1)
+        _, z_order = self.content.layout(
+            manager, panel, z_order+1, recalc=False,
+        )
+        _, z_order = self.post_renderer.layout(
+            manager, panel, z_order+1, recalc=False,
+        )
         return z_order
 
     def __iter__(self):
@@ -250,8 +261,12 @@ class Overlayed(containers.Bin):
     # TODO: set_style() -> use overlay names?
 
     def layout_content(self, manager, panel, z_order):
-        _, z_order = self.content.layout(manager, panel, z_order+1)
-        _, z_order = self._overlay.layout(manager, panel, z_order+1)
+        z_order = super().layout_content(
+            manager, panel, z_order,
+        )
+        _, z_order = self._overlay.layout(
+            manager, panel, z_order+1, recalc=False,
+        )
         return z_order
 
     def __iter__(self):

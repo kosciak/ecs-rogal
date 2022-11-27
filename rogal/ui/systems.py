@@ -161,7 +161,9 @@ class LayoutSytem(UISystem):
             layouts.remove(*children)
             layout = layouts.get(element)
             if layout is None:
-                widget.layout(self.ui_manager, panel=self.root, z_order=0)
+                widget.layout(
+                    self.ui_manager, panel=self.root, z_order=0, recalc=True,
+                )
             else:
                 # TODO: This works ONLY if we are redrawing children, but not widget itself
                 #       for example after resizing it! It would need panel from it's parent!

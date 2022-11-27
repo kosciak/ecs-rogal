@@ -39,7 +39,9 @@ class Bin(core.Container, core.WithSize):
         return height
 
     def layout_content(self, manager, panel, z_order):
-        _, z_order = self.content.layout(manager, panel, z_order+1)
+        _, z_order = self.content.layout(
+            manager, panel, z_order+1, recalc=False,
+        )
         return z_order
 
     def __iter__(self):
@@ -85,7 +87,9 @@ class Stack(ListContainer, core.WithSize):
 
     def layout_content(self, manager, panel, z_order):
         for child in self.content:
-            _, z_order = child.layout(manager, panel, z_order+1)
+            _, z_order = child.layout(
+                manager, panel, z_order+1, recalc=True,
+            )
         return z_order
 
 
@@ -101,7 +105,9 @@ class NamedStack(core.Container, core.WithSize):
 
     def layout_content(self, manager, panel, z_order):
         for child in self.content.values():
-            _, z_order = child.layout(manager, panel, z_order+1)
+            _, z_order = child.layout(
+                manager, panel, z_order+1, recalc=True,
+            )
         return z_order
 
     def __len__(self):
@@ -174,7 +180,9 @@ class Row(ListContainer, core.WithSize):
             # size = Size(calc_widths[i], child.height or panel.height)
             size = Size(calc_widths[i], panel.height)
             subpanel = panel.create_panel(position, size)
-            _, child_z_order = child.layout(manager, subpanel, z_order+1)
+            _, child_z_order = child.layout(
+                manager, subpanel, z_order+1, #recalc=True,
+            )
             z_orders.append(child_z_order or 0)
             position += Position(calc_widths[i], 0)
         return max(z_orders)
@@ -226,7 +234,9 @@ class Column(ListContainer, core.WithSize):
             #       for containers (e.g. Row) to work correctly
             size = Size(panel.width, calc_heights[i])
             subpanel = panel.create_panel(position, size)
-            _, child_z_order = child.layout(manager, subpanel, z_order+1)
+            _, child_z_order = child.layout(
+                manager, subpanel, z_order+1, #recalc=True,
+            )
             z_orders.append(child_z_order or 0)
             position += Position(0, calc_heights[i])
         return max(z_orders)
@@ -250,7 +260,9 @@ class Split(ListContainer, core.WithSize):
         subpanels = panel.split(self.left, self.right, self.top, self.bottom)
         for i, child in enumerate(self.content):
             if child:
-                _, child_z_order = child.layout(manager, subpanels[i], z_order+1)
+                _, child_z_order = child.layout(
+                    manager, subpanels[i], z_order+1, #recalc=???,
+                )
                 z_orders.append(child_z_order or 0)
             if i >= 2:
                 break

@@ -30,7 +30,7 @@ class Layoutable(UIElement):
 
     """Base class for elements that can be layouted on the panel."""
 
-    def layout(self, manager, panel, z_order):
+    def layout(self, manager, panel, z_order, recalc=True):
         manager.insert(
             self.element,
             panel=panel,
@@ -153,9 +153,10 @@ class WithSize(Styled, Layoutable):
             panel = panel.create_panel(position, size)
         return panel
 
-    def layout(self, manager, panel, z_order):
+    def layout(self, manager, panel, z_order, recalc=True):
         z_order = z_order or self.default_z_order
-        panel = self.get_layout_panel(panel)
+        if recalc:
+            panel = self.get_layout_panel(panel)
         manager.insert(
             self.element,
             panel=panel,
@@ -208,9 +209,13 @@ class Container:
                 manager.create_child(element),
             )
 
-    def layout(self, manager, panel, z_order):
-        panel, z_order = super().layout(manager, panel, z_order)
-        z_order = self.layout_content(manager, panel, z_order)
+    def layout(self, manager, panel, z_order, recalc=True):
+        panel, z_order = super().layout(
+            manager, panel, z_order, recalc=recalc,
+        )
+        z_order = self.layout_content(
+            manager, panel, z_order,
+        )
         return panel, z_order
 
     def layout_content(self, manager, panel, z_order):
