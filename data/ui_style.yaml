@@ -10,6 +10,15 @@ Window:
   width: 40
 
 
+.dialog .prompt:
+  align: TOP_CENTER
+  padding: [1, 0]
+
+
+.dialog .reply_buttons:
+  align: BOTTOM_CENTER
+
+
 Separator.horizontal:
   fg: FG
   bg: BG
@@ -69,20 +78,16 @@ Separator.horizontal:
   bg: BG
 
 
-.dialog .reply_buttons:
-  align: BOTTOM_CENTER
-
-
 .title:
   align: TOP_LEFT
   fg: FG
   bg: green
+  width: 15
   padding: [0, 1]
   Frame:
     decorations: HORIZONTAL_DSLINE
   Label:
     align: RIGHT
-    width: 10
     padding: [0, 2]
 
 Window:hover .title:
@@ -106,12 +111,6 @@ Window:hover .title:
 .close_button:active:
     fg: BG
     bg: BRIGHT_WHITE
-
-
-.dialog .prompt:
-  align: TOP_CENTER
-  width: 0
-  padding: [1, 0]
 
 
 TextInput:
