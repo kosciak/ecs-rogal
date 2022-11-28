@@ -97,7 +97,7 @@ class WithSize(Styled, Layoutable):
 
     @property
     def width(self):
-        """Return element's declared width."""
+        """Return declared width."""
         width = self.style.width
         if width is None:
             width = self.DEFAULT_WIDTH
@@ -105,7 +105,7 @@ class WithSize(Styled, Layoutable):
 
     @property
     def height(self):
-        """Return element's declared height."""
+        """Return declared height."""
         height = self.style.height
         if height is None:
             height = self.DEFAULT_HEIGHT
@@ -124,6 +124,14 @@ class WithSize(Styled, Layoutable):
         """Return minimal height or FULL_SIZE based on given available size."""
         return self._calc_size(self.height, available.height)
 
+    def get_min_size(self, available):
+        """Return minimal size based on available space."""
+        size = Size(
+            self.get_min_width(available),
+            self.get_min_height(available),
+        )
+        return size
+
     def get_width(self, available):
         """Return calculated width based on given available size."""
         width = self.get_min_width(available)
@@ -139,15 +147,15 @@ class WithSize(Styled, Layoutable):
         return height
 
     def get_size(self, available):
-        """Return calculated element's size based on available space."""
+        """Return calculated size based on available space."""
         size = Size(
             self.get_width(available),
             self.get_height(available),
         )
         return size
 
-    def get_layout_panel(self, panel):
-        size = self.get_size(panel)
+    def get_layout_panel(self, panel, force_size=None):
+        size = force_size or self.get_size(panel)
         if not size == panel.size:
             position = panel.get_position(size, self.align)
             panel = panel.create_panel(position, size)
@@ -155,8 +163,10 @@ class WithSize(Styled, Layoutable):
 
     def layout(self, manager, panel, z_order, recalc=True):
         z_order = z_order or self.default_z_order
-        if recalc:
-            panel = self.get_layout_panel(panel)
+        force_size = recalc is False and panel.size
+        panel = self.get_layout_panel(
+            panel, force_size=force_size,
+        )
         manager.insert(
             self.element,
             panel=panel,
@@ -214,7 +224,7 @@ class Container:
             manager, panel, z_order, recalc=recalc,
         )
         z_order = self.layout_content(
-            manager, panel, z_order,
+            manager, panel, z_order+1,
         )
         return panel, z_order
 

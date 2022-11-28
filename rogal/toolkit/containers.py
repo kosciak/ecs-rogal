@@ -177,11 +177,10 @@ class Row(ListContainer, core.WithSize):
         widths = tuple(child.get_min_width(panel) for child in self.content)
         calc_widths = calc_sizes(panel.width, widths)
         for i, child in enumerate(self.content):
-            # size = Size(calc_widths[i], child.height or panel.height)
             size = Size(calc_widths[i], panel.height)
             subpanel = panel.create_panel(position, size)
             _, child_z_order = child.layout(
-                manager, subpanel, z_order+1, #recalc=True,
+                manager, subpanel, z_order+1, recalc=False,
             )
             z_orders.append(child_z_order or 0)
             position += Position(calc_widths[i], 0)
@@ -235,7 +234,7 @@ class Column(ListContainer, core.WithSize):
             size = Size(panel.width, calc_heights[i])
             subpanel = panel.create_panel(position, size)
             _, child_z_order = child.layout(
-                manager, subpanel, z_order+1, #recalc=True,
+                manager, subpanel, z_order+1, recalc=False,
             )
             z_orders.append(child_z_order or 0)
             position += Position(0, calc_heights[i])
@@ -261,7 +260,7 @@ class Split(ListContainer, core.WithSize):
         for i, child in enumerate(self.content):
             if child:
                 _, child_z_order = child.layout(
-                    manager, subpanels[i], z_order+1, #recalc=???,
+                    manager, subpanels[i], z_order+1, recalc=False,
                 )
                 z_orders.append(child_z_order or 0)
             if i >= 2:

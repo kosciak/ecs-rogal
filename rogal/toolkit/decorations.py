@@ -48,27 +48,15 @@ class Padded(containers.Bin):
             height += self.padding.top + self.padding.bottom
         return height
 
-    def get_width(self, available):
-        width = super().get_width(available)
-        if not width == self.FULL_SIZE:
-            width -= self.padding.left + self.padding.right
-        return width
-
-    def get_height(self, available):
-        height = super().get_height(available)
-        if not height == self.FULL_SIZE:
-            height -= self.padding.top + self.padding.bottom
-        return height
-
-    def get_layout_panel(self, panel):
-        size = self.get_size(panel)
+    def get_layout_panel(self, panel, size=None):
+        size = size or self.get_size(panel)
+        size = Size(
+            size.width - (self.padding.left + self.padding.right),
+            size.height - (self.padding.top + self.padding.bottom),
+        )
         position = panel.get_position(size, self.align, self.padding)
         panel = panel.create_panel(position, size)
         return panel
-
-    def layout(self, manager, panel, z_order, recalc=True):
-        # NOTE: Always recalc panel for padding to work
-        return super().layout(manager, panel, z_order, recalc=True)
 
 
 class WithPaddedContent:
