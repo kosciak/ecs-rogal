@@ -48,8 +48,8 @@ class Padded(containers.Bin):
             height += self.padding.top + self.padding.bottom
         return height
 
-    def get_layout_panel(self, panel, size=None):
-        size = size or self.get_size(panel)
+    def get_layout_panel(self, panel, force_size=None):
+        size = force_size or self.get_size(panel)
         size = Size(
             size.width - (self.padding.left + self.padding.right),
             size.height - (self.padding.top + self.padding.bottom),

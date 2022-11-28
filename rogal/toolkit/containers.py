@@ -174,13 +174,14 @@ class Row(ListContainer, core.WithSize):
     def layout_content(self, manager, panel, z_order):
         z_orders = [z_order, ]
         position = Position.ZERO
+        # TODO: ??? Might need same layouting mechanism as Column does
         widths = tuple(child.get_min_width(panel) for child in self.content)
         calc_widths = calc_sizes(panel.width, widths)
         for i, child in enumerate(self.content):
             size = Size(calc_widths[i], panel.height)
-            subpanel = panel.create_panel(position, size)
+            child_panel = panel.create_panel(position, size)
             _, child_z_order = child.layout(
-                manager, subpanel, z_order+1, recalc=False,
+                manager, child_panel, z_order+1, recalc=False,
             )
             z_orders.append(child_z_order or 0)
             position += Position(calc_widths[i], 0)
@@ -226,18 +227,32 @@ class Column(ListContainer, core.WithSize):
     def layout_content(self, manager, panel, z_order):
         z_orders = [z_order, ]
         position = Position.ZERO
-        heights = tuple(child.get_min_height(panel) for child in self.content)
+        min_sizes = [child.get_min_size(panel) for child in self.content]
+        heights = tuple(size.height for size in min_sizes)
         calc_heights = calc_sizes(panel.height, heights)
         for i, child in enumerate(self.content):
-            # NOTE: Use whole panel.width instead of child.width 
-            #       for containers (e.g. Row) to work correctly
-            size = Size(panel.width, calc_heights[i])
-            subpanel = panel.create_panel(position, size)
+            width = min_sizes[i].width
+            if width == self.FULL_SIZE:
+                width = panel.width
+            height = calc_heights[i]
+            child_size = Size(width, height)
+            child_panel = panel.create_panel(
+                position, Size(panel.width, height),
+            )
+            if not child_size == child_panel.size:
+                # NOTE: Not calling get_layout_panel(child_panel, child_size)
+                #       As Padded would stack another paddings
+                child_position = child_panel.get_position(
+                    child_size, child.align,
+                )
+                child_panel = child_panel.create_panel(
+                    child_position, child_size,
+                )
             _, child_z_order = child.layout(
-                manager, subpanel, z_order+1, recalc=False,
+                manager, child_panel, z_order+1, recalc=False,
             )
             z_orders.append(child_z_order or 0)
-            position += Position(0, calc_heights[i])
+            position += Position(0, height)
         return max(z_orders)
 
 
